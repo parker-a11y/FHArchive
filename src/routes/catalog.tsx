@@ -261,7 +261,7 @@ function QuickEntry() {
           </div>
 
           <div className="mt-6 flex gap-3">
-            <Button type="submit" size="lg" disabled={busy || !next}>
+            <Button type="submit" size="lg" disabled={busy}>
               SAVE &amp; CREATE NEXT
             </Button>
             <Button type="button" variant="outline" disabled={busy} onClick={() => save(false)}>
