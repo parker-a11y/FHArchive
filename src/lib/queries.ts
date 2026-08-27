@@ -59,19 +59,19 @@ export async function previewNextArchiveId(): Promise<{ fh_seq: number; archive_
 }
 
 export type NewLetterInput = {
-  p_date_as_written: string | null;
-  p_normalized_date: string | null;
+  p_date_as_written?: string;
+  p_normalized_date?: string;
   p_date_precision: string;
   p_date_certainty: string;
-  p_author: string | null;
-  p_recipient: string | null;
-  p_origin: string | null;
-  p_destination: string | null;
+  p_author?: string;
+  p_recipient?: string;
+  p_origin?: string;
+  p_destination?: string;
   p_period: string;
-  p_sheets: number | null;
+  p_sheets?: number;
   p_has_envelope: boolean;
   p_has_enclosures: boolean;
-  p_notes: string | null;
+  p_notes?: string;
 };
 
 export async function createLetter(
@@ -82,6 +82,7 @@ export async function createLetter(
   const row = Array.isArray(data) ? data[0] : data;
   return row as { id: string; fh_seq: number; archive_id: string };
 }
+
 
 
 export async function logEdits(
