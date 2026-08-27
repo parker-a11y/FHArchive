@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as LettersIndexRouteImport } from './routes/letters/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +30,53 @@ const CatalogRoute = CatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LettersIndexRoute = LettersIndexRouteImport.update({
+  id: '/letters/',
+  path: '/letters/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/timeline': typeof TimelineRoute
+  '/letters/': typeof LettersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/timeline': typeof TimelineRoute
+  '/letters': typeof LettersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/timeline': typeof TimelineRoute
+  '/letters/': typeof LettersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/catalog'
+  fullPaths: '/' | '/auth' | '/catalog' | '/timeline' | '/letters/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/catalog'
-  id: '__root__' | '/' | '/auth' | '/catalog'
+  to: '/' | '/auth' | '/catalog' | '/timeline' | '/letters'
+  id: '__root__' | '/' | '/auth' | '/catalog' | '/timeline' | '/letters/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
+  TimelineRoute: typeof TimelineRoute
+  LettersIndexRoute: typeof LettersIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +102,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/letters/': {
+      id: '/letters/'
+      path: '/letters'
+      fullPath: '/letters/'
+      preLoaderRoute: typeof LettersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +123,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
+  TimelineRoute: TimelineRoute,
+  LettersIndexRoute: LettersIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
