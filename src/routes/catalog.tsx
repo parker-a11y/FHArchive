@@ -164,12 +164,12 @@ function QuickEntry() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            save(true);
+            save("next");
           }}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
               e.preventDefault();
-              save(true);
+              save("next");
             }
           }}
         >
@@ -278,8 +278,11 @@ function QuickEntry() {
             <Button type="submit" size="lg" disabled={busy}>
               SAVE &amp; CREATE NEXT
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => save(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => save("open")}>
               Save &amp; open record
+            </Button>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => save("label")}>
+              Save &amp; print label
             </Button>
           </div>
         </form>
