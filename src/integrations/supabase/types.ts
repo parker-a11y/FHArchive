@@ -615,7 +615,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_letter: {
+        Args: {
+          p_author?: string
+          p_date_as_written?: string
+          p_date_certainty?: string
+          p_date_precision?: string
+          p_destination?: string
+          p_has_enclosures?: boolean
+          p_has_envelope?: boolean
+          p_normalized_date?: string
+          p_notes?: string
+          p_origin?: string
+          p_period?: string
+          p_recipient?: string
+          p_sheets?: number
+        }
+        Returns: {
+          archive_id: string
+          fh_seq: number
+          id: string
+        }[]
+      }
       next_archive_id: {
+        Args: never
+        Returns: {
+          archive_id: string
+          fh_seq: number
+        }[]
+      }
+      preview_next_archive_id: {
         Args: never
         Returns: {
           archive_id: string
