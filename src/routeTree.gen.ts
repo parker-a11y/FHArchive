@@ -18,6 +18,7 @@ import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
 import { Route as KeywordsKeywordIdRouteImport } from './routes/keywords/$keywordId'
 import { Route as LettersIndexRouteImport } from './routes/letters/index'
+import { Route as LettersArchiveIdRouteImport } from './routes/letters/$archiveId'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 import { Route as PlacesIndexRouteImport } from './routes/places/index'
@@ -68,6 +69,11 @@ const LettersIndexRoute = LettersIndexRouteImport.update({
   path: '/letters/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LettersArchiveIdRoute = LettersArchiveIdRouteImport.update({
+  id: '/letters/$archiveId',
+  path: '/letters/$archiveId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PeopleIndexRoute = PeopleIndexRouteImport.update({
   id: '/people/',
   path: '/people/',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
+  '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
   '/keywords/': typeof KeywordsIndexRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
+  '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
   '/keywords': typeof KeywordsIndexRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
+  '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
   '/keywords/': typeof KeywordsIndexRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/timeline'
     | '/keywords/$keywordId'
+    | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
     | '/keywords/'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/timeline'
     | '/keywords/$keywordId'
+    | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
     | '/keywords'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/timeline'
     | '/keywords/$keywordId'
+    | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
     | '/keywords/'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   TimelineRoute: typeof TimelineRoute
   KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
+  LettersArchiveIdRoute: typeof LettersArchiveIdRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   PlacesPlaceIdRoute: typeof PlacesPlaceIdRoute
   KeywordsIndexRoute: typeof KeywordsIndexRoute
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LettersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/letters/$archiveId': {
+      id: '/letters/$archiveId'
+      path: '/letters/$archiveId'
+      fullPath: '/letters/$archiveId'
+      preLoaderRoute: typeof LettersArchiveIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/people/': {
       id: '/people/'
       path: '/people'
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   TimelineRoute: TimelineRoute,
   KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
+  LettersArchiveIdRoute: LettersArchiveIdRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   PlacesPlaceIdRoute: PlacesPlaceIdRoute,
   KeywordsIndexRoute: KeywordsIndexRoute,
