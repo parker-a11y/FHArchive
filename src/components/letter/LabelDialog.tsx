@@ -3,7 +3,7 @@ import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { labelDate, optionLabel, PERIODS } from "@/lib/archive";
+import { labelDate, labelOf, PERIODS } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
 
 /** Pure 4×6 label card — renders identically on screen (scaled) and in print. */
@@ -61,7 +61,7 @@ export function labelLines(letter: Partial<Letter>): string[] {
   if (route) lines.push(route);
   const extras: string[] = [];
   if (letter.period && letter.period !== "unknown")
-    extras.push(optionLabel(PERIODS, letter.period));
+    extras.push(labelOf(PERIODS, letter.period));
   if (letter.sheets) extras.push(`${letter.sheets} sheet${letter.sheets === 1 ? "" : "s"}`);
   if (letter.has_envelope) extras.push("envelope");
   if (letter.has_enclosures) extras.push("enclosures");
