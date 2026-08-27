@@ -2,14 +2,32 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchLetterByArchiveId, fetchLetters, logEdits, type Letter } from "@/lib/queries";
+import {
+  deleteLetter,
+  fetchLetterByArchiveId,
+  fetchLetters,
+  logEdits,
+  type Letter,
+} from "@/lib/queries";
+
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
@@ -74,6 +92,8 @@ function LetterPage() {
 
   const [form, setForm] = useState<Record<string, string | boolean>>({});
   const [dirty, setDirty] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
 
   useEffect(() => {
     if (!letter) return;
@@ -197,10 +217,55 @@ function LetterPage() {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <LabelDialog letter={letter} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="text-destructive hover:text-destructive">
+                  <Trash2 className="mr-1.5 size-4" />
+                  Delete record
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {letter.archive_id}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently removes the record, its scans, links, and edit history. If{" "}
+                    {letter.archive_id} is the most recently issued number, it will be reused for
+                    your next entry. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={deleting}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      setDeleting(true);
+                      try {
+                        const reused = await deleteLetter(letter);
+                        await qc.invalidateQueries();
+                        toast.success(
+                          reused
+                            ? `${letter.archive_id} deleted — number will be reused`
+                            : `${letter.archive_id} deleted`,
+                        );
+                        navigate({ to: "/letters" });
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                  >
+                    {deleting ? "Deleting…" : "Delete permanently"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Button onClick={save} disabled={!dirty}>
               {dirty ? "Save changes" : "Saved"}
             </Button>
           </div>
+
         </div>
 
         <div className="mt-4 flex items-center gap-6 border-t border-border pt-3">
