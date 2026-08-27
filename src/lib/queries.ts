@@ -83,6 +83,35 @@ export async function createLetter(
   return row as { id: string; fh_seq: number; archive_id: string };
 }
 
+/**
+ * Permanently deletes a letter (and, via cascade, its scans/links/history).
+ * If it was the most recently issued FH number, the counter is rolled back so
+ * the number is reused by the next record.
+ */
+export async function deleteLetter(letter: Pick<Letter, "id" | "fh_seq">): Promise<boolean> {
+  const { data: scans } = await supabase
+    .from("letter_scans")
+    .select("storage_path")
+    .eq("letter_id", letter.id);
+  const paths = (scans ?? []).map((s) => s.storage_path).filter(Boolean);
+  if (paths.length) await supabase.storage.from("scans").remove(paths);
+
+  const { error } = await supabase.from("letters").delete().eq("id", letter.id);
+  if (error) throw error;
+
+  const { data: counter } = await supabase
+    .from("archive_counter")
+    .select("owner_id, last_seq")
+    .maybeSingle();
+  if (counter && counter.last_seq === letter.fh_seq) {
+    await supabase
+      .from("archive_counter")
+      .update({ last_seq: Math.max(letter.fh_seq - 1, 0) } as never)
+      .eq("owner_id", counter.owner_id);
+    return true;
+  }
+  return false;
+}
 
 
 export async function logEdits(
