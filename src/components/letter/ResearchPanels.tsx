@@ -95,7 +95,7 @@ export function LinksPanel({ letter }: { letter: Letter }) {
     inval();
   }
   async function del(table: string, id: string) {
-    await supabase.from(table).delete().eq("id", id);
+    await (supabase.from(table as "letter_people") as any).delete().eq("id", id);
     inval();
   }
 

@@ -80,7 +80,7 @@ function PlacePage() {
     const payload: Record<string, unknown> = { ...form };
     payload.latitude = form.latitude ? Number(form.latitude) : null;
     payload.longitude = form.longitude ? Number(form.longitude) : null;
-    const { error } = await supabase.from("places").update(payload).eq("id", placeId);
+    const { error } = await supabase.from("places").update(payload as never).eq("id", placeId);
     if (error) return toast.error(error.message);
     toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["place", placeId] });
