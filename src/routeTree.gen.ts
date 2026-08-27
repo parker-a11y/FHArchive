@@ -15,9 +15,13 @@ import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
+import { Route as KeywordsKeywordIdRouteImport } from './routes/keywords/$keywordId'
 import { Route as LettersIndexRouteImport } from './routes/letters/index'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
+import { Route as PlacesIndexRouteImport } from './routes/places/index'
+import { Route as PlacesPlaceIdRouteImport } from './routes/places/$placeId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -49,6 +53,16 @@ const TimelineRoute = TimelineRouteImport.update({
   path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KeywordsIndexRoute = KeywordsIndexRouteImport.update({
+  id: '/keywords/',
+  path: '/keywords/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KeywordsKeywordIdRoute = KeywordsKeywordIdRouteImport.update({
+  id: '/keywords/$keywordId',
+  path: '/keywords/$keywordId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LettersIndexRoute = LettersIndexRouteImport.update({
   id: '/letters/',
   path: '/letters/',
@@ -64,6 +78,16 @@ const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   path: '/people/$personId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlacesIndexRoute = PlacesIndexRouteImport.update({
+  id: '/places/',
+  path: '/places/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlacesPlaceIdRoute = PlacesPlaceIdRouteImport.update({
+  id: '/places/$placeId',
+  path: '/places/$placeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,9 +96,13 @@ export interface FileRoutesByFullPath {
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
+  '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
   '/people/': typeof PeopleIndexRoute
+  '/places/': typeof PlacesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -83,9 +111,13 @@ export interface FileRoutesByTo {
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
+  '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/keywords': typeof KeywordsIndexRoute
   '/letters': typeof LettersIndexRoute
   '/people': typeof PeopleIndexRoute
+  '/places': typeof PlacesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -95,9 +127,13 @@ export interface FileRoutesById {
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
+  '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
   '/people/': typeof PeopleIndexRoute
+  '/places/': typeof PlacesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,9 +144,13 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/keywords/$keywordId'
     | '/people/$personId'
+    | '/places/$placeId'
+    | '/keywords/'
     | '/letters/'
     | '/people/'
+    | '/places/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -119,9 +159,13 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/keywords/$keywordId'
     | '/people/$personId'
+    | '/places/$placeId'
+    | '/keywords'
     | '/letters'
     | '/people'
+    | '/places'
   id:
     | '__root__'
     | '/'
@@ -130,9 +174,13 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/keywords/$keywordId'
     | '/people/$personId'
+    | '/places/$placeId'
+    | '/keywords/'
     | '/letters/'
     | '/people/'
+    | '/places/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -142,9 +190,13 @@ export interface RootRouteChildren {
   QueuesRoute: typeof QueuesRoute
   SearchRoute: typeof SearchRoute
   TimelineRoute: typeof TimelineRoute
+  KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
+  PlacesPlaceIdRoute: typeof PlacesPlaceIdRoute
+  KeywordsIndexRoute: typeof KeywordsIndexRoute
   LettersIndexRoute: typeof LettersIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
+  PlacesIndexRoute: typeof PlacesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -191,6 +243,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/keywords/': {
+      id: '/keywords/'
+      path: '/keywords'
+      fullPath: '/keywords/'
+      preLoaderRoute: typeof KeywordsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/keywords/$keywordId': {
+      id: '/keywords/$keywordId'
+      path: '/keywords/$keywordId'
+      fullPath: '/keywords/$keywordId'
+      preLoaderRoute: typeof KeywordsKeywordIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/letters/': {
       id: '/letters/'
       path: '/letters'
@@ -212,6 +278,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeoplePersonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/places/': {
+      id: '/places/'
+      path: '/places'
+      fullPath: '/places/'
+      preLoaderRoute: typeof PlacesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/places/$placeId': {
+      id: '/places/$placeId'
+      path: '/places/$placeId'
+      fullPath: '/places/$placeId'
+      preLoaderRoute: typeof PlacesPlaceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -222,9 +302,13 @@ const rootRouteChildren: RootRouteChildren = {
   QueuesRoute: QueuesRoute,
   SearchRoute: SearchRoute,
   TimelineRoute: TimelineRoute,
+  KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
+  PlacesPlaceIdRoute: PlacesPlaceIdRoute,
+  KeywordsIndexRoute: KeywordsIndexRoute,
   LettersIndexRoute: LettersIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
+  PlacesIndexRoute: PlacesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
