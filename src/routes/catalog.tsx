@@ -107,7 +107,7 @@ function QuickEntry() {
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
-  async function save(andNext: boolean) {
+  async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
     let created: { archive_id: string };
