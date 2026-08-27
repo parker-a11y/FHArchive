@@ -109,19 +109,19 @@ function QuickEntry() {
     let created: { archive_id: string };
     try {
       created = await createLetter({
-        p_date_as_written: form.date_as_written || null,
-        p_normalized_date: form.normalized_date || null,
+        p_date_as_written: form.date_as_written || undefined,
+        p_normalized_date: form.normalized_date || undefined,
         p_date_precision: form.date_precision,
         p_date_certainty: form.date_certainty,
-        p_author: form.author || null,
-        p_recipient: form.recipient || null,
-        p_origin: form.origin || null,
-        p_destination: form.destination || null,
+        p_author: form.author || undefined,
+        p_recipient: form.recipient || undefined,
+        p_origin: form.origin || undefined,
+        p_destination: form.destination || undefined,
         p_period: form.period,
-        p_sheets: form.sheets ? Number(form.sheets) : null,
+        p_sheets: form.sheets ? Number(form.sheets) : undefined,
         p_has_envelope: form.has_envelope,
         p_has_enclosures: form.has_enclosures,
-        p_notes: form.notes || null,
+        p_notes: form.notes || undefined,
       });
     } catch (e) {
       setBusy(false);
