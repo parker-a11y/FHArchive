@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { createLetter, previewNextArchiveId } from "@/lib/queries";
-import { DATE_CERTAINTY, DATE_PRECISION, PERIODS } from "@/lib/archive";
+import { DATE_CERTAINTY, DATE_PRECISION, PERIODS, labelDate } from "@/lib/archive";
+import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
@@ -84,6 +85,9 @@ function QuickEntry() {
   const [form, setForm] = useState({ ...blank });
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
+  const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; lines: string[] } | null>(
+    null,
+  );
   const dateRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -103,7 +107,7 @@ function QuickEntry() {
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
-  async function save(andNext: boolean) {
+  async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
     let created: { archive_id: string };
@@ -131,12 +135,22 @@ function QuickEntry() {
     qc.invalidateQueries({ queryKey: ["letters"] });
     toast.success(`${created.archive_id} cataloged`);
     setSession((s) => [created.archive_id, ...s]);
-    if (andNext) {
-      setForm((f) => ({ ...blank, period: f.period, author: f.author, recipient: f.recipient }));
-      loadNext();
-    } else {
+    if (mode === "open") {
       navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
+      return;
     }
+    if (mode === "label") {
+      setLabelFor({
+        archiveId: created.archive_id,
+        date: labelDate(form),
+        lines: labelLines({
+          ...form,
+          sheets: form.sheets ? Number(form.sheets) : null,
+        }),
+      });
+    }
+    setForm((f) => ({ ...blank, period: f.period, author: f.author, recipient: f.recipient }));
+    loadNext();
   }
 
 
@@ -150,12 +164,12 @@ function QuickEntry() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            save(true);
+            save("next");
           }}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
               e.preventDefault();
-              save(true);
+              save("next");
             }
           }}
         >
@@ -264,8 +278,11 @@ function QuickEntry() {
             <Button type="submit" size="lg" disabled={busy}>
               SAVE &amp; CREATE NEXT
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => save(false)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => save("open")}>
               Save &amp; open record
+            </Button>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => save("label")}>
+              Save &amp; print label
             </Button>
           </div>
         </form>
@@ -288,6 +305,16 @@ function QuickEntry() {
           </div>
         </aside>
       </div>
+
+      <EntryLabelDialog
+        open={labelFor !== null}
+        onOpenChange={(v) => {
+          if (!v) setLabelFor(null);
+        }}
+        archiveId={labelFor?.archiveId ?? ""}
+        defaultDate={labelFor?.date ?? ""}
+        lines={labelFor?.lines ?? []}
+      />
     </>
   );
 }
