@@ -92,6 +92,8 @@ function LetterPage() {
 
   const [form, setForm] = useState<Record<string, string | boolean>>({});
   const [dirty, setDirty] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
 
   useEffect(() => {
     if (!letter) return;
