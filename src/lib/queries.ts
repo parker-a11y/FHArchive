@@ -51,12 +51,38 @@ export async function fetchLetterByArchiveId(archiveId: string): Promise<Letter 
   return (data as Letter) ?? null;
 }
 
-export async function nextArchiveId(): Promise<{ fh_seq: number; archive_id: string }> {
-  const { data, error } = await supabase.rpc("next_archive_id");
+export async function previewNextArchiveId(): Promise<{ fh_seq: number; archive_id: string }> {
+  const { data, error } = await supabase.rpc("preview_next_archive_id");
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
   return row as { fh_seq: number; archive_id: string };
 }
+
+export type NewLetterInput = {
+  p_date_as_written: string | null;
+  p_normalized_date: string | null;
+  p_date_precision: string;
+  p_date_certainty: string;
+  p_author: string | null;
+  p_recipient: string | null;
+  p_origin: string | null;
+  p_destination: string | null;
+  p_period: string;
+  p_sheets: number | null;
+  p_has_envelope: boolean;
+  p_has_enclosures: boolean;
+  p_notes: string | null;
+};
+
+export async function createLetter(
+  input: NewLetterInput,
+): Promise<{ id: string; fh_seq: number; archive_id: string }> {
+  const { data, error } = await supabase.rpc("create_letter", input);
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row as { id: string; fh_seq: number; archive_id: string };
+}
+
 
 export async function logEdits(
   letterId: string,
