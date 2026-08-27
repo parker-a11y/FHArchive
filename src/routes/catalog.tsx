@@ -160,10 +160,11 @@ function QuickEntry() {
           }}
         >
           <div className="mb-6 rounded border border-border bg-card px-5 py-4">
-            <div className="field-label">Assigning archive ID</div>
+            <div className="field-label">Next archive ID (assigned on save)</div>
             <div className="archive-id font-display mt-1 text-4xl">
               {next?.archive_id ?? "……"}
             </div>
+
           </div>
 
           <div className="grid grid-cols-3 gap-4">
