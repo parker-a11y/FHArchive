@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { createLetter, previewNextArchiveId } from "@/lib/queries";
-import { DATE_CERTAINTY, DATE_PRECISION, PERIODS } from "@/lib/archive";
+import { DATE_CERTAINTY, DATE_PRECISION, PERIODS, labelDate } from "@/lib/archive";
+import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
@@ -84,6 +85,9 @@ function QuickEntry() {
   const [form, setForm] = useState({ ...blank });
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
+  const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; lines: string[] } | null>(
+    null,
+  );
   const dateRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
