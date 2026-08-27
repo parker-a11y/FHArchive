@@ -14,13 +14,614 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_suggestions: {
+        Row: {
+          content: string | null
+          created_at: string
+          field_key: string
+          id: string
+          letter_id: string
+          model: string | null
+          owner_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          field_key: string
+          id?: string
+          letter_id: string
+          model?: string | null
+          owner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          field_key?: string
+          id?: string
+          letter_id?: string
+          model?: string | null
+          owner_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_suggestions_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      archive_counter: {
+        Row: {
+          last_seq: number
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          last_seq?: number
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          last_seq?: number
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      edit_history: {
+        Row: {
+          created_at: string
+          entity: string
+          field_key: string
+          id: string
+          letter_id: string | null
+          new_value: string | null
+          old_value: string | null
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity?: string
+          field_key: string
+          id?: string
+          letter_id?: string | null
+          new_value?: string | null
+          old_value?: string | null
+          owner_id?: string
+        }
+        Update: {
+          created_at?: string
+          entity?: string
+          field_key?: string
+          id?: string
+          letter_id?: string | null
+          new_value?: string | null
+          old_value?: string | null
+          owner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edit_history_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historical_references: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          letter_id: string
+          notes: string | null
+          owner_id: string
+          ref_type: string
+          reference: string
+          research_status: string
+          source_links: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          letter_id: string
+          notes?: string | null
+          owner_id?: string
+          ref_type?: string
+          reference: string
+          research_status?: string
+          source_links?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          letter_id?: string
+          notes?: string | null
+          owner_id?: string
+          ref_type?: string
+          reference?: string
+          research_status?: string
+          source_links?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historical_references_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keywords: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      letter_keywords: {
+        Row: {
+          confirmed: boolean
+          created_at: string
+          id: string
+          keyword_id: string
+          letter_id: string
+          owner_id: string
+          source: string
+        }
+        Insert: {
+          confirmed?: boolean
+          created_at?: string
+          id?: string
+          keyword_id: string
+          letter_id: string
+          owner_id?: string
+          source?: string
+        }
+        Update: {
+          confirmed?: boolean
+          created_at?: string
+          id?: string
+          keyword_id?: string
+          letter_id?: string
+          owner_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_keywords_keyword_id_fkey"
+            columns: ["keyword_id"]
+            isOneToOne: false
+            referencedRelation: "keywords"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_keywords_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letter_people: {
+        Row: {
+          created_at: string
+          id: string
+          letter_id: string
+          owner_id: string
+          person_id: string
+          role: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          letter_id: string
+          owner_id?: string
+          person_id: string
+          role?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          letter_id?: string
+          owner_id?: string
+          person_id?: string
+          role?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_people_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_people_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letter_places: {
+        Row: {
+          created_at: string
+          id: string
+          letter_id: string
+          owner_id: string
+          place_id: string
+          role: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          letter_id: string
+          owner_id?: string
+          place_id: string
+          role?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          letter_id?: string
+          owner_id?: string
+          place_id?: string
+          role?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_places_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_places_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letter_relations: {
+        Row: {
+          created_at: string
+          id: string
+          letter_id: string
+          note: string | null
+          owner_id: string
+          related_letter_id: string
+          relation_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          letter_id: string
+          note?: string | null
+          owner_id?: string
+          related_letter_id: string
+          relation_type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          letter_id?: string
+          note?: string | null
+          owner_id?: string
+          related_letter_id?: string
+          relation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_relations_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_relations_related_letter_id_fkey"
+            columns: ["related_letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letter_scans: {
+        Row: {
+          created_at: string
+          file_label: string
+          id: string
+          image_type: string
+          letter_id: string
+          original_filename: string | null
+          owner_id: string
+          rotation: number
+          sort_order: number
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_label: string
+          id?: string
+          image_type?: string
+          letter_id: string
+          original_filename?: string | null
+          owner_id?: string
+          rotation?: number
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_label?: string
+          id?: string
+          image_type?: string
+          letter_id?: string
+          original_filename?: string | null
+          owner_id?: string
+          rotation?: number
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_scans_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letters: {
+        Row: {
+          archive_id: string
+          author: string | null
+          created_at: string
+          date_as_written: string | null
+          date_certainty: string
+          date_precision: string
+          destination: string | null
+          fh_seq: number
+          has_enclosures: boolean
+          has_envelope: boolean
+          id: string
+          image_count: number
+          normalized_date: string | null
+          notes: string | null
+          origin: string | null
+          owner_id: string
+          period: string
+          physical_condition: string | null
+          publication_status: string
+          recipient: string | null
+          research_needed: boolean
+          review_status: string
+          scan_status: string
+          sheets: number | null
+          summary_long: string | null
+          summary_short: string | null
+          transcription_raw_ai: string | null
+          transcription_status: string
+          transcription_verified: string | null
+          updated_at: string
+        }
+        Insert: {
+          archive_id: string
+          author?: string | null
+          created_at?: string
+          date_as_written?: string | null
+          date_certainty?: string
+          date_precision?: string
+          destination?: string | null
+          fh_seq: number
+          has_enclosures?: boolean
+          has_envelope?: boolean
+          id?: string
+          image_count?: number
+          normalized_date?: string | null
+          notes?: string | null
+          origin?: string | null
+          owner_id?: string
+          period?: string
+          physical_condition?: string | null
+          publication_status?: string
+          recipient?: string | null
+          research_needed?: boolean
+          review_status?: string
+          scan_status?: string
+          sheets?: number | null
+          summary_long?: string | null
+          summary_short?: string | null
+          transcription_raw_ai?: string | null
+          transcription_status?: string
+          transcription_verified?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archive_id?: string
+          author?: string | null
+          created_at?: string
+          date_as_written?: string | null
+          date_certainty?: string
+          date_precision?: string
+          destination?: string | null
+          fh_seq?: number
+          has_enclosures?: boolean
+          has_envelope?: boolean
+          id?: string
+          image_count?: number
+          normalized_date?: string | null
+          notes?: string | null
+          origin?: string | null
+          owner_id?: string
+          period?: string
+          physical_condition?: string | null
+          publication_status?: string
+          recipient?: string | null
+          research_needed?: boolean
+          review_status?: string
+          scan_status?: string
+          sheets?: number | null
+          summary_long?: string | null
+          summary_short?: string | null
+          transcription_raw_ai?: string | null
+          transcription_status?: string
+          transcription_verified?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      people: {
+        Row: {
+          alternate_names: string | null
+          biographical_notes: string | null
+          birth_date: string | null
+          created_at: string
+          death_date: string | null
+          id: string
+          name: string
+          owner_id: string
+          relationship: string | null
+          research_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          alternate_names?: string | null
+          biographical_notes?: string | null
+          birth_date?: string | null
+          created_at?: string
+          death_date?: string | null
+          id?: string
+          name: string
+          owner_id?: string
+          relationship?: string | null
+          research_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alternate_names?: string | null
+          biographical_notes?: string | null
+          birth_date?: string | null
+          created_at?: string
+          death_date?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          relationship?: string | null
+          research_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      places: {
+        Row: {
+          canonical_name: string
+          city: string | null
+          country: string | null
+          created_at: string
+          historical_notes: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name_as_written: string | null
+          owner_id: string
+          region: string | null
+          research_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          canonical_name: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          historical_notes?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name_as_written?: string | null
+          owner_id?: string
+          region?: string | null
+          research_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canonical_name?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          historical_notes?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name_as_written?: string | null
+          owner_id?: string
+          region?: string | null
+          research_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      next_archive_id: {
+        Args: never
+        Returns: {
+          archive_id: string
+          fh_seq: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
