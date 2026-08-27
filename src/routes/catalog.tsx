@@ -135,12 +135,22 @@ function QuickEntry() {
     qc.invalidateQueries({ queryKey: ["letters"] });
     toast.success(`${created.archive_id} cataloged`);
     setSession((s) => [created.archive_id, ...s]);
-    if (andNext) {
-      setForm((f) => ({ ...blank, period: f.period, author: f.author, recipient: f.recipient }));
-      loadNext();
-    } else {
+    if (mode === "open") {
       navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
+      return;
     }
+    if (mode === "label") {
+      setLabelFor({
+        archiveId: created.archive_id,
+        date: labelDate(form),
+        lines: labelLines({
+          ...form,
+          sheets: form.sheets ? Number(form.sheets) : null,
+        }),
+      });
+    }
+    setForm((f) => ({ ...blank, period: f.period, author: f.author, recipient: f.recipient }));
+    loadNext();
   }
 
 
