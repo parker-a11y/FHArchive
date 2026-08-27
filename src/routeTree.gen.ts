@@ -16,6 +16,8 @@ import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as LettersIndexRouteImport } from './routes/letters/index'
+import { Route as PeopleIndexRouteImport } from './routes/people/index'
+import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +54,16 @@ const LettersIndexRoute = LettersIndexRouteImport.update({
   path: '/letters/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeopleIndexRoute = PeopleIndexRouteImport.update({
+  id: '/people/',
+  path: '/people/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
+  id: '/people/$personId',
+  path: '/people/$personId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,7 +72,9 @@ export interface FileRoutesByFullPath {
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
   '/letters/': typeof LettersIndexRoute
+  '/people/': typeof PeopleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +83,9 @@ export interface FileRoutesByTo {
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
   '/letters': typeof LettersIndexRoute
+  '/people': typeof PeopleIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +95,9 @@ export interface FileRoutesById {
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
   '/letters/': typeof LettersIndexRoute
+  '/people/': typeof PeopleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +108,9 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/people/$personId'
     | '/letters/'
+    | '/people/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +119,9 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/people/$personId'
     | '/letters'
+    | '/people'
   id:
     | '__root__'
     | '/'
@@ -108,7 +130,9 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/people/$personId'
     | '/letters/'
+    | '/people/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,7 +142,9 @@ export interface RootRouteChildren {
   QueuesRoute: typeof QueuesRoute
   SearchRoute: typeof SearchRoute
   TimelineRoute: typeof TimelineRoute
+  PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   LettersIndexRoute: typeof LettersIndexRoute
+  PeopleIndexRoute: typeof PeopleIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +198,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LettersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people/': {
+      id: '/people/'
+      path: '/people'
+      fullPath: '/people/'
+      preLoaderRoute: typeof PeopleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people/$personId': {
+      id: '/people/$personId'
+      path: '/people/$personId'
+      fullPath: '/people/$personId'
+      preLoaderRoute: typeof PeoplePersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -182,7 +222,9 @@ const rootRouteChildren: RootRouteChildren = {
   QueuesRoute: QueuesRoute,
   SearchRoute: SearchRoute,
   TimelineRoute: TimelineRoute,
+  PeoplePersonIdRoute: PeoplePersonIdRoute,
   LettersIndexRoute: LettersIndexRoute,
+  PeopleIndexRoute: PeopleIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
