@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CatalogRouteImport } from './routes/catalog'
+import { Route as QueuesRouteImport } from './routes/queues'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as LettersIndexRouteImport } from './routes/letters/index'
 
@@ -30,6 +32,16 @@ const CatalogRoute = CatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QueuesRoute = QueuesRouteImport.update({
+  id: '/queues',
+  path: '/queues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -45,6 +57,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/queues': typeof QueuesRoute
+  '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
   '/letters/': typeof LettersIndexRoute
 }
@@ -52,6 +66,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/queues': typeof QueuesRoute
+  '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
   '/letters': typeof LettersIndexRoute
 }
@@ -60,21 +76,47 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/catalog': typeof CatalogRoute
+  '/queues': typeof QueuesRoute
+  '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
   '/letters/': typeof LettersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/catalog' | '/timeline' | '/letters/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/catalog'
+    | '/queues'
+    | '/search'
+    | '/timeline'
+    | '/letters/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/catalog' | '/timeline' | '/letters'
-  id: '__root__' | '/' | '/auth' | '/catalog' | '/timeline' | '/letters/'
+  to:
+    | '/'
+    | '/auth'
+    | '/catalog'
+    | '/queues'
+    | '/search'
+    | '/timeline'
+    | '/letters'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/catalog'
+    | '/queues'
+    | '/search'
+    | '/timeline'
+    | '/letters/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CatalogRoute: typeof CatalogRoute
+  QueuesRoute: typeof QueuesRoute
+  SearchRoute: typeof SearchRoute
   TimelineRoute: typeof TimelineRoute
   LettersIndexRoute: typeof LettersIndexRoute
 }
@@ -102,6 +144,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/queues': {
+      id: '/queues'
+      path: '/queues'
+      fullPath: '/queues'
+      preLoaderRoute: typeof QueuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/timeline': {
       id: '/timeline'
       path: '/timeline'
@@ -123,6 +179,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CatalogRoute: CatalogRoute,
+  QueuesRoute: QueuesRoute,
+  SearchRoute: SearchRoute,
   TimelineRoute: TimelineRoute,
   LettersIndexRoute: LettersIndexRoute,
 }
