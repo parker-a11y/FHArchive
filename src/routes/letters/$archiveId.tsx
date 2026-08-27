@@ -135,7 +135,7 @@ function LetterPage() {
     payload.scan_status = form.scan_status;
     payload.publication_status = form.publication_status;
 
-    const { error } = await supabase.from("letters").update(payload).eq("id", letter.id);
+    const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
     await logEdits(letter.id, letter as unknown as Record<string, unknown>, payload);
     qc.invalidateQueries({ queryKey: ["letter", archiveId] });

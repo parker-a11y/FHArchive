@@ -161,7 +161,7 @@ function LettersTable() {
     setEditing(null);
     const value = key === "sheets" ? (raw ? Number(raw) : null) : raw || null;
     if (String(letter[key as keyof Letter] ?? "") === String(value ?? "")) return;
-    const { error } = await supabase.from("letters").update({ [key]: value }).eq("id", letter.id);
+    const { error } = await supabase.from("letters").update({ [key]: value } as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
     await logEdits(letter.id, { [key]: letter[key as keyof Letter] }, { [key]: value });
     qc.invalidateQueries({ queryKey: ["letters"] });

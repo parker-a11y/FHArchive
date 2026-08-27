@@ -75,7 +75,7 @@ function PersonPage() {
   }, [person]);
 
   async function save() {
-    const { error } = await supabase.from("people").update(form).eq("id", personId);
+    const { error } = await supabase.from("people").update(form as never).eq("id", personId);
     if (error) return toast.error(error.message);
     toast.success("Saved");
     qc.invalidateQueries({ queryKey: ["person", personId] });
