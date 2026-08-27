@@ -77,7 +77,7 @@ export type NewLetterInput = {
 export async function createLetter(
   input: NewLetterInput,
 ): Promise<{ id: string; fh_seq: number; archive_id: string }> {
-  const { data, error } = await supabase.rpc("create_letter", input);
+  const { data, error } = await supabase.rpc("create_letter", input as never);
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
   return row as { id: string; fh_seq: number; archive_id: string };

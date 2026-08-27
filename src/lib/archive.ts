@@ -108,7 +108,7 @@ export function labelOf(
 }
 
 export function formatArchiveId(seq: number) {
-  return "FH" + String(seq).padStart(6, "0");
+  return "FH" + String(seq).padStart(4, "0");
 }
 
 const MONTHS = [
