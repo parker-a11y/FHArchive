@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
-import { nextArchiveId } from "@/lib/queries";
+
+import { createLetter, previewNextArchiveId } from "@/lib/queries";
 import { DATE_CERTAINTY, DATE_PRECISION, PERIODS } from "@/lib/archive";
 
 export const Route = createFileRoute("/catalog")({
@@ -90,7 +90,7 @@ function QuickEntry() {
 
   async function loadNext() {
     try {
-      setNext(await nextArchiveId());
+      setNext(await previewNextArchiveId());
       setTimeout(() => dateRef.current?.focus(), 30);
     } catch (e) {
       toast.error((e as Error).message);
@@ -104,37 +104,41 @@ function QuickEntry() {
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
 
   async function save(andNext: boolean) {
-    if (!next) return;
+    if (busy) return;
     setBusy(true);
-    const { error } = await supabase.from("letters").insert({
-      fh_seq: next.fh_seq,
-      archive_id: next.archive_id,
-      date_as_written: form.date_as_written || null,
-      normalized_date: form.normalized_date || null,
-      date_precision: form.date_precision,
-      date_certainty: form.date_certainty,
-      author: form.author || null,
-      recipient: form.recipient || null,
-      origin: form.origin || null,
-      destination: form.destination || null,
-      period: form.period,
-      sheets: form.sheets ? Number(form.sheets) : null,
-      has_envelope: form.has_envelope,
-      has_enclosures: form.has_enclosures,
-      notes: form.notes || null,
-    });
+    let created: { archive_id: string };
+    try {
+      created = await createLetter({
+        p_date_as_written: form.date_as_written || undefined,
+        p_normalized_date: form.normalized_date || undefined,
+        p_date_precision: form.date_precision,
+        p_date_certainty: form.date_certainty,
+        p_author: form.author || undefined,
+        p_recipient: form.recipient || undefined,
+        p_origin: form.origin || undefined,
+        p_destination: form.destination || undefined,
+        p_period: form.period,
+        p_sheets: form.sheets ? Number(form.sheets) : undefined,
+        p_has_envelope: form.has_envelope,
+        p_has_enclosures: form.has_enclosures,
+        p_notes: form.notes || undefined,
+      });
+    } catch (e) {
+      setBusy(false);
+      return toast.error((e as Error).message);
+    }
     setBusy(false);
-    if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["letters"] });
-    toast.success(`${next.archive_id} cataloged`);
-    setSession((s) => [next.archive_id, ...s]);
+    toast.success(`${created.archive_id} cataloged`);
+    setSession((s) => [created.archive_id, ...s]);
     if (andNext) {
       setForm((f) => ({ ...blank, period: f.period, author: f.author, recipient: f.recipient }));
       loadNext();
     } else {
-      navigate({ to: "/letters/$archiveId", params: { archiveId: next.archive_id } });
+      navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
     }
   }
+
 
   return (
     <>
@@ -156,10 +160,11 @@ function QuickEntry() {
           }}
         >
           <div className="mb-6 rounded border border-border bg-card px-5 py-4">
-            <div className="field-label">Assigning archive ID</div>
+            <div className="field-label">Next archive ID (assigned on save)</div>
             <div className="archive-id font-display mt-1 text-4xl">
               {next?.archive_id ?? "……"}
             </div>
+
           </div>
 
           <div className="grid grid-cols-3 gap-4">
@@ -256,7 +261,7 @@ function QuickEntry() {
           </div>
 
           <div className="mt-6 flex gap-3">
-            <Button type="submit" size="lg" disabled={busy || !next}>
+            <Button type="submit" size="lg" disabled={busy}>
               SAVE &amp; CREATE NEXT
             </Button>
             <Button type="button" variant="outline" disabled={busy} onClick={() => save(false)}>
