@@ -305,6 +305,16 @@ function QuickEntry() {
           </div>
         </aside>
       </div>
+
+      <EntryLabelDialog
+        open={labelFor !== null}
+        onOpenChange={(v) => {
+          if (!v) setLabelFor(null);
+        }}
+        archiveId={labelFor?.archiveId ?? ""}
+        defaultDate={labelFor?.date ?? ""}
+        lines={labelFor?.lines ?? []}
+      />
     </>
   );
 }
