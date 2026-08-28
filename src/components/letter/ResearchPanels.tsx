@@ -28,19 +28,27 @@ export function LinksPanel({ letter }: { letter: Letter }) {
   const { data: entities } = useQuery({
     queryKey: ["entities"],
     queryFn: async () => {
-      const [p, pl, k] = await Promise.all([
+      const [p, pl, k, o, ev] = await Promise.all([
         supabase.from("people").select("id,name").order("name"),
         supabase.from("places").select("id,canonical_name").order("canonical_name"),
         supabase.from("keywords").select("id,name").order("name"),
+        supabase.from("organizations").select("id,name").order("name"),
+        supabase.from("events").select("id,name").order("name"),
       ]);
-      return { people: p.data ?? [], places: pl.data ?? [], keywords: k.data ?? [] };
+      return {
+        people: p.data ?? [],
+        places: pl.data ?? [],
+        keywords: k.data ?? [],
+        organizations: o.data ?? [],
+        events: ev.data ?? [],
+      };
     },
   });
 
   const { data: links } = useQuery({
     queryKey: ["links", letter.id],
     queryFn: async () => {
-      const [p, pl, k] = await Promise.all([
+      const [p, pl, k, o, ev] = await Promise.all([
         supabase.from("letter_people").select("id, role, person_id, people(name)").eq("letter_id", letter.id),
         supabase
           .from("letter_places")
@@ -50,14 +58,47 @@ export function LinksPanel({ letter }: { letter: Letter }) {
           .from("letter_keywords")
           .select("id, source, confirmed, keyword_id, keywords(name)")
           .eq("letter_id", letter.id),
+        supabase
+          .from("letter_organizations")
+          .select("id, organization_id, organizations(name)")
+          .eq("letter_id", letter.id),
+        supabase.from("letter_events").select("id, event_id, events(name)").eq("letter_id", letter.id),
       ]);
-      return { people: p.data ?? [], places: pl.data ?? [], keywords: k.data ?? [] };
+      return {
+        people: p.data ?? [],
+        places: pl.data ?? [],
+        keywords: k.data ?? [],
+        organizations: o.data ?? [],
+        events: ev.data ?? [],
+      };
     },
   });
 
   const [personId, setPersonId] = useState("");
   const [placeId, setPlaceId] = useState("");
   const [keywordName, setKeywordName] = useState("");
+  const [orgId, setOrgId] = useState("");
+  const [eventId, setEventId] = useState("");
+
+  async function addOrg() {
+    if (!orgId) return;
+    const { error } = await supabase
+      .from("letter_organizations")
+      .insert({ letter_id: letter.id, organization_id: orgId });
+    if (error) return toast.error(error.message);
+    setOrgId("");
+    inval();
+  }
+  async function addEvent() {
+    if (!eventId) return;
+    const { error } = await supabase
+      .from("letter_events")
+      .insert({ letter_id: letter.id, event_id: eventId });
+    if (error) return toast.error(error.message);
+    setEventId("");
+    inval();
+  }
+
 
   async function addPerson() {
     if (!personId) return;
