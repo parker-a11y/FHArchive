@@ -18,6 +18,7 @@ type Scan = {
   sort_order: number;
   rotation: number;
   original_filename: string | null;
+  signedUrl?: string;
 };
 
 function ScanThumb({
