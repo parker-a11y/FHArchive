@@ -309,7 +309,7 @@ function QuickEntry() {
               />
             </div>
             <Select_
-              label="Precision"
+              label="Date status"
               value={form.date_precision}
               onChange={(v) => set("date_precision", v)}
               options={DATE_PRECISION}
@@ -326,6 +326,13 @@ function QuickEntry() {
               onChange={(v) => set("period", v)}
               options={PERIODS}
             />
+            <Select_
+              label="Identification status"
+              value={form.identification_status}
+              onChange={(v) => set("identification_status", v)}
+              options={IDENTIFICATION_STATUS}
+            />
+
 
             {isLetter && (
               <>
