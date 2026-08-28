@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { fetchLetters, type Letter } from "@/lib/queries";
+import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
 import { displayDate, RECORD_TYPES } from "@/lib/archive";
 
 export const Route = createFileRoute("/")({
@@ -51,12 +51,19 @@ function Dashboard() {
     queryKey: ["letters"],
     queryFn: fetchLetters,
   });
+  const { data: itemCounts } = useQuery({
+    queryKey: ["item-counts"],
+    queryFn: fetchItemCounts,
+  });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats = [
-    { label: "Total archive items", value: letters.length },
+    { label: "FH records", value: letters.length },
+    { label: "Total items", value: itemCounts?.totalItems ?? 0 },
+    { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0 },
+    { label: "Total scans", value: itemCounts?.totalScans ?? 0 },
     { label: "Cataloged", value: c((l) => !!(l.author || l.recipient || l.normalized_date)) },
-    { label: "Scanned", value: c((l) => l.image_count > 0) },
+    { label: "Records with scans", value: c((l) => l.image_count > 0) },
     { label: "Transcribed", value: c((l) => l.transcription_status === "human_verified") },
     {
       label: "Needing transcription",
@@ -67,7 +74,7 @@ function Dashboard() {
       label: "Uncertain dates",
       value: c((l) => l.date_certainty !== "confirmed" || l.date_precision !== "exact"),
     },
-    { label: "Missing scans", value: c((l) => l.image_count === 0) },
+    { label: "Records missing scans", value: c((l) => l.image_count === 0) },
     { label: "Prewar", value: c((l) => l.period === "prewar") },
     { label: "Wartime", value: c((l) => l.period === "wartime") },
     { label: "Postwar", value: c((l) => l.period === "postwar") },
@@ -109,7 +116,6 @@ function Dashboard() {
                 { value: "financial", label: "Financial" },
                 { value: "program", label: "Programs" },
                 { value: "artifact", label: "Artifacts" },
-                { value: "media", label: "Audio / Video" },
                 { value: "other", label: "Other" },
               ].map((cat) => (
                 <Stat
