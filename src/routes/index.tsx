@@ -127,27 +127,61 @@ function Dashboard() {
   });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
-  const stats = [
-    { label: "FH records", value: letters.length },
-    { label: "Total items", value: itemCounts?.totalItems ?? 0 },
-    { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0 },
-    { label: "Total scans", value: itemCounts?.totalScans ?? 0 },
-    { label: "Cataloged", value: c((l) => !!(l.author || l.recipient || l.normalized_date)) },
-    { label: "Records with scans", value: c((l) => l.image_count > 0) },
-    { label: "Transcribed", value: c((l) => l.transcription_status === "human_verified") },
+  const stats: { label: string; value: number; tone: Tone; icon: LucideIcon }[] = [
+    { label: "FH records", value: letters.length, tone: "blue", icon: Hash },
+    { label: "Total items", value: itemCounts?.totalItems ?? 0, tone: "emerald", icon: Layers },
+    { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0, tone: "teal", icon: ScanLine },
+    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "teal", icon: Images },
+    {
+      label: "Cataloged",
+      value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
+      tone: "amber",
+      icon: PenLine,
+    },
+    {
+      label: "Records with scans",
+      value: c((l) => l.image_count > 0),
+      tone: "teal",
+      icon: FileCheck2,
+    },
+    {
+      label: "Transcribed",
+      value: c((l) => l.transcription_status === "human_verified"),
+      tone: "emerald",
+      icon: FileCheck2,
+    },
     {
       label: "Needing transcription",
       value: c((l) => l.transcription_status !== "human_verified"),
+      tone: "rose",
+      icon: FileQuestion,
     },
-    { label: "Reviewed", value: c((l) => l.review_status === "reviewed") },
+    {
+      label: "Reviewed",
+      value: c((l) => l.review_status === "reviewed"),
+      tone: "indigo",
+      icon: Eye,
+    },
     {
       label: "Uncertain dates",
       value: c((l) => l.date_certainty !== "confirmed" || l.date_precision !== "exact"),
+      tone: "ochre",
+      icon: CalendarClock,
     },
-    { label: "Records missing scans", value: c((l) => l.image_count === 0) },
-    { label: "Prewar", value: c((l) => l.period === "prewar") },
-    { label: "Wartime", value: c((l) => l.period === "wartime") },
-    { label: "Postwar", value: c((l) => l.period === "postwar") },
+    {
+      label: "Records missing scans",
+      value: c((l) => l.image_count === 0),
+      tone: "rose",
+      icon: ImageOff,
+    },
+    { label: "Prewar", value: c((l) => l.period === "prewar"), tone: "plum", icon: Hourglass },
+    { label: "Wartime", value: c((l) => l.period === "wartime"), tone: "rose", icon: Shield },
+    {
+      label: "Postwar",
+      value: c((l) => l.period === "postwar"),
+      tone: "indigo",
+      icon: CalendarDays,
+    },
   ];
 
   const recent = [...letters].sort((a, b) => b.fh_seq - a.fh_seq).slice(0, 8);
