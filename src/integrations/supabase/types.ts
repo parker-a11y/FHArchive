@@ -76,6 +76,350 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_sources: {
+        Row: {
+          citation: string | null
+          created_at: string
+          creator: string | null
+          date_accessed: string | null
+          description: string | null
+          ds_id: string
+          ds_seq: number
+          historical_date_range: string | null
+          id: string
+          institution: string | null
+          local_file_path: string | null
+          notes: string | null
+          original_date: string | null
+          owner_id: string
+          rights_notes: string | null
+          source_type: string
+          title: string
+          transcript: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          citation?: string | null
+          created_at?: string
+          creator?: string | null
+          date_accessed?: string | null
+          description?: string | null
+          ds_id: string
+          ds_seq: number
+          historical_date_range?: string | null
+          id?: string
+          institution?: string | null
+          local_file_path?: string | null
+          notes?: string | null
+          original_date?: string | null
+          owner_id?: string
+          rights_notes?: string | null
+          source_type?: string
+          title: string
+          transcript?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          citation?: string | null
+          created_at?: string
+          creator?: string | null
+          date_accessed?: string | null
+          description?: string | null
+          ds_id?: string
+          ds_seq?: number
+          historical_date_range?: string | null
+          id?: string
+          institution?: string | null
+          local_file_path?: string | null
+          notes?: string | null
+          original_date?: string | null
+          owner_id?: string
+          rights_notes?: string | null
+          source_type?: string
+          title?: string
+          transcript?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      ds_counter: {
+        Row: {
+          last_seq: number
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          last_seq?: number
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          last_seq?: number
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ds_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          owner_id: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          owner_id?: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          owner_id?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds_events_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds_keywords: {
+        Row: {
+          created_at: string
+          id: string
+          keyword_id: string
+          owner_id: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          keyword_id: string
+          owner_id?: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          keyword_id?: string
+          owner_id?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_keywords_keyword_id_fkey"
+            columns: ["keyword_id"]
+            isOneToOne: false
+            referencedRelation: "keywords"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds_keywords_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds_organizations: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          owner_id: string
+          role: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          owner_id?: string
+          role?: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          owner_id?: string
+          role?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds_organizations_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds_people: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          person_id: string
+          role: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          person_id: string
+          role?: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          person_id?: string
+          role?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_people_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds_people_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds_places: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          place_id: string
+          role: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          place_id: string
+          role?: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          place_id?: string
+          role?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_places_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ds_places_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds_segments: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_ts: string | null
+          id: string
+          keywords: string | null
+          owner_id: string
+          sort_order: number
+          source_id: string
+          start_ts: string | null
+          title: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_ts?: string | null
+          id?: string
+          keywords?: string | null
+          owner_id?: string
+          sort_order?: number
+          source_id: string
+          start_ts?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_ts?: string | null
+          id?: string
+          keywords?: string | null
+          owner_id?: string
+          sort_order?: number
+          source_id?: string
+          start_ts?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_segments_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       edit_history: {
         Row: {
           created_at: string
@@ -616,6 +960,48 @@ export type Database = {
           },
         ]
       }
+      letter_sources: {
+        Row: {
+          created_at: string
+          explanation: string | null
+          id: string
+          letter_id: string
+          owner_id: string
+          source_id: string
+        }
+        Insert: {
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          letter_id: string
+          owner_id?: string
+          source_id: string
+        }
+        Update: {
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          letter_id?: string
+          owner_id?: string
+          source_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_sources_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_sources_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       letters: {
         Row: {
           archive_id: string
@@ -909,6 +1295,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_digital_source: {
+        Args: {
+          p_creator: string
+          p_date_accessed: string
+          p_description: string
+          p_historical_date_range: string
+          p_institution: string
+          p_notes: string
+          p_original_date: string
+          p_source_type: string
+          p_title: string
+          p_url: string
+        }
+        Returns: {
+          ds_id: string
+          ds_seq: number
+          id: string
+        }[]
+      }
       create_letter: {
         Args: {
           p_author: string
@@ -972,6 +1377,13 @@ export type Database = {
         Returns: {
           archive_id: string
           fh_seq: number
+        }[]
+      }
+      preview_next_ds_id: {
+        Args: never
+        Returns: {
+          ds_id: string
+          ds_seq: number
         }[]
       }
     }
