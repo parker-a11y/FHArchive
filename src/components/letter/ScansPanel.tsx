@@ -191,9 +191,8 @@ export function ScansPanel({
     qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
   }
 
-  async function updateScan(id: string, patch: Partial<Scan>) {
-    const { signedUrl: _, ...rest } = patch;
-    await supabase.from("letter_scans").update(rest).eq("id", id);
+  async function updateScan(id: string, patch: Partial<ScanUpdate>) {
+    await supabase.from("letter_scans").update(patch).eq("id", id);
     qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
   }
 
