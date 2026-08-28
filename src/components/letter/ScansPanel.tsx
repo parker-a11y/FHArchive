@@ -202,6 +202,22 @@ export function ScansPanel({
     await syncCount();
   }
 
+  const lightboxItems: LightboxItem[] = useMemo(
+    () =>
+      scans
+        .filter((s) => s.signedUrl)
+        .map((s) => ({
+          id: s.id,
+          url: s.signedUrl!,
+          type: "image",
+          title: s.file_label,
+          subtitle: letter.archive_id,
+          filename: s.original_filename,
+          rotation: s.rotation,
+        })),
+    [scans, letter.archive_id],
+  );
+
   return (
     <section>
       <div
@@ -237,57 +253,37 @@ export function ScansPanel({
         {uploading && <p className="mt-2 text-xs">Uploading…</p>}
       </div>
 
-      const lightboxItems: LightboxItem[] = useMemo(
-        () =>
-          scans
-            .filter((s) => s.signedUrl)
-            .map((s) => ({
-              id: s.id,
-              url: s.signedUrl!,
-              type: "image",
-              title: s.file_label,
-              subtitle: letter.archive_id,
-              filename: s.original_filename,
-              rotation: s.rotation,
-            })),
-        [scans, letter.archive_id],
-      );
-
-      return (
-        <section>
-          <div className="flex flex-wrap gap-3">
-            {scans.map((s, i) => (
-              <ScanThumb
-                key={s.id}
-                scan={s}
-                onOpen={() => {
-                  setViewerIndex(i);
-                  setViewerOpen(true);
-                }}
-                onDragStart={() => setDragId(s.id)}
-                onDrop={() => reorder(s.id)}
-                onRotate={() => updateScan(s.id, { rotation: (s.rotation + 90) % 360 })}
-                onDelete={() => remove(s)}
-                onType={(v) =>
-                  updateScan(s.id, {
-                    image_type: v,
-                    file_label: scanFileLabel(letter.archive_id, v, s.sort_order),
-                  })
-                }
-              />
-            ))}
-            {scans.length === 0 && <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
-          </div>
-
-          <MediaLightbox
-            items={lightboxItems}
-            initialIndex={viewerIndex}
-            open={viewerOpen}
-            onClose={() => setViewerOpen(false)}
-            onRotationChange={(id, rotation) => updateScan(id, { rotation })}
+      <div className="flex flex-wrap gap-3">
+        {scans.map((s, i) => (
+          <ScanThumb
+            key={s.id}
+            scan={s}
+            onOpen={() => {
+              setViewerIndex(i);
+              setViewerOpen(true);
+            }}
+            onDragStart={() => setDragId(s.id)}
+            onDrop={() => reorder(s.id)}
+            onRotate={() => updateScan(s.id, { rotation: (s.rotation + 90) % 360 })}
+            onDelete={() => remove(s)}
+            onType={(v) =>
+              updateScan(s.id, {
+                image_type: v,
+                file_label: scanFileLabel(letter.archive_id, v, s.sort_order),
+              })
+            }
           />
-        </section>
-      );
-    }
+        ))}
+        {scans.length === 0 && <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
+      </div>
+
+      <MediaLightbox
+        items={lightboxItems}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        onRotationChange={(id, rotation) => updateScan(id, { rotation })}
+      />
+    </section>
   );
 }
