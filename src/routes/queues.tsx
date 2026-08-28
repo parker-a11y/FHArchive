@@ -126,7 +126,7 @@ function Queues() {
                 <span className="archive-id w-28 text-primary">{l.archive_id}</span>
                 <span className="w-40 text-muted-foreground">{displayDate(l)}</span>
                 <span className="truncate">
-                  {l.author || "—"} → {l.recipient || "—"}
+                  {l.title || (l.author || l.recipient ? `${l.author || "—"} → ${l.recipient || "—"}` : "—")}
                 </span>
               </Link>
             ))}
