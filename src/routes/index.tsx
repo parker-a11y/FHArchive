@@ -209,50 +209,57 @@ function Dashboard() {
             </div>
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
               {[
-                { value: "letter", label: "Letters" },
-                { value: "photograph", label: "Photographs" },
-                { value: "military", label: "Military" },
-                { value: "government", label: "Government" },
-                { value: "family", label: "Personal / Family" },
-                { value: "newspaper", label: "Newspaper" },
-                { value: "financial", label: "Financial" },
-                { value: "program", label: "Programs" },
-                { value: "artifact", label: "Artifacts" },
-                { value: "other", label: "Other" },
+                { value: "letter", label: "Letters", tone: "blue" as Tone, icon: Mail },
+                { value: "photograph", label: "Photographs", tone: "emerald" as Tone, icon: Camera },
+                { value: "military", label: "Military", tone: "rose" as Tone, icon: Medal },
+                { value: "government", label: "Government", tone: "indigo" as Tone, icon: Landmark },
+                { value: "family", label: "Personal / Family", tone: "amber" as Tone, icon: Home },
+                { value: "newspaper", label: "Newspaper", tone: "teal" as Tone, icon: Newspaper },
+                { value: "financial", label: "Financial", tone: "ochre" as Tone, icon: Coins },
+                { value: "program", label: "Programs", tone: "plum" as Tone, icon: CalendarDays },
+                { value: "artifact", label: "Artifacts", tone: "rose" as Tone, icon: Gem },
+                { value: "other", label: "Other", tone: "indigo" as Tone, icon: Box },
               ].map((cat) => (
                 <Stat
                   key={cat.value}
                   label={cat.label}
                   value={letters.filter((l) => (l.record_type ?? "letter") === cat.value).length}
                   to={`/letters?type=${cat.value}`}
+                  tone={cat.tone}
+                  icon={cat.icon}
                 />
               ))}
             </div>
 
             <h2 className="field-label mt-10 mb-3">Recently added</h2>
-            <div className="divide-y divide-border rounded border border-border bg-card">
-              {recent.length === 0 && (
-                <p className="px-4 py-6 text-sm text-muted-foreground">
-                  No letters yet. Start with Quick Entry.
-                </p>
-              )}
-              {recent.map((l) => (
-                <Link
-                  key={l.id}
-                  to="/letters/$archiveId"
-                  params={{ archiveId: l.archive_id }}
-                  className="flex items-center gap-6 px-4 py-2.5 text-sm hover:bg-muted/60"
-                >
-                  <span className="archive-id w-28 text-base">{l.archive_id}</span>
-                  <span className="w-40 text-muted-foreground">{displayDate(l)}</span>
-                  <span className="truncate">
-                    {l.author || "—"} → {l.recipient || "—"}
-                  </span>
-                  <span className="ml-auto text-muted-foreground">{l.origin}</span>
-                </Link>
-              ))}
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="divide-y divide-border">
+                {recent.length === 0 && (
+                  <p className="px-5 py-6 text-sm text-muted-foreground">
+                    No records yet. Start with Quick Entry.
+                  </p>
+                )}
+                {recent.map((l) => (
+                  <Link
+                    key={l.id}
+                    to="/letters/$archiveId"
+                    params={{ archiveId: l.archive_id }}
+                    className="flex items-center gap-4 px-4 py-2.5 text-sm transition-colors hover:bg-muted/60"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-amber-soft text-tone-amber">
+                      <Mail className="size-4" />
+                    </div>
+                    <span className="archive-id w-24 text-base">{l.archive_id}</span>
+                    <span className="w-36 text-muted-foreground">{displayDate(l)}</span>
+                    <span className="truncate font-medium">
+                      {l.title || `${l.author || "—"} → ${l.recipient || "—"}`}
+                    </span>
+                    <span className="ml-auto text-muted-foreground">{l.origin}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </>
         )}
