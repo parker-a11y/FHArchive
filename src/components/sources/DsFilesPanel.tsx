@@ -175,17 +175,30 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
   }
 
   async function upload(list: FileList | File[]) {
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth.user?.id;
+    if (!uid) {
+      toast.error("You need to be signed in to upload files.");
+      return;
+    }
+
     setUploading(true);
     let index = files.length + 1;
+    let ok = 0;
+    let failed = 0;
+    let lastError = "";
+
     for (const file of Array.from(list)) {
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `${source.ds_id}/${Date.now()}-${safe}`;
+      // First folder MUST be the user id — storage access rules check it.
+      const path = `${uid}/${source.ds_id}/${Date.now()}-${safe}`;
       const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
         upsert: false,
         contentType: file.type || undefined,
       });
       if (upErr) {
-        toast.error(upErr.message);
+        failed++;
+        lastError = upErr.message;
         continue;
       }
       const { error } = await supabase.from("ds_files").insert({
@@ -198,12 +211,27 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
         file_size: file.size,
         sort_order: index,
       });
-      if (error) toast.error(error.message);
+      if (error) {
+        failed++;
+        lastError = error.message;
+        // Don't leave an orphaned object behind.
+        await supabase.storage.from(BUCKET).remove([path]);
+        continue;
+      }
+      ok++;
       index++;
     }
+
     setUploading(false);
     invalidate();
-    toast.success("Preservation copies uploaded");
+
+    if (ok && failed) {
+      toast.warning(`${ok} uploaded, ${failed} failed: ${lastError}`);
+    } else if (ok) {
+      toast.success(ok === 1 ? "Preservation copy uploaded" : `${ok} preservation copies uploaded`);
+    } else if (failed) {
+      toast.error(`Upload failed: ${lastError}`);
+    }
   }
 
   return (
