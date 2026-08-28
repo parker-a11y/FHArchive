@@ -30,7 +30,7 @@ import {
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
-import { fetchSources } from "@/lib/sources";
+import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
 
 export const Route = createFileRoute("/")({
