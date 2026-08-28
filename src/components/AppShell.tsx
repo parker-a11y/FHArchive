@@ -12,6 +12,8 @@ import {
   Tags,
   ListChecks,
   LogOut,
+  Ship,
+  CalendarDays,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,14 +22,17 @@ import { Button } from "@/components/ui/button";
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare },
-  { to: "/letters", label: "Letters Table", icon: Files },
+  { to: "/letters", label: "All Records", icon: Files },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks },
   { to: "/people", label: "People", icon: Users },
+  { to: "/organizations", label: "Orgs & Ships", icon: Ship },
+  { to: "/events", label: "Events", icon: CalendarDays },
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
 ];
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
@@ -53,8 +58,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="font-display text-sm leading-tight font-semibold text-sidebar-foreground">
             Harrington
             <br />
-            Letter Archive
+            Family Archive
           </div>
+
           <div className="field-label mt-1">Private workspace</div>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">

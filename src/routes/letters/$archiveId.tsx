@@ -225,7 +225,15 @@ function LetterPage() {
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
+            <div className="mt-2 text-sm">
+              <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
+                {labelOf(RECORD_TYPES, letter.record_type)}
+                {letter.subtype ? ` · ${letter.subtype}` : ""}
+              </span>
+              {letter.title && <span className="ml-3 font-medium">{letter.title}</span>}
+            </div>
             <div className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-sm">
+
               <span>
                 <span className="field-label mr-2">Date</span>
                 {displayDate(letter)}
