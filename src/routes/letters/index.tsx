@@ -281,6 +281,11 @@ function LettersTable() {
         return l.has_envelope ? "Yes" : "No";
       case "keywords":
         return (keywordsByLetter[l.id] ?? []).join(", ");
+      case "visibility":
+        return (
+          VISIBILITY.find((v) => v.value === ((l as Letter & { visibility?: string }).visibility ?? "private"))
+            ?.label ?? "Private"
+        );
       default:
         return (l[key as keyof Letter] ?? "") as string;
     }
