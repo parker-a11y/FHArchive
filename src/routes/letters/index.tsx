@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Download, Eye } from "lucide-react";
@@ -88,6 +89,7 @@ const COLUMNS: Col[] = [
   { key: "transcription_status", label: "Transcription", width: 130 },
   { key: "review_status", label: "Review", width: 110 },
   { key: "research_status", label: "Research", width: 120 },
+  { key: "visibility", label: "Sharing", width: 120 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
 ];
@@ -281,6 +283,11 @@ function LettersTable() {
         return l.has_envelope ? "Yes" : "No";
       case "keywords":
         return (keywordsByLetter[l.id] ?? []).join(", ");
+      case "visibility":
+        return (
+          VISIBILITY.find((v) => v.value === ((l as Letter & { visibility?: string }).visibility ?? "private"))
+            ?.label ?? "Private"
+        );
       default:
         return (l[key as keyof Letter] ?? "") as string;
     }
