@@ -76,6 +76,90 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_files: {
+        Row: {
+          backed_up_at: string
+          bucket: string
+          created_at: string
+          drive_file_id: string | null
+          file_size: number | null
+          id: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          backed_up_at?: string
+          bucket: string
+          created_at?: string
+          drive_file_id?: string | null
+          file_size?: number | null
+          id?: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          backed_up_at?: string
+          bucket?: string
+          created_at?: string
+          drive_file_id?: string | null
+          file_size?: number | null
+          id?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      backup_runs: {
+        Row: {
+          bytes_uploaded: number
+          created_at: string
+          db_rows: number
+          destination: string
+          drive_folder_id: string | null
+          drive_folder_name: string | null
+          error: string | null
+          files_pending: number
+          files_uploaded: number
+          finished_at: string | null
+          id: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bytes_uploaded?: number
+          created_at?: string
+          db_rows?: number
+          destination?: string
+          drive_folder_id?: string | null
+          drive_folder_name?: string | null
+          error?: string | null
+          files_pending?: number
+          files_uploaded?: number
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bytes_uploaded?: number
+          created_at?: string
+          db_rows?: number
+          destination?: string
+          drive_folder_id?: string | null
+          drive_folder_name?: string | null
+          error?: string | null
+          files_pending?: number
+          files_uploaded?: number
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       digital_sources: {
         Row: {
           citation: string | null
