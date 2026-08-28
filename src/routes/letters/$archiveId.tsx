@@ -31,12 +31,19 @@ import {
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
+  ORIGINAL_COPY,
   PERIODS,
   PUBLICATION_STATUS,
+  RECORD_RESEARCH_STATUS,
+  RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
   displayDate,
+  isLetterType,
+  labelOf,
+  subtypesFor,
 } from "@/lib/archive";
+
 import { ScansPanel } from "@/components/letter/ScansPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
@@ -71,13 +78,16 @@ export const Route = createFileRoute("/letters/$archiveId")({
 });
 
 const TEXT_FIELDS = [
-  { key: "date_as_written", label: "Date as written" },
-  { key: "author", label: "Author (from)" },
-  { key: "recipient", label: "Recipient (to)" },
-  { key: "origin", label: "Origin — written from" },
-  { key: "destination", label: "Destination" },
-  { key: "physical_condition", label: "Physical condition" },
+  { key: "date_as_written", label: "Date as written", letterOnly: false },
+  { key: "author", label: "Author (from)", letterOnly: true },
+  { key: "recipient", label: "Recipient (to)", letterOnly: true },
+  { key: "origin", label: "Origin / location", letterOnly: false },
+  { key: "destination", label: "Destination", letterOnly: true },
+  { key: "primary_person", label: "Primary person", letterOnly: false },
+  { key: "storage_location", label: "Box / folder / storage", letterOnly: false },
+  { key: "physical_condition", label: "Physical condition", letterOnly: false },
 ];
+
 
 function LetterPage() {
   const { archiveId } = Route.useParams();
@@ -98,8 +108,23 @@ function LetterPage() {
   useEffect(() => {
     if (!letter) return;
     setForm({
+      record_type: letter.record_type ?? "letter",
+      subtype: letter.subtype ?? "",
+      title: letter.title ?? "",
+      date_end: letter.date_end ?? "",
+      primary_person: letter.primary_person ?? "",
+      physical_description: letter.physical_description ?? "",
+      original_copy: letter.original_copy ?? "unknown",
+      storage_location: letter.storage_location ?? "",
+      provenance: letter.provenance ?? "",
+      digitization_notes: letter.digitization_notes ?? "",
+      research_status: letter.research_status ?? "unreviewed",
+      research_notes: letter.research_notes ?? "",
+      citations: letter.citations ?? "",
+      historical_notes: letter.historical_notes ?? "",
       date_as_written: letter.date_as_written ?? "",
       normalized_date: letter.normalized_date ?? "",
+
       date_precision: letter.date_precision,
       date_certainty: letter.date_certainty,
       author: letter.author ?? "",
@@ -154,6 +179,10 @@ function LetterPage() {
     payload.review_status = form.review_status;
     payload.scan_status = form.scan_status;
     payload.publication_status = form.publication_status;
+    payload.record_type = form.record_type || "letter";
+    payload.original_copy = form.original_copy || "unknown";
+    payload.research_status = form.research_status || "unreviewed";
+
 
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
@@ -196,7 +225,15 @@ function LetterPage() {
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
+            <div className="mt-2 text-sm">
+              <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
+                {labelOf(RECORD_TYPES, letter.record_type)}
+                {letter.subtype ? ` · ${letter.subtype}` : ""}
+              </span>
+              {letter.title && <span className="ml-3 font-medium">{letter.title}</span>}
+            </div>
             <div className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-sm">
+
               <span>
                 <span className="field-label mr-2">Date</span>
                 {displayDate(letter)}
@@ -303,6 +340,45 @@ function LetterPage() {
         <TabsContent value="catalog" className="mt-6">
           <div className="grid max-w-5xl grid-cols-3 gap-4">
             <div>
+              <label className="field-label">Record type</label>
+              <select
+                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                value={(form.record_type as string) ?? "letter"}
+                onChange={(e) => {
+                  set("record_type", e.target.value);
+                  set("subtype", "");
+                }}
+              >
+                {RECORD_TYPES.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Subtype</label>
+              <select
+                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                value={(form.subtype as string) ?? ""}
+                onChange={(e) => set("subtype", e.target.value)}
+              >
+                <option value="">—</option>
+                {subtypesFor((form.record_type as string) ?? "letter").map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Title / short description</label>
+              <Input
+                value={(form.title as string) ?? ""}
+                onChange={(e) => set("title", e.target.value)}
+              />
+            </div>
+            <div>
               <label className="field-label">Normalized date</label>
               <Input
                 type="date"
@@ -310,7 +386,18 @@ function LetterPage() {
                 onChange={(e) => set("normalized_date", e.target.value)}
               />
             </div>
-            {TEXT_FIELDS.map((f) => (
+            <div>
+              <label className="field-label">End date (range)</label>
+              <Input
+                type="date"
+                value={(form.date_end as string) ?? ""}
+                onChange={(e) => set("date_end", e.target.value)}
+              />
+            </div>
+
+            {TEXT_FIELDS.filter(
+              (f) => !f.letterOnly || isLetterType(form.record_type as string),
+            ).map((f) => (
               <div key={f.key}>
                 <label className="field-label">{f.label}</label>
                 <Input
@@ -319,6 +406,7 @@ function LetterPage() {
                 />
               </div>
             ))}
+
             {[
               { key: "date_precision", label: "Date precision", opts: DATE_PRECISION },
               { key: "date_certainty", label: "Date certainty", opts: DATE_CERTAINTY },
@@ -326,7 +414,10 @@ function LetterPage() {
               { key: "scan_status", label: "Scan status", opts: SCAN_STATUS },
               { key: "review_status", label: "Review status", opts: REVIEW_STATUS },
               { key: "publication_status", label: "Publication status", opts: PUBLICATION_STATUS },
+              { key: "original_copy", label: "Original / copy", opts: ORIGINAL_COPY },
+              { key: "research_status", label: "Research status", opts: RECORD_RESEARCH_STATUS },
             ].map((f) => (
+
               <div key={f.key}>
                 <label className="field-label">{f.label}</label>
                 <select
@@ -407,7 +498,50 @@ function LetterPage() {
                 />
               </div>
             </div>
+            <div className="col-span-3 grid grid-cols-2 gap-4">
+              <div>
+                <label className="field-label">Physical description</label>
+                <Textarea
+                  rows={3}
+                  value={(form.physical_description as string) ?? ""}
+                  onChange={(e) => set("physical_description", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Provenance</label>
+                <Textarea
+                  rows={3}
+                  value={(form.provenance as string) ?? ""}
+                  onChange={(e) => set("provenance", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Historical context notes</label>
+                <Textarea
+                  rows={3}
+                  value={(form.historical_notes as string) ?? ""}
+                  onChange={(e) => set("historical_notes", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Private research notes</label>
+                <Textarea
+                  rows={3}
+                  value={(form.research_notes as string) ?? ""}
+                  onChange={(e) => set("research_notes", e.target.value)}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="field-label">Citations / sources</label>
+                <Textarea
+                  rows={2}
+                  value={(form.citations as string) ?? ""}
+                  onChange={(e) => set("citations", e.target.value)}
+                />
+              </div>
+            </div>
           </div>
+
         </TabsContent>
 
         <TabsContent value="scans" className="mt-6">

@@ -15,6 +15,7 @@ import { fetchLetters, logEdits, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PERIODS,
+  RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
   TRANSCRIPTION_STATUS,
@@ -24,6 +25,7 @@ import {
   toCsv,
   toExcelXml,
 } from "@/lib/archive";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/letters/")({
@@ -52,10 +54,15 @@ export const Route = createFileRoute("/letters/")({
 type Col = { key: string; label: string; width: number; editable?: boolean };
 const COLUMNS: Col[] = [
   { key: "archive_id", label: "FH ID", width: 110 },
+  { key: "record_type", label: "Type", width: 150 },
+  { key: "subtype", label: "Subtype", width: 130 },
+  { key: "title", label: "Title", width: 200, editable: true },
   { key: "date", label: "Date", width: 150 },
+  { key: "primary_person", label: "Primary person", width: 150, editable: true },
   { key: "author", label: "From", width: 150, editable: true },
   { key: "recipient", label: "To", width: 150, editable: true },
   { key: "origin", label: "Origin", width: 160, editable: true },
+
   { key: "period", label: "Period", width: 100 },
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
@@ -93,6 +100,8 @@ function LettersTable() {
   const [q, setQ] = useState("");
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
+  const [rType, setRType] = useState("");
+
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
@@ -104,6 +113,8 @@ function LettersTable() {
     let r = letters.filter((l) => {
       if (period && l.period !== period) return false;
       if (tStatus && l.transcription_status !== tStatus) return false;
+      if (rType && (l.record_type ?? "letter") !== rType) return false;
+
       if (!q) return true;
       const hay = [
         l.archive_id,
@@ -124,12 +135,18 @@ function LettersTable() {
       return (String(av ?? "") > String(bv ?? "") ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, sort, keywordsByLetter]);
 
   function exportRows() {
     return rows.map((l) => ({
       fh_id: l.archive_id,
+      record_type: labelOf(RECORD_TYPES, l.record_type),
+      subtype: l.subtype ?? "",
+      title: l.title ?? "",
+      primary_person: l.primary_person ?? "",
       date_normalized: l.normalized_date ?? "",
+      date_end: l.date_end ?? "",
+
       date_as_written: l.date_as_written ?? "",
       date_precision: l.date_precision,
       date_certainty: l.date_certainty,
@@ -143,6 +160,11 @@ function LettersTable() {
       envelope: l.has_envelope ? "Yes" : "No",
       enclosures: l.has_enclosures ? "Yes" : "No",
       condition: l.physical_condition ?? "",
+      physical_description: l.physical_description ?? "",
+      original_copy: l.original_copy ?? "",
+      storage_location: l.storage_location ?? "",
+      research_status: l.research_status ?? "",
+
       scan_status: l.scan_status,
       transcription_status: l.transcription_status,
       review_status: l.review_status,
@@ -171,7 +193,10 @@ function LettersTable() {
     switch (key) {
       case "date":
         return displayDate(l);
+      case "record_type":
+        return labelOf(RECORD_TYPES, l.record_type);
       case "period":
+
         return labelOf(PERIODS, l.period);
       case "scan_status":
         return labelOf(SCAN_STATUS, l.scan_status);
@@ -191,7 +216,7 @@ function LettersTable() {
   return (
     <>
       <PageHeader
-        title="Letters"
+        title="All Records"
         description={`${rows.length} of ${letters.length} records`}
         actions={
           <>
@@ -250,6 +275,19 @@ function LettersTable() {
           onChange={(e) => setQ(e.target.value)}
           className="h-8 w-64"
         />
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={rType}
+          onChange={(e) => setRType(e.target.value)}
+        >
+          <option value="">All record types</option>
+          {RECORD_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
           value={period}

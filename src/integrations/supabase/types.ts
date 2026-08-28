@@ -117,6 +117,45 @@ export type Database = {
           },
         ]
       }
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          event_type: string
+          id: string
+          name: string
+          notes: string | null
+          owner_id: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          event_type?: string
+          id?: string
+          name: string
+          notes?: string | null
+          owner_id?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          event_type?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       historical_references: {
         Row: {
           created_at: string
@@ -191,6 +230,48 @@ export type Database = {
         }
         Relationships: []
       }
+      letter_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          letter_id: string
+          owner_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          letter_id: string
+          owner_id?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          letter_id?: string
+          owner_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_events_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       letter_keywords: {
         Row: {
           confirmed: boolean
@@ -232,6 +313,51 @@ export type Database = {
             columns: ["letter_id"]
             isOneToOne: false
             referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      letter_organizations: {
+        Row: {
+          created_at: string
+          id: string
+          letter_id: string
+          organization_id: string
+          owner_id: string
+          role: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          letter_id: string
+          organization_id: string
+          owner_id?: string
+          role?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          letter_id?: string
+          organization_id?: string
+          owner_id?: string
+          role?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "letter_organizations_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "letter_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -425,30 +551,45 @@ export type Database = {
         Row: {
           archive_id: string
           author: string | null
+          citations: string | null
           created_at: string
           date_as_written: string | null
           date_certainty: string
+          date_end: string | null
           date_precision: string
           destination: string | null
+          digitization_notes: string | null
           fh_seq: number
           has_enclosures: boolean
           has_envelope: boolean
+          historical_notes: string | null
           id: string
           image_count: number
           normalized_date: string | null
           notes: string | null
+          ocr_text: string | null
           origin: string | null
+          original_copy: string
           owner_id: string
           period: string
           physical_condition: string | null
+          physical_description: string | null
+          primary_person: string | null
+          provenance: string | null
           publication_status: string
           recipient: string | null
+          record_type: string
           research_needed: boolean
+          research_notes: string | null
+          research_status: string
           review_status: string
           scan_status: string
           sheets: number | null
+          storage_location: string | null
+          subtype: string | null
           summary_long: string | null
           summary_short: string | null
+          title: string | null
           transcription_raw_ai: string | null
           transcription_status: string
           transcription_verified: string | null
@@ -457,30 +598,45 @@ export type Database = {
         Insert: {
           archive_id: string
           author?: string | null
+          citations?: string | null
           created_at?: string
           date_as_written?: string | null
           date_certainty?: string
+          date_end?: string | null
           date_precision?: string
           destination?: string | null
+          digitization_notes?: string | null
           fh_seq: number
           has_enclosures?: boolean
           has_envelope?: boolean
+          historical_notes?: string | null
           id?: string
           image_count?: number
           normalized_date?: string | null
           notes?: string | null
+          ocr_text?: string | null
           origin?: string | null
+          original_copy?: string
           owner_id?: string
           period?: string
           physical_condition?: string | null
+          physical_description?: string | null
+          primary_person?: string | null
+          provenance?: string | null
           publication_status?: string
           recipient?: string | null
+          record_type?: string
           research_needed?: boolean
+          research_notes?: string | null
+          research_status?: string
           review_status?: string
           scan_status?: string
           sheets?: number | null
+          storage_location?: string | null
+          subtype?: string | null
           summary_long?: string | null
           summary_short?: string | null
+          title?: string | null
           transcription_raw_ai?: string | null
           transcription_status?: string
           transcription_verified?: string | null
@@ -489,33 +645,81 @@ export type Database = {
         Update: {
           archive_id?: string
           author?: string | null
+          citations?: string | null
           created_at?: string
           date_as_written?: string | null
           date_certainty?: string
+          date_end?: string | null
           date_precision?: string
           destination?: string | null
+          digitization_notes?: string | null
           fh_seq?: number
           has_enclosures?: boolean
           has_envelope?: boolean
+          historical_notes?: string | null
           id?: string
           image_count?: number
           normalized_date?: string | null
           notes?: string | null
+          ocr_text?: string | null
           origin?: string | null
+          original_copy?: string
           owner_id?: string
           period?: string
           physical_condition?: string | null
+          physical_description?: string | null
+          primary_person?: string | null
+          provenance?: string | null
           publication_status?: string
           recipient?: string | null
+          record_type?: string
           research_needed?: boolean
+          research_notes?: string | null
+          research_status?: string
           review_status?: string
           scan_status?: string
           sheets?: number | null
+          storage_location?: string | null
+          subtype?: string | null
           summary_long?: string | null
           summary_short?: string | null
+          title?: string | null
           transcription_raw_ai?: string | null
           transcription_status?: string
           transcription_verified?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          notes: string | null
+          org_type: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          org_type?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          org_type?: string
+          owner_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -630,6 +834,35 @@ export type Database = {
           p_period: string
           p_recipient: string
           p_sheets: number
+        }
+        Returns: {
+          archive_id: string
+          fh_seq: number
+          id: string
+        }[]
+      }
+      create_record: {
+        Args: {
+          p_author: string
+          p_date_as_written: string
+          p_date_certainty: string
+          p_date_end: string
+          p_date_precision: string
+          p_destination: string
+          p_has_enclosures: boolean
+          p_has_envelope: boolean
+          p_normalized_date: string
+          p_notes: string
+          p_origin: string
+          p_original_copy: string
+          p_period: string
+          p_primary_person: string
+          p_recipient: string
+          p_record_type: string
+          p_sheets: number
+          p_storage_location: string
+          p_subtype: string
+          p_title: string
         }
         Returns: {
           archive_id: string

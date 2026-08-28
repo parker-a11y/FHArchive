@@ -28,19 +28,27 @@ export function LinksPanel({ letter }: { letter: Letter }) {
   const { data: entities } = useQuery({
     queryKey: ["entities"],
     queryFn: async () => {
-      const [p, pl, k] = await Promise.all([
+      const [p, pl, k, o, ev] = await Promise.all([
         supabase.from("people").select("id,name").order("name"),
         supabase.from("places").select("id,canonical_name").order("canonical_name"),
         supabase.from("keywords").select("id,name").order("name"),
+        supabase.from("organizations").select("id,name").order("name"),
+        supabase.from("events").select("id,name").order("name"),
       ]);
-      return { people: p.data ?? [], places: pl.data ?? [], keywords: k.data ?? [] };
+      return {
+        people: p.data ?? [],
+        places: pl.data ?? [],
+        keywords: k.data ?? [],
+        organizations: o.data ?? [],
+        events: ev.data ?? [],
+      };
     },
   });
 
   const { data: links } = useQuery({
     queryKey: ["links", letter.id],
     queryFn: async () => {
-      const [p, pl, k] = await Promise.all([
+      const [p, pl, k, o, ev] = await Promise.all([
         supabase.from("letter_people").select("id, role, person_id, people(name)").eq("letter_id", letter.id),
         supabase
           .from("letter_places")
@@ -50,14 +58,47 @@ export function LinksPanel({ letter }: { letter: Letter }) {
           .from("letter_keywords")
           .select("id, source, confirmed, keyword_id, keywords(name)")
           .eq("letter_id", letter.id),
+        supabase
+          .from("letter_organizations")
+          .select("id, organization_id, organizations(name)")
+          .eq("letter_id", letter.id),
+        supabase.from("letter_events").select("id, event_id, events(name)").eq("letter_id", letter.id),
       ]);
-      return { people: p.data ?? [], places: pl.data ?? [], keywords: k.data ?? [] };
+      return {
+        people: p.data ?? [],
+        places: pl.data ?? [],
+        keywords: k.data ?? [],
+        organizations: o.data ?? [],
+        events: ev.data ?? [],
+      };
     },
   });
 
   const [personId, setPersonId] = useState("");
   const [placeId, setPlaceId] = useState("");
   const [keywordName, setKeywordName] = useState("");
+  const [orgId, setOrgId] = useState("");
+  const [eventId, setEventId] = useState("");
+
+  async function addOrg() {
+    if (!orgId) return;
+    const { error } = await supabase
+      .from("letter_organizations")
+      .insert({ letter_id: letter.id, organization_id: orgId });
+    if (error) return toast.error(error.message);
+    setOrgId("");
+    inval();
+  }
+  async function addEvent() {
+    if (!eventId) return;
+    const { error } = await supabase
+      .from("letter_events")
+      .insert({ letter_id: letter.id, event_id: eventId });
+    if (error) return toast.error(error.message);
+    setEventId("");
+    inval();
+  }
+
 
   async function addPerson() {
     if (!personId) return;
@@ -215,8 +256,67 @@ export function LinksPanel({ letter }: { letter: Letter }) {
           ))}
         </div>
       </div>
+
+      <div>
+        <h3 className="field-label mb-2">Organizations / Ships / Units</h3>
+        <div className="mb-2 flex gap-2">
+          <select
+            className="h-9 flex-1 rounded border border-input bg-background px-2 text-sm"
+            value={orgId}
+            onChange={(e) => setOrgId(e.target.value)}
+          >
+            <option value="">Select organization…</option>
+            {entities?.organizations.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+          <Button size="sm" onClick={addOrg}>
+            Add
+          </Button>
+        </div>
+        {links?.organizations.map((r) => (
+          <div key={r.id} className="flex items-center justify-between py-1 text-sm">
+            <span>{r.organizations?.name}</span>
+            <button onClick={() => del("letter_organizations", r.id)}>
+              <Trash2 className="size-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h3 className="field-label mb-2">Events</h3>
+        <div className="mb-2 flex gap-2">
+          <select
+            className="h-9 flex-1 rounded border border-input bg-background px-2 text-sm"
+            value={eventId}
+            onChange={(e) => setEventId(e.target.value)}
+          >
+            <option value="">Select event…</option>
+            {entities?.events.map((e2) => (
+              <option key={e2.id} value={e2.id}>
+                {e2.name}
+              </option>
+            ))}
+          </select>
+          <Button size="sm" onClick={addEvent}>
+            Add
+          </Button>
+        </div>
+        {links?.events.map((r) => (
+          <div key={r.id} className="flex items-center justify-between py-1 text-sm">
+            <span>{r.events?.name}</span>
+            <button onClick={() => del("letter_events", r.id)}>
+              <Trash2 className="size-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
+
 }
 
 /* ---------------- Historical references ---------------- */

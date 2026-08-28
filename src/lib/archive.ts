@@ -1,4 +1,184 @@
+/* ---------------- Record types & subtypes ---------------- */
+
+export const RECORD_TYPES = [
+  { value: "letter", label: "Letter / Correspondence" },
+  { value: "photograph", label: "Photograph" },
+  { value: "military", label: "Military Record" },
+  { value: "government", label: "Government / Official Document" },
+  { value: "family", label: "Personal / Family Document" },
+  { value: "newspaper", label: "Newspaper / Clipping" },
+  { value: "financial", label: "Financial Record" },
+  { value: "employment", label: "Employment Record" },
+  { value: "education", label: "Education Record" },
+  { value: "travel", label: "Travel Document" },
+  { value: "ephemera", label: "Ephemera" },
+  { value: "artifact", label: "Artifact / Physical Object" },
+  { value: "media", label: "Audio / Video" },
+  { value: "research", label: "Research Material" },
+  { value: "other", label: "Other" },
+] as const;
+
+/** Subtypes per record type — add new entries freely; unknown types fall back to Other. */
+export const SUBTYPES: Record<string, readonly string[]> = {
+  letter: [
+    "Personal letter",
+    "V-Mail",
+    "Postcard",
+    "Telegram",
+    "Greeting card",
+    "Official correspondence",
+    "Envelope only",
+    "Enclosure",
+    "Other",
+  ],
+  photograph: [
+    "Portrait",
+    "Family",
+    "Military",
+    "Group",
+    "Event",
+    "Travel",
+    "Location",
+    "Snapshot",
+    "Formal / Studio",
+    "Unknown",
+  ],
+  military: [
+    "Orders",
+    "Assignment",
+    "Personnel Record",
+    "Appointment / Commission",
+    "Promotion",
+    "Training",
+    "Medical / Physical",
+    "Pay",
+    "Leave",
+    "Discharge / Separation",
+    "Award / Citation",
+    "Ship Record",
+    "Muster / Personnel Roster",
+    "Official Correspondence",
+    "Official Photograph",
+    "Map",
+    "Other",
+  ],
+  government: [
+    "Birth certificate",
+    "Marriage certificate",
+    "Death certificate",
+    "Census record",
+    "Immigration / Naturalization",
+    "Court record",
+    "Tax record",
+    "License / Permit",
+    "Social Security",
+    "Other",
+  ],
+  family: [
+    "Diary / Journal",
+    "Address book",
+    "Recipe",
+    "Family tree / Genealogy",
+    "Scrapbook page",
+    "Religious record",
+    "Invitation / Announcement",
+    "Memorial / Funeral",
+    "Other",
+  ],
+  newspaper: ["Article", "Obituary", "Announcement", "Advertisement", "Photograph", "Other"],
+  financial: [
+    "Receipt",
+    "Bank record",
+    "Bond / Savings",
+    "Insurance",
+    "Bill / Invoice",
+    "Will / Estate",
+    "Property / Deed",
+    "Other",
+  ],
+  employment: [
+    "Application",
+    "Contract",
+    "Pay record",
+    "Union record",
+    "Identification",
+    "Retirement / Pension",
+    "Correspondence",
+    "Other",
+  ],
+  education: [
+    "Diploma / Certificate",
+    "Transcript",
+    "Report card",
+    "Yearbook",
+    "Enrollment",
+    "Award",
+    "Other",
+  ],
+  travel: ["Passport", "Visa", "Ticket", "Itinerary", "Map", "Souvenir", "Other"],
+  ephemera: ["Program", "Menu", "Ticket stub", "Pamphlet", "Postcard", "Label / Tag", "Other"],
+  artifact: ["Medal / Insignia", "Uniform item", "Jewelry", "Tool", "Textile", "Other"],
+  media: ["Audio recording", "Film", "Video", "Interview", "Other"],
+  research: ["Notes", "Article", "Book excerpt", "Web source", "Correspondence", "Other"],
+  other: ["Other"],
+};
+
+export function subtypesFor(recordType: string): readonly string[] {
+  return SUBTYPES[recordType] ?? ["Other"];
+}
+
+export const ORIGINAL_COPY = [
+  { value: "original", label: "Original" },
+  { value: "copy", label: "Copy" },
+  { value: "unknown", label: "Unknown" },
+] as const;
+
+export const RECORD_RESEARCH_STATUS = [
+  { value: "unreviewed", label: "Unreviewed" },
+  { value: "reviewed", label: "Reviewed" },
+  { value: "needs_research", label: "Needs Research" },
+  { value: "verified", label: "Verified" },
+] as const;
+
+export const PRIMARY_PERSONS = [
+  { value: "", label: "—" },
+  { value: "Francis A. Harrington", label: "Francis" },
+  { value: "Jacqueline Harrington", label: "Jacqueline" },
+  { value: "Francis & Jacqueline", label: "Francis & Jacqueline" },
+  { value: "Other", label: "Other" },
+] as const;
+
+export const ORG_TYPES = [
+  { value: "ship", label: "Ship" },
+  { value: "military_unit", label: "Military Unit" },
+  { value: "military_installation", label: "Military Installation" },
+  { value: "school", label: "School" },
+  { value: "employer", label: "Employer" },
+  { value: "church", label: "Church / Religious" },
+  { value: "government", label: "Government Agency" },
+  { value: "club", label: "Club / Association" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const EVENT_TYPES = [
+  { value: "military", label: "Military Service" },
+  { value: "family", label: "Family Event" },
+  { value: "birth", label: "Birth" },
+  { value: "death", label: "Death" },
+  { value: "marriage", label: "Marriage" },
+  { value: "travel", label: "Trip / Travel" },
+  { value: "residence", label: "Move / Residence" },
+  { value: "historical", label: "Historical Event" },
+  { value: "other", label: "Other" },
+] as const;
+
+/** True when the record should show correspondence-specific fields. */
+export function isLetterType(recordType: string | null | undefined) {
+  return (recordType ?? "letter") === "letter";
+}
+
 export const DATE_PRECISION = [
+
   { value: "exact", label: "Exact" },
   { value: "month", label: "Month only" },
   { value: "year", label: "Year only" },
@@ -7,11 +187,14 @@ export const DATE_PRECISION = [
 ] as const;
 
 export const DATE_CERTAINTY = [
-  { value: "confirmed", label: "Confirmed" },
+  { value: "confirmed", label: "Exact / Confirmed" },
   { value: "probable", label: "Probable" },
+  { value: "approximate", label: "Approximate" },
+  { value: "estimated", label: "Estimated" },
   { value: "possible", label: "Possible" },
   { value: "unknown", label: "Unknown" },
 ] as const;
+
 
 export const PERIODS = [
   { value: "prewar", label: "Prewar" },
