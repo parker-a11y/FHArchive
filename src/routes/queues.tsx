@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { fetchLetters, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
-import { displayDate } from "@/lib/archive";
+import { displayDate, isUnidentifiedPhoto, needsDating } from "@/lib/archive";
 
 export const Route = createFileRoute("/queues")({
   head: () => ({
@@ -43,6 +43,8 @@ function Queues() {
   });
 
   const queues: { key: string; label: string; fn: (l: Letter) => boolean }[] = [
+    { key: "undated", label: "Undated / Needs Dating", fn: needsDating },
+    { key: "unidphoto", label: "Unidentified Photos", fn: isUnidentifiedPhoto },
     { key: "scan", label: "Needs Scanning", fn: (l) => l.image_count === 0 },
     {
       key: "transcribe",
@@ -58,14 +60,16 @@ function Queues() {
         l.review_status === "not_reviewed",
     },
     {
-      key: "dates",
-      label: "Uncertain Dates",
-      fn: (l) => l.date_certainty !== "confirmed" || l.date_precision !== "exact",
+      key: "unidentified",
+      label: "Unidentified Material",
+      fn: (l) =>
+        (l.identification_status ?? "unidentified") === "unidentified" ||
+        (l.identification_status ?? "") === "needs_research",
     },
     {
       key: "meta",
       label: "Missing Metadata",
-      fn: (l) => !l.author || !l.recipient || !l.origin || !l.normalized_date,
+      fn: (l) => !l.title && !l.author && !l.origin && !l.normalized_date,
     },
     {
       key: "ai",
@@ -122,7 +126,7 @@ function Queues() {
                 <span className="archive-id w-28 text-primary">{l.archive_id}</span>
                 <span className="w-40 text-muted-foreground">{displayDate(l)}</span>
                 <span className="truncate">
-                  {l.author || "—"} → {l.recipient || "—"}
+                  {l.title || (l.author || l.recipient ? `${l.author || "—"} → ${l.recipient || "—"}` : "—")}
                 </span>
               </Link>
             ))}

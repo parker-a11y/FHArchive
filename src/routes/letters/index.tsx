@@ -14,14 +14,20 @@ import {
 import { fetchLetters, logEdits, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  DATE_PRECISION,
+  IDENTIFICATION_STATUS,
   PERIODS,
+  RECORD_RESEARCH_STATUS,
   RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
+  STORAGE_TYPES,
   TRANSCRIPTION_STATUS,
   displayDate,
   download,
+  isUnidentifiedPhoto,
   labelOf,
+  needsDating,
   toCsv,
   toExcelXml,
 } from "@/lib/archive";
@@ -58,11 +64,14 @@ const COLUMNS: Col[] = [
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
   { key: "date", label: "Date", width: 150 },
+  { key: "date_precision", label: "Date status", width: 130 },
+  { key: "identification_status", label: "ID status", width: 130 },
   { key: "primary_person", label: "Primary person", width: 150, editable: true },
   { key: "author", label: "From", width: 150, editable: true },
   { key: "recipient", label: "To", width: 150, editable: true },
   { key: "origin", label: "Origin", width: 160, editable: true },
-
+  { key: "storage", label: "Storage", width: 200 },
+  { key: "storage_container", label: "Container / box", width: 150, editable: true },
   { key: "period", label: "Period", width: 100 },
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
@@ -70,9 +79,21 @@ const COLUMNS: Col[] = [
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
   { key: "review_status", label: "Review", width: 110 },
+  { key: "research_status", label: "Research", width: 120 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
 ];
+
+/** Human-readable one-line physical location. */
+function storageText(l: Letter) {
+  const parts = [
+    labelOf(STORAGE_TYPES, l.storage_type),
+    l.storage_container,
+    l.storage_folder,
+    l.storage_position,
+  ].filter((v) => v && v !== "—");
+  return parts.join(" · ") || (l.storage_location ?? "");
+}
 
 function LettersTable() {
   const qc = useQueryClient();
@@ -101,6 +122,9 @@ function LettersTable() {
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
   const [rType, setRType] = useState("");
+  const [idStatus, setIdStatus] = useState("");
+  const [dStatus, setDStatus] = useState("");
+  const [view, setView] = useState<"" | "undated" | "unidphoto">("");
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [hidden, setHidden] = useState<string[]>([]);
@@ -111,17 +135,23 @@ function LettersTable() {
 
   const rows = useMemo(() => {
     let r = letters.filter((l) => {
+      if (view === "undated" && !needsDating(l)) return false;
+      if (view === "unidphoto" && !isUnidentifiedPhoto(l)) return false;
       if (period && l.period !== period) return false;
       if (tStatus && l.transcription_status !== tStatus) return false;
       if (rType && (l.record_type ?? "letter") !== rType) return false;
+      if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
+      if (dStatus && l.date_precision !== dStatus) return false;
 
       if (!q) return true;
       const hay = [
         l.archive_id,
+        l.title,
         l.author,
         l.recipient,
         l.origin,
         l.notes,
+        storageText(l),
         ...(keywordsByLetter[l.id] ?? []),
       ]
         .join(" ")
@@ -129,13 +159,27 @@ function LettersTable() {
       return hay.includes(q.toLowerCase());
     });
     r = [...r].sort((a, b) => {
-      const k = sort.key as keyof Letter;
-      const av = k === ("date" as keyof Letter) ? a.normalized_date : a[k];
-      const bv = k === ("date" as keyof Letter) ? b.normalized_date : b[k];
-      return (String(av ?? "") > String(bv ?? "") ? 1 : -1) * sort.dir;
+      const pick = (l: Letter) => {
+        switch (sort.key) {
+          case "date":
+            return l.sort_date ?? l.normalized_date ?? "";
+          case "storage":
+            return storageText(l);
+          default:
+            return l[sort.key as keyof Letter];
+        }
+      };
+      const av = String(pick(a) ?? "");
+      const bv = String(pick(b) ?? "");
+      if (av === bv) return (a.fh_seq - b.fh_seq) * sort.dir;
+      // Blank values always sort last, so undated records never crowd the top.
+      if (!av) return 1;
+      if (!bv) return -1;
+      return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, idStatus, dStatus, view, sort, keywordsByLetter]);
+
 
   function exportRows() {
     return rows.map((l) => ({
@@ -162,6 +206,12 @@ function LettersTable() {
       condition: l.physical_condition ?? "",
       physical_description: l.physical_description ?? "",
       original_copy: l.original_copy ?? "",
+      identification_status: labelOf(IDENTIFICATION_STATUS, l.identification_status),
+      storage_type: labelOf(STORAGE_TYPES, l.storage_type),
+      storage_container: l.storage_container ?? "",
+      storage_folder: l.storage_folder ?? "",
+      storage_position: l.storage_position ?? "",
+      storage_notes: l.storage_notes ?? "",
       storage_location: l.storage_location ?? "",
       research_status: l.research_status ?? "",
 
@@ -195,6 +245,14 @@ function LettersTable() {
         return displayDate(l);
       case "record_type":
         return labelOf(RECORD_TYPES, l.record_type);
+      case "date_precision":
+        return labelOf(DATE_PRECISION, l.date_precision);
+      case "identification_status":
+        return labelOf(IDENTIFICATION_STATUS, l.identification_status);
+      case "storage":
+        return storageText(l);
+      case "research_status":
+        return labelOf(RECORD_RESEARCH_STATUS, l.research_status);
       case "period":
 
         return labelOf(PERIODS, l.period);
@@ -312,7 +370,50 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={idStatus}
+          onChange={(e) => setIdStatus(e.target.value)}
+        >
+          <option value="">All ID states</option>
+          {IDENTIFICATION_STATUS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={dStatus}
+          onChange={(e) => setDStatus(e.target.value)}
+        >
+          <option value="">All date states</option>
+          {DATE_PRECISION.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="ml-auto flex items-center gap-2">
+          <span className="field-label">Views</span>
+          {[
+            { key: "", label: "All" },
+            { key: "undated", label: "Undated" },
+            { key: "unidphoto", label: "Unidentified photos" },
+          ].map((v) => (
+            <Button
+              key={v.key}
+              size="sm"
+              variant={view === v.key ? "default" : "outline"}
+              onClick={() => setView(v.key as "" | "undated" | "unidphoto")}
+            >
+              {v.label}
+            </Button>
+          ))}
+        </div>
       </div>
+
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">

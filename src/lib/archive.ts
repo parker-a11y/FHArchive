@@ -6,17 +6,22 @@ export const RECORD_TYPES = [
   { value: "military", label: "Military Record" },
   { value: "government", label: "Government / Official Document" },
   { value: "family", label: "Personal / Family Document" },
+  { value: "program", label: "Program / Invitation" },
   { value: "newspaper", label: "Newspaper / Clipping" },
   { value: "financial", label: "Financial Record" },
   { value: "employment", label: "Employment Record" },
   { value: "education", label: "Education Record" },
   { value: "travel", label: "Travel Document" },
   { value: "ephemera", label: "Ephemera" },
-  { value: "artifact", label: "Artifact / Physical Object" },
+  { value: "artifact", label: "Artifact / Object" },
+  { value: "medal", label: "Medal / Decoration" },
+  { value: "insignia", label: "Pin / Insignia" },
+  { value: "scrapbook", label: "Scrapbook Material" },
   { value: "media", label: "Audio / Video" },
   { value: "research", label: "Research Material" },
   { value: "other", label: "Other" },
 ] as const;
+
 
 /** Subtypes per record type — add new entries freely; unknown types fall back to Other. */
 export const SUBTYPES: Record<string, readonly string[]> = {
@@ -117,7 +122,11 @@ export const SUBTYPES: Record<string, readonly string[]> = {
   ],
   travel: ["Passport", "Visa", "Ticket", "Itinerary", "Map", "Souvenir", "Other"],
   ephemera: ["Program", "Menu", "Ticket stub", "Pamphlet", "Postcard", "Label / Tag", "Other"],
-  artifact: ["Medal / Insignia", "Uniform item", "Jewelry", "Tool", "Textile", "Other"],
+  artifact: ["Uniform item", "Jewelry", "Tool", "Textile", "Flag / Banner", "Other"],
+  program: ["Program", "Invitation", "Announcement", "Menu", "Order of service", "Other"],
+  medal: ["Campaign medal", "Service medal", "Decoration", "Ribbon", "Citation bar", "Other"],
+  insignia: ["Rank insignia", "Unit insignia", "Collar device", "Pin", "Patch", "Button", "Other"],
+  scrapbook: ["Scrapbook page", "Loose clipping", "Mounted photograph", "Keepsake", "Other"],
   media: ["Audio recording", "Film", "Video", "Interview", "Other"],
   research: ["Notes", "Article", "Book excerpt", "Web source", "Correspondence", "Other"],
   other: ["Other"],
@@ -177,14 +186,38 @@ export function isLetterType(recordType: string | null | undefined) {
   return (recordType ?? "letter") === "letter";
 }
 
+/** Date status / precision. A record is always valid with no date at all. */
 export const DATE_PRECISION = [
-
-  { value: "exact", label: "Exact" },
-  { value: "month", label: "Month only" },
+  { value: "exact", label: "Exact date" },
+  { value: "month", label: "Month and year" },
   { value: "year", label: "Year only" },
-  { value: "approximate", label: "Approximate" },
+  { value: "approximate", label: "Approximate (circa)" },
+  { value: "range", label: "Date range" },
+  { value: "undated", label: "Undated" },
+  { value: "not_applicable", label: "Not applicable" },
   { value: "unknown", label: "Unknown" },
 ] as const;
+
+export const IDENTIFICATION_STATUS = [
+  { value: "identified", label: "Identified" },
+  { value: "partial", label: "Partially Identified" },
+  { value: "probable", label: "Probable" },
+  { value: "possible", label: "Possible" },
+  { value: "unidentified", label: "Unidentified" },
+  { value: "needs_research", label: "Needs Research" },
+] as const;
+
+export const STORAGE_TYPES = [
+  { value: "", label: "—" },
+  { value: "file_jacket", label: "File Jacket" },
+  { value: "archival_sleeve", label: "Archival Sleeve" },
+  { value: "photo_sleeve", label: "Photo Sleeve" },
+  { value: "artifact_box", label: "Artifact Box" },
+  { value: "document_box", label: "Document Box" },
+  { value: "oversize", label: "Oversize Storage" },
+  { value: "other", label: "Other" },
+] as const;
+
 
 export const DATE_CERTAINTY = [
   { value: "confirmed", label: "Exact / Confirmed" },
@@ -332,33 +365,75 @@ const MONTHS = [
   "DECEMBER",
 ];
 
-/** Label date rendering honouring precision/certainty — never invents precision. */
-export function labelDate(letter: {
+type DateShape = {
   normalized_date: string | null;
-  date_precision: string;
-  date_certainty: string;
-}) {
-  const d = letter.normalized_date;
-  if (!d) return "DATE UNKNOWN";
-  const [y, m, day] = d.split("-").map(Number);
-  const approx = letter.date_precision === "approximate" || letter.date_certainty === "possible";
-  if (letter.date_precision === "year" || letter.date_precision === "unknown")
-    return (approx ? "c. " : "") + y;
-  if (letter.date_precision === "month")
-    return (approx ? "c. " : "") + `${MONTHS[m - 1]} ${y}`;
-  return (approx ? "c. " : "") + `${MONTHS[m - 1]} ${day}, ${y}`;
-}
-
-export function displayDate(letter: {
-  normalized_date: string | null;
+  date_end?: string | null;
   date_as_written?: string | null;
   date_precision: string;
   date_certainty: string;
-}) {
-  if (!letter.normalized_date) return letter.date_as_written || "Unknown date";
+};
+
+/** Label date rendering honouring precision/certainty — never invents precision. */
+export function labelDate(letter: DateShape) {
+  if (letter.date_precision === "not_applicable") return "NO DATE";
+  if (letter.date_precision === "undated") return "UNDATED";
+  const d = letter.normalized_date;
+  if (!d) return "UNDATED";
+  const [y, m, day] = d.split("-").map(Number);
+  const approx = letter.date_precision === "approximate" || letter.date_certainty === "possible";
+  if (letter.date_precision === "range") {
+    const endYear = letter.date_end ? Number(letter.date_end.split("-")[0]) : null;
+    return endYear && endYear !== y ? `${y}–${endYear}` : String(y);
+  }
+  if (letter.date_precision === "year" || letter.date_precision === "unknown")
+    return (approx ? "C. " : "") + y;
+  if (letter.date_precision === "month")
+    return (approx ? "C. " : "") + `${MONTHS[m - 1]} ${y}`;
+  return (approx ? "C. " : "") + `${MONTHS[m - 1]} ${day}, ${y}`;
+}
+
+export function displayDate(letter: DateShape) {
+  if (letter.date_precision === "undated") return "Undated";
+  if (letter.date_precision === "not_applicable") return "Not applicable";
+  if (!letter.normalized_date) return letter.date_as_written || "Undated";
   const base = labelDate(letter);
   return base.charAt(0) + base.slice(1).toLowerCase();
 }
+
+/** Records whose date still needs work — powers the "Undated / Needs Dating" view. */
+export function needsDating(l: {
+  normalized_date: string | null;
+  date_precision: string;
+  date_certainty: string;
+}) {
+  if (l.date_precision === "not_applicable") return false;
+  return (
+    !l.normalized_date ||
+    ["undated", "approximate", "range", "unknown"].includes(l.date_precision) ||
+    ["estimated", "possible", "unknown"].includes(l.date_certainty)
+  );
+}
+
+/** Photographs (or photographic material) that still need identifying. */
+export function isUnidentifiedPhoto(l: {
+  record_type: string;
+  identification_status?: string | null;
+  normalized_date: string | null;
+  date_precision: string;
+  date_certainty: string;
+  origin: string | null;
+  primary_person: string | null;
+}) {
+  if ((l.record_type ?? "letter") !== "photograph") return false;
+  const st = l.identification_status ?? "unidentified";
+  return (
+    st !== "identified" ||
+    !l.primary_person ||
+    !l.origin ||
+    needsDating(l)
+  );
+}
+
 
 export function scanFileLabel(archiveId: string, imageType: string, index: number) {
   if (imageType === "envelope_front") return `${archiveId}_ENV-F`;

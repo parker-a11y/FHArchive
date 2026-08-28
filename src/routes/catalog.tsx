@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
+  IDENTIFICATION_STATUS,
   ORIGINAL_COPY,
   PERIODS,
   PRIMARY_PERSONS,
   RECORD_TYPES,
+  STORAGE_TYPES,
   isLetterType,
   labelDate,
   subtypesFor,
@@ -64,6 +67,12 @@ const blank = {
   has_envelope: false,
   has_enclosures: false,
   storage_location: "",
+  storage_type: "",
+  storage_container: "",
+  storage_folder: "",
+  storage_position: "",
+  storage_notes: "",
+  identification_status: "unidentified",
   original_copy: "original",
   notes: "",
 };
@@ -128,7 +137,12 @@ function QuickEntry() {
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
-    let created: { archive_id: string };
+    // A record never needs a date: fall back to "undated" rather than blocking entry.
+    const precision =
+      !form.normalized_date && !["undated", "not_applicable", "unknown"].includes(form.date_precision)
+        ? "undated"
+        : form.date_precision;
+    let created: { id: string; archive_id: string };
     try {
       created = await createRecord({
         p_record_type: form.record_type,
@@ -137,7 +151,7 @@ function QuickEntry() {
         p_date_as_written: form.date_as_written,
         p_normalized_date: form.normalized_date,
         p_date_end: form.date_end,
-        p_date_precision: form.date_precision,
+        p_date_precision: precision,
         p_date_certainty: form.date_certainty,
         p_primary_person: form.primary_person,
         p_author: isLetter ? form.author : null,
@@ -152,6 +166,15 @@ function QuickEntry() {
         p_original_copy: form.original_copy,
         p_notes: form.notes,
       });
+      const extras = {
+        identification_status: form.identification_status,
+        storage_type: form.storage_type || null,
+        storage_container: form.storage_container || null,
+        storage_folder: form.storage_folder || null,
+        storage_position: form.storage_position || null,
+        storage_notes: form.storage_notes || null,
+      };
+      await supabase.from("letters").update(extras as never).eq("id", created.id);
     } catch (e) {
       setBusy(false);
       return toast.error((e as Error).message);
@@ -167,7 +190,7 @@ function QuickEntry() {
     if (mode === "label") {
       setLabelFor({
         archiveId: created.archive_id,
-        date: labelDate(form),
+        date: labelDate({ ...form, date_precision: precision }),
         lines: labelLines({
           ...form,
           sheets: form.sheets ? Number(form.sheets) : null,
@@ -181,12 +204,17 @@ function QuickEntry() {
       period: f.period,
       primary_person: f.primary_person,
       storage_location: f.storage_location,
+      storage_type: f.storage_type,
+      storage_container: f.storage_container,
+      storage_folder: f.storage_folder,
+      storage_position: f.storage_position,
       original_copy: f.original_copy,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
     loadNext();
   }
+
 
   return (
     <>
@@ -253,13 +281,16 @@ function QuickEntry() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="field-label">Date</Label>
+              <Label className="field-label">Date (optional)</Label>
               <Input
                 ref={dateRef}
                 type="date"
                 value={form.normalized_date}
                 onChange={(e) => set("normalized_date", e.target.value)}
               />
+              <p className="text-[11px] text-muted-foreground">
+                Leave blank — the record saves as Undated.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label className="field-label">End date (range, optional)</Label>
@@ -278,7 +309,7 @@ function QuickEntry() {
               />
             </div>
             <Select_
-              label="Precision"
+              label="Date status"
               value={form.date_precision}
               onChange={(v) => set("date_precision", v)}
               options={DATE_PRECISION}
@@ -295,6 +326,13 @@ function QuickEntry() {
               onChange={(v) => set("period", v)}
               options={PERIODS}
             />
+            <Select_
+              label="Identification status"
+              value={form.identification_status}
+              onChange={(v) => set("identification_status", v)}
+              options={IDENTIFICATION_STATUS}
+            />
+
 
             {isLetter && (
               <>
@@ -339,11 +377,53 @@ function QuickEntry() {
               options={ORIGINAL_COPY}
             />
             <div className="space-y-1.5">
-              <Label className="field-label">Box / folder / storage</Label>
+              <Label className="field-label">Legacy storage note</Label>
               <Input
                 value={form.storage_location}
                 onChange={(e) => set("storage_location", e.target.value)}
               />
+            </div>
+            <div className="col-span-3 rounded border border-border bg-card p-4">
+              <div className="field-label mb-3">Physical storage location</div>
+              <div className="grid grid-cols-4 gap-4">
+                <Select_
+                  label="Storage type"
+                  value={form.storage_type}
+                  onChange={(v) => set("storage_type", v)}
+                  options={STORAGE_TYPES}
+                />
+                <div className="space-y-1.5">
+                  <Label className="field-label">Container / box</Label>
+                  <Input
+                    value={form.storage_container}
+                    onChange={(e) => set("storage_container", e.target.value)}
+                    placeholder="Artifact Box 01"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="field-label">Folder / jacket</Label>
+                  <Input
+                    value={form.storage_folder}
+                    onChange={(e) => set("storage_folder", e.target.value)}
+                    placeholder="FH-0268"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="field-label">Position / compartment</Label>
+                  <Input
+                    value={form.storage_position}
+                    onChange={(e) => set("storage_position", e.target.value)}
+                    placeholder="Compartment 07"
+                  />
+                </div>
+                <div className="col-span-4 space-y-1.5">
+                  <Label className="field-label">Location notes</Label>
+                  <Input
+                    value={form.storage_notes}
+                    onChange={(e) => set("storage_notes", e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex items-end gap-6 pb-2">
               {isLetter && (

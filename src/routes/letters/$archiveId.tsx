@@ -31,6 +31,7 @@ import {
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
+  IDENTIFICATION_STATUS,
   ORIGINAL_COPY,
   PERIODS,
   PUBLICATION_STATUS,
@@ -38,6 +39,7 @@ import {
   RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
+  STORAGE_TYPES,
   displayDate,
   isLetterType,
   labelOf,
@@ -84,9 +86,17 @@ const TEXT_FIELDS = [
   { key: "origin", label: "Origin / location", letterOnly: false },
   { key: "destination", label: "Destination", letterOnly: true },
   { key: "primary_person", label: "Primary person", letterOnly: false },
-  { key: "storage_location", label: "Box / folder / storage", letterOnly: false },
   { key: "physical_condition", label: "Physical condition", letterOnly: false },
 ];
+
+const STORAGE_FIELDS = [
+  { key: "storage_container", label: "Container / box", placeholder: "Artifact Box 01" },
+  { key: "storage_folder", label: "Folder / jacket", placeholder: "FH-0268" },
+  { key: "storage_position", label: "Position / compartment", placeholder: "Compartment 07" },
+  { key: "storage_notes", label: "Location notes", placeholder: "" },
+  { key: "storage_location", label: "Legacy storage note", placeholder: "" },
+];
+
 
 
 function LetterPage() {
@@ -116,6 +126,12 @@ function LetterPage() {
       physical_description: letter.physical_description ?? "",
       original_copy: letter.original_copy ?? "unknown",
       storage_location: letter.storage_location ?? "",
+      storage_type: letter.storage_type ?? "",
+      storage_container: letter.storage_container ?? "",
+      storage_folder: letter.storage_folder ?? "",
+      storage_position: letter.storage_position ?? "",
+      storage_notes: letter.storage_notes ?? "",
+      identification_status: letter.identification_status ?? "unidentified",
       provenance: letter.provenance ?? "",
       digitization_notes: letter.digitization_notes ?? "",
       research_status: letter.research_status ?? "unreviewed",
@@ -182,6 +198,7 @@ function LetterPage() {
     payload.record_type = form.record_type || "letter";
     payload.original_copy = form.original_copy || "unknown";
     payload.research_status = form.research_status || "unreviewed";
+    payload.identification_status = form.identification_status || "unidentified";
 
 
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
@@ -249,6 +266,21 @@ function LetterPage() {
               <span>
                 <span className="field-label mr-2">Origin</span>
                 {letter.origin || "—"}
+              </span>
+              <span>
+                <span className="field-label mr-2">ID status</span>
+                {labelOf(IDENTIFICATION_STATUS, letter.identification_status)}
+              </span>
+              <span>
+                <span className="field-label mr-2">Stored</span>
+                {[
+                  labelOf(STORAGE_TYPES, letter.storage_type),
+                  letter.storage_container,
+                  letter.storage_folder,
+                  letter.storage_position,
+                ]
+                  .filter((v) => v && v !== "—")
+                  .join(" · ") || "—"}
               </span>
             </div>
           </div>
@@ -408,15 +440,21 @@ function LetterPage() {
             ))}
 
             {[
-              { key: "date_precision", label: "Date precision", opts: DATE_PRECISION },
+              { key: "date_precision", label: "Date status / precision", opts: DATE_PRECISION },
               { key: "date_certainty", label: "Date certainty", opts: DATE_CERTAINTY },
               { key: "period", label: "Period", opts: PERIODS },
+              {
+                key: "identification_status",
+                label: "Identification status",
+                opts: IDENTIFICATION_STATUS,
+              },
               { key: "scan_status", label: "Scan status", opts: SCAN_STATUS },
               { key: "review_status", label: "Review status", opts: REVIEW_STATUS },
               { key: "publication_status", label: "Publication status", opts: PUBLICATION_STATUS },
               { key: "original_copy", label: "Original / copy", opts: ORIGINAL_COPY },
               { key: "research_status", label: "Research status", opts: RECORD_RESEARCH_STATUS },
             ].map((f) => (
+
 
               <div key={f.key}>
                 <label className="field-label">{f.label}</label>
@@ -433,6 +471,37 @@ function LetterPage() {
                 </select>
               </div>
             ))}
+
+            <div className="col-span-3 rounded border border-border bg-card p-4">
+              <div className="field-label mb-3">Physical storage location</div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="field-label">Storage type</label>
+                  <select
+                    className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                    value={(form.storage_type as string) ?? ""}
+                    onChange={(e) => set("storage_type", e.target.value)}
+                  >
+                    {STORAGE_TYPES.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {STORAGE_FIELDS.map((f) => (
+                  <div key={f.key}>
+                    <label className="field-label">{f.label}</label>
+                    <Input
+                      placeholder={f.placeholder}
+                      value={(form[f.key] as string) ?? ""}
+                      onChange={(e) => set(f.key, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="field-label">Physical sheets</label>
               <Input
