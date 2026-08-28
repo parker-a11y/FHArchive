@@ -14,6 +14,8 @@ import {
   LogOut,
   Ship,
   CalendarDays,
+  BookOpen,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +25,7 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare },
   { to: "/letters", label: "All Records", icon: Files },
+  { to: "/sources", label: "Digital Sources", icon: Globe },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks },
@@ -53,40 +56,50 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="no-print sticky top-0 flex h-screen w-56 shrink-0 flex-col border-r border-border bg-sidebar">
-        <div className="border-b border-sidebar-border px-4 py-4">
-          <div className="font-display text-sm leading-tight font-semibold text-sidebar-foreground">
-            Harrington
-            <br />
-            Family Archive
+      <aside className="no-print sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-sidebar">
+        <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-archive-gold-strong text-sidebar-accent-foreground shadow-lg">
+            <BookOpen className="size-5" />
           </div>
-
-          <div className="field-label mt-1">Private workspace</div>
+          <div className="flex min-w-0 flex-col">
+            <span className="font-display text-lg leading-none font-semibold text-sidebar-accent-foreground">
+              Harrington
+            </span>
+            <span className="mt-1 text-[10px] font-bold tracking-[0.2em] text-sidebar-foreground/60 uppercase">
+              Family Archive
+            </span>
+          </div>
         </div>
-        <nav className="flex-1 overflow-y-auto p-2">
+        <nav className="flex-1 overflow-y-auto p-3">
           {NAV.map((item) => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`mb-0.5 flex items-center gap-2.5 rounded px-2.5 py-1.5 text-sm transition-colors ${
+                className={`group mb-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
                   active
                     ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
                 }`}
               >
-                <item.icon className="size-4" />
+                <item.icon
+                  className={`size-4 transition-colors ${
+                    active
+                      ? "text-archive-gold"
+                      : "text-sidebar-foreground/50 group-hover:text-archive-gold"
+                  }`}
+                />
                 {item.label}
               </Link>
             );
           })}
         </nav>
-        <div className="border-t border-sidebar-border p-2">
+        <div className="border-t border-sidebar-border p-3">
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start gap-2 text-muted-foreground"
+            className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={async () => {
               await supabase.auth.signOut();
               navigate({ to: "/auth" });

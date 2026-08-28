@@ -48,6 +48,7 @@ import {
 
 import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
+import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
 import {
   AiPanel,
@@ -626,8 +627,9 @@ function LetterPage() {
         <TabsContent value="references" className="mt-6">
           <ReferencesPanel letter={letter} />
         </TabsContent>
-        <TabsContent value="related" className="mt-6">
+        <TabsContent value="related" className="mt-6 space-y-10">
           <RelationsPanel letter={letter} />
+          <LetterSourcesPanel letter={letter} />
         </TabsContent>
         <TabsContent value="ai" className="mt-6">
           <AiPanel letter={letter} />

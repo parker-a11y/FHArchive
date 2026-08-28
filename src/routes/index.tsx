@@ -1,10 +1,37 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  Mail,
+  Camera,
+  Medal,
+  Landmark,
+  Home,
+  Newspaper,
+  Coins,
+  CalendarDays,
+  Gem,
+  Box,
+  Hash,
+  Layers,
+  ScanLine,
+  Images,
+  PenLine,
+  FileCheck2,
+  FileQuestion,
+  Eye,
+  CalendarClock,
+  ImageOff,
+  Hourglass,
+  Shield,
+  Globe,
+  type LucideIcon,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
-import { displayDate, RECORD_TYPES } from "@/lib/archive";
+import { fetchSources } from "@/lib/sources";
+import { displayDate } from "@/lib/archive";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,11 +56,56 @@ export const Route = createFileRoute("/")({
   ),
 });
 
-function Stat({ label, value, to }: { label: string; value: number; to?: string }) {
+type Tone = "blue" | "emerald" | "amber" | "indigo" | "rose" | "teal" | "ochre" | "plum";
+
+const TONE_BAR: Record<Tone, string> = {
+  blue: "bg-tone-blue",
+  emerald: "bg-tone-emerald",
+  amber: "bg-tone-amber",
+  indigo: "bg-tone-indigo",
+  rose: "bg-tone-rose",
+  teal: "bg-tone-teal",
+  ochre: "bg-tone-ochre",
+  plum: "bg-tone-plum",
+};
+const TONE_CHIP: Record<Tone, string> = {
+  blue: "bg-tone-blue-soft text-tone-blue",
+  emerald: "bg-tone-emerald-soft text-tone-emerald",
+  amber: "bg-tone-amber-soft text-tone-amber",
+  indigo: "bg-tone-indigo-soft text-tone-indigo",
+  rose: "bg-tone-rose-soft text-tone-rose",
+  teal: "bg-tone-teal-soft text-tone-teal",
+  ochre: "bg-tone-ochre-soft text-tone-ochre",
+  plum: "bg-tone-plum-soft text-tone-plum",
+};
+
+function Stat({
+  label,
+  value,
+  to,
+  tone = "amber",
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  to?: string;
+  tone?: Tone;
+  icon?: LucideIcon;
+}) {
   const body = (
-    <div className="rounded border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40">
-      <div className="field-label">{label}</div>
-      <div className="font-display mt-1 text-3xl font-semibold tabular-nums">{value}</div>
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
+      <div className={`absolute top-0 left-0 h-full w-1.5 ${TONE_BAR[tone]}`} />
+      <div className="mb-3 flex items-center gap-2.5">
+        {Icon && (
+          <div
+            className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TONE_CHIP[tone]}`}
+          >
+            <Icon className="size-4" />
+          </div>
+        )}
+        <span className="field-label">{label}</span>
+      </div>
+      <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
     </div>
   );
   return to ? (
@@ -55,29 +127,74 @@ function Dashboard() {
     queryKey: ["item-counts"],
     queryFn: fetchItemCounts,
   });
+  const { data: sources = [] } = useQuery({
+    queryKey: ["sources"],
+    queryFn: fetchSources,
+  });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
-  const stats = [
-    { label: "FH records", value: letters.length },
-    { label: "Total items", value: itemCounts?.totalItems ?? 0 },
-    { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0 },
-    { label: "Total scans", value: itemCounts?.totalScans ?? 0 },
-    { label: "Cataloged", value: c((l) => !!(l.author || l.recipient || l.normalized_date)) },
-    { label: "Records with scans", value: c((l) => l.image_count > 0) },
-    { label: "Transcribed", value: c((l) => l.transcription_status === "human_verified") },
+  const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
+    { label: "FH records", value: letters.length, tone: "blue", icon: Hash },
+    {
+      label: "Digital sources",
+      value: sources.length,
+      tone: "teal",
+      icon: Globe,
+      to: "/sources",
+    },
+    { label: "Total items", value: itemCounts?.totalItems ?? 0, tone: "emerald", icon: Layers },
+    { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0, tone: "teal", icon: ScanLine },
+    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "teal", icon: Images },
+    {
+      label: "Cataloged",
+      value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
+      tone: "amber",
+      icon: PenLine,
+    },
+    {
+      label: "Records with scans",
+      value: c((l) => l.image_count > 0),
+      tone: "teal",
+      icon: FileCheck2,
+    },
+    {
+      label: "Transcribed",
+      value: c((l) => l.transcription_status === "human_verified"),
+      tone: "emerald",
+      icon: FileCheck2,
+    },
     {
       label: "Needing transcription",
       value: c((l) => l.transcription_status !== "human_verified"),
+      tone: "rose",
+      icon: FileQuestion,
     },
-    { label: "Reviewed", value: c((l) => l.review_status === "reviewed") },
+    {
+      label: "Reviewed",
+      value: c((l) => l.review_status === "reviewed"),
+      tone: "indigo",
+      icon: Eye,
+    },
     {
       label: "Uncertain dates",
       value: c((l) => l.date_certainty !== "confirmed" || l.date_precision !== "exact"),
+      tone: "ochre",
+      icon: CalendarClock,
     },
-    { label: "Records missing scans", value: c((l) => l.image_count === 0) },
-    { label: "Prewar", value: c((l) => l.period === "prewar") },
-    { label: "Wartime", value: c((l) => l.period === "wartime") },
-    { label: "Postwar", value: c((l) => l.period === "postwar") },
+    {
+      label: "Records missing scans",
+      value: c((l) => l.image_count === 0),
+      tone: "rose",
+      icon: ImageOff,
+    },
+    { label: "Prewar", value: c((l) => l.period === "prewar"), tone: "plum", icon: Hourglass },
+    { label: "Wartime", value: c((l) => l.period === "wartime"), tone: "rose", icon: Shield },
+    {
+      label: "Postwar",
+      value: c((l) => l.period === "postwar"),
+      tone: "indigo",
+      icon: CalendarDays,
+    },
   ];
 
   const recent = [...letters].sort((a, b) => b.fh_seq - a.fh_seq).slice(0, 8);
@@ -88,8 +205,12 @@ function Dashboard() {
         title="Archive Dashboard"
         description="Harrington family letters — cataloging status."
         actions={
-          <Button size="lg" className="gap-2" onClick={() => navigate({ to: "/catalog" })}>
-            <Plus className="size-4" /> ADD NEXT ARCHIVE ITEM
+          <Button
+            size="lg"
+            className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
+            onClick={() => navigate({ to: "/catalog" })}
+          >
+            <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
           </Button>
         }
       />
@@ -98,57 +219,64 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
               ))}
             </div>
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-5">
               {[
-                { value: "letter", label: "Letters" },
-                { value: "photograph", label: "Photographs" },
-                { value: "military", label: "Military" },
-                { value: "government", label: "Government" },
-                { value: "family", label: "Personal / Family" },
-                { value: "newspaper", label: "Newspaper" },
-                { value: "financial", label: "Financial" },
-                { value: "program", label: "Programs" },
-                { value: "artifact", label: "Artifacts" },
-                { value: "other", label: "Other" },
+                { value: "letter", label: "Letters", tone: "blue" as Tone, icon: Mail },
+                { value: "photograph", label: "Photographs", tone: "emerald" as Tone, icon: Camera },
+                { value: "military", label: "Military", tone: "rose" as Tone, icon: Medal },
+                { value: "government", label: "Government", tone: "indigo" as Tone, icon: Landmark },
+                { value: "family", label: "Personal / Family", tone: "amber" as Tone, icon: Home },
+                { value: "newspaper", label: "Newspaper", tone: "teal" as Tone, icon: Newspaper },
+                { value: "financial", label: "Financial", tone: "ochre" as Tone, icon: Coins },
+                { value: "program", label: "Programs", tone: "plum" as Tone, icon: CalendarDays },
+                { value: "artifact", label: "Artifacts", tone: "rose" as Tone, icon: Gem },
+                { value: "other", label: "Other", tone: "indigo" as Tone, icon: Box },
               ].map((cat) => (
                 <Stat
                   key={cat.value}
                   label={cat.label}
                   value={letters.filter((l) => (l.record_type ?? "letter") === cat.value).length}
                   to={`/letters?type=${cat.value}`}
+                  tone={cat.tone}
+                  icon={cat.icon}
                 />
               ))}
             </div>
 
             <h2 className="field-label mt-10 mb-3">Recently added</h2>
-            <div className="divide-y divide-border rounded border border-border bg-card">
-              {recent.length === 0 && (
-                <p className="px-4 py-6 text-sm text-muted-foreground">
-                  No letters yet. Start with Quick Entry.
-                </p>
-              )}
-              {recent.map((l) => (
-                <Link
-                  key={l.id}
-                  to="/letters/$archiveId"
-                  params={{ archiveId: l.archive_id }}
-                  className="flex items-center gap-6 px-4 py-2.5 text-sm hover:bg-muted/60"
-                >
-                  <span className="archive-id w-28 text-base">{l.archive_id}</span>
-                  <span className="w-40 text-muted-foreground">{displayDate(l)}</span>
-                  <span className="truncate">
-                    {l.author || "—"} → {l.recipient || "—"}
-                  </span>
-                  <span className="ml-auto text-muted-foreground">{l.origin}</span>
-                </Link>
-              ))}
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <div className="divide-y divide-border">
+                {recent.length === 0 && (
+                  <p className="px-5 py-6 text-sm text-muted-foreground">
+                    No records yet. Start with Quick Entry.
+                  </p>
+                )}
+                {recent.map((l) => (
+                  <Link
+                    key={l.id}
+                    to="/letters/$archiveId"
+                    params={{ archiveId: l.archive_id }}
+                    className="flex items-center gap-4 px-4 py-2.5 text-sm transition-colors hover:bg-muted/60"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-amber-soft text-tone-amber">
+                      <Mail className="size-4" />
+                    </div>
+                    <span className="archive-id w-24 text-base">{l.archive_id}</span>
+                    <span className="w-36 text-muted-foreground">{displayDate(l)}</span>
+                    <span className="truncate font-medium">
+                      {l.title || `${l.author || "—"} → ${l.recipient || "—"}`}
+                    </span>
+                    <span className="ml-auto text-muted-foreground">{l.origin}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </>
         )}

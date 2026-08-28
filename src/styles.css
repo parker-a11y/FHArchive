@@ -62,14 +62,14 @@
 }
 
 :root {
-  --radius: 0.25rem;
-  --background: oklch(0.981 0.006 85);
+  --radius: 0.75rem;
+  --background: oklch(0.972 0.004 90);
   --foreground: oklch(0.235 0.012 65);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.235 0.012 65);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.235 0.012 65);
-  --primary: oklch(0.335 0.045 245);
+  --primary: oklch(0.21 0.018 265);
   --primary-foreground: oklch(0.985 0.005 85);
   --secondary: oklch(0.944 0.009 85);
   --secondary-foreground: oklch(0.3 0.014 65);
@@ -79,38 +79,78 @@
   --accent-foreground: oklch(0.3 0.03 60);
   --destructive: oklch(0.503 0.16 27);
   --destructive-foreground: oklch(0.985 0.005 85);
-  --border: oklch(0.888 0.01 80);
-  --input: oklch(0.888 0.01 80);
-  --ring: oklch(0.6 0.05 245);
+  --border: oklch(0.895 0.008 80);
+  --input: oklch(0.895 0.008 80);
+  --ring: oklch(0.65 0.14 70);
   --chart-1: oklch(0.45 0.09 245);
   --chart-2: oklch(0.58 0.1 55);
   --chart-3: oklch(0.5 0.08 150);
   --chart-4: oklch(0.55 0.13 25);
   --chart-5: oklch(0.45 0.06 300);
-  --sidebar: oklch(0.966 0.008 85);
-  --sidebar-foreground: oklch(0.29 0.012 65);
-  --sidebar-primary: oklch(0.335 0.045 245);
-  --sidebar-primary-foreground: oklch(0.985 0.005 85);
-  --sidebar-accent: oklch(0.923 0.014 80);
-  --sidebar-accent-foreground: oklch(0.29 0.02 65);
-  --sidebar-border: oklch(0.885 0.01 80);
-  --sidebar-ring: oklch(0.6 0.05 245);
+  --sidebar: oklch(0.21 0.018 265);
+  --sidebar-foreground: oklch(0.72 0.012 265);
+  --sidebar-primary: oklch(0.68 0.14 70);
+  --sidebar-primary-foreground: oklch(0.21 0.018 265);
+  --sidebar-accent: oklch(0.27 0.018 265);
+  --sidebar-accent-foreground: oklch(0.96 0.005 90);
+  --sidebar-border: oklch(0.28 0.018 265);
+  --sidebar-ring: oklch(0.68 0.14 70);
 
-  --archive-ink: oklch(0.235 0.012 65);
-  --archive-rule: oklch(0.855 0.012 80);
+  --archive-ink: oklch(0.21 0.018 265);
+  --archive-gold: oklch(0.65 0.13 70);
+  --archive-gold-strong: oklch(0.55 0.12 60);
+  --archive-rule: oklch(0.895 0.008 80);
   --archive-flag: oklch(0.52 0.15 45);
   --archive-ai: oklch(0.47 0.1 300);
   --archive-ai-surface: oklch(0.955 0.02 300);
-  --font-display: "IBM Plex Serif", Georgia, serif;
-  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+
+  /* Stat/category accent tones (bar + soft chip) */
+  --tone-blue: oklch(0.55 0.14 255);
+  --tone-blue-soft: oklch(0.95 0.025 255);
+  --tone-emerald: oklch(0.55 0.11 160);
+  --tone-emerald-soft: oklch(0.95 0.03 160);
+  --tone-amber: oklch(0.65 0.14 70);
+  --tone-amber-soft: oklch(0.95 0.04 85);
+  --tone-indigo: oklch(0.5 0.12 285);
+  --tone-indigo-soft: oklch(0.95 0.02 285);
+  --tone-rose: oklch(0.55 0.16 15);
+  --tone-rose-soft: oklch(0.95 0.025 20);
+  --tone-teal: oklch(0.55 0.09 200);
+  --tone-teal-soft: oklch(0.95 0.02 200);
+  --tone-ochre: oklch(0.6 0.11 55);
+  --tone-ochre-soft: oklch(0.95 0.035 70);
+  --tone-plum: oklch(0.5 0.09 330);
+  --tone-plum-soft: oklch(0.95 0.02 330);
+
+  --font-display: "Crimson Pro", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 @theme inline {
+  --color-archive-ink: var(--archive-ink);
+  --color-archive-gold: var(--archive-gold);
+  --color-archive-gold-strong: var(--archive-gold-strong);
   --color-archive-rule: var(--archive-rule);
   --color-archive-flag: var(--archive-flag);
   --color-archive-ai: var(--archive-ai);
   --color-archive-ai-surface: var(--archive-ai-surface);
+  --color-tone-blue: var(--tone-blue);
+  --color-tone-blue-soft: var(--tone-blue-soft);
+  --color-tone-emerald: var(--tone-emerald);
+  --color-tone-emerald-soft: var(--tone-emerald-soft);
+  --color-tone-amber: var(--tone-amber);
+  --color-tone-amber-soft: var(--tone-amber-soft);
+  --color-tone-indigo: var(--tone-indigo);
+  --color-tone-indigo-soft: var(--tone-indigo-soft);
+  --color-tone-rose: var(--tone-rose);
+  --color-tone-rose-soft: var(--tone-rose-soft);
+  --color-tone-teal: var(--tone-teal);
+  --color-tone-teal-soft: var(--tone-teal-soft);
+  --color-tone-ochre: var(--tone-ochre);
+  --color-tone-ochre-soft: var(--tone-ochre-soft);
+  --color-tone-plum: var(--tone-plum);
+  --color-tone-plum-soft: var(--tone-plum-soft);
   --font-display: var(--font-display);
   --font-sans: var(--font-body);
   --font-mono: var(--font-mono);
