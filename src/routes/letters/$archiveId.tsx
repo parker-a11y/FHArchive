@@ -179,6 +179,10 @@ function LetterPage() {
     payload.review_status = form.review_status;
     payload.scan_status = form.scan_status;
     payload.publication_status = form.publication_status;
+    payload.record_type = form.record_type || "letter";
+    payload.original_copy = form.original_copy || "unknown";
+    payload.research_status = form.research_status || "unreviewed";
+
 
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
@@ -335,7 +339,9 @@ function LetterPage() {
                 onChange={(e) => set("normalized_date", e.target.value)}
               />
             </div>
-            {TEXT_FIELDS.map((f) => (
+            {TEXT_FIELDS.filter(
+              (f) => !f.letterOnly || isLetterType(form.record_type as string),
+            ).map((f) => (
               <div key={f.key}>
                 <label className="field-label">{f.label}</label>
                 <Input
@@ -344,6 +350,7 @@ function LetterPage() {
                 />
               </div>
             ))}
+
             {[
               { key: "date_precision", label: "Date precision", opts: DATE_PRECISION },
               { key: "date_certainty", label: "Date certainty", opts: DATE_CERTAINTY },
