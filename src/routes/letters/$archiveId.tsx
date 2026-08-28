@@ -490,7 +490,50 @@ function LetterPage() {
                 />
               </div>
             </div>
+            <div className="col-span-3 grid grid-cols-2 gap-4">
+              <div>
+                <label className="field-label">Physical description</label>
+                <Textarea
+                  rows={3}
+                  value={(form.physical_description as string) ?? ""}
+                  onChange={(e) => set("physical_description", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Provenance</label>
+                <Textarea
+                  rows={3}
+                  value={(form.provenance as string) ?? ""}
+                  onChange={(e) => set("provenance", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Historical context notes</label>
+                <Textarea
+                  rows={3}
+                  value={(form.historical_notes as string) ?? ""}
+                  onChange={(e) => set("historical_notes", e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">Private research notes</label>
+                <Textarea
+                  rows={3}
+                  value={(form.research_notes as string) ?? ""}
+                  onChange={(e) => set("research_notes", e.target.value)}
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="field-label">Citations / sources</label>
+                <Textarea
+                  rows={2}
+                  value={(form.citations as string) ?? ""}
+                  onChange={(e) => set("citations", e.target.value)}
+                />
+              </div>
+            </div>
           </div>
+
         </TabsContent>
 
         <TabsContent value="scans" className="mt-6">
