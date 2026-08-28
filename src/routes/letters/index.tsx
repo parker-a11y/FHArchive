@@ -124,10 +124,11 @@ function LettersTable() {
     return m;
   }, [tags]);
 
+  const search = Route.useSearch();
   const [q, setQ] = useState("");
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
-  const [rType, setRType] = useState("");
+  const [rType, setRType] = useState(search.type ?? "");
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
