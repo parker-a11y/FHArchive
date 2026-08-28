@@ -63,7 +63,7 @@ function FileCard({
   onDelete: () => void;
   onOpen: () => void;
 }) {
-  const url = useSignedUrl(file.storage_path);
+  const url = file.signedUrl || useSignedUrl(file.storage_path);
   const [label, setLabel] = useState(file.file_label);
   const [notes, setNotes] = useState(file.notes ?? "");
   const dirty = label !== file.file_label || notes !== (file.notes ?? "");
