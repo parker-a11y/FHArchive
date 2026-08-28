@@ -102,7 +102,8 @@ export function ScansPanel({
   emptyLabel?: string;
 }) {
   const qc = useQueryClient();
-  const [viewer, setViewer] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const [dragId, setDragId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
