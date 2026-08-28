@@ -109,7 +109,6 @@ function Dashboard() {
                 { value: "financial", label: "Financial" },
                 { value: "program", label: "Programs" },
                 { value: "artifact", label: "Artifacts" },
-                { value: "media", label: "Audio / Video" },
                 { value: "other", label: "Other" },
               ].map((cat) => (
                 <Stat

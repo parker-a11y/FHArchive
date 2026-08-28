@@ -17,7 +17,6 @@ export const RECORD_TYPES = [
   { value: "medal", label: "Medal / Decoration" },
   { value: "insignia", label: "Pin / Insignia" },
   { value: "scrapbook", label: "Scrapbook Material" },
-  { value: "media", label: "Audio / Video" },
   { value: "research", label: "Research Material" },
   { value: "other", label: "Other" },
 ] as const;
@@ -127,7 +126,6 @@ export const SUBTYPES: Record<string, readonly string[]> = {
   medal: ["Campaign medal", "Service medal", "Decoration", "Ribbon", "Citation bar", "Other"],
   insignia: ["Rank insignia", "Unit insignia", "Collar device", "Pin", "Patch", "Button", "Other"],
   scrapbook: ["Scrapbook page", "Loose clipping", "Mounted photograph", "Keepsake", "Other"],
-  media: ["Audio recording", "Film", "Video", "Interview", "Other"],
   research: ["Notes", "Article", "Book excerpt", "Web source", "Correspondence", "Other"],
   other: ["Other"],
 };
