@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ExternalLink, Globe, Plus, Search } from "lucide-react";
+import { ExternalLink, Globe, Paperclip, Plus, Search } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DS_SOURCE_TYPES, dsTypeLabel, fetchSources } from "@/lib/sources";
+import { DS_SOURCE_TYPES, dsTypeLabel, fetchDsFileCounts, fetchSources } from "@/lib/sources";
 
 export const Route = createFileRoute("/sources/")({
   head: () => ({
@@ -47,6 +47,11 @@ function SourcesList() {
     queryKey: ["sources"],
     queryFn: fetchSources,
   });
+  const { data: fileCounts = {} } = useQuery({
+    queryKey: ["ds-file-counts"],
+    queryFn: fetchDsFileCounts,
+  });
+
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
