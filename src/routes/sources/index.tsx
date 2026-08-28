@@ -79,7 +79,7 @@ function SourcesList() {
           </Button>
         }
       />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <div className="relative w-80">
             <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />

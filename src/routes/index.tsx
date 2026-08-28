@@ -228,7 +228,7 @@ function Dashboard() {
           </Button>
         }
       />
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (

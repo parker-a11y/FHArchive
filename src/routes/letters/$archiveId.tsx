@@ -164,10 +164,10 @@ function LetterPage() {
     setDirty(false);
   }, [letter]);
 
-  if (isLoading) return <div className="p-8 text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</div>;
   if (!letter)
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <p className="text-sm">No record found for {archiveId}.</p>
         <Link to="/letters" className="text-sm text-primary underline">
           Back to letters
@@ -239,7 +239,7 @@ function LetterPage() {
 
   return (
     <>
-      <header className="no-print border-b border-border px-8 py-5">
+      <header className="no-print border-b border-border px-4 sm:px-8 py-5">
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
@@ -358,7 +358,7 @@ function LetterPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="catalog" className="px-8 py-6">
+      <Tabs defaultValue="catalog" className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="scans">Items &amp; Scans ({letter.image_count})</TabsTrigger>
@@ -638,7 +638,7 @@ function LetterPage() {
           <HistoryPanel letter={letter} />
         </TabsContent>
       </Tabs>
-      <div className="px-8 pb-10 text-xs text-muted-foreground">
+      <div className="px-4 sm:px-8 pb-10 text-xs text-muted-foreground">
         Record created {new Date(letter.created_at).toLocaleDateString()} · modified{" "}
         {new Date(letter.updated_at).toLocaleDateString()} ·{" "}
         <button className="underline" onClick={() => navigate({ to: "/letters" })}>

@@ -172,7 +172,7 @@ function Backups() {
             <tbody>
               {runs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-6 sm:py-8 text-center text-muted-foreground">
                     No backups have run yet.
                   </td>
                 </tr>

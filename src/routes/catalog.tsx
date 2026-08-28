@@ -222,7 +222,7 @@ function QuickEntry() {
         title="Catalog Next Item"
         description="Type, date, a short description — then Save & Create Next (⌘/Ctrl + Enter). Details can be added later."
       />
-      <div className="grid grid-cols-[1fr_16rem] gap-8 p-8">
+      <div className="grid grid-cols-[1fr_16rem] gap-8 p-4 sm:p-8">
         <form
           onSubmit={(e) => {
             e.preventDefault();

@@ -86,7 +86,7 @@ function PlacePage() {
     qc.invalidateQueries({ queryKey: ["place", placeId] });
   }
 
-  if (!place) return <div className="p-8 text-sm text-muted-foreground">Loading…</div>;
+  if (!place) return <div className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</div>;
 
   const name = place.canonical_name as string;
   const related = letters.filter(
@@ -99,7 +99,7 @@ function PlacePage() {
   return (
     <>
       <PageHeader title={name} description="Place record" actions={<Button onClick={save}>Save</Button>} />
-      <div className="grid grid-cols-[1fr_22rem] gap-8 p-8">
+      <div className="grid grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
         <div className="grid grid-cols-2 gap-4">
           {FIELDS.map((f) => (
             <div key={f.key} className={f.area ? "col-span-2" : ""}>

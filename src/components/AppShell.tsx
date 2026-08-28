@@ -126,7 +126,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="no-print flex items-end justify-between gap-4 border-b border-border px-8 py-5">
+    <div className="no-print flex items-end justify-between gap-4 border-b border-border px-4 sm:px-8 py-5">
       <div>
         <h1 className="font-display text-2xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}

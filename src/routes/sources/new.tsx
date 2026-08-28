@@ -124,7 +124,7 @@ function NewSource() {
           )
         }
       />
-      <div className="max-w-3xl space-y-5 p-8">
+      <div className="max-w-3xl space-y-5 p-4 sm:p-8">
         <Field label="Title *">
           <Input value={form.title} onChange={set("title")} placeholder="e.g. USS Enterprise CV-6 combat footage, 1944" />
         </Field>
