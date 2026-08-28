@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Download, FileText, Trash2, Upload } from "lucide-react";
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DS_FILE_TYPES,
@@ -55,29 +56,45 @@ function FileCard({
   file,
   onSave,
   onDelete,
+  onOpen,
 }: {
   file: DsFile;
   onSave: (patch: Partial<DsFile>) => void;
   onDelete: () => void;
+  onOpen: () => void;
 }) {
-  const url = useSignedUrl(file.storage_path);
+  const url = file.signedUrl || useSignedUrl(file.storage_path);
   const [label, setLabel] = useState(file.file_label);
   const [notes, setNotes] = useState(file.notes ?? "");
   const dirty = label !== file.file_label || notes !== (file.notes ?? "");
+  const isViewable = ["image", "audio", "video"].includes(file.file_type);
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-3 overflow-hidden rounded-lg bg-muted">
         {file.file_type === "image" && url && (
-          <img src={url} alt={file.file_label || "Preservation copy"} className="max-h-56 w-full object-contain" />
+          <button
+            onClick={onOpen}
+            className="block h-56 w-full cursor-zoom-in"
+            aria-label={`Open ${file.file_label || "image"} fullscreen`}
+          >
+            <img src={url} alt={file.file_label || "Preservation copy"} className="h-full w-full object-contain" />
+          </button>
         )}
         {file.file_type === "audio" && url && (
-          <audio controls src={url} className="w-full" />
+          <div className="flex h-56 flex-col items-center justify-center px-4">
+            <audio controls src={url} className="w-full" />
+            <Button variant="outline" size="sm" className="mt-3 gap-2" onClick={onOpen}>
+              Open audio player
+            </Button>
+          </div>
         )}
         {file.file_type === "video" && url && (
-          <video controls src={url} className="max-h-56 w-full" />
+          <button onClick={onOpen} className="block h-56 w-full cursor-zoom-in">
+            <video src={url} className="h-full w-full object-contain" />
+          </button>
         )}
-        {!["image", "audio", "video"].includes(file.file_type) && (
+        {!isViewable && (
           <div className="flex h-24 items-center justify-center text-muted-foreground">
             <FileText className="size-8" />
           </div>
@@ -144,6 +161,8 @@ function FileCard({
 export function DsFilesPanel({ source }: { source: DigitalSource }) {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const { data: files = [] } = useQuery({
     queryKey: ["ds-files", source.id],
     queryFn: () => fetchDsFiles(source.id),
@@ -234,6 +253,21 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
     }
   }
 
+  const lightboxItems: LightboxItem[] = useMemo(
+    () =>
+      files
+        .filter((f) => f.signedUrl && ["image", "audio", "video"].includes(f.file_type))
+        .map((f) => ({
+          id: f.id,
+          url: f.signedUrl!,
+          type: f.file_type as "image" | "audio" | "video",
+          title: f.file_label,
+          subtitle: source.ds_id,
+          filename: f.original_filename,
+        })),
+    [files, source.ds_id],
+  );
+
   return (
     <div className="space-y-5">
       <div
@@ -274,16 +308,27 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {files.map((f) => (
+          {files.map((f, i) => (
             <FileCard
               key={f.id}
               file={f}
               onSave={(patch) => saveMutation.mutate({ id: f.id, patch })}
               onDelete={() => remove(f)}
+              onOpen={() => {
+                setViewerIndex(lightboxItems.findIndex((item) => item.id === f.id));
+                setViewerOpen(true);
+              }}
             />
           ))}
         </div>
       )}
+
+      <MediaLightbox
+        items={lightboxItems}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
     </div>
   );
 }

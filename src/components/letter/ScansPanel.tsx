@@ -1,10 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RotateCw, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { IMAGE_TYPES, scanFileLabel } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
 
@@ -18,7 +18,10 @@ type Scan = {
   sort_order: number;
   rotation: number;
   original_filename: string | null;
+  signedUrl?: string;
 };
+
+type ScanUpdate = Omit<Scan, "signedUrl">;
 
 function ScanThumb({
   scan,
@@ -30,7 +33,7 @@ function ScanThumb({
   onType,
 }: {
   scan: Scan;
-  onOpen: (url: string) => void;
+  onOpen: () => void;
   onDragStart: () => void;
   onDrop: () => void;
   onRotate: () => void;
@@ -54,7 +57,7 @@ function ScanThumb({
       className="w-44 shrink-0 rounded border border-border bg-card p-2"
     >
       <button
-        onClick={() => url && onOpen(url)}
+        onClick={() => url && onOpen()}
         className="block h-40 w-full overflow-hidden rounded bg-muted"
       >
         {url && (
@@ -102,7 +105,8 @@ export function ScansPanel({
   emptyLabel?: string;
 }) {
   const qc = useQueryClient();
-  const [viewer, setViewer] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const [dragId, setDragId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -113,7 +117,16 @@ export function ScansPanel({
       q = itemId ? q.eq("item_id", itemId) : q.is("item_id", null);
       const { data, error } = await q.order("sort_order");
       if (error) throw error;
-      return (data ?? []) as Scan[];
+      const rows = (data ?? []) as Scan[];
+      const withUrls = await Promise.all(
+        rows.map(async (s) => {
+          const { data: signed } = await supabase.storage
+            .from("scans")
+            .createSignedUrl(s.storage_path, 3600);
+          return { ...s, signedUrl: signed?.signedUrl ?? "" };
+        }),
+      );
+      return withUrls;
     },
   });
 
@@ -178,7 +191,7 @@ export function ScansPanel({
     qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
   }
 
-  async function updateScan(id: string, patch: Partial<Scan>) {
+  async function updateScan(id: string, patch: Partial<ScanUpdate>) {
     await supabase.from("letter_scans").update(patch).eq("id", id);
     qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
   }
@@ -190,6 +203,22 @@ export function ScansPanel({
     qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
     await syncCount();
   }
+
+  const lightboxItems: LightboxItem[] = useMemo(
+    () =>
+      scans
+        .filter((s) => s.signedUrl)
+        .map((s) => ({
+          id: s.id,
+          url: s.signedUrl!,
+          type: "image",
+          title: s.file_label,
+          subtitle: letter.archive_id,
+          filename: s.original_filename,
+          rotation: s.rotation,
+        })),
+    [scans, letter.archive_id],
+  );
 
   return (
     <section>
@@ -227,11 +256,14 @@ export function ScansPanel({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {scans.map((s) => (
+        {scans.map((s, i) => (
           <ScanThumb
             key={s.id}
             scan={s}
-            onOpen={setViewer}
+            onOpen={() => {
+              setViewerIndex(i);
+              setViewerOpen(true);
+            }}
             onDragStart={() => setDragId(s.id)}
             onDrop={() => reorder(s.id)}
             onRotate={() => updateScan(s.id, { rotation: (s.rotation + 90) % 360 })}
@@ -247,11 +279,13 @@ export function ScansPanel({
         {scans.length === 0 && <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
       </div>
 
-      <Dialog open={!!viewer} onOpenChange={() => setViewer(null)}>
-        <DialogContent className="max-w-[95vw] sm:max-w-5xl">
-          {viewer && <img src={viewer} alt="Scan" className="max-h-[85vh] w-full object-contain" />}
-        </DialogContent>
-      </Dialog>
+      <MediaLightbox
+        items={lightboxItems}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        onRotationChange={(id, rotation) => updateScan(id, { rotation })}
+      />
     </section>
   );
 }
