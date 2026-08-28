@@ -246,6 +246,7 @@ export type Database = {
           transcript: string | null
           updated_at: string
           url: string | null
+          visibility: string
         }
         Insert: {
           citation?: string | null
@@ -270,6 +271,7 @@ export type Database = {
           transcript?: string | null
           updated_at?: string
           url?: string | null
+          visibility?: string
         }
         Update: {
           citation?: string | null
@@ -294,6 +296,7 @@ export type Database = {
           transcript?: string | null
           updated_at?: string
           url?: string | null
+          visibility?: string
         }
         Relationships: []
       }
@@ -1671,6 +1674,69 @@ export type Database = {
             columns: ["letter_id"]
             isOneToOne: false
             referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_shares: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          file_id: string | null
+          id: string
+          include_notes: boolean
+          include_transcript: boolean
+          last_viewed_at: string | null
+          owner_id: string
+          public_note: string | null
+          scope: string
+          source_id: string
+          token: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          file_id?: string | null
+          id?: string
+          include_notes?: boolean
+          include_transcript?: boolean
+          last_viewed_at?: string | null
+          owner_id?: string
+          public_note?: string | null
+          scope?: string
+          source_id: string
+          token: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          file_id?: string | null
+          id?: string
+          include_notes?: boolean
+          include_transcript?: boolean
+          last_viewed_at?: string | null
+          owner_id?: string
+          public_note?: string | null
+          scope?: string
+          source_id?: string
+          token?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_shares_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "ds_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_shares_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
             referencedColumns: ["id"]
           },
         ]

@@ -40,6 +40,10 @@ import {
   SourceLettersPanel,
 } from "@/components/sources/SourcePanels";
 import { DsFilesPanel } from "@/components/sources/DsFilesPanel";
+import {
+  ShareSourceDialog,
+  SourceShareStatusBadge,
+} from "@/components/sources/ShareSourceDialog";
 
 
 export const Route = createFileRoute("/sources/$dsId")({
@@ -137,6 +141,7 @@ function SourcePage() {
               <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                 {dsTypeLabel(source.source_type)}
               </span>
+              <SourceShareStatusBadge visibility={source.visibility} />
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">{source.title}</p>
           </div>
@@ -148,6 +153,7 @@ function SourcePage() {
           <Button variant="outline" size="icon" onClick={() => navigate({ to: "/sources/$dsId", params: { dsId: nextId } })}>
             <ChevronRight className="size-4" />
           </Button>
+          <ShareSourceDialog source={source} />
           {source.url && (
             <Button variant="outline" className="gap-2" asChild>
               <a href={source.url} target="_blank" rel="noreferrer">

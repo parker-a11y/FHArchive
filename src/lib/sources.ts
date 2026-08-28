@@ -43,6 +43,7 @@ export type DigitalSource = {
   rights_notes: string | null;
   citation: string | null;
   local_file_path: string | null;
+  visibility?: string;
   created_at: string;
   updated_at: string;
 };
