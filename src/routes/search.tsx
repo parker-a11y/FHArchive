@@ -7,11 +7,15 @@ import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PERIODS,
+  RECORD_RESEARCH_STATUS,
+  RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
   TRANSCRIPTION_STATUS,
   displayDate,
+  subtypesFor,
 } from "@/lib/archive";
+
 
 export const Route = createFileRoute("/search")({
   head: () => ({
