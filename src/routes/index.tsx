@@ -24,12 +24,14 @@ import {
   ImageOff,
   Hourglass,
   Shield,
+  Globe,
   type LucideIcon,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
-import { displayDate, RECORD_TYPES } from "@/lib/archive";
+import { fetchSources } from "@/lib/sources";
+import { displayDate } from "@/lib/archive";
 
 export const Route = createFileRoute("/")({
   head: () => ({
