@@ -56,8 +56,9 @@ function Organizations() {
     qc.invalidateQueries({ queryKey: ["entities"] });
   }
 
-  async function update(id: string, patch: Record<string, string>) {
+  async function update(id: string, patch: { description: string }) {
     const { error } = await supabase.from("organizations").update(patch).eq("id", id);
+
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["organizations"] });
   }
