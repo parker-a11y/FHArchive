@@ -30,7 +30,7 @@ function ScanThumb({
   onType,
 }: {
   scan: Scan;
-  onOpen: (url: string) => void;
+  onOpen: () => void;
   onDragStart: () => void;
   onDrop: () => void;
   onRotate: () => void;
@@ -54,7 +54,7 @@ function ScanThumb({
       className="w-44 shrink-0 rounded border border-border bg-card p-2"
     >
       <button
-        onClick={() => url && onOpen(url)}
+        onClick={() => url && onOpen()}
         className="block h-40 w-full overflow-hidden rounded bg-muted"
       >
         {url && (
