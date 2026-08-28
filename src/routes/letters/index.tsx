@@ -133,12 +133,18 @@ function LettersTable() {
       return (String(av ?? "") > String(bv ?? "") ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, sort, keywordsByLetter]);
 
   function exportRows() {
     return rows.map((l) => ({
       fh_id: l.archive_id,
+      record_type: labelOf(RECORD_TYPES, l.record_type),
+      subtype: l.subtype ?? "",
+      title: l.title ?? "",
+      primary_person: l.primary_person ?? "",
       date_normalized: l.normalized_date ?? "",
+      date_end: l.date_end ?? "",
+
       date_as_written: l.date_as_written ?? "",
       date_precision: l.date_precision,
       date_certainty: l.date_certainty,
