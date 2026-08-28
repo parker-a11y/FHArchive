@@ -173,6 +173,19 @@ export type BackupResult = {
 
 export async function runBackup(): Promise<BackupResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  // Keep the scheduled job's credential in sync so the nightly cron can call
+  // this endpoint. Stored in a service-role-only table.
+  const cronSecret = process.env["LOVABLE_CRON_SECRET"];
+  if (cronSecret) {
+    await supabaseAdmin
+      .from("job_config")
+      .upsert(
+        { key: "cron_secret", value: cronSecret, updated_at: new Date().toISOString() },
+        { onConflict: "key" },
+      );
+  }
+
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   const folderName = `db-${stamp}`;
 
