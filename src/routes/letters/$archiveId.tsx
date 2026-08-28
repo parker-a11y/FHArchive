@@ -84,9 +84,17 @@ const TEXT_FIELDS = [
   { key: "origin", label: "Origin / location", letterOnly: false },
   { key: "destination", label: "Destination", letterOnly: true },
   { key: "primary_person", label: "Primary person", letterOnly: false },
-  { key: "storage_location", label: "Box / folder / storage", letterOnly: false },
   { key: "physical_condition", label: "Physical condition", letterOnly: false },
 ];
+
+const STORAGE_FIELDS = [
+  { key: "storage_container", label: "Container / box", placeholder: "Artifact Box 01" },
+  { key: "storage_folder", label: "Folder / jacket", placeholder: "FH-0268" },
+  { key: "storage_position", label: "Position / compartment", placeholder: "Compartment 07" },
+  { key: "storage_notes", label: "Location notes", placeholder: "" },
+  { key: "storage_location", label: "Legacy storage note", placeholder: "" },
+];
+
 
 
 function LetterPage() {
