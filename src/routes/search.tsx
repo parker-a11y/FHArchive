@@ -233,11 +233,61 @@ function SearchPage() {
             <label className="field-label">Location</label>
             <Input value={place} onChange={(e) => setPlace(e.target.value)} className="h-8" />
           </div>
+          <div>
+            <label className="field-label">Record type</label>
+            <select
+              className="h-8 w-full rounded border border-input bg-background px-2 text-sm"
+              value={rtype}
+              onChange={(e) => {
+                setRtype(e.target.value);
+                setSubtype("");
+              }}
+            >
+              <option value="">Any</option>
+              {RECORD_TYPES.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {rtype && (
+            <div>
+              <label className="field-label">Subtype</label>
+              <select
+                className="h-8 w-full rounded border border-input bg-background px-2 text-sm"
+                value={subtype}
+                onChange={(e) => setSubtype(e.target.value)}
+              >
+                <option value="">Any</option>
+                {subtypesFor(rtype).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           {[
+            { label: "Person", v: personId, set: setPersonId, opts: (entities?.people ?? []).map((p) => ({ value: p.id, label: p.name })) },
+            {
+              label: "Organization / ship",
+              v: orgId,
+              set: setOrgId,
+              opts: (entities?.organizations ?? []).map((o) => ({ value: o.id, label: o.name })),
+            },
+            {
+              label: "Event",
+              v: eventId,
+              set: setEventId,
+              opts: (entities?.events ?? []).map((e) => ({ value: e.id, label: e.name })),
+            },
+            { label: "Research status", v: research, set: setResearch, opts: RECORD_RESEARCH_STATUS },
             { label: "Period", v: period, set: setPeriod, opts: PERIODS },
             { label: "Transcription", v: tstat, set: setTstat, opts: TRANSCRIPTION_STATUS },
             { label: "Scan status", v: sstat, set: setSstat, opts: SCAN_STATUS },
             { label: "Review status", v: rstat, set: setRstat, opts: REVIEW_STATUS },
+
           ].map((f) => (
             <div key={f.label}>
               <label className="field-label">{f.label}</label>
