@@ -32,6 +32,8 @@ export type DigitalSource = {
   creator: string | null;
   institution: string | null;
   original_date: string | null;
+  normalized_date: string | null;
+  date_precision: string;
   date_accessed: string | null;
   historical_date_range: string | null;
   url: string | null;
@@ -44,6 +46,72 @@ export type DigitalSource = {
   created_at: string;
   updated_at: string;
 };
+
+/* ---------------- Preservation copies (uploaded files) ---------------- */
+
+export const DS_FILE_TYPES = [
+  { value: "image", label: "Image" },
+  { value: "audio", label: "Audio" },
+  { value: "video", label: "Video" },
+  { value: "document", label: "Document" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type DsFile = {
+  id: string;
+  source_id: string;
+  storage_path: string;
+  original_filename: string | null;
+  file_label: string;
+  file_type: string;
+  mime_type: string | null;
+  file_size: number | null;
+  sort_order: number;
+  notes: string | null;
+  created_at: string;
+};
+
+/** Best-guess bucket for a browser File, used to pick the right preview. */
+export function inferFileType(file: File): string {
+  const m = file.type;
+  if (m.startsWith("image/")) return "image";
+  if (m.startsWith("audio/")) return "audio";
+  if (m.startsWith("video/")) return "video";
+  if (m === "application/pdf" || m.startsWith("text/")) return "document";
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (["jpg", "jpeg", "png", "gif", "webp", "tif", "tiff", "heic"].includes(ext)) return "image";
+  if (["mp3", "wav", "m4a", "aac", "flac", "ogg"].includes(ext)) return "audio";
+  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext)) return "video";
+  if (["pdf", "doc", "docx", "txt", "rtf"].includes(ext)) return "document";
+  return "other";
+}
+
+export function formatFileSize(bytes: number | null) {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+export async function fetchDsFiles(sourceId: string): Promise<DsFile[]> {
+  const { data, error } = await supabase
+    .from("ds_files")
+    .select("*")
+    .eq("source_id", sourceId)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as DsFile[];
+}
+
+/** Map of source_id -> number of preservation copies, for list badges. */
+export async function fetchDsFileCounts(): Promise<Record<string, number>> {
+  const { data, error } = await supabase.from("ds_files").select("source_id");
+  if (error) throw error;
+  const map: Record<string, number> = {};
+  for (const row of data ?? []) map[row.source_id] = (map[row.source_id] ?? 0) + 1;
+  return map;
+}
+
 
 export type DsSegment = {
   id: string;
@@ -61,10 +129,13 @@ export async function fetchSources(): Promise<DigitalSource[]> {
   const { data, error } = await supabase
     .from("digital_sources")
     .select("*")
+    // Undated sources sort last, then oldest first, then by DS number.
+    .order("normalized_date", { ascending: true, nullsFirst: false })
     .order("ds_seq", { ascending: true });
   if (error) throw error;
   return (data ?? []) as DigitalSource[];
 }
+
 
 export async function fetchSourceByDsId(dsId: string): Promise<DigitalSource | null> {
   const { data, error } = await supabase
@@ -89,6 +160,8 @@ export type NewSourceInput = {
   creator?: string;
   institution?: string;
   original_date?: string;
+  normalized_date?: string;
+  date_precision?: string;
   date_accessed?: string;
   historical_date_range?: string;
   url?: string;
@@ -111,10 +184,13 @@ export async function createDigitalSource(
     p_url: input.url || null,
     p_description: input.description || null,
     p_notes: input.notes || null,
+    p_normalized_date: input.normalized_date || null,
+    p_date_precision: input.date_precision || "unknown",
   };
   const { data, error } = await supabase.rpc("create_digital_source", payload as never);
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
+
   return row as { id: string; ds_seq: number; ds_id: string };
 }
 

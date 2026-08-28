@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DS_SOURCE_TYPES, createDigitalSource, previewNextDsId } from "@/lib/sources";
+import { DATE_PRECISION } from "@/lib/archive";
+
 
 export const Route = createFileRoute("/sources/new")({
   head: () => ({
@@ -58,12 +60,15 @@ function NewSource() {
     creator: "",
     institution: "",
     original_date: "",
+    normalized_date: "",
+    date_precision: "unknown",
     date_accessed: "",
     historical_date_range: "",
     url: "",
     description: "",
     notes: "",
   });
+
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -150,6 +155,27 @@ function NewSource() {
           <Field label="Original date (as shown)">
             <Input value={form.original_date} onChange={set("original_date")} placeholder="e.g. 1944, c. 1943" />
           </Field>
+          <Field label="Normalized date (for sorting)">
+            <Input type="date" value={form.normalized_date} onChange={set("normalized_date")} />
+          </Field>
+          <Field label="Date precision">
+            <Select
+              value={form.date_precision}
+              onValueChange={(v) => setForm((f) => ({ ...f, date_precision: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DATE_PRECISION.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
           <Field label="Historical date range">
             <Input value={form.historical_date_range} onChange={set("historical_date_range")} placeholder="e.g. 1943–1945" />
           </Field>

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ExternalLink, Globe, Plus, Search } from "lucide-react";
+import { ExternalLink, Globe, Paperclip, Plus, Search } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DS_SOURCE_TYPES, dsTypeLabel, fetchSources } from "@/lib/sources";
+import { DS_SOURCE_TYPES, dsTypeLabel, fetchDsFileCounts, fetchSources } from "@/lib/sources";
 
 export const Route = createFileRoute("/sources/")({
   head: () => ({
@@ -47,6 +47,11 @@ function SourcesList() {
     queryKey: ["sources"],
     queryFn: fetchSources,
   });
+  const { data: fileCounts = {} } = useQuery({
+    queryKey: ["ds-file-counts"],
+    queryFn: fetchDsFileCounts,
+  });
+
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -135,7 +140,13 @@ function SourcesList() {
                   <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                     {dsTypeLabel(s.source_type)}
                   </span>
+                  {(fileCounts[s.id] ?? 0) > 0 && (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-tone-teal-soft px-2.5 py-0.5 text-xs font-medium text-tone-teal">
+                      <Paperclip className="size-3" /> {fileCounts[s.id]}
+                    </span>
+                  )}
                   {s.url && <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />}
+
                 </Link>
               ))}
             </div>
