@@ -25,6 +25,8 @@ import {
   Hourglass,
   Shield,
   Globe,
+  Paperclip,
+
   type LucideIcon,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
