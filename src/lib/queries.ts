@@ -36,6 +36,13 @@ export type Letter = {
   physical_description: string | null;
   original_copy: string;
   storage_location: string | null;
+  storage_type: string | null;
+  storage_container: string | null;
+  storage_folder: string | null;
+  storage_position: string | null;
+  storage_notes: string | null;
+  identification_status: string;
+  sort_date: string | null;
   provenance: string | null;
   ocr_text: string | null;
   digitization_notes: string | null;
