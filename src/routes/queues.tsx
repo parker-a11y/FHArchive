@@ -42,10 +42,28 @@ function Queues() {
     },
   });
 
+  const dig = (l: Letter) => l.digitization_status ?? "not_scanned";
+
   const queues: { key: string; label: string; fn: (l: Letter) => boolean }[] = [
+    { key: "not_scanned", label: "Not Scanned", fn: (l) => dig(l) === "not_scanned" },
+    {
+      key: "scanning",
+      label: "Scanning / In Progress",
+      fn: (l) => dig(l) === "in_progress",
+    },
+    {
+      key: "scan_review",
+      label: "Scanned — Needs Review",
+      fn: (l) => dig(l) === "needs_review",
+    },
+    {
+      key: "digitized",
+      label: "Digitization Complete",
+      fn: (l) => dig(l) === "complete",
+    },
     { key: "undated", label: "Undated / Needs Dating", fn: needsDating },
     { key: "unidphoto", label: "Unidentified Photos", fn: isUnidentifiedPhoto },
-    { key: "scan", label: "Needs Scanning", fn: (l) => l.image_count === 0 },
+    { key: "scan", label: "Needs Scanning (legacy scans)", fn: (l) => l.image_count === 0 },
     {
       key: "transcribe",
       label: "Needs Transcription",
@@ -87,7 +105,7 @@ function Queues() {
     },
   ];
 
-  const [active, setActive] = useState("scan");
+  const [active, setActive] = useState("not_scanned");
   const current = queues.find((q) => q.key === active)!;
   const rows = letters.filter(current.fn);
 

@@ -47,6 +47,8 @@ import {
 } from "@/lib/archive";
 
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
+import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
@@ -274,6 +276,10 @@ function LetterPage() {
                 {labelOf(IDENTIFICATION_STATUS, letter.identification_status)}
               </span>
               <span>
+                <span className="field-label mr-2">Digitization</span>
+                {labelOf(DIGITIZATION_STATUS, letter.digitization_status ?? "not_scanned")}
+              </span>
+              <span>
                 <span className="field-label mr-2">Stored</span>
                 {[
                   labelOf(STORAGE_TYPES, letter.storage_type),
@@ -362,6 +368,7 @@ function LetterPage() {
       <Tabs defaultValue="catalog" className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
+          <TabsTrigger value="digitization">Digital Files</TabsTrigger>
           <TabsTrigger value="scans">Items &amp; Scans ({letter.image_count})</TabsTrigger>
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
@@ -621,6 +628,11 @@ function LetterPage() {
           </div>
 
         </TabsContent>
+
+        <TabsContent value="digitization" className="mt-6">
+          <DigitizationPanel letter={letter} />
+        </TabsContent>
+
 
         <TabsContent value="scans" className="mt-6">
           <ItemsPanel letter={letter} />

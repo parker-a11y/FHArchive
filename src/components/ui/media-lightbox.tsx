@@ -22,12 +22,15 @@ export function MediaLightbox({
   open,
   onClose,
   onRotationChange,
+  footerAction,
 }: {
   items: LightboxItem[];
   initialIndex?: number;
   open: boolean;
   onClose: () => void;
   onRotationChange?: (id: string, rotation: number) => void;
+  /** Optional extra action rendered in the footer, e.g. "download the master". */
+  footerAction?: { label: string; onClick: () => void };
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
@@ -208,13 +211,23 @@ export function MediaLightbox({
       </div>
 
       {/* Footer / counter */}
-      <div className="no-print flex items-center justify-between px-4 py-2 text-xs text-white/60">
-        <span>{item.filename || item.title}</span>
-        {items.length > 1 && (
-          <span>
-            {index + 1} / {items.length}
-          </span>
-        )}
+      <div className="no-print flex items-center justify-between gap-4 px-4 py-2 text-xs text-white/60">
+        <span className="truncate">{item.filename || item.title}</span>
+        <div className="flex shrink-0 items-center gap-4">
+          {footerAction && (
+            <button
+              onClick={footerAction.onClick}
+              className="underline underline-offset-2 hover:text-white"
+            >
+              {footerAction.label}
+            </button>
+          )}
+          {items.length > 1 && (
+            <span>
+              {index + 1} / {items.length}
+            </span>
+          )}
+        </div>
       </div>
     </div>,
     document.body,

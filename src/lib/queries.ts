@@ -43,6 +43,14 @@ export type Letter = {
   storage_notes: string | null;
   identification_status: string;
   sort_date: string | null;
+  digitization_status: string;
+  expected_scan_count: number | null;
+  completeness_check: boolean;
+  scan_both_sides: boolean;
+  photo_front_scanned: boolean;
+  photo_back_scanned: boolean;
+  digitization_override: boolean;
+  digitization_completed_at: string | null;
   provenance: string | null;
   ocr_text: string | null;
   digitization_notes: string | null;
