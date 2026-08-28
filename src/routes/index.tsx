@@ -54,7 +54,7 @@ function Dashboard() {
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats = [
-    { label: "Total letters", value: letters.length },
+    { label: "Total archive items", value: letters.length },
     { label: "Cataloged", value: c((l) => !!(l.author || l.recipient || l.normalized_date)) },
     { label: "Scanned", value: c((l) => l.image_count > 0) },
     { label: "Transcribed", value: c((l) => l.transcription_status === "human_verified") },
@@ -82,7 +82,7 @@ function Dashboard() {
         description="Harrington family letters — cataloging status."
         actions={
           <Button size="lg" className="gap-2" onClick={() => navigate({ to: "/catalog" })}>
-            <Plus className="size-4" /> ADD NEXT LETTER
+            <Plus className="size-4" /> ADD NEXT ARCHIVE ITEM
           </Button>
         }
       />
