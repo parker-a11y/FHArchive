@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Download, FileText, Trash2, Upload } from "lucide-react";
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DS_FILE_TYPES,
