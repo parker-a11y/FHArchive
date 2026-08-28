@@ -370,7 +370,50 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={idStatus}
+          onChange={(e) => setIdStatus(e.target.value)}
+        >
+          <option value="">All ID states</option>
+          {IDENTIFICATION_STATUS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={dStatus}
+          onChange={(e) => setDStatus(e.target.value)}
+        >
+          <option value="">All date states</option>
+          {DATE_PRECISION.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="ml-auto flex items-center gap-2">
+          <span className="field-label">Views</span>
+          {[
+            { key: "", label: "All" },
+            { key: "undated", label: "Undated" },
+            { key: "unidphoto", label: "Unidentified photos" },
+          ].map((v) => (
+            <Button
+              key={v.key}
+              size="sm"
+              variant={view === v.key ? "default" : "outline"}
+              onClick={() => setView(v.key as "" | "undated" | "unidphoto")}
+            >
+              {v.label}
+            </Button>
+          ))}
+        </div>
       </div>
+
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
