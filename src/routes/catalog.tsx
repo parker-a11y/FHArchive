@@ -377,11 +377,53 @@ function QuickEntry() {
               options={ORIGINAL_COPY}
             />
             <div className="space-y-1.5">
-              <Label className="field-label">Box / folder / storage</Label>
+              <Label className="field-label">Legacy storage note</Label>
               <Input
                 value={form.storage_location}
                 onChange={(e) => set("storage_location", e.target.value)}
               />
+            </div>
+            <div className="col-span-3 rounded border border-border bg-card p-4">
+              <div className="field-label mb-3">Physical storage location</div>
+              <div className="grid grid-cols-4 gap-4">
+                <Select_
+                  label="Storage type"
+                  value={form.storage_type}
+                  onChange={(v) => set("storage_type", v)}
+                  options={STORAGE_TYPES}
+                />
+                <div className="space-y-1.5">
+                  <Label className="field-label">Container / box</Label>
+                  <Input
+                    value={form.storage_container}
+                    onChange={(e) => set("storage_container", e.target.value)}
+                    placeholder="Artifact Box 01"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="field-label">Folder / jacket</Label>
+                  <Input
+                    value={form.storage_folder}
+                    onChange={(e) => set("storage_folder", e.target.value)}
+                    placeholder="FH-0268"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="field-label">Position / compartment</Label>
+                  <Input
+                    value={form.storage_position}
+                    onChange={(e) => set("storage_position", e.target.value)}
+                    placeholder="Compartment 07"
+                  />
+                </div>
+                <div className="col-span-4 space-y-1.5">
+                  <Label className="field-label">Location notes</Label>
+                  <Input
+                    value={form.storage_notes}
+                    onChange={(e) => set("storage_notes", e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
             <div className="flex items-end gap-6 pb-2">
               {isLetter && (
