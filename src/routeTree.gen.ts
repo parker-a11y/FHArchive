@@ -28,6 +28,7 @@ import { Route as PlacesPlaceIdRouteImport } from './routes/places/$placeId'
 import { Route as SourcesIndexRouteImport } from './routes/sources/index'
 import { Route as SourcesDsIdRouteImport } from './routes/sources/$dsId'
 import { Route as SourcesNewRouteImport } from './routes/sources/new'
+import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -124,6 +125,11 @@ const SourcesNewRoute = SourcesNewRouteImport.update({
   path: '/sources/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
+  id: '/api/public/backup',
+  path: '/api/public/backup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/people/': typeof PeopleIndexRoute
   '/places/': typeof PlacesIndexRoute
   '/sources/': typeof SourcesIndexRoute
+  '/api/public/backup': typeof ApiPublicBackupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/people': typeof PeopleIndexRoute
   '/places': typeof PlacesIndexRoute
   '/sources': typeof SourcesIndexRoute
+  '/api/public/backup': typeof ApiPublicBackupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/people/': typeof PeopleIndexRoute
   '/places/': typeof PlacesIndexRoute
   '/sources/': typeof SourcesIndexRoute
+  '/api/public/backup': typeof ApiPublicBackupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/people/'
     | '/places/'
     | '/sources/'
+    | '/api/public/backup'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/places'
     | '/sources'
+    | '/api/public/backup'
   id:
     | '__root__'
     | '/'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/people/'
     | '/places/'
     | '/sources/'
+    | '/api/public/backup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   PeopleIndexRoute: typeof PeopleIndexRoute
   PlacesIndexRoute: typeof PlacesIndexRoute
   SourcesIndexRoute: typeof SourcesIndexRoute
+  ApiPublicBackupRoute: typeof ApiPublicBackupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SourcesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/backup': {
+      id: '/api/public/backup'
+      path: '/api/public/backup'
+      fullPath: '/api/public/backup'
+      preLoaderRoute: typeof ApiPublicBackupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -435,6 +455,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeopleIndexRoute: PeopleIndexRoute,
   PlacesIndexRoute: PlacesIndexRoute,
   SourcesIndexRoute: SourcesIndexRoute,
+  ApiPublicBackupRoute: ApiPublicBackupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
