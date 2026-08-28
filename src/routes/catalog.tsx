@@ -281,13 +281,16 @@ function QuickEntry() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="field-label">Date</Label>
+              <Label className="field-label">Date (optional)</Label>
               <Input
                 ref={dateRef}
                 type="date"
                 value={form.normalized_date}
                 onChange={(e) => set("normalized_date", e.target.value)}
               />
+              <p className="text-[11px] text-muted-foreground">
+                Leave blank — the record saves as Undated.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label className="field-label">End date (range, optional)</Label>
