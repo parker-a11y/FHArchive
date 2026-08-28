@@ -192,8 +192,12 @@ function Dashboard() {
         title="Archive Dashboard"
         description="Harrington family letters — cataloging status."
         actions={
-          <Button size="lg" className="gap-2" onClick={() => navigate({ to: "/catalog" })}>
-            <Plus className="size-4" /> ADD NEXT ARCHIVE ITEM
+          <Button
+            size="lg"
+            className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
+            onClick={() => navigate({ to: "/catalog" })}
+          >
+            <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
           </Button>
         }
       />
@@ -202,7 +206,7 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
               ))}
