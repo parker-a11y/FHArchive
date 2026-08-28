@@ -179,6 +179,8 @@ function SourcePage() {
         <Tabs defaultValue="details">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="files">Files</TabsTrigger>
+
             <TabsTrigger value="segments">Segments</TabsTrigger>
             <TabsTrigger value="records">Linked FH Records</TabsTrigger>
             <TabsTrigger value="connections">People · Places · More</TabsTrigger>
