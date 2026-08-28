@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DS_SOURCE_TYPES, createDigitalSource, previewNextDsId } from "@/lib/sources";
+import { DATE_PRECISION } from "@/lib/archive";
+
 
 export const Route = createFileRoute("/sources/new")({
   head: () => ({
