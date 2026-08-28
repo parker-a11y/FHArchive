@@ -85,7 +85,7 @@ function ItemCard({
 
       {open && (
         <div className="space-y-4 border-t border-border px-3 py-3">
-          <div className="grid gap-3 md:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Item type">
               <select
                 value={draft.item_type}

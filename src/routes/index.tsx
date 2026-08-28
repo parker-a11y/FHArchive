@@ -233,14 +233,14 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
               ))}
             </div>
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {[
                 { value: "letter", label: "Letters", tone: "blue" as Tone, icon: Mail },
                 { value: "photograph", label: "Photographs", tone: "emerald" as Tone, icon: Camera },

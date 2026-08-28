@@ -370,7 +370,7 @@ function EntityLinker({ source, config }: { source: DigitalSource; config: Entit
 
 export function SourceConnectionsPanel({ source }: { source: DigitalSource }) {
   return (
-    <div className="grid max-w-4xl gap-4 md:grid-cols-1 sm:grid-cols-2">
+    <div className="grid max-w-4xl gap-4 md:grid-cols-2">
       <EntityLinker
         source={source}
         config={{
