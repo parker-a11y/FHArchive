@@ -6,17 +6,22 @@ export const RECORD_TYPES = [
   { value: "military", label: "Military Record" },
   { value: "government", label: "Government / Official Document" },
   { value: "family", label: "Personal / Family Document" },
+  { value: "program", label: "Program / Invitation" },
   { value: "newspaper", label: "Newspaper / Clipping" },
   { value: "financial", label: "Financial Record" },
   { value: "employment", label: "Employment Record" },
   { value: "education", label: "Education Record" },
   { value: "travel", label: "Travel Document" },
   { value: "ephemera", label: "Ephemera" },
-  { value: "artifact", label: "Artifact / Physical Object" },
+  { value: "artifact", label: "Artifact / Object" },
+  { value: "medal", label: "Medal / Decoration" },
+  { value: "insignia", label: "Pin / Insignia" },
+  { value: "scrapbook", label: "Scrapbook Material" },
   { value: "media", label: "Audio / Video" },
   { value: "research", label: "Research Material" },
   { value: "other", label: "Other" },
 ] as const;
+
 
 /** Subtypes per record type — add new entries freely; unknown types fall back to Other. */
 export const SUBTYPES: Record<string, readonly string[]> = {
