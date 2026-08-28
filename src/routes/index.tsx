@@ -82,7 +82,7 @@ function Dashboard() {
         description="Harrington family letters — cataloging status."
         actions={
           <Button size="lg" className="gap-2" onClick={() => navigate({ to: "/catalog" })}>
-            <Plus className="size-4" /> ADD NEXT LETTER
+            <Plus className="size-4" /> ADD NEXT ARCHIVE ITEM
           </Button>
         }
       />
