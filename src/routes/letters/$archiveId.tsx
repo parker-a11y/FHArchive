@@ -196,6 +196,7 @@ function LetterPage() {
     payload.record_type = form.record_type || "letter";
     payload.original_copy = form.original_copy || "unknown";
     payload.research_status = form.research_status || "unreviewed";
+    payload.identification_status = form.identification_status || "unidentified";
 
 
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
