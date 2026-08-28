@@ -332,6 +332,45 @@ function LetterPage() {
         <TabsContent value="catalog" className="mt-6">
           <div className="grid max-w-5xl grid-cols-3 gap-4">
             <div>
+              <label className="field-label">Record type</label>
+              <select
+                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                value={(form.record_type as string) ?? "letter"}
+                onChange={(e) => {
+                  set("record_type", e.target.value);
+                  set("subtype", "");
+                }}
+              >
+                {RECORD_TYPES.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Subtype</label>
+              <select
+                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                value={(form.subtype as string) ?? ""}
+                onChange={(e) => set("subtype", e.target.value)}
+              >
+                <option value="">—</option>
+                {subtypesFor((form.record_type as string) ?? "letter").map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Title / short description</label>
+              <Input
+                value={(form.title as string) ?? ""}
+                onChange={(e) => set("title", e.target.value)}
+              />
+            </div>
+            <div>
               <label className="field-label">Normalized date</label>
               <Input
                 type="date"
@@ -339,6 +378,15 @@ function LetterPage() {
                 onChange={(e) => set("normalized_date", e.target.value)}
               />
             </div>
+            <div>
+              <label className="field-label">End date (range)</label>
+              <Input
+                type="date"
+                value={(form.date_end as string) ?? ""}
+                onChange={(e) => set("date_end", e.target.value)}
+              />
+            </div>
+
             {TEXT_FIELDS.filter(
               (f) => !f.letterOnly || isLetterType(form.record_type as string),
             ).map((f) => (
