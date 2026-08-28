@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { fetchLetters, type Letter } from "@/lib/queries";
+import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
 import { displayDate, RECORD_TYPES } from "@/lib/archive";
 
 export const Route = createFileRoute("/")({
