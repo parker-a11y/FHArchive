@@ -135,7 +135,13 @@ function SourcesList() {
                   <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                     {dsTypeLabel(s.source_type)}
                   </span>
+                  {(fileCounts[s.id] ?? 0) > 0 && (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-tone-teal-soft px-2.5 py-0.5 text-xs font-medium text-tone-teal">
+                      <Paperclip className="size-3" /> {fileCounts[s.id]}
+                    </span>
+                  )}
                   {s.url && <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />}
+
                 </Link>
               ))}
             </div>
