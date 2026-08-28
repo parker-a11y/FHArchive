@@ -423,15 +423,21 @@ function LetterPage() {
             ))}
 
             {[
-              { key: "date_precision", label: "Date precision", opts: DATE_PRECISION },
+              { key: "date_precision", label: "Date status / precision", opts: DATE_PRECISION },
               { key: "date_certainty", label: "Date certainty", opts: DATE_CERTAINTY },
               { key: "period", label: "Period", opts: PERIODS },
+              {
+                key: "identification_status",
+                label: "Identification status",
+                opts: IDENTIFICATION_STATUS,
+              },
               { key: "scan_status", label: "Scan status", opts: SCAN_STATUS },
               { key: "review_status", label: "Review status", opts: REVIEW_STATUS },
               { key: "publication_status", label: "Publication status", opts: PUBLICATION_STATUS },
               { key: "original_copy", label: "Original / copy", opts: ORIGINAL_COPY },
               { key: "research_status", label: "Research status", opts: RECORD_RESEARCH_STATUS },
             ].map((f) => (
+
 
               <div key={f.key}>
                 <label className="field-label">{f.label}</label>
