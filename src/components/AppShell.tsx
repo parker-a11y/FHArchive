@@ -16,6 +16,7 @@ import {
   CalendarDays,
   BookOpen,
   Globe,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ const NAV = [
   { to: "/events", label: "Events", icon: CalendarDays },
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
+  { to: "/backups", label: "Backups", icon: ShieldCheck },
 ];
 
 
