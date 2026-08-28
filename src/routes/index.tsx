@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { fetchLetters, type Letter } from "@/lib/queries";
-import { displayDate } from "@/lib/archive";
+import { displayDate, RECORD_TYPES } from "@/lib/archive";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -94,6 +94,30 @@ function Dashboard() {
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
+              ))}
+            </div>
+
+            <h2 className="field-label mt-10 mb-3">Record categories</h2>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">
+              {[
+                { value: "letter", label: "Letters" },
+                { value: "photograph", label: "Photographs" },
+                { value: "military", label: "Military" },
+                { value: "government", label: "Government" },
+                { value: "family", label: "Personal / Family" },
+                { value: "newspaper", label: "Newspaper" },
+                { value: "financial", label: "Financial" },
+                { value: "program", label: "Programs" },
+                { value: "artifact", label: "Artifacts" },
+                { value: "media", label: "Audio / Video" },
+                { value: "other", label: "Other" },
+              ].map((cat) => (
+                <Stat
+                  key={cat.value}
+                  label={cat.label}
+                  value={letters.filter((l) => (l.record_type ?? "letter") === cat.value).length}
+                  to={`/letters?type=${cat.value}`}
+                />
               ))}
             </div>
 

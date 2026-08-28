@@ -3,9 +3,9 @@
 export const RECORD_TYPES = [
   { value: "letter", label: "Letter / Correspondence" },
   { value: "photograph", label: "Photograph" },
+  { value: "family", label: "Personal / Family" },
   { value: "military", label: "Military Record" },
   { value: "government", label: "Government / Official Document" },
-  { value: "family", label: "Personal / Family Document" },
   { value: "program", label: "Program / Invitation" },
   { value: "newspaper", label: "Newspaper / Clipping" },
   { value: "financial", label: "Financial Record" },
