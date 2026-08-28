@@ -28,6 +28,7 @@ import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 import { Route as PlacesIndexRouteImport } from './routes/places/index'
 import { Route as PlacesPlaceIdRouteImport } from './routes/places/$placeId'
+import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as SourcesIndexRouteImport } from './routes/sources/index'
 import { Route as SourcesDsIdRouteImport } from './routes/sources/$dsId'
 import { Route as SourcesNewRouteImport } from './routes/sources/new'
@@ -128,6 +129,11 @@ const PlacesPlaceIdRoute = PlacesPlaceIdRouteImport.update({
   path: '/places/$placeId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const STokenRoute = STokenRouteImport.update({
+  id: '/s/$token',
+  path: '/s/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SourcesIndexRoute = SourcesIndexRouteImport.update({
   id: '/sources/',
   path: '/sources/',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
   '/events/': typeof EventsIndexRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
   '/events': typeof EventsIndexRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
   '/events/': typeof EventsIndexRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
     | '/events/'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
     | '/events'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
     | '/events/'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   LettersArchiveIdRoute: typeof LettersArchiveIdRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   PlacesPlaceIdRoute: typeof PlacesPlaceIdRoute
+  STokenRoute: typeof STokenRoute
   SourcesDsIdRoute: typeof SourcesDsIdRoute
   SourcesNewRoute: typeof SourcesNewRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -464,6 +477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlacesPlaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$token': {
+      id: '/s/$token'
+      path: '/s/$token'
+      fullPath: '/s/$token'
+      preLoaderRoute: typeof STokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sources/': {
       id: '/sources/'
       path: '/sources'
@@ -509,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   LettersArchiveIdRoute: LettersArchiveIdRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   PlacesPlaceIdRoute: PlacesPlaceIdRoute,
+  STokenRoute: STokenRoute,
   SourcesDsIdRoute: SourcesDsIdRoute,
   SourcesNewRoute: SourcesNewRoute,
   EventsIndexRoute: EventsIndexRoute,
