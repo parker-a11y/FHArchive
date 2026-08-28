@@ -192,7 +192,7 @@ function NewSource() {
         <Field label="Notes">
           <Textarea rows={2} value={form.notes} onChange={set("notes")} />
         </Field>
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-wrap gap-3 pt-2">
           <Button size="lg" disabled={saving} onClick={() => save(true)}>
             Save &amp; open record
           </Button>
