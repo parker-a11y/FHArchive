@@ -131,6 +131,10 @@ function Dashboard() {
     queryKey: ["sources"],
     queryFn: fetchSources,
   });
+  const { data: dsFileCounts = {} } = useQuery({
+    queryKey: ["ds-file-counts"],
+    queryFn: fetchDsFileCounts,
+  });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
@@ -142,6 +146,14 @@ function Dashboard() {
       icon: Globe,
       to: "/sources",
     },
+    {
+      label: "Sources with file copies",
+      value: Object.keys(dsFileCounts).length,
+      tone: "teal",
+      icon: Paperclip,
+      to: "/sources",
+    },
+
     { label: "Total items", value: itemCounts?.totalItems ?? 0, tone: "emerald", icon: Layers },
     { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0, tone: "teal", icon: ScanLine },
     { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "teal", icon: Images },
