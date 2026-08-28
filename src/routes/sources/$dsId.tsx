@@ -213,6 +213,23 @@ function SourcePage() {
                 <Field label="Original date (as shown)">
                   <Input value={v("original_date")} onChange={(e) => set("original_date", e.target.value)} />
                 </Field>
+                <Field label="Normalized date (for sorting)">
+                  <Input type="date" value={v("normalized_date")} onChange={(e) => set("normalized_date", e.target.value)} />
+                </Field>
+                <Field label="Date precision">
+                  <Select value={v("date_precision") || "unknown"} onValueChange={(val) => set("date_precision", val)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_PRECISION.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
                 <Field label="Historical date range">
                   <Input value={v("historical_date_range")} onChange={(e) => set("historical_date_range", e.target.value)} />
                 </Field>
@@ -223,9 +240,7 @@ function SourcePage() {
               <Field label="URL">
                 <Input value={v("url")} onChange={(e) => set("url", e.target.value)} />
               </Field>
-              <Field label="Local file path">
-                <Input value={v("local_file_path")} onChange={(e) => set("local_file_path", e.target.value)} placeholder="e.g. D:\Archive\downloads\…" />
-              </Field>
+
               <Field label="Description">
                 <Textarea rows={3} value={v("description")} onChange={(e) => set("description", e.target.value)} />
               </Field>
