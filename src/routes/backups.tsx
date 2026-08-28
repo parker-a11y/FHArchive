@@ -112,8 +112,9 @@ function Backups() {
     <>
       <PageHeader
         title="Backups"
-        subtitle="Nightly off-site copy of the entire archive to Google Drive"
+        description="Nightly off-site copy of the entire archive to Google Drive"
       />
+
       <div className="space-y-6 p-6">
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard
