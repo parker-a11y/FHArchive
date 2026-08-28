@@ -102,7 +102,7 @@ function PlacePage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FIELDS.map((f) => (
-            <div key={f.key} className={f.area ? "col-span-2" : ""}>
+            <div key={f.key} className={f.area ? "col-span-full" : ""}>
               <label className="field-label">{f.label}</label>
               {f.area ? (
                 <Textarea

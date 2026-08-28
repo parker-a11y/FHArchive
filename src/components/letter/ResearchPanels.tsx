@@ -375,7 +375,7 @@ export function ReferencesPanel({ letter }: { letter: Letter }) {
             ))}
           </select>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-full">
           <label className="field-label">Description</label>
           <Input
             value={draft.description}
@@ -403,7 +403,7 @@ export function ReferencesPanel({ letter }: { letter: Letter }) {
             onChange={(e) => setDraft({ ...draft, source_links: e.target.value })}
           />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-full">
           <label className="field-label">Notes</label>
           <Textarea
             rows={2}

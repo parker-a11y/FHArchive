@@ -271,7 +271,7 @@ function QuickEntry() {
               options={PRIMARY_PERSONS}
             />
 
-            <div className="col-span-3 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label className="field-label">Title / short description</Label>
               <Input
                 value={form.title}
@@ -383,7 +383,7 @@ function QuickEntry() {
                 onChange={(e) => set("storage_location", e.target.value)}
               />
             </div>
-            <div className="col-span-3 rounded border border-border bg-card p-4">
+            <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Select_
@@ -416,7 +416,7 @@ function QuickEntry() {
                     placeholder="Compartment 07"
                   />
                 </div>
-                <div className="col-span-4 space-y-1.5">
+                <div className="col-span-full space-y-1.5">
                   <Label className="field-label">Location notes</Label>
                   <Input
                     value={form.storage_notes}
