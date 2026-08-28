@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Download, Eye } from "lucide-react";
+import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,12 @@ import {
 
 import { toast } from "sonner";
 
+const searchSchema = z.object({
+  type: z.string().optional(),
+});
+
 export const Route = createFileRoute("/letters/")({
+  validateSearch: searchSchema,
   head: () => ({
     meta: [
       { title: "Letters Table — Harrington Letter Archive" },
