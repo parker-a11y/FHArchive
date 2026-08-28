@@ -256,8 +256,67 @@ export function LinksPanel({ letter }: { letter: Letter }) {
           ))}
         </div>
       </div>
+
+      <div>
+        <h3 className="field-label mb-2">Organizations / Ships / Units</h3>
+        <div className="mb-2 flex gap-2">
+          <select
+            className="h-9 flex-1 rounded border border-input bg-background px-2 text-sm"
+            value={orgId}
+            onChange={(e) => setOrgId(e.target.value)}
+          >
+            <option value="">Select organization…</option>
+            {entities?.organizations.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+          <Button size="sm" onClick={addOrg}>
+            Add
+          </Button>
+        </div>
+        {links?.organizations.map((r) => (
+          <div key={r.id} className="flex items-center justify-between py-1 text-sm">
+            <span>{r.organizations?.name}</span>
+            <button onClick={() => del("letter_organizations", r.id)}>
+              <Trash2 className="size-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h3 className="field-label mb-2">Events</h3>
+        <div className="mb-2 flex gap-2">
+          <select
+            className="h-9 flex-1 rounded border border-input bg-background px-2 text-sm"
+            value={eventId}
+            onChange={(e) => setEventId(e.target.value)}
+          >
+            <option value="">Select event…</option>
+            {entities?.events.map((e2) => (
+              <option key={e2.id} value={e2.id}>
+                {e2.name}
+              </option>
+            ))}
+          </select>
+          <Button size="sm" onClick={addEvent}>
+            Add
+          </Button>
+        </div>
+        {links?.events.map((r) => (
+          <div key={r.id} className="flex items-center justify-between py-1 text-sm">
+            <span>{r.events?.name}</span>
+            <button onClick={() => del("letter_events", r.id)}>
+              <Trash2 className="size-3.5 text-muted-foreground" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
+
 }
 
 /* ---------------- Historical references ---------------- */
