@@ -253,6 +253,21 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
     }
   }
 
+  const lightboxItems: LightboxItem[] = useMemo(
+    () =>
+      files
+        .filter((f) => f.signedUrl && ["image", "audio", "video"].includes(f.file_type))
+        .map((f) => ({
+          id: f.id,
+          url: f.signedUrl!,
+          type: f.file_type as "image" | "audio" | "video",
+          title: f.file_label,
+          subtitle: source.ds_id,
+          filename: f.original_filename,
+        })),
+    [files, source.ds_id],
+  );
+
   return (
     <div className="space-y-5">
       <div
@@ -293,16 +308,27 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {files.map((f) => (
+          {files.map((f, i) => (
             <FileCard
               key={f.id}
               file={f}
               onSave={(patch) => saveMutation.mutate({ id: f.id, patch })}
               onDelete={() => remove(f)}
+              onOpen={() => {
+                setViewerIndex(lightboxItems.findIndex((item) => item.id === f.id));
+                setViewerOpen(true);
+              }}
             />
           ))}
         </div>
       )}
+
+      <MediaLightbox
+        items={lightboxItems}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
     </div>
   );
 }
