@@ -128,7 +128,7 @@ function NewSource() {
         <Field label="Title *">
           <Input value={form.title} onChange={set("title")} placeholder="e.g. USS Enterprise CV-6 combat footage, 1944" />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Source type">
             <Select
               value={form.source_type}

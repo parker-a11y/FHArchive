@@ -371,7 +371,7 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
-          <div className="grid max-w-5xl grid-cols-3 gap-4">
+          <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="field-label">Record type</label>
               <select
@@ -475,7 +475,7 @@ function LetterPage() {
 
             <div className="col-span-3 rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="field-label">Storage type</label>
                   <select
@@ -550,7 +550,7 @@ function LetterPage() {
                 onChange={(e) => set("notes", e.target.value)}
               />
             </div>
-            <div className="col-span-3 grid grid-cols-2 gap-4">
+            <div className="col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="field-label">Short summary</label>
                 <Textarea
@@ -568,7 +568,7 @@ function LetterPage() {
                 />
               </div>
             </div>
-            <div className="col-span-3 grid grid-cols-2 gap-4">
+            <div className="col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="field-label">Physical description</label>
                 <Textarea

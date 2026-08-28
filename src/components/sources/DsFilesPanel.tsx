@@ -307,7 +307,7 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
           No preservation copies yet. Download the file from the source URL in your browser, then upload it here.
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {files.map((f, i) => (
             <FileCard
               key={f.id}

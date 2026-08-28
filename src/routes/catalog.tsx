@@ -222,7 +222,7 @@ function QuickEntry() {
         title="Catalog Next Item"
         description="Type, date, a short description — then Save & Create Next (⌘/Ctrl + Enter). Details can be added later."
       />
-      <div className="grid grid-cols-[1fr_16rem] gap-8 p-4 sm:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-8 p-4 sm:p-8">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -242,7 +242,7 @@ function QuickEntry() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select_
               label="Record type *"
               value={form.record_type}
@@ -385,7 +385,7 @@ function QuickEntry() {
             </div>
             <div className="col-span-3 rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Select_
                   label="Storage type"
                   value={form.storage_type}

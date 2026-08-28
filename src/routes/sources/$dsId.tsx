@@ -194,7 +194,7 @@ function SourcePage() {
               <Field label="Title">
                 <Input value={v("title")} onChange={(e) => set("title", e.target.value)} />
               </Field>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Source type">
                   <Select value={v("source_type")} onValueChange={(val) => set("source_type", val)}>
                     <SelectTrigger>

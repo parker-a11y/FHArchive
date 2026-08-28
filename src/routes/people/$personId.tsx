@@ -115,7 +115,7 @@ function PersonPage() {
   return (
     <>
       <PageHeader title={name} description="Person record" actions={<Button onClick={save}>Save</Button>} />
-      <div className="grid grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
         <div className="space-y-4">
           {FIELDS.map((f) =>
             f.area ? (
