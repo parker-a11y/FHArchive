@@ -101,7 +101,16 @@ export async function fetchDsFiles(sourceId: string): Promise<DsFile[]> {
     .eq("source_id", sourceId)
     .order("sort_order", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as DsFile[];
+  const rows = (data ?? []) as DsFile[];
+  const withUrls = await Promise.all(
+    rows.map(async (row) => {
+      const { data: signed } = await supabase.storage
+        .from("ds-files")
+        .createSignedUrl(row.storage_path, 3600);
+      return { ...row, signedUrl: signed?.signedUrl ?? "" };
+    }),
+  );
+  return withUrls;
 }
 
 /** Map of source_id -> number of preservation copies, for list badges. */
