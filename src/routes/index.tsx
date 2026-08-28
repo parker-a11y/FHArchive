@@ -1,6 +1,31 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  Mail,
+  Camera,
+  Medal,
+  Landmark,
+  Home,
+  Newspaper,
+  Coins,
+  CalendarDays,
+  Gem,
+  Box,
+  Hash,
+  Layers,
+  ScanLine,
+  Images,
+  PenLine,
+  FileCheck2,
+  FileQuestion,
+  Eye,
+  CalendarClock,
+  ImageOff,
+  Hourglass,
+  Shield,
+  type LucideIcon,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
@@ -29,11 +54,56 @@ export const Route = createFileRoute("/")({
   ),
 });
 
-function Stat({ label, value, to }: { label: string; value: number; to?: string }) {
+type Tone = "blue" | "emerald" | "amber" | "indigo" | "rose" | "teal" | "ochre" | "plum";
+
+const TONE_BAR: Record<Tone, string> = {
+  blue: "bg-tone-blue",
+  emerald: "bg-tone-emerald",
+  amber: "bg-tone-amber",
+  indigo: "bg-tone-indigo",
+  rose: "bg-tone-rose",
+  teal: "bg-tone-teal",
+  ochre: "bg-tone-ochre",
+  plum: "bg-tone-plum",
+};
+const TONE_CHIP: Record<Tone, string> = {
+  blue: "bg-tone-blue-soft text-tone-blue",
+  emerald: "bg-tone-emerald-soft text-tone-emerald",
+  amber: "bg-tone-amber-soft text-tone-amber",
+  indigo: "bg-tone-indigo-soft text-tone-indigo",
+  rose: "bg-tone-rose-soft text-tone-rose",
+  teal: "bg-tone-teal-soft text-tone-teal",
+  ochre: "bg-tone-ochre-soft text-tone-ochre",
+  plum: "bg-tone-plum-soft text-tone-plum",
+};
+
+function Stat({
+  label,
+  value,
+  to,
+  tone = "amber",
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  to?: string;
+  tone?: Tone;
+  icon?: LucideIcon;
+}) {
   const body = (
-    <div className="rounded border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40">
-      <div className="field-label">{label}</div>
-      <div className="font-display mt-1 text-3xl font-semibold tabular-nums">{value}</div>
+    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
+      <div className={`absolute top-0 left-0 h-full w-1.5 ${TONE_BAR[tone]}`} />
+      <div className="mb-3 flex items-center gap-2.5">
+        {Icon && (
+          <div
+            className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TONE_CHIP[tone]}`}
+          >
+            <Icon className="size-4" />
+          </div>
+        )}
+        <span className="field-label">{label}</span>
+      </div>
+      <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
     </div>
   );
   return to ? (
