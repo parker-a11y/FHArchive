@@ -161,6 +161,8 @@ function FileCard({
 export function DsFilesPanel({ source }: { source: DigitalSource }) {
   const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const { data: files = [] } = useQuery({
     queryKey: ["ds-files", source.id],
     queryFn: () => fetchDsFiles(source.id),
