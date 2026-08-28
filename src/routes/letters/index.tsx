@@ -122,6 +122,9 @@ function LettersTable() {
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
   const [rType, setRType] = useState("");
+  const [idStatus, setIdStatus] = useState("");
+  const [dStatus, setDStatus] = useState("");
+  const [view, setView] = useState<"" | "undated" | "unidphoto">("");
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [hidden, setHidden] = useState<string[]>([]);
@@ -132,17 +135,23 @@ function LettersTable() {
 
   const rows = useMemo(() => {
     let r = letters.filter((l) => {
+      if (view === "undated" && !needsDating(l)) return false;
+      if (view === "unidphoto" && !isUnidentifiedPhoto(l)) return false;
       if (period && l.period !== period) return false;
       if (tStatus && l.transcription_status !== tStatus) return false;
       if (rType && (l.record_type ?? "letter") !== rType) return false;
+      if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
+      if (dStatus && l.date_precision !== dStatus) return false;
 
       if (!q) return true;
       const hay = [
         l.archive_id,
+        l.title,
         l.author,
         l.recipient,
         l.origin,
         l.notes,
+        storageText(l),
         ...(keywordsByLetter[l.id] ?? []),
       ]
         .join(" ")
@@ -150,13 +159,27 @@ function LettersTable() {
       return hay.includes(q.toLowerCase());
     });
     r = [...r].sort((a, b) => {
-      const k = sort.key as keyof Letter;
-      const av = k === ("date" as keyof Letter) ? a.normalized_date : a[k];
-      const bv = k === ("date" as keyof Letter) ? b.normalized_date : b[k];
-      return (String(av ?? "") > String(bv ?? "") ? 1 : -1) * sort.dir;
+      const pick = (l: Letter) => {
+        switch (sort.key) {
+          case "date":
+            return l.sort_date ?? l.normalized_date ?? "";
+          case "storage":
+            return storageText(l);
+          default:
+            return l[sort.key as keyof Letter];
+        }
+      };
+      const av = String(pick(a) ?? "");
+      const bv = String(pick(b) ?? "");
+      if (av === bv) return (a.fh_seq - b.fh_seq) * sort.dir;
+      // Blank values always sort last, so undated records never crowd the top.
+      if (!av) return 1;
+      if (!bv) return -1;
+      return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, idStatus, dStatus, view, sort, keywordsByLetter]);
+
 
   function exportRows() {
     return rows.map((l) => ({
