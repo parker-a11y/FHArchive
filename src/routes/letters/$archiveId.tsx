@@ -46,6 +46,7 @@ import {
   subtypesFor,
 } from "@/lib/archive";
 
+import { PersonCombobox } from "@/components/PersonCombobox";
 import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
