@@ -267,6 +267,21 @@ function LetterPage() {
                 <span className="field-label mr-2">Origin</span>
                 {letter.origin || "—"}
               </span>
+              <span>
+                <span className="field-label mr-2">ID status</span>
+                {labelOf(IDENTIFICATION_STATUS, letter.identification_status)}
+              </span>
+              <span>
+                <span className="field-label mr-2">Stored</span>
+                {[
+                  labelOf(STORAGE_TYPES, letter.storage_type),
+                  letter.storage_container,
+                  letter.storage_folder,
+                  letter.storage_position,
+                ]
+                  .filter((v) => v && v !== "—")
+                  .join(" · ") || "—"}
+              </span>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
