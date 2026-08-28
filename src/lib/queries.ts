@@ -118,6 +118,29 @@ export async function fetchLetters(): Promise<Letter[]> {
   return (data ?? []) as Letter[];
 }
 
+export type ArchiveItemCounts = {
+  totalItems: number;
+  itemsScanned: number;
+  totalScans: number;
+};
+
+/** Aggregate counts across child items and scans (whole archive). */
+export async function fetchItemCounts(): Promise<ArchiveItemCounts> {
+  const [itemsRes, scansRes] = await Promise.all([
+    supabase.from("letter_items").select("id"),
+    supabase.from("letter_scans").select("id,item_id"),
+  ]);
+  if (itemsRes.error) throw itemsRes.error;
+  if (scansRes.error) throw scansRes.error;
+  const scans = (scansRes.data ?? []) as { id: string; item_id: string | null }[];
+  const scannedItemIds = new Set(scans.map((s) => s.item_id).filter(Boolean) as string[]);
+  return {
+    totalItems: (itemsRes.data ?? []).length,
+    itemsScanned: scannedItemIds.size,
+    totalScans: scans.length,
+  };
+}
+
 export async function fetchLetterByArchiveId(archiveId: string): Promise<Letter | null> {
   const { data, error } = await supabase
     .from("letters")
