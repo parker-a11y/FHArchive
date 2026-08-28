@@ -8,23 +8,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-import { createLetter, previewNextArchiveId } from "@/lib/queries";
-import { DATE_CERTAINTY, DATE_PRECISION, PERIODS, labelDate } from "@/lib/archive";
+import { createRecord, previewNextArchiveId } from "@/lib/queries";
+import {
+  DATE_CERTAINTY,
+  DATE_PRECISION,
+  ORIGINAL_COPY,
+  PERIODS,
+  PRIMARY_PERSONS,
+  RECORD_TYPES,
+  isLetterType,
+  labelDate,
+  subtypesFor,
+} from "@/lib/archive";
 import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
     meta: [
-      { title: "Quick Entry — Harrington Letter Archive" },
+      { title: "Quick Entry — Harrington Family Archive" },
       {
         name: "description",
         content:
-          "Rapid keyboard-first cataloging screen that assigns the next sequential FH archive number.",
+          "Rapid keyboard-first intake screen that assigns the next sequential FH archive number to any item.",
       },
-      { property: "og:title", content: "Quick Entry — Harrington Letter Archive" },
+      { property: "og:title", content: "Quick Entry — Harrington Family Archive" },
       {
         property: "og:description",
-        content: "Rapid cataloging of letters with automatic sequential FH numbering.",
+        content: "Fast intake of letters, photographs, military and family records with FH numbering.",
       },
     ],
   }),
@@ -36,10 +46,15 @@ export const Route = createFileRoute("/catalog")({
 });
 
 const blank = {
+  record_type: "letter",
+  subtype: "",
+  title: "",
   date_as_written: "",
   normalized_date: "",
+  date_end: "",
   date_precision: "exact",
   date_certainty: "confirmed",
+  primary_person: "",
   author: "",
   recipient: "",
   origin: "",
@@ -48,6 +63,8 @@ const blank = {
   sheets: "",
   has_envelope: false,
   has_enclosures: false,
+  storage_location: "",
+  original_copy: "original",
   notes: "",
 };
 
@@ -106,26 +123,34 @@ function QuickEntry() {
   }, []);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+  const isLetter = isLetterType(form.record_type);
 
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
     let created: { archive_id: string };
     try {
-      created = await createLetter({
-        p_date_as_written: form.date_as_written || undefined,
-        p_normalized_date: form.normalized_date || undefined,
+      created = await createRecord({
+        p_record_type: form.record_type,
+        p_subtype: form.subtype,
+        p_title: form.title,
+        p_date_as_written: form.date_as_written,
+        p_normalized_date: form.normalized_date,
+        p_date_end: form.date_end,
         p_date_precision: form.date_precision,
         p_date_certainty: form.date_certainty,
-        p_author: form.author || undefined,
-        p_recipient: form.recipient || undefined,
-        p_origin: form.origin || undefined,
-        p_destination: form.destination || undefined,
+        p_primary_person: form.primary_person,
+        p_author: isLetter ? form.author : null,
+        p_recipient: isLetter ? form.recipient : null,
+        p_origin: form.origin,
+        p_destination: isLetter ? form.destination : null,
         p_period: form.period,
-        p_sheets: form.sheets ? Number(form.sheets) : undefined,
-        p_has_envelope: form.has_envelope,
+        p_sheets: form.sheets ? Number(form.sheets) : null,
+        p_has_envelope: isLetter ? form.has_envelope : false,
         p_has_enclosures: form.has_enclosures,
-        p_notes: form.notes || undefined,
+        p_storage_location: form.storage_location,
+        p_original_copy: form.original_copy,
+        p_notes: form.notes,
       });
     } catch (e) {
       setBusy(false);
@@ -149,16 +174,25 @@ function QuickEntry() {
         }),
       });
     }
-    setForm((f) => ({ ...blank, period: f.period, author: f.author, recipient: f.recipient }));
+    setForm((f) => ({
+      ...blank,
+      record_type: f.record_type,
+      subtype: f.subtype,
+      period: f.period,
+      primary_person: f.primary_person,
+      storage_location: f.storage_location,
+      original_copy: f.original_copy,
+      author: isLetterType(f.record_type) ? f.author : "",
+      recipient: isLetterType(f.record_type) ? f.recipient : "",
+    }));
     loadNext();
   }
-
 
   return (
     <>
       <PageHeader
-        title="Catalog Next Letter"
-        description="Enter the basics, then Save & Create Next (⌘/Ctrl + Enter)."
+        title="Catalog Next Item"
+        description="Type, date, a short description — then Save & Create Next (⌘/Ctrl + Enter). Details can be added later."
       />
       <div className="grid grid-cols-[1fr_16rem] gap-8 p-8">
         <form
@@ -178,17 +212,61 @@ function QuickEntry() {
             <div className="archive-id font-display mt-1 text-4xl">
               {next?.archive_id ?? "……"}
             </div>
-
           </div>
 
           <div className="grid grid-cols-3 gap-4">
+            <Select_
+              label="Record type *"
+              value={form.record_type}
+              onChange={(v) => setForm((f) => ({ ...f, record_type: v, subtype: "" }))}
+              options={RECORD_TYPES}
+            />
             <div className="space-y-1.5">
-              <Label className="field-label">Date (normalized)</Label>
+              <Label className="field-label">Subtype</Label>
+              <select
+                value={form.subtype}
+                onChange={(e) => set("subtype", e.target.value)}
+                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+              >
+                <option value="">—</option>
+                {subtypesFor(form.record_type).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Select_
+              label="Primary person"
+              value={form.primary_person}
+              onChange={(v) => set("primary_person", v)}
+              options={PRIMARY_PERSONS}
+            />
+
+            <div className="col-span-3 space-y-1.5">
+              <Label className="field-label">Title / short description</Label>
+              <Input
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                placeholder="e.g. Discharge papers, Navy — or: portrait in dress blues"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="field-label">Date</Label>
               <Input
                 ref={dateRef}
                 type="date"
                 value={form.normalized_date}
                 onChange={(e) => set("normalized_date", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="field-label">End date (range, optional)</Label>
+              <Input
+                type="date"
+                value={form.date_end}
+                onChange={(e) => set("date_end", e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -211,33 +289,42 @@ function QuickEntry() {
               onChange={(v) => set("date_certainty", v)}
               options={DATE_CERTAINTY}
             />
-            <div className="space-y-1.5">
-              <Label className="field-label">From (author)</Label>
-              <Input value={form.author} onChange={(e) => set("author", e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">To (recipient)</Label>
-              <Input value={form.recipient} onChange={(e) => set("recipient", e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">Origin</Label>
-              <Input value={form.origin} onChange={(e) => set("origin", e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">Destination</Label>
-              <Input
-                value={form.destination}
-                onChange={(e) => set("destination", e.target.value)}
-              />
-            </div>
             <Select_
               label="Period"
               value={form.period}
               onChange={(v) => set("period", v)}
               options={PERIODS}
             />
+
+            {isLetter && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="field-label">From (sender)</Label>
+                  <Input value={form.author} onChange={(e) => set("author", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="field-label">To (recipient)</Label>
+                  <Input
+                    value={form.recipient}
+                    onChange={(e) => set("recipient", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="field-label">Destination</Label>
+                  <Input
+                    value={form.destination}
+                    onChange={(e) => set("destination", e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-1.5">
-              <Label className="field-label">Sheets</Label>
+              <Label className="field-label">{isLetter ? "Origin" : "Location"}</Label>
+              <Input value={form.origin} onChange={(e) => set("origin", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="field-label">Pages / sheets</Label>
               <Input
                 type="number"
                 min={0}
@@ -245,15 +332,30 @@ function QuickEntry() {
                 onChange={(e) => set("sheets", e.target.value)}
               />
             </div>
+            <Select_
+              label="Original / copy"
+              value={form.original_copy}
+              onChange={(v) => set("original_copy", v)}
+              options={ORIGINAL_COPY}
+            />
+            <div className="space-y-1.5">
+              <Label className="field-label">Box / folder / storage</Label>
+              <Input
+                value={form.storage_location}
+                onChange={(e) => set("storage_location", e.target.value)}
+              />
+            </div>
             <div className="flex items-end gap-6 pb-2">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.has_envelope}
-                  onChange={(e) => set("has_envelope", e.target.checked)}
-                />
-                Envelope
-              </label>
+              {isLetter && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.has_envelope}
+                    onChange={(e) => set("has_envelope", e.target.checked)}
+                  />
+                  Envelope
+                </label>
+              )}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
