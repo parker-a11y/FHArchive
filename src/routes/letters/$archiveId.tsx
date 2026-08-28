@@ -52,6 +52,7 @@ import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
+import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
 import {
   AiPanel,
