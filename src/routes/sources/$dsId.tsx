@@ -101,7 +101,7 @@ function SourcePage() {
     setSaving(true);
     const updates = Object.fromEntries(
       Object.entries(draft).map(([k, val]) => [k, val === "" ? null : val]),
-    );
+    ) as never;
     const { error } = await supabase.from("digital_sources").update(updates).eq("id", source!.id);
     setSaving(false);
     if (error) return toast.error(error.message);

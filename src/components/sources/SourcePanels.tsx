@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { ExternalLink, Link2, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,12 @@ import {
   type DigitalSource,
   type DsSegment,
 } from "@/lib/sources";
+
+// Untyped client for dynamic (config-driven) table access in EntityLinker.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const db = supabase as unknown as {
+  from: (table: string) => any;
+};
 
 // ---------------------------------------------------------------------------
 // Segments
