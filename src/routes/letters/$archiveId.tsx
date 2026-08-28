@@ -31,12 +31,19 @@ import {
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
+  ORIGINAL_COPY,
   PERIODS,
   PUBLICATION_STATUS,
+  RECORD_RESEARCH_STATUS,
+  RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
   displayDate,
+  isLetterType,
+  labelOf,
+  subtypesFor,
 } from "@/lib/archive";
+
 import { ScansPanel } from "@/components/letter/ScansPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
@@ -71,13 +78,16 @@ export const Route = createFileRoute("/letters/$archiveId")({
 });
 
 const TEXT_FIELDS = [
-  { key: "date_as_written", label: "Date as written" },
-  { key: "author", label: "Author (from)" },
-  { key: "recipient", label: "Recipient (to)" },
-  { key: "origin", label: "Origin — written from" },
-  { key: "destination", label: "Destination" },
-  { key: "physical_condition", label: "Physical condition" },
+  { key: "date_as_written", label: "Date as written", letterOnly: false },
+  { key: "author", label: "Author (from)", letterOnly: true },
+  { key: "recipient", label: "Recipient (to)", letterOnly: true },
+  { key: "origin", label: "Origin / location", letterOnly: false },
+  { key: "destination", label: "Destination", letterOnly: true },
+  { key: "primary_person", label: "Primary person", letterOnly: false },
+  { key: "storage_location", label: "Box / folder / storage", letterOnly: false },
+  { key: "physical_condition", label: "Physical condition", letterOnly: false },
 ];
+
 
 function LetterPage() {
   const { archiveId } = Route.useParams();
