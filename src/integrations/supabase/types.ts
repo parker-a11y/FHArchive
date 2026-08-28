@@ -633,6 +633,7 @@ export type Database = {
           has_envelope: boolean
           historical_notes: string | null
           id: string
+          identification_status: string
           image_count: number
           normalized_date: string | null
           notes: string | null
@@ -654,7 +655,13 @@ export type Database = {
           review_status: string
           scan_status: string
           sheets: number | null
+          sort_date: string | null
+          storage_container: string | null
+          storage_folder: string | null
           storage_location: string | null
+          storage_notes: string | null
+          storage_position: string | null
+          storage_type: string | null
           subtype: string | null
           summary_long: string | null
           summary_short: string | null
@@ -680,6 +687,7 @@ export type Database = {
           has_envelope?: boolean
           historical_notes?: string | null
           id?: string
+          identification_status?: string
           image_count?: number
           normalized_date?: string | null
           notes?: string | null
@@ -701,7 +709,13 @@ export type Database = {
           review_status?: string
           scan_status?: string
           sheets?: number | null
+          sort_date?: string | null
+          storage_container?: string | null
+          storage_folder?: string | null
           storage_location?: string | null
+          storage_notes?: string | null
+          storage_position?: string | null
+          storage_type?: string | null
           subtype?: string | null
           summary_long?: string | null
           summary_short?: string | null
@@ -727,6 +741,7 @@ export type Database = {
           has_envelope?: boolean
           historical_notes?: string | null
           id?: string
+          identification_status?: string
           image_count?: number
           normalized_date?: string | null
           notes?: string | null
@@ -748,7 +763,13 @@ export type Database = {
           review_status?: string
           scan_status?: string
           sheets?: number | null
+          sort_date?: string | null
+          storage_container?: string | null
+          storage_folder?: string | null
           storage_location?: string | null
+          storage_notes?: string | null
+          storage_position?: string | null
+          storage_type?: string | null
           subtype?: string | null
           summary_long?: string | null
           summary_short?: string | null
