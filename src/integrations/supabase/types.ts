@@ -1359,6 +1359,7 @@ export type Database = {
           transcription_status: string
           transcription_verified: string | null
           updated_at: string
+          visibility: string
         }
         Insert: {
           archive_id: string
@@ -1421,6 +1422,7 @@ export type Database = {
           transcription_status?: string
           transcription_verified?: string | null
           updated_at?: string
+          visibility?: string
         }
         Update: {
           archive_id?: string
@@ -1483,6 +1485,7 @@ export type Database = {
           transcription_status?: string
           transcription_verified?: string | null
           updated_at?: string
+          visibility?: string
         }
         Relationships: []
       }
@@ -1608,6 +1611,69 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      record_shares: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          file_id: string | null
+          id: string
+          include_notes: boolean
+          include_transcription: boolean
+          last_viewed_at: string | null
+          letter_id: string
+          owner_id: string
+          public_note: string | null
+          scope: string
+          token: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          file_id?: string | null
+          id?: string
+          include_notes?: boolean
+          include_transcription?: boolean
+          last_viewed_at?: string | null
+          letter_id: string
+          owner_id?: string
+          public_note?: string | null
+          scope?: string
+          token: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          file_id?: string | null
+          id?: string
+          include_notes?: boolean
+          include_transcription?: boolean
+          last_viewed_at?: string | null
+          letter_id?: string
+          owner_id?: string
+          public_note?: string | null
+          scope?: string
+          token?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "record_shares_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "digital_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "record_shares_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
