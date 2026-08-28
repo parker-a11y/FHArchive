@@ -31,6 +31,7 @@ import {
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
+  IDENTIFICATION_STATUS,
   ORIGINAL_COPY,
   PERIODS,
   PUBLICATION_STATUS,
@@ -38,6 +39,7 @@ import {
   RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
+  STORAGE_TYPES,
   displayDate,
   isLetterType,
   labelOf,
