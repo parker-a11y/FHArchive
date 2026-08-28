@@ -262,9 +262,13 @@ function SourcePage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="files" className="mt-6">
+            <DsFilesPanel source={source} />
+          </TabsContent>
           <TabsContent value="segments" className="mt-6">
             <SegmentsPanel source={source} />
           </TabsContent>
+
           <TabsContent value="records" className="mt-6">
             <SourceLettersPanel source={source} />
           </TabsContent>
