@@ -33,11 +33,14 @@ import {
   fetchSourceByDsId,
   type DigitalSource,
 } from "@/lib/sources";
+import { DATE_PRECISION } from "@/lib/archive";
 import {
   SegmentsPanel,
   SourceConnectionsPanel,
   SourceLettersPanel,
 } from "@/components/sources/SourcePanels";
+import { DsFilesPanel } from "@/components/sources/DsFilesPanel";
+
 
 export const Route = createFileRoute("/sources/$dsId")({
   head: () => ({
