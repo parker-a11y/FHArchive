@@ -69,6 +69,7 @@ export type DsFile = {
   sort_order: number;
   notes: string | null;
   created_at: string;
+  signedUrl?: string;
 };
 
 /** Best-guess bucket for a browser File, used to pick the right preview. */
