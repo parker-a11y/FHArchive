@@ -1,10 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RotateCw, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { IMAGE_TYPES, scanFileLabel } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
 
