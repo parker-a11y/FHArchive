@@ -454,6 +454,37 @@ function LetterPage() {
                 </select>
               </div>
             ))}
+
+            <div className="col-span-3 rounded border border-border bg-card p-4">
+              <div className="field-label mb-3">Physical storage location</div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="field-label">Storage type</label>
+                  <select
+                    className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                    value={(form.storage_type as string) ?? ""}
+                    onChange={(e) => set("storage_type", e.target.value)}
+                  >
+                    {STORAGE_TYPES.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {STORAGE_FIELDS.map((f) => (
+                  <div key={f.key}>
+                    <label className="field-label">{f.label}</label>
+                    <Input
+                      placeholder={f.placeholder}
+                      value={(form[f.key] as string) ?? ""}
+                      onChange={(e) => set(f.key, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="field-label">Physical sheets</label>
               <Input
