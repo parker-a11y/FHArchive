@@ -365,33 +365,75 @@ const MONTHS = [
   "DECEMBER",
 ];
 
-/** Label date rendering honouring precision/certainty — never invents precision. */
-export function labelDate(letter: {
+type DateShape = {
   normalized_date: string | null;
-  date_precision: string;
-  date_certainty: string;
-}) {
-  const d = letter.normalized_date;
-  if (!d) return "DATE UNKNOWN";
-  const [y, m, day] = d.split("-").map(Number);
-  const approx = letter.date_precision === "approximate" || letter.date_certainty === "possible";
-  if (letter.date_precision === "year" || letter.date_precision === "unknown")
-    return (approx ? "c. " : "") + y;
-  if (letter.date_precision === "month")
-    return (approx ? "c. " : "") + `${MONTHS[m - 1]} ${y}`;
-  return (approx ? "c. " : "") + `${MONTHS[m - 1]} ${day}, ${y}`;
-}
-
-export function displayDate(letter: {
-  normalized_date: string | null;
+  date_end?: string | null;
   date_as_written?: string | null;
   date_precision: string;
   date_certainty: string;
-}) {
-  if (!letter.normalized_date) return letter.date_as_written || "Unknown date";
+};
+
+/** Label date rendering honouring precision/certainty — never invents precision. */
+export function labelDate(letter: DateShape) {
+  if (letter.date_precision === "not_applicable") return "NO DATE";
+  if (letter.date_precision === "undated") return "UNDATED";
+  const d = letter.normalized_date;
+  if (!d) return "UNDATED";
+  const [y, m, day] = d.split("-").map(Number);
+  const approx = letter.date_precision === "approximate" || letter.date_certainty === "possible";
+  if (letter.date_precision === "range") {
+    const endYear = letter.date_end ? Number(letter.date_end.split("-")[0]) : null;
+    return endYear && endYear !== y ? `${y}–${endYear}` : String(y);
+  }
+  if (letter.date_precision === "year" || letter.date_precision === "unknown")
+    return (approx ? "C. " : "") + y;
+  if (letter.date_precision === "month")
+    return (approx ? "C. " : "") + `${MONTHS[m - 1]} ${y}`;
+  return (approx ? "C. " : "") + `${MONTHS[m - 1]} ${day}, ${y}`;
+}
+
+export function displayDate(letter: DateShape) {
+  if (letter.date_precision === "undated") return "Undated";
+  if (letter.date_precision === "not_applicable") return "Not applicable";
+  if (!letter.normalized_date) return letter.date_as_written || "Undated";
   const base = labelDate(letter);
   return base.charAt(0) + base.slice(1).toLowerCase();
 }
+
+/** Records whose date still needs work — powers the "Undated / Needs Dating" view. */
+export function needsDating(l: {
+  normalized_date: string | null;
+  date_precision: string;
+  date_certainty: string;
+}) {
+  if (l.date_precision === "not_applicable") return false;
+  return (
+    !l.normalized_date ||
+    ["undated", "approximate", "range", "unknown"].includes(l.date_precision) ||
+    ["estimated", "possible", "unknown"].includes(l.date_certainty)
+  );
+}
+
+/** Photographs (or photographic material) that still need identifying. */
+export function isUnidentifiedPhoto(l: {
+  record_type: string;
+  identification_status?: string | null;
+  normalized_date: string | null;
+  date_precision: string;
+  date_certainty: string;
+  origin: string | null;
+  primary_person: string | null;
+}) {
+  if ((l.record_type ?? "letter") !== "photograph") return false;
+  const st = l.identification_status ?? "unidentified";
+  return (
+    st !== "identified" ||
+    !l.primary_person ||
+    !l.origin ||
+    needsDating(l)
+  );
+}
+
 
 export function scanFileLabel(archiveId: string, imageType: string, index: number) {
   if (imageType === "envelope_front") return `${archiveId}_ENV-F`;
