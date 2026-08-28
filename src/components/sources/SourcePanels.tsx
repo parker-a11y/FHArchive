@@ -262,7 +262,7 @@ function EntityLinker({ source, config }: { source: DigitalSource; config: Entit
   const { data: links = [] } = useQuery({
     queryKey: qk,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from(config.joinTable)
         .select(`id, ${config.entityKey}, ${config.entityTable}(${config.nameColumn})`)
         .eq("source_id", source.id);
@@ -273,7 +273,7 @@ function EntityLinker({ source, config }: { source: DigitalSource; config: Entit
   const { data: entities = [] } = useQuery({
     queryKey: [config.entityTable],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from(config.entityTable)
         .select(`id, ${config.nameColumn}`)
         .order(config.nameColumn);
@@ -285,7 +285,7 @@ function EntityLinker({ source, config }: { source: DigitalSource; config: Entit
   const linkedIds = new Set(links.map((l) => l[config.entityKey] as string));
 
   async function addLink(entityId: string) {
-    const { error } = await supabase
+    const { error } = await db
       .from(config.joinTable)
       .insert({ source_id: source.id, [config.entityKey]: entityId });
     if (error) return toast.error(error.message);
@@ -295,7 +295,7 @@ function EntityLinker({ source, config }: { source: DigitalSource; config: Entit
   async function createAndLink() {
     const name = newName.trim();
     if (!name) return;
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from(config.entityTable)
       .insert({ [config.nameColumn]: name, ...(config.insertDefaults ?? {}) })
       .select("id")
@@ -307,7 +307,7 @@ function EntityLinker({ source, config }: { source: DigitalSource; config: Entit
   }
 
   async function unlink(linkId: string) {
-    const { error } = await supabase.from(config.joinTable).delete().eq("id", linkId);
+    const { error } = await db.from(config.joinTable).delete().eq("id", linkId);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: qk });
   }
