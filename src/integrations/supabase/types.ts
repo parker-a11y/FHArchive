@@ -82,6 +82,7 @@ export type Database = {
           created_at: string
           creator: string | null
           date_accessed: string | null
+          date_precision: string
           description: string | null
           ds_id: string
           ds_seq: number
@@ -89,6 +90,7 @@ export type Database = {
           id: string
           institution: string | null
           local_file_path: string | null
+          normalized_date: string | null
           notes: string | null
           original_date: string | null
           owner_id: string
@@ -104,6 +106,7 @@ export type Database = {
           created_at?: string
           creator?: string | null
           date_accessed?: string | null
+          date_precision?: string
           description?: string | null
           ds_id: string
           ds_seq: number
@@ -111,6 +114,7 @@ export type Database = {
           id?: string
           institution?: string | null
           local_file_path?: string | null
+          normalized_date?: string | null
           notes?: string | null
           original_date?: string | null
           owner_id?: string
@@ -126,6 +130,7 @@ export type Database = {
           created_at?: string
           creator?: string | null
           date_accessed?: string | null
+          date_precision?: string
           description?: string | null
           ds_id?: string
           ds_seq?: number
@@ -133,6 +138,7 @@ export type Database = {
           id?: string
           institution?: string | null
           local_file_path?: string | null
+          normalized_date?: string | null
           notes?: string | null
           original_date?: string | null
           owner_id?: string
@@ -195,6 +201,62 @@ export type Database = {
           },
           {
             foreignKeyName: "ds_events_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ds_files: {
+        Row: {
+          created_at: string
+          file_label: string
+          file_size: number | null
+          file_type: string
+          id: string
+          mime_type: string | null
+          notes: string | null
+          original_filename: string | null
+          owner_id: string
+          sort_order: number
+          source_id: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_label?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          original_filename?: string | null
+          owner_id?: string
+          sort_order?: number
+          source_id: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_label?: string
+          file_size?: number | null
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          original_filename?: string | null
+          owner_id?: string
+          sort_order?: number
+          source_id?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ds_files_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "digital_sources"
@@ -1295,25 +1357,47 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_digital_source: {
-        Args: {
-          p_creator: string
-          p_date_accessed: string
-          p_description: string
-          p_historical_date_range: string
-          p_institution: string
-          p_notes: string
-          p_original_date: string
-          p_source_type: string
-          p_title: string
-          p_url: string
-        }
-        Returns: {
-          ds_id: string
-          ds_seq: number
-          id: string
-        }[]
-      }
+      create_digital_source:
+        | {
+            Args: {
+              p_creator: string
+              p_date_accessed: string
+              p_description: string
+              p_historical_date_range: string
+              p_institution: string
+              p_notes: string
+              p_original_date: string
+              p_source_type: string
+              p_title: string
+              p_url: string
+            }
+            Returns: {
+              ds_id: string
+              ds_seq: number
+              id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_creator: string
+              p_date_accessed: string
+              p_date_precision?: string
+              p_description: string
+              p_historical_date_range: string
+              p_institution: string
+              p_normalized_date?: string
+              p_notes: string
+              p_original_date: string
+              p_source_type: string
+              p_title: string
+              p_url: string
+            }
+            Returns: {
+              ds_id: string
+              ds_seq: number
+              id: string
+            }[]
+          }
       create_letter: {
         Args: {
           p_author: string
