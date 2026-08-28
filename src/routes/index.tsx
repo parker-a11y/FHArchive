@@ -127,10 +127,21 @@ function Dashboard() {
     queryKey: ["item-counts"],
     queryFn: fetchItemCounts,
   });
+  const { data: sources = [] } = useQuery({
+    queryKey: ["sources"],
+    queryFn: fetchSources,
+  });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
-  const stats: { label: string; value: number; tone: Tone; icon: LucideIcon }[] = [
+  const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
     { label: "FH records", value: letters.length, tone: "blue", icon: Hash },
+    {
+      label: "Digital sources",
+      value: sources.length,
+      tone: "teal",
+      icon: Globe,
+      to: "/sources",
+    },
     { label: "Total items", value: itemCounts?.totalItems ?? 0, tone: "emerald", icon: Layers },
     { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0, tone: "teal", icon: ScanLine },
     { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "teal", icon: Images },
