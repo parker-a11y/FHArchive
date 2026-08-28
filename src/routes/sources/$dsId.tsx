@@ -141,6 +141,7 @@ function SourcePage() {
               <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                 {dsTypeLabel(source.source_type)}
               </span>
+              <SourceShareStatusBadge visibility={source.visibility} />
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">{source.title}</p>
           </div>
