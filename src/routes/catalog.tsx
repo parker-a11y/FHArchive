@@ -456,14 +456,26 @@ function QuickEntry() {
             />
           </div>
 
-          <div className="mt-6 flex gap-3">
-            <Button type="submit" size="lg" disabled={busy}>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={busy}>
               SAVE &amp; CREATE NEXT
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => save("open")}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              disabled={busy}
+              onClick={() => save("open")}
+            >
               Save &amp; open record
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => save("label")}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              disabled={busy}
+              onClick={() => save("label")}
+            >
               Save &amp; print label
             </Button>
           </div>
