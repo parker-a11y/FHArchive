@@ -153,6 +153,7 @@ function SourcePage() {
           <Button variant="outline" size="icon" onClick={() => navigate({ to: "/sources/$dsId", params: { dsId: nextId } })}>
             <ChevronRight className="size-4" />
           </Button>
+          <ShareSourceDialog source={source} />
           {source.url && (
             <Button variant="outline" className="gap-2" asChild>
               <a href={source.url} target="_blank" rel="noreferrer">
