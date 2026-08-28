@@ -58,12 +58,15 @@ function NewSource() {
     creator: "",
     institution: "",
     original_date: "",
+    normalized_date: "",
+    date_precision: "unknown",
     date_accessed: "",
     historical_date_range: "",
     url: "",
     description: "",
     notes: "",
   });
+
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
