@@ -56,29 +56,45 @@ function FileCard({
   file,
   onSave,
   onDelete,
+  onOpen,
 }: {
   file: DsFile;
   onSave: (patch: Partial<DsFile>) => void;
   onDelete: () => void;
+  onOpen: () => void;
 }) {
   const url = useSignedUrl(file.storage_path);
   const [label, setLabel] = useState(file.file_label);
   const [notes, setNotes] = useState(file.notes ?? "");
   const dirty = label !== file.file_label || notes !== (file.notes ?? "");
+  const isViewable = ["image", "audio", "video"].includes(file.file_type);
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="mb-3 overflow-hidden rounded-lg bg-muted">
         {file.file_type === "image" && url && (
-          <img src={url} alt={file.file_label || "Preservation copy"} className="max-h-56 w-full object-contain" />
+          <button
+            onClick={onOpen}
+            className="block h-56 w-full cursor-zoom-in"
+            aria-label={`Open ${file.file_label || "image"} fullscreen`}
+          >
+            <img src={url} alt={file.file_label || "Preservation copy"} className="h-full w-full object-contain" />
+          </button>
         )}
         {file.file_type === "audio" && url && (
-          <audio controls src={url} className="w-full" />
+          <div className="flex h-56 flex-col items-center justify-center px-4">
+            <audio controls src={url} className="w-full" />
+            <Button variant="outline" size="sm" className="mt-3 gap-2" onClick={onOpen}>
+              Open audio player
+            </Button>
+          </div>
         )}
         {file.file_type === "video" && url && (
-          <video controls src={url} className="max-h-56 w-full" />
+          <button onClick={onOpen} className="block h-56 w-full cursor-zoom-in">
+            <video src={url} className="h-full w-full object-contain" />
+          </button>
         )}
-        {!["image", "audio", "video"].includes(file.file_type) && (
+        {!isViewable && (
           <div className="flex h-24 items-center justify-center text-muted-foreground">
             <FileText className="size-8" />
           </div>
