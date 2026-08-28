@@ -15,6 +15,7 @@ import {
   Ship,
   CalendarDays,
   BookOpen,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare },
   { to: "/letters", label: "All Records", icon: Files },
+  { to: "/sources", label: "Digital Sources", icon: Globe },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks },
