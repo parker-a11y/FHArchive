@@ -222,7 +222,7 @@ function QuickEntry() {
         title="Catalog Next Item"
         description="Type, date, a short description — then Save & Create Next (⌘/Ctrl + Enter). Details can be added later."
       />
-      <div className="grid grid-cols-[1fr_16rem] gap-8 p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-8 p-4 sm:p-8">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -242,7 +242,7 @@ function QuickEntry() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select_
               label="Record type *"
               value={form.record_type}
@@ -271,7 +271,7 @@ function QuickEntry() {
               options={PRIMARY_PERSONS}
             />
 
-            <div className="col-span-3 space-y-1.5">
+            <div className="col-span-full space-y-1.5">
               <Label className="field-label">Title / short description</Label>
               <Input
                 value={form.title}
@@ -383,9 +383,9 @@ function QuickEntry() {
                 onChange={(e) => set("storage_location", e.target.value)}
               />
             </div>
-            <div className="col-span-3 rounded border border-border bg-card p-4">
+            <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Select_
                   label="Storage type"
                   value={form.storage_type}
@@ -416,7 +416,7 @@ function QuickEntry() {
                     placeholder="Compartment 07"
                   />
                 </div>
-                <div className="col-span-4 space-y-1.5">
+                <div className="col-span-full space-y-1.5">
                   <Label className="field-label">Location notes</Label>
                   <Input
                     value={form.storage_notes}
@@ -456,14 +456,26 @@ function QuickEntry() {
             />
           </div>
 
-          <div className="mt-6 flex gap-3">
-            <Button type="submit" size="lg" disabled={busy}>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={busy}>
               SAVE &amp; CREATE NEXT
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => save("open")}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              disabled={busy}
+              onClick={() => save("open")}
+            >
               Save &amp; open record
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => save("label")}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              disabled={busy}
+              onClick={() => save("label")}
+            >
               Save &amp; print label
             </Button>
           </div>

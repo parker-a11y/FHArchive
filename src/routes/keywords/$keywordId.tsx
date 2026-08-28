@@ -51,7 +51,7 @@ function KeywordPage() {
         title={(keyword?.name as string) ?? "Keyword"}
         description={`${rows.length} letters`}
       />
-      <div className="max-w-3xl p-8">
+      <div className="max-w-3xl p-4 sm:p-8">
         <div className="divide-y divide-border rounded border border-border bg-card">
           {rows.map((l) => {
             const link = links.find((x) => x.letter_id === l.id);

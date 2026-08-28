@@ -215,7 +215,7 @@ function SearchPage() {
   return (
     <>
       <PageHeader title="Search" description={`${results.length} matching letters`} />
-      <div className="grid grid-cols-[16rem_1fr] gap-8 p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-8 p-4 sm:p-8">
         <aside className="space-y-3">
           <div>
             <label className="field-label">Date from</label>

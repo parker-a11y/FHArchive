@@ -276,7 +276,7 @@ export function DsFilesPanel({ source }: { source: DigitalSource }) {
           e.preventDefault();
           if (e.dataTransfer.files.length) upload(e.dataTransfer.files);
         }}
-        className="rounded-2xl border-2 border-dashed border-border bg-muted/40 p-8 text-center"
+        className="rounded-2xl border-2 border-dashed border-border bg-muted/40 p-4 sm:p-8 text-center"
       >
         <Upload className="mx-auto mb-2 size-6 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">

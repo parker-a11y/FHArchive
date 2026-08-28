@@ -127,13 +127,13 @@ export function SegmentsPanel({ source }: { source: DigitalSource }) {
       </div>
 
       <div className="mt-5 space-y-3 rounded-xl border border-dashed border-border bg-muted/40 p-4">
-        <div className="grid grid-cols-[1fr_1fr_2fr] gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_2fr] gap-2">
           {input("start_ts", "Start (e.g. 12:34)")}
           {input("end_ts", "End")}
           {input("title", "Segment title *")}
         </div>
         {input("description", "Description")}
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {input("url", "Direct URL to this part")}
           {input("keywords", "Tags (comma separated)")}
         </div>

@@ -53,7 +53,7 @@ function Places() {
   return (
     <>
       <PageHeader title="Places" description={`${places.length} place records`} />
-      <div className="max-w-3xl p-8">
+      <div className="max-w-3xl p-4 sm:p-8">
         <div className="mb-6 flex gap-2">
           <Input
             placeholder="New place, e.g. Fort Benning, Georgia"

@@ -164,10 +164,10 @@ function LetterPage() {
     setDirty(false);
   }, [letter]);
 
-  if (isLoading) return <div className="p-8 text-sm text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</div>;
   if (!letter)
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <p className="text-sm">No record found for {archiveId}.</p>
         <Link to="/letters" className="text-sm text-primary underline">
           Back to letters
@@ -239,7 +239,7 @@ function LetterPage() {
 
   return (
     <>
-      <header className="no-print border-b border-border px-8 py-5">
+      <header className="no-print border-b border-border px-4 sm:px-8 py-5">
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
@@ -358,7 +358,7 @@ function LetterPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="catalog" className="px-8 py-6">
+      <Tabs defaultValue="catalog" className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="scans">Items &amp; Scans ({letter.image_count})</TabsTrigger>
@@ -371,7 +371,7 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
-          <div className="grid max-w-5xl grid-cols-3 gap-4">
+          <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="field-label">Record type</label>
               <select
@@ -473,9 +473,9 @@ function LetterPage() {
               </div>
             ))}
 
-            <div className="col-span-3 rounded border border-border bg-card p-4">
+            <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <label className="field-label">Storage type</label>
                   <select
@@ -542,7 +542,7 @@ function LetterPage() {
                 Research needed
               </label>
             </div>
-            <div className="col-span-3">
+            <div className="col-span-full">
               <label className="field-label">General notes (my interpretation / research)</label>
               <Textarea
                 rows={4}
@@ -550,7 +550,7 @@ function LetterPage() {
                 onChange={(e) => set("notes", e.target.value)}
               />
             </div>
-            <div className="col-span-3 grid grid-cols-2 gap-4">
+            <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="field-label">Short summary</label>
                 <Textarea
@@ -568,7 +568,7 @@ function LetterPage() {
                 />
               </div>
             </div>
-            <div className="col-span-3 grid grid-cols-2 gap-4">
+            <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="field-label">Physical description</label>
                 <Textarea
@@ -601,7 +601,7 @@ function LetterPage() {
                   onChange={(e) => set("research_notes", e.target.value)}
                 />
               </div>
-              <div className="col-span-2">
+              <div className="col-span-full">
                 <label className="field-label">Citations / sources</label>
                 <Textarea
                   rows={2}
@@ -638,7 +638,7 @@ function LetterPage() {
           <HistoryPanel letter={letter} />
         </TabsContent>
       </Tabs>
-      <div className="px-8 pb-10 text-xs text-muted-foreground">
+      <div className="px-4 sm:px-8 pb-10 text-xs text-muted-foreground">
         Record created {new Date(letter.created_at).toLocaleDateString()} · modified{" "}
         {new Date(letter.updated_at).toLocaleDateString()} ·{" "}
         <button className="underline" onClick={() => navigate({ to: "/letters" })}>

@@ -58,7 +58,7 @@ function Keywords() {
   return (
     <>
       <PageHeader title="Keywords" description={`${keywords.length} tags`} />
-      <div className="max-w-3xl p-8">
+      <div className="max-w-3xl p-4 sm:p-8">
         <div className="mb-6 flex gap-2">
           <Input
             placeholder="New keyword, e.g. Officer Candidate School"

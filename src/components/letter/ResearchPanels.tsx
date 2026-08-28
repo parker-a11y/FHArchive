@@ -141,7 +141,7 @@ export function LinksPanel({ letter }: { letter: Letter }) {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <div>
         <h3 className="field-label mb-2">People</h3>
         <div className="mb-2 flex gap-2">
@@ -355,7 +355,7 @@ export function ReferencesPanel({ letter }: { letter: Letter }) {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="grid grid-cols-2 gap-3 rounded border border-border bg-card p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded border border-border bg-card p-4">
         <div>
           <label className="field-label">Reference</label>
           <Input
@@ -375,7 +375,7 @@ export function ReferencesPanel({ letter }: { letter: Letter }) {
             ))}
           </select>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-full">
           <label className="field-label">Description</label>
           <Input
             value={draft.description}
@@ -403,7 +403,7 @@ export function ReferencesPanel({ letter }: { letter: Letter }) {
             onChange={(e) => setDraft({ ...draft, source_links: e.target.value })}
           />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-full">
           <label className="field-label">Notes</label>
           <Textarea
             rows={2}
@@ -646,7 +646,7 @@ export function HistoryPanel({ letter }: { letter: Letter }) {
       </p>
       <div className="divide-y divide-border rounded border border-border bg-card text-sm">
         {rows.map((h) => (
-          <div key={h.id} className="grid grid-cols-[10rem_9rem_1fr_1fr] gap-3 px-3 py-2">
+          <div key={h.id} className="grid grid-cols-1 lg:grid-cols-[10rem_9rem_1fr_1fr] gap-3 px-3 py-2">
             <span className="text-muted-foreground">
               {new Date(h.created_at).toLocaleString()}
             </span>

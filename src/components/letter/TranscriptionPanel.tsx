@@ -66,7 +66,7 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <div className="rounded border border-border bg-muted/30 p-2">
         {scanUrl ? (
           <img src={scanUrl} alt="First scan" className="max-h-[75vh] w-full object-contain" />

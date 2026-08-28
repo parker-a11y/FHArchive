@@ -76,7 +76,7 @@ function Timeline() {
   return (
     <>
       <PageHeader title="Timeline" description={`${rows.length} letters in chronological order`} />
-      <div className="flex gap-2 border-b border-border px-8 py-3">
+      <div className="flex gap-2 border-b border-border px-4 sm:px-8 py-3">
         <Input
           className="h-8 w-72"
           placeholder="Filter by person, place or keyword…"
@@ -96,7 +96,7 @@ function Timeline() {
           ))}
         </select>
       </div>
-      <div className="max-w-4xl p-8">
+      <div className="max-w-4xl p-4 sm:p-8">
         {rows.map((l) => {
           const year = l.normalized_date?.slice(0, 4) ?? "Undated";
           const showYear = year !== lastYear;

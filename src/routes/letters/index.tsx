@@ -333,7 +333,7 @@ function LettersTable() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2 border-b border-border px-8 py-3">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 sm:px-8 py-3">
         <Input
           placeholder="Filter…"
           value={q}
@@ -508,9 +508,9 @@ function LettersTable() {
           </tbody>
         </table>
         {rows.length === 0 && (
-          <p className="px-8 py-8 text-sm text-muted-foreground">No matching records.</p>
+          <p className="px-4 sm:px-8 py-6 sm:py-8 text-sm text-muted-foreground">No matching records.</p>
         )}
-        <p className="px-8 py-3 text-xs text-muted-foreground">
+        <p className="px-4 sm:px-8 py-3 text-xs text-muted-foreground">
           Double-click an editable cell (From, To, Origin, Sheets, Notes) to edit inline. Changes
           are recorded in the letter's edit history.
         </p>

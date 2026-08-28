@@ -66,8 +66,8 @@ function Events() {
   return (
     <>
       <PageHeader title="Events" description={`${events.length} event records — never required`} />
-      <div className="max-w-4xl p-8">
-        <div className="mb-6 grid grid-cols-[1fr_10rem_9rem_9rem_auto] gap-2">
+      <div className="max-w-4xl p-4 sm:p-8">
+        <div className="mb-6 grid grid-cols-1 lg:grid-cols-[1fr_10rem_9rem_9rem_auto] gap-2">
           <Input
             placeholder="e.g. Marriage of Francis & Jacqueline"
             value={name}

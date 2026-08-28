@@ -116,7 +116,7 @@ function Backups() {
       />
 
       <div className="space-y-6 p-6">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             icon={<ShieldCheck className="size-5" />}
             label="Last successful backup"
@@ -172,7 +172,7 @@ function Backups() {
             <tbody>
               {runs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-6 sm:py-8 text-center text-muted-foreground">
                     No backups have run yet.
                   </td>
                 </tr>

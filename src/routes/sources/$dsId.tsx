@@ -87,10 +87,10 @@ function SourcePage() {
   const [saving, setSaving] = useState(false);
 
   if (isLoading)
-    return <p className="p-8 text-sm text-muted-foreground">Loading…</p>;
+    return <p className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</p>;
   if (!source)
     return (
-      <p className="p-8 text-sm text-muted-foreground">
+      <p className="p-4 sm:p-8 text-sm text-muted-foreground">
         Source {dsId} not found. <Link to="/sources" className="underline">Back to sources</Link>
       </p>
     );
@@ -126,7 +126,7 @@ function SourcePage() {
 
   return (
     <>
-      <div className="no-print flex items-end justify-between gap-4 border-b border-border px-8 py-5">
+      <div className="no-print flex items-end justify-between gap-4 border-b border-border px-4 sm:px-8 py-5">
         <div className="flex items-center gap-4">
           <div className="flex size-11 items-center justify-center rounded-xl bg-tone-teal-soft text-tone-teal">
             <Globe className="size-5" />
@@ -178,7 +178,7 @@ function SourcePage() {
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <Tabs defaultValue="details">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
@@ -194,7 +194,7 @@ function SourcePage() {
               <Field label="Title">
                 <Input value={v("title")} onChange={(e) => set("title", e.target.value)} />
               </Field>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Source type">
                   <Select value={v("source_type")} onValueChange={(val) => set("source_type", val)}>
                     <SelectTrigger>

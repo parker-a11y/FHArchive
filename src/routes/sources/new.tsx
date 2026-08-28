@@ -124,11 +124,11 @@ function NewSource() {
           )
         }
       />
-      <div className="max-w-3xl space-y-5 p-8">
+      <div className="max-w-3xl space-y-5 p-4 sm:p-8">
         <Field label="Title *">
           <Input value={form.title} onChange={set("title")} placeholder="e.g. USS Enterprise CV-6 combat footage, 1944" />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Source type">
             <Select
               value={form.source_type}
@@ -192,7 +192,7 @@ function NewSource() {
         <Field label="Notes">
           <Textarea rows={2} value={form.notes} onChange={set("notes")} />
         </Field>
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-wrap gap-3 pt-2">
           <Button size="lg" disabled={saving} onClick={() => save(true)}>
             Save &amp; open record
           </Button>

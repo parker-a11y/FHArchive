@@ -94,7 +94,7 @@ function Queues() {
   return (
     <>
       <PageHeader title="Work Queues" description="What remains to be done." />
-      <div className="grid grid-cols-[16rem_1fr] gap-8 p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-8 p-4 sm:p-8">
         <nav className="space-y-1">
           {queues.map((q) => (
             <button
