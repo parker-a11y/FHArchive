@@ -15,10 +15,12 @@ import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
 import { Route as KeywordsKeywordIdRouteImport } from './routes/keywords/$keywordId'
 import { Route as LettersIndexRouteImport } from './routes/letters/index'
 import { Route as LettersArchiveIdRouteImport } from './routes/letters/$archiveId'
+import { Route as OrganizationsIndexRouteImport } from './routes/organizations/index'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 import { Route as PlacesIndexRouteImport } from './routes/places/index'
@@ -54,6 +56,11 @@ const TimelineRoute = TimelineRouteImport.update({
   path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KeywordsIndexRoute = KeywordsIndexRouteImport.update({
   id: '/keywords/',
   path: '/keywords/',
@@ -72,6 +79,11 @@ const LettersIndexRoute = LettersIndexRouteImport.update({
 const LettersArchiveIdRoute = LettersArchiveIdRouteImport.update({
   id: '/letters/$archiveId',
   path: '/letters/$archiveId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizationsIndexRoute = OrganizationsIndexRouteImport.update({
+  id: '/organizations/',
+  path: '/organizations/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PeopleIndexRoute = PeopleIndexRouteImport.update({
@@ -106,8 +118,10 @@ export interface FileRoutesByFullPath {
   '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
+  '/organizations/': typeof OrganizationsIndexRoute
   '/people/': typeof PeopleIndexRoute
   '/places/': typeof PlacesIndexRoute
 }
@@ -122,8 +136,10 @@ export interface FileRoutesByTo {
   '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/events': typeof EventsIndexRoute
   '/keywords': typeof KeywordsIndexRoute
   '/letters': typeof LettersIndexRoute
+  '/organizations': typeof OrganizationsIndexRoute
   '/people': typeof PeopleIndexRoute
   '/places': typeof PlacesIndexRoute
 }
@@ -139,8 +155,10 @@ export interface FileRoutesById {
   '/letters/$archiveId': typeof LettersArchiveIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/places/$placeId': typeof PlacesPlaceIdRoute
+  '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
+  '/organizations/': typeof OrganizationsIndexRoute
   '/people/': typeof PeopleIndexRoute
   '/places/': typeof PlacesIndexRoute
 }
@@ -157,8 +175,10 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/events/'
     | '/keywords/'
     | '/letters/'
+    | '/organizations/'
     | '/people/'
     | '/places/'
   fileRoutesByTo: FileRoutesByTo
@@ -173,8 +193,10 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/events'
     | '/keywords'
     | '/letters'
+    | '/organizations'
     | '/people'
     | '/places'
   id:
@@ -189,8 +211,10 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/events/'
     | '/keywords/'
     | '/letters/'
+    | '/organizations/'
     | '/people/'
     | '/places/'
   fileRoutesById: FileRoutesById
@@ -206,8 +230,10 @@ export interface RootRouteChildren {
   LettersArchiveIdRoute: typeof LettersArchiveIdRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   PlacesPlaceIdRoute: typeof PlacesPlaceIdRoute
+  EventsIndexRoute: typeof EventsIndexRoute
   KeywordsIndexRoute: typeof KeywordsIndexRoute
   LettersIndexRoute: typeof LettersIndexRoute
+  OrganizationsIndexRoute: typeof OrganizationsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
   PlacesIndexRoute: typeof PlacesIndexRoute
 }
@@ -256,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events/': {
+      id: '/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/keywords/': {
       id: '/keywords/'
       path: '/keywords'
@@ -282,6 +315,13 @@ declare module '@tanstack/react-router' {
       path: '/letters/$archiveId'
       fullPath: '/letters/$archiveId'
       preLoaderRoute: typeof LettersArchiveIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizations/': {
+      id: '/organizations/'
+      path: '/organizations'
+      fullPath: '/organizations/'
+      preLoaderRoute: typeof OrganizationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/people/': {
@@ -326,8 +366,10 @@ const rootRouteChildren: RootRouteChildren = {
   LettersArchiveIdRoute: LettersArchiveIdRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   PlacesPlaceIdRoute: PlacesPlaceIdRoute,
+  EventsIndexRoute: EventsIndexRoute,
   KeywordsIndexRoute: KeywordsIndexRoute,
   LettersIndexRoute: LettersIndexRoute,
+  OrganizationsIndexRoute: OrganizationsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
   PlacesIndexRoute: PlacesIndexRoute,
 }

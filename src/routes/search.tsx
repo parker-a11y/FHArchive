@@ -41,23 +41,63 @@ function SearchPage() {
   const { data: index } = useQuery({
     queryKey: ["search_index"],
     queryFn: async () => {
-      const [k, p, pl, refs] = await Promise.all([
+      const [k, p, pl, refs, o, ev] = await Promise.all([
         supabase.from("letter_keywords").select("letter_id, keywords(name)"),
         supabase.from("letter_people").select("letter_id, people(name)"),
         supabase.from("letter_places").select("letter_id, places(canonical_name)"),
         supabase.from("historical_references").select("letter_id, reference, notes, description"),
+        supabase.from("letter_organizations").select("letter_id, organizations(name)"),
+        supabase.from("letter_events").select("letter_id, events(name)"),
       ]);
       const map: Record<string, string[]> = {};
       const push = (id: string, v?: string | null) => v && (map[id] ??= []).push(v);
       (k.data ?? []).forEach((r) => push(r.letter_id, r.keywords?.name));
       (p.data ?? []).forEach((r) => push(r.letter_id, r.people?.name));
       (pl.data ?? []).forEach((r) => push(r.letter_id, r.places?.canonical_name));
+      (o.data ?? []).forEach((r) => push(r.letter_id, r.organizations?.name));
+      (ev.data ?? []).forEach((r) => push(r.letter_id, r.events?.name));
       (refs.data ?? []).forEach((r) => {
         push(r.letter_id, r.reference);
         push(r.letter_id, r.notes);
         push(r.letter_id, r.description);
       });
       return map;
+    },
+  });
+
+  const { data: linkSets } = useQuery({
+    queryKey: ["search_link_sets"],
+    queryFn: async () => {
+      const [p, o, ev] = await Promise.all([
+        supabase.from("letter_people").select("letter_id, person_id"),
+        supabase.from("letter_organizations").select("letter_id, organization_id"),
+        supabase.from("letter_events").select("letter_id, event_id"),
+      ]);
+      return {
+        people: p.data ?? [],
+        orgs: o.data ?? [],
+        events: ev.data ?? [],
+      };
+    },
+  });
+
+  const { data: entities } = useQuery({
+    queryKey: ["entities"],
+    queryFn: async () => {
+      const [p, pl, k, o, ev] = await Promise.all([
+        supabase.from("people").select("id,name").order("name"),
+        supabase.from("places").select("id,canonical_name").order("canonical_name"),
+        supabase.from("keywords").select("id,name").order("name"),
+        supabase.from("organizations").select("id,name").order("name"),
+        supabase.from("events").select("id,name").order("name"),
+      ]);
+      return {
+        people: p.data ?? [],
+        places: pl.data ?? [],
+        keywords: k.data ?? [],
+        organizations: o.data ?? [],
+        events: ev.data ?? [],
+      };
     },
   });
 
@@ -71,6 +111,13 @@ function SearchPage() {
   const [tstat, setTstat] = useState("");
   const [sstat, setSstat] = useState("");
   const [rstat, setRstat] = useState("");
+  const [rtype, setRtype] = useState("");
+  const [subtype, setSubtype] = useState("");
+  const [research, setResearch] = useState("");
+  const [personId, setPersonId] = useState("");
+  const [orgId, setOrgId] = useState("");
+  const [eventId, setEventId] = useState("");
+
 
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
