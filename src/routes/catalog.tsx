@@ -64,6 +64,12 @@ const blank = {
   has_envelope: false,
   has_enclosures: false,
   storage_location: "",
+  storage_type: "",
+  storage_container: "",
+  storage_folder: "",
+  storage_position: "",
+  storage_notes: "",
+  identification_status: "unidentified",
   original_copy: "original",
   notes: "",
 };
