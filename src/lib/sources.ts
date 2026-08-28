@@ -129,10 +129,13 @@ export async function fetchSources(): Promise<DigitalSource[]> {
   const { data, error } = await supabase
     .from("digital_sources")
     .select("*")
+    // Undated sources sort last, then oldest first, then by DS number.
+    .order("normalized_date", { ascending: true, nullsFirst: false })
     .order("ds_seq", { ascending: true });
   if (error) throw error;
   return (data ?? []) as DigitalSource[];
 }
+
 
 export async function fetchSourceByDsId(dsId: string): Promise<DigitalSource | null> {
   const { data, error } = await supabase
