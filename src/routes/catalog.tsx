@@ -8,14 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
+  IDENTIFICATION_STATUS,
   ORIGINAL_COPY,
   PERIODS,
   PRIMARY_PERSONS,
   RECORD_TYPES,
+  STORAGE_TYPES,
   isLetterType,
   labelDate,
   subtypesFor,
