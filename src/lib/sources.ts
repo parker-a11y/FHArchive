@@ -160,6 +160,8 @@ export type NewSourceInput = {
   creator?: string;
   institution?: string;
   original_date?: string;
+  normalized_date?: string;
+  date_precision?: string;
   date_accessed?: string;
   historical_date_range?: string;
   url?: string;
@@ -182,10 +184,13 @@ export async function createDigitalSource(
     p_url: input.url || null,
     p_description: input.description || null,
     p_notes: input.notes || null,
+    p_normalized_date: input.normalized_date || null,
+    p_date_precision: input.date_precision || "unknown",
   };
   const { data, error } = await supabase.rpc("create_digital_source", payload as never);
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
+
   return row as { id: string; ds_seq: number; ds_id: string };
 }
 
