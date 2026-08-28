@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BackupsRouteImport } from './routes/backups'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as SearchRouteImport } from './routes/search'
@@ -38,6 +39,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BackupsRoute = BackupsRouteImport.update({
+  id: '/backups',
+  path: '/backups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogRoute = CatalogRouteImport.update({
@@ -134,6 +140,7 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/queues': typeof QueuesRoute
   '/search': typeof SearchRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/backups'
     | '/catalog'
     | '/queues'
     | '/search'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/backups'
     | '/catalog'
     | '/queues'
     | '/search'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/backups'
     | '/catalog'
     | '/queues'
     | '/search'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BackupsRoute: typeof BackupsRoute
   CatalogRoute: typeof CatalogRoute
   QueuesRoute: typeof QueuesRoute
   SearchRoute: typeof SearchRoute
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backups': {
+      id: '/backups'
+      path: '/backups'
+      fullPath: '/backups'
+      preLoaderRoute: typeof BackupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalog': {
@@ -438,6 +458,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BackupsRoute: BackupsRoute,
   CatalogRoute: CatalogRoute,
   QueuesRoute: QueuesRoute,
   SearchRoute: SearchRoute,
