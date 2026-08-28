@@ -90,12 +90,6 @@ export const getSharedRecord = createServerFn({ method: "GET" })
       supabaseAdmin.from("file_derivatives").select("*").eq("letter_id", share.letter_id),
     ]);
 
-    const names = (rows: unknown, key: string, sub: string) =>
-      ((rows as { data?: unknown[] } | null)?.data ?? []).length === 0
-        ? []
-        : ([] as string[]);
-    void names;
-
     const pick = (res: { data: unknown[] | null }, rel: string, field: string): string[] =>
       (res.data ?? [])
         .map((r) => {
