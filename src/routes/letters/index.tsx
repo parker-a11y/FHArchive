@@ -98,6 +98,8 @@ function LettersTable() {
   const [q, setQ] = useState("");
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
+  const [rType, setRType] = useState("");
+
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
@@ -109,6 +111,8 @@ function LettersTable() {
     let r = letters.filter((l) => {
       if (period && l.period !== period) return false;
       if (tStatus && l.transcription_status !== tStatus) return false;
+      if (rType && (l.record_type ?? "letter") !== rType) return false;
+
       if (!q) return true;
       const hay = [
         l.archive_id,
