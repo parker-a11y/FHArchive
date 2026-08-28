@@ -237,6 +237,29 @@ export const IMAGE_TYPES = [
   { value: "other", label: "Other" },
 ] as const;
 
+export const ITEM_TYPES = [
+  { value: "letter", label: "Letter / Note" },
+  { value: "invitation", label: "Invitation" },
+  { value: "program", label: "Program / Agenda" },
+  { value: "photograph", label: "Photograph" },
+  { value: "envelope", label: "Envelope" },
+  { value: "clipping", label: "Newspaper clipping" },
+  { value: "document", label: "Document" },
+  { value: "card", label: "Card" },
+  { value: "ephemera", label: "Ephemera" },
+  { value: "artifact", label: "Artifact" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const ITEM_SIDES = [
+  { value: "", label: "—" },
+  { value: "front", label: "Front" },
+  { value: "back", label: "Back" },
+  { value: "both", label: "Front & Back" },
+] as const;
+
+
+
 export const REFERENCE_TYPES = [
   "Person",
   "Military unit",
