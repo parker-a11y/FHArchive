@@ -108,8 +108,23 @@ function LetterPage() {
   useEffect(() => {
     if (!letter) return;
     setForm({
+      record_type: letter.record_type ?? "letter",
+      subtype: letter.subtype ?? "",
+      title: letter.title ?? "",
+      date_end: letter.date_end ?? "",
+      primary_person: letter.primary_person ?? "",
+      physical_description: letter.physical_description ?? "",
+      original_copy: letter.original_copy ?? "unknown",
+      storage_location: letter.storage_location ?? "",
+      provenance: letter.provenance ?? "",
+      digitization_notes: letter.digitization_notes ?? "",
+      research_status: letter.research_status ?? "unreviewed",
+      research_notes: letter.research_notes ?? "",
+      citations: letter.citations ?? "",
+      historical_notes: letter.historical_notes ?? "",
       date_as_written: letter.date_as_written ?? "",
       normalized_date: letter.normalized_date ?? "",
+
       date_precision: letter.date_precision,
       date_certainty: letter.date_certainty,
       author: letter.author ?? "",
