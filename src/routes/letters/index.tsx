@@ -277,6 +277,19 @@ function LettersTable() {
         />
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={rType}
+          onChange={(e) => setRType(e.target.value)}
+        >
+          <option value="">All record types</option>
+          {RECORD_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
         >
