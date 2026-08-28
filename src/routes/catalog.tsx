@@ -134,7 +134,12 @@ function QuickEntry() {
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
-    let created: { archive_id: string };
+    // A record never needs a date: fall back to "undated" rather than blocking entry.
+    const precision =
+      !form.normalized_date && !["undated", "not_applicable", "unknown"].includes(form.date_precision)
+        ? "undated"
+        : form.date_precision;
+    let created: { id: string; archive_id: string };
     try {
       created = await createRecord({
         p_record_type: form.record_type,
@@ -143,7 +148,7 @@ function QuickEntry() {
         p_date_as_written: form.date_as_written,
         p_normalized_date: form.normalized_date,
         p_date_end: form.date_end,
-        p_date_precision: form.date_precision,
+        p_date_precision: precision,
         p_date_certainty: form.date_certainty,
         p_primary_person: form.primary_person,
         p_author: isLetter ? form.author : null,
@@ -158,6 +163,15 @@ function QuickEntry() {
         p_original_copy: form.original_copy,
         p_notes: form.notes,
       });
+      const extras = {
+        identification_status: form.identification_status,
+        storage_type: form.storage_type || null,
+        storage_container: form.storage_container || null,
+        storage_folder: form.storage_folder || null,
+        storage_position: form.storage_position || null,
+        storage_notes: form.storage_notes || null,
+      };
+      await supabase.from("letters").update(extras as never).eq("id", created.id);
     } catch (e) {
       setBusy(false);
       return toast.error((e as Error).message);
@@ -173,7 +187,7 @@ function QuickEntry() {
     if (mode === "label") {
       setLabelFor({
         archiveId: created.archive_id,
-        date: labelDate(form),
+        date: labelDate({ ...form, date_precision: precision }),
         lines: labelLines({
           ...form,
           sheets: form.sheets ? Number(form.sheets) : null,
@@ -187,12 +201,17 @@ function QuickEntry() {
       period: f.period,
       primary_person: f.primary_person,
       storage_location: f.storage_location,
+      storage_type: f.storage_type,
+      storage_container: f.storage_container,
+      storage_folder: f.storage_folder,
+      storage_position: f.storage_position,
       original_copy: f.original_copy,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
     loadNext();
   }
+
 
   return (
     <>
