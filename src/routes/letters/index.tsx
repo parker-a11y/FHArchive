@@ -245,6 +245,14 @@ function LettersTable() {
         return displayDate(l);
       case "record_type":
         return labelOf(RECORD_TYPES, l.record_type);
+      case "date_precision":
+        return labelOf(DATE_PRECISION, l.date_precision);
+      case "identification_status":
+        return labelOf(IDENTIFICATION_STATUS, l.identification_status);
+      case "storage":
+        return storageText(l);
+      case "research_status":
+        return labelOf(RECORD_RESEARCH_STATUS, l.research_status);
       case "period":
 
         return labelOf(PERIODS, l.period);
