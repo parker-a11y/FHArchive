@@ -115,7 +115,16 @@ export function ScansPanel({
       q = itemId ? q.eq("item_id", itemId) : q.is("item_id", null);
       const { data, error } = await q.order("sort_order");
       if (error) throw error;
-      return (data ?? []) as Scan[];
+      const rows = (data ?? []) as Scan[];
+      const withUrls = await Promise.all(
+        rows.map(async (s) => {
+          const { data: signed } = await supabase.storage
+            .from("scans")
+            .createSignedUrl(s.storage_path, 3600);
+          return { ...s, signedUrl: signed?.signedUrl ?? "" };
+        }),
+      );
+      return withUrls;
     },
   });
 
