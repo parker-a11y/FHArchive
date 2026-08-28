@@ -21,6 +21,8 @@ type Scan = {
   signedUrl?: string;
 };
 
+type ScanUpdate = Omit<Scan, "signedUrl">;
+
 function ScanThumb({
   scan,
   onOpen,
