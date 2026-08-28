@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { fetchLetters, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
-import { displayDate } from "@/lib/archive";
+import { displayDate, isUnidentifiedPhoto, needsDating } from "@/lib/archive";
 
 export const Route = createFileRoute("/queues")({
   head: () => ({
