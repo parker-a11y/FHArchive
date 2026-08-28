@@ -58,11 +58,14 @@ const COLUMNS: Col[] = [
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
   { key: "date", label: "Date", width: 150 },
+  { key: "date_precision", label: "Date status", width: 130 },
+  { key: "identification_status", label: "ID status", width: 130 },
   { key: "primary_person", label: "Primary person", width: 150, editable: true },
   { key: "author", label: "From", width: 150, editable: true },
   { key: "recipient", label: "To", width: 150, editable: true },
   { key: "origin", label: "Origin", width: 160, editable: true },
-
+  { key: "storage", label: "Storage", width: 200 },
+  { key: "storage_container", label: "Container / box", width: 150, editable: true },
   { key: "period", label: "Period", width: 100 },
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
@@ -70,9 +73,21 @@ const COLUMNS: Col[] = [
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
   { key: "review_status", label: "Review", width: 110 },
+  { key: "research_status", label: "Research", width: 120 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
 ];
+
+/** Human-readable one-line physical location. */
+function storageText(l: Letter) {
+  const parts = [
+    labelOf(STORAGE_TYPES, l.storage_type),
+    l.storage_container,
+    l.storage_folder,
+    l.storage_position,
+  ].filter((v) => v && v !== "—");
+  return parts.join(" · ") || (l.storage_location ?? "");
+}
 
 function LettersTable() {
   const qc = useQueryClient();
