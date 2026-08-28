@@ -54,7 +54,7 @@ function Dashboard() {
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats = [
-    { label: "Total letters", value: letters.length },
+    { label: "Total archive items", value: letters.length },
     { label: "Cataloged", value: c((l) => !!(l.author || l.recipient || l.normalized_date)) },
     { label: "Scanned", value: c((l) => l.image_count > 0) },
     { label: "Transcribed", value: c((l) => l.transcription_status === "human_verified") },
