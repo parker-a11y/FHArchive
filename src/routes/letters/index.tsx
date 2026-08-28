@@ -206,6 +206,12 @@ function LettersTable() {
       condition: l.physical_condition ?? "",
       physical_description: l.physical_description ?? "",
       original_copy: l.original_copy ?? "",
+      identification_status: labelOf(IDENTIFICATION_STATUS, l.identification_status),
+      storage_type: labelOf(STORAGE_TYPES, l.storage_type),
+      storage_container: l.storage_container ?? "",
+      storage_folder: l.storage_folder ?? "",
+      storage_position: l.storage_position ?? "",
+      storage_notes: l.storage_notes ?? "",
       storage_location: l.storage_location ?? "",
       research_status: l.research_status ?? "",
 
