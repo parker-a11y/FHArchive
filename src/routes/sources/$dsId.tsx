@@ -40,6 +40,10 @@ import {
   SourceLettersPanel,
 } from "@/components/sources/SourcePanels";
 import { DsFilesPanel } from "@/components/sources/DsFilesPanel";
+import {
+  ShareSourceDialog,
+  SourceShareStatusBadge,
+} from "@/components/sources/ShareSourceDialog";
 
 
 export const Route = createFileRoute("/sources/$dsId")({
