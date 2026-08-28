@@ -133,9 +133,30 @@ function SearchPage() {
       if (tstat && l.transcription_status !== tstat) return false;
       if (sstat && l.scan_status !== sstat) return false;
       if (rstat && l.review_status !== rstat) return false;
+      if (rtype && (l.record_type ?? "letter") !== rtype) return false;
+      if (subtype && (l.subtype ?? "") !== subtype) return false;
+      if (research && (l.research_status ?? "unreviewed") !== research) return false;
+      if (
+        personId &&
+        !(linkSets?.people ?? []).some((r) => r.letter_id === l.id && r.person_id === personId)
+      )
+        return false;
+      if (
+        orgId &&
+        !(linkSets?.orgs ?? []).some((r) => r.letter_id === l.id && r.organization_id === orgId)
+      )
+        return false;
+      if (
+        eventId &&
+        !(linkSets?.events ?? []).some((r) => r.letter_id === l.id && r.event_id === eventId)
+      )
+        return false;
       if (!term) return true;
       const hay = [
         l.archive_id,
+        l.title,
+        l.subtype,
+        l.primary_person,
         l.author,
         l.recipient,
         l.origin,
@@ -147,13 +168,38 @@ function SearchPage() {
         l.transcription_verified,
         l.transcription_raw_ai,
         l.physical_condition,
+        l.physical_description,
+        l.historical_notes,
+        l.research_notes,
+        l.ocr_text,
         ...((index ?? {})[l.id] ?? []),
       ]
         .join(" \n ")
         .toLowerCase();
       return hay.includes(term);
     });
-  }, [letters, q, from, to, author, recipient, period, place, tstat, sstat, rstat, index]);
+  }, [
+    letters,
+    q,
+    from,
+    to,
+    author,
+    recipient,
+    period,
+    place,
+    tstat,
+    sstat,
+    rstat,
+    rtype,
+    subtype,
+    research,
+    personId,
+    orgId,
+    eventId,
+    linkSets,
+    index,
+  ]);
+
 
   function snippet(text: string | null) {
     if (!text || !q) return null;
