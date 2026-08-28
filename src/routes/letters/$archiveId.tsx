@@ -545,8 +545,9 @@ function LetterPage() {
         </TabsContent>
 
         <TabsContent value="scans" className="mt-6">
-          <ScansPanel letter={letter} />
+          <ItemsPanel letter={letter} />
         </TabsContent>
+
         <TabsContent value="transcription" className="mt-6">
           <TranscriptionPanel letter={letter} />
         </TabsContent>
