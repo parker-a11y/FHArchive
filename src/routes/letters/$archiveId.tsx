@@ -293,6 +293,8 @@ function LetterPage() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <ShareStatusBadge letter={letter} />
+            <ShareDialog letter={letter} />
             <LabelDialog letter={letter} />
             <AlertDialog>
               <AlertDialogTrigger asChild>
