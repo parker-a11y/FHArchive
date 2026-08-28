@@ -52,10 +52,15 @@ export const Route = createFileRoute("/letters/")({
 type Col = { key: string; label: string; width: number; editable?: boolean };
 const COLUMNS: Col[] = [
   { key: "archive_id", label: "FH ID", width: 110 },
+  { key: "record_type", label: "Type", width: 150 },
+  { key: "subtype", label: "Subtype", width: 130 },
+  { key: "title", label: "Title", width: 200, editable: true },
   { key: "date", label: "Date", width: 150 },
+  { key: "primary_person", label: "Primary person", width: 150, editable: true },
   { key: "author", label: "From", width: 150, editable: true },
   { key: "recipient", label: "To", width: 150, editable: true },
   { key: "origin", label: "Origin", width: 160, editable: true },
+
   { key: "period", label: "Period", width: 100 },
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
