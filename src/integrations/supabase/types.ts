@@ -160,6 +160,68 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_files: {
+        Row: {
+          created_at: string
+          filename_matches: boolean
+          id: string
+          label: string | null
+          letter_id: string
+          master_mime: string | null
+          master_path: string
+          master_size: number | null
+          notes: string | null
+          original_filename: string
+          owner_id: string
+          rotation: number
+          seq: number | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          filename_matches?: boolean
+          id?: string
+          label?: string | null
+          letter_id: string
+          master_mime?: string | null
+          master_path: string
+          master_size?: number | null
+          notes?: string | null
+          original_filename: string
+          owner_id?: string
+          rotation?: number
+          seq?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          filename_matches?: boolean
+          id?: string
+          label?: string | null
+          letter_id?: string
+          master_mime?: string | null
+          master_path?: string
+          master_size?: number | null
+          notes?: string | null
+          original_filename?: string
+          owner_id?: string
+          rotation?: number
+          seq?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_files_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       digital_sources: {
         Row: {
           citation: string | null
@@ -645,6 +707,75 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      file_derivatives: {
+        Row: {
+          created_at: string
+          error: string | null
+          file_id: string | null
+          file_size: number | null
+          height: number | null
+          id: string
+          kind: string
+          letter_id: string
+          mime_type: string | null
+          owner_id: string
+          status: string
+          storage_path: string | null
+          text_content: string | null
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          file_id?: string | null
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          kind: string
+          letter_id: string
+          mime_type?: string | null
+          owner_id?: string
+          status?: string
+          storage_path?: string | null
+          text_content?: string | null
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          file_id?: string | null
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          kind?: string
+          letter_id?: string
+          mime_type?: string | null
+          owner_id?: string
+          status?: string
+          storage_path?: string | null
+          text_content?: string | null
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_derivatives_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "digital_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_derivatives_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       historical_references: {
         Row: {
@@ -1171,13 +1302,18 @@ export type Database = {
           archive_id: string
           author: string | null
           citations: string | null
+          completeness_check: boolean
           created_at: string
           date_as_written: string | null
           date_certainty: string
           date_end: string | null
           date_precision: string
           destination: string | null
+          digitization_completed_at: string | null
           digitization_notes: string | null
+          digitization_override: boolean
+          digitization_status: string
+          expected_scan_count: number | null
           fh_seq: number
           has_enclosures: boolean
           has_envelope: boolean
@@ -1192,6 +1328,8 @@ export type Database = {
           original_copy: string
           owner_id: string
           period: string
+          photo_back_scanned: boolean
+          photo_front_scanned: boolean
           physical_condition: string | null
           physical_description: string | null
           primary_person: string | null
@@ -1203,6 +1341,7 @@ export type Database = {
           research_notes: string | null
           research_status: string
           review_status: string
+          scan_both_sides: boolean
           scan_status: string
           sheets: number | null
           sort_date: string | null
@@ -1225,13 +1364,18 @@ export type Database = {
           archive_id: string
           author?: string | null
           citations?: string | null
+          completeness_check?: boolean
           created_at?: string
           date_as_written?: string | null
           date_certainty?: string
           date_end?: string | null
           date_precision?: string
           destination?: string | null
+          digitization_completed_at?: string | null
           digitization_notes?: string | null
+          digitization_override?: boolean
+          digitization_status?: string
+          expected_scan_count?: number | null
           fh_seq: number
           has_enclosures?: boolean
           has_envelope?: boolean
@@ -1246,6 +1390,8 @@ export type Database = {
           original_copy?: string
           owner_id?: string
           period?: string
+          photo_back_scanned?: boolean
+          photo_front_scanned?: boolean
           physical_condition?: string | null
           physical_description?: string | null
           primary_person?: string | null
@@ -1257,6 +1403,7 @@ export type Database = {
           research_notes?: string | null
           research_status?: string
           review_status?: string
+          scan_both_sides?: boolean
           scan_status?: string
           sheets?: number | null
           sort_date?: string | null
@@ -1279,13 +1426,18 @@ export type Database = {
           archive_id?: string
           author?: string | null
           citations?: string | null
+          completeness_check?: boolean
           created_at?: string
           date_as_written?: string | null
           date_certainty?: string
           date_end?: string | null
           date_precision?: string
           destination?: string | null
+          digitization_completed_at?: string | null
           digitization_notes?: string | null
+          digitization_override?: boolean
+          digitization_status?: string
+          expected_scan_count?: number | null
           fh_seq?: number
           has_enclosures?: boolean
           has_envelope?: boolean
@@ -1300,6 +1452,8 @@ export type Database = {
           original_copy?: string
           owner_id?: string
           period?: string
+          photo_back_scanned?: boolean
+          photo_front_scanned?: boolean
           physical_condition?: string | null
           physical_description?: string | null
           primary_person?: string | null
@@ -1311,6 +1465,7 @@ export type Database = {
           research_notes?: string | null
           research_status?: string
           review_status?: string
+          scan_both_sides?: boolean
           scan_status?: string
           sheets?: number | null
           sort_date?: string | null

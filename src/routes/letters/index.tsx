@@ -32,6 +32,7 @@ import {
   toCsv,
   toExcelXml,
 } from "@/lib/archive";
+import { DIGITIZATION_STATUS } from "@/lib/digitization";
 
 import { toast } from "sonner";
 
@@ -82,6 +83,7 @@ const COLUMNS: Col[] = [
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
   { key: "has_envelope", label: "Env", width: 60 },
+  { key: "digitization_status", label: "Digitization", width: 160 },
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
   { key: "review_status", label: "Review", width: 110 },
@@ -131,6 +133,7 @@ function LettersTable() {
   const [rType, setRType] = useState(search.type ?? "");
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
+  const [digStatus, setDigStatus] = useState("");
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
@@ -149,6 +152,7 @@ function LettersTable() {
       if (rType && (l.record_type ?? "letter") !== rType) return false;
       if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
       if (dStatus && l.date_precision !== dStatus) return false;
+      if (digStatus && (l.digitization_status ?? "not_scanned") !== digStatus) return false;
 
       if (!q) return true;
       const hay = [
@@ -185,7 +189,7 @@ function LettersTable() {
       return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, idStatus, dStatus, view, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, idStatus, dStatus, digStatus, view, sort, keywordsByLetter]);
 
 
   function exportRows() {
@@ -222,6 +226,8 @@ function LettersTable() {
       storage_location: l.storage_location ?? "",
       research_status: l.research_status ?? "",
 
+      digitization_status: labelOf(DIGITIZATION_STATUS, l.digitization_status ?? "not_scanned"),
+      expected_scan_count: l.expected_scan_count ?? "",
       scan_status: l.scan_status,
       transcription_status: l.transcription_status,
       review_status: l.review_status,
@@ -265,6 +271,8 @@ function LettersTable() {
         return labelOf(PERIODS, l.period);
       case "scan_status":
         return labelOf(SCAN_STATUS, l.scan_status);
+      case "digitization_status":
+        return labelOf(DIGITIZATION_STATUS, l.digitization_status ?? "not_scanned");
       case "transcription_status":
         return labelOf(TRANSCRIPTION_STATUS, l.transcription_status);
       case "review_status":
@@ -352,6 +360,19 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={digStatus}
+          onChange={(e) => setDigStatus(e.target.value)}
+        >
+          <option value="">All digitization states</option>
+          {DIGITIZATION_STATUS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+
 
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
