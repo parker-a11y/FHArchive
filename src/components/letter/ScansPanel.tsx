@@ -11,6 +11,7 @@ import type { Letter } from "@/lib/queries";
 type Scan = {
   id: string;
   letter_id: string;
+  item_id: string | null;
   storage_path: string;
   file_label: string;
   image_type: string;
@@ -89,26 +90,39 @@ function ScanThumb({
   );
 }
 
-export function ScansPanel({ letter }: { letter: Letter }) {
+export function ScansPanel({
+  letter,
+  itemId = null,
+  compact = false,
+  emptyLabel = "No scans attached to this record yet.",
+}: {
+  letter: Letter;
+  itemId?: string | null;
+  compact?: boolean;
+  emptyLabel?: string;
+}) {
   const qc = useQueryClient();
   const [viewer, setViewer] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const { data: scans = [] } = useQuery({
-    queryKey: ["scans", letter.id],
+    queryKey: ["scans", letter.id, itemId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("letter_scans")
-        .select("*")
-        .eq("letter_id", letter.id)
-        .order("sort_order");
+      let q = supabase.from("letter_scans").select("*").eq("letter_id", letter.id);
+      q = itemId ? q.eq("item_id", itemId) : q.is("item_id", null);
+      const { data, error } = await q.order("sort_order");
       if (error) throw error;
       return (data ?? []) as Scan[];
     },
   });
 
-  async function syncCount(n: number) {
+  async function syncCount() {
+    const { count } = await supabase
+      .from("letter_scans")
+      .select("id", { count: "exact", head: true })
+      .eq("letter_id", letter.id);
+    const n = count ?? 0;
     await supabase
       .from("letters")
       .update({ image_count: n, scan_status: n > 0 ? "scanned" : "not_scanned" })
@@ -134,6 +148,7 @@ export function ScansPanel({ letter }: { letter: Letter }) {
       }
       const { error } = await supabase.from("letter_scans").insert({
         letter_id: letter.id,
+        item_id: itemId,
         storage_path: path,
         file_label: label,
         image_type: "page_front",
@@ -144,8 +159,8 @@ export function ScansPanel({ letter }: { letter: Letter }) {
       index++;
     }
     setUploading(false);
-    qc.invalidateQueries({ queryKey: ["scans", letter.id] });
-    await syncCount(index - 1);
+    qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
+    await syncCount();
     toast.success("Scans uploaded — originals are stored unmodified");
   }
 
@@ -160,20 +175,20 @@ export function ScansPanel({ letter }: { letter: Letter }) {
     await Promise.all(
       list.map((s, i) => supabase.from("letter_scans").update({ sort_order: i + 1 }).eq("id", s.id)),
     );
-    qc.invalidateQueries({ queryKey: ["scans", letter.id] });
+    qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
   }
 
   async function updateScan(id: string, patch: Partial<Scan>) {
     await supabase.from("letter_scans").update(patch).eq("id", id);
-    qc.invalidateQueries({ queryKey: ["scans", letter.id] });
+    qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
   }
 
   async function remove(scan: Scan) {
     if (!confirm(`Remove ${scan.file_label}? The original file is deleted from storage.`)) return;
     await supabase.storage.from("scans").remove([scan.storage_path]);
     await supabase.from("letter_scans").delete().eq("id", scan.id);
-    qc.invalidateQueries({ queryKey: ["scans", letter.id] });
-    await syncCount(Math.max(0, scans.length - 1));
+    qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
+    await syncCount();
   }
 
   return (
@@ -184,7 +199,9 @@ export function ScansPanel({ letter }: { letter: Letter }) {
           e.preventDefault();
           if (e.dataTransfer.files.length) upload(e.dataTransfer.files);
         }}
-        className="mb-4 rounded border border-dashed border-border bg-muted/40 px-6 py-6 text-center"
+        className={`mb-4 rounded border border-dashed border-border bg-muted/40 text-center ${
+          compact ? "px-3 py-3" : "px-6 py-6"
+        }`}
       >
         <p className="text-sm text-muted-foreground">
           Drag scans here, or{" "}
@@ -199,11 +216,13 @@ export function ScansPanel({ letter }: { letter: Letter }) {
             />
           </label>
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          <Upload className="mr-1 inline size-3" />
-          Files are named from the archive ID, e.g. {letter.archive_id}_001. Originals are never
-          altered — rotation is display-only.
-        </p>
+        {!compact && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            <Upload className="mr-1 inline size-3" />
+            Files are named from the archive ID, e.g. {letter.archive_id}_001. Originals are never
+            altered — rotation is display-only.
+          </p>
+        )}
         {uploading && <p className="mt-2 text-xs">Uploading…</p>}
       </div>
 
@@ -225,9 +244,7 @@ export function ScansPanel({ letter }: { letter: Letter }) {
             }
           />
         ))}
-        {scans.length === 0 && (
-          <p className="text-sm text-muted-foreground">No scans attached to this record yet.</p>
-        )}
+        {scans.length === 0 && <p className="text-sm text-muted-foreground">{emptyLabel}</p>}
       </div>
 
       <Dialog open={!!viewer} onOpenChange={() => setViewer(null)}>

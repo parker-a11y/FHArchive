@@ -44,7 +44,7 @@ import {
   subtypesFor,
 } from "@/lib/archive";
 
-import { ScansPanel } from "@/components/letter/ScansPanel";
+import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
 import {
@@ -328,7 +328,7 @@ function LetterPage() {
       <Tabs defaultValue="catalog" className="px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
-          <TabsTrigger value="scans">Scans ({letter.image_count})</TabsTrigger>
+          <TabsTrigger value="scans">Items &amp; Scans ({letter.image_count})</TabsTrigger>
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
@@ -545,8 +545,9 @@ function LetterPage() {
         </TabsContent>
 
         <TabsContent value="scans" className="mt-6">
-          <ScansPanel letter={letter} />
+          <ItemsPanel letter={letter} />
         </TabsContent>
+
         <TabsContent value="transcription" className="mt-6">
           <TranscriptionPanel letter={letter} />
         </TabsContent>
