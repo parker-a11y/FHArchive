@@ -46,6 +46,7 @@ import {
   subtypesFor,
 } from "@/lib/archive";
 
+import { PersonCombobox } from "@/components/PersonCombobox";
 import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
@@ -433,10 +434,17 @@ function LetterPage() {
             ).map((f) => (
               <div key={f.key}>
                 <label className="field-label">{f.label}</label>
-                <Input
-                  value={(form[f.key] as string) ?? ""}
-                  onChange={(e) => set(f.key, e.target.value)}
-                />
+                {f.key === "primary_person" ? (
+                  <PersonCombobox
+                    value={(form[f.key] as string) ?? ""}
+                    onChange={(v) => set(f.key, v)}
+                  />
+                ) : (
+                  <Input
+                    value={(form[f.key] as string) ?? ""}
+                    onChange={(e) => set(f.key, e.target.value)}
+                  />
+                )}
               </div>
             ))}
 

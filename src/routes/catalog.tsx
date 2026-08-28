@@ -16,7 +16,6 @@ import {
   IDENTIFICATION_STATUS,
   ORIGINAL_COPY,
   PERIODS,
-  PRIMARY_PERSONS,
   RECORD_TYPES,
   STORAGE_TYPES,
   isLetterType,
@@ -24,6 +23,7 @@ import {
   subtypesFor,
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
+import { PersonCombobox } from "@/components/PersonCombobox";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
@@ -264,12 +264,13 @@ function QuickEntry() {
                 ))}
               </select>
             </div>
-            <Select_
-              label="Primary person"
-              value={form.primary_person}
-              onChange={(v) => set("primary_person", v)}
-              options={PRIMARY_PERSONS}
-            />
+            <div className="space-y-1.5">
+              <Label className="field-label">Primary person</Label>
+              <PersonCombobox
+                value={form.primary_person}
+                onChange={(v) => set("primary_person", v)}
+              />
+            </div>
 
             <div className="col-span-full space-y-1.5">
               <Label className="field-label">Title / short description</Label>
