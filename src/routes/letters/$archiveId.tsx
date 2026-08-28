@@ -328,7 +328,7 @@ function LetterPage() {
       <Tabs defaultValue="catalog" className="px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
-          <TabsTrigger value="scans">Scans ({letter.image_count})</TabsTrigger>
+          <TabsTrigger value="scans">Items &amp; Scans ({letter.image_count})</TabsTrigger>
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
