@@ -186,14 +186,38 @@ export function isLetterType(recordType: string | null | undefined) {
   return (recordType ?? "letter") === "letter";
 }
 
+/** Date status / precision. A record is always valid with no date at all. */
 export const DATE_PRECISION = [
-
-  { value: "exact", label: "Exact" },
-  { value: "month", label: "Month only" },
+  { value: "exact", label: "Exact date" },
+  { value: "month", label: "Month and year" },
   { value: "year", label: "Year only" },
-  { value: "approximate", label: "Approximate" },
+  { value: "approximate", label: "Approximate (circa)" },
+  { value: "range", label: "Date range" },
+  { value: "undated", label: "Undated" },
+  { value: "not_applicable", label: "Not applicable" },
   { value: "unknown", label: "Unknown" },
 ] as const;
+
+export const IDENTIFICATION_STATUS = [
+  { value: "identified", label: "Identified" },
+  { value: "partial", label: "Partially Identified" },
+  { value: "probable", label: "Probable" },
+  { value: "possible", label: "Possible" },
+  { value: "unidentified", label: "Unidentified" },
+  { value: "needs_research", label: "Needs Research" },
+] as const;
+
+export const STORAGE_TYPES = [
+  { value: "", label: "—" },
+  { value: "file_jacket", label: "File Jacket" },
+  { value: "archival_sleeve", label: "Archival Sleeve" },
+  { value: "photo_sleeve", label: "Photo Sleeve" },
+  { value: "artifact_box", label: "Artifact Box" },
+  { value: "document_box", label: "Document Box" },
+  { value: "oversize", label: "Oversize Storage" },
+  { value: "other", label: "Other" },
+] as const;
+
 
 export const DATE_CERTAINTY = [
   { value: "confirmed", label: "Exact / Confirmed" },
