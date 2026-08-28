@@ -15,6 +15,7 @@ import { fetchLetters, logEdits, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PERIODS,
+  RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
   TRANSCRIPTION_STATUS,
@@ -24,6 +25,7 @@ import {
   toCsv,
   toExcelXml,
 } from "@/lib/archive";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/letters/")({
@@ -158,6 +160,11 @@ function LettersTable() {
       envelope: l.has_envelope ? "Yes" : "No",
       enclosures: l.has_enclosures ? "Yes" : "No",
       condition: l.physical_condition ?? "",
+      physical_description: l.physical_description ?? "",
+      original_copy: l.original_copy ?? "",
+      storage_location: l.storage_location ?? "",
+      research_status: l.research_status ?? "",
+
       scan_status: l.scan_status,
       transcription_status: l.transcription_status,
       review_status: l.review_status,
@@ -186,7 +193,10 @@ function LettersTable() {
     switch (key) {
       case "date":
         return displayDate(l);
+      case "record_type":
+        return labelOf(RECORD_TYPES, l.record_type);
       case "period":
+
         return labelOf(PERIODS, l.period);
       case "scan_status":
         return labelOf(SCAN_STATUS, l.scan_status);
@@ -206,7 +216,7 @@ function LettersTable() {
   return (
     <>
       <PageHeader
-        title="Letters"
+        title="All Records"
         description={`${rows.length} of ${letters.length} records`}
         actions={
           <>
