@@ -33,6 +33,7 @@ export type Letter = {
   title: string | null;
   date_end: string | null;
   primary_person: string | null;
+  tones: string[] | null;
   physical_description: string | null;
   original_copy: string;
   storage_location: string | null;
