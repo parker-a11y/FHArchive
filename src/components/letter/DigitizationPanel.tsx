@@ -213,14 +213,24 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   }
 
   async function confirmUploadComplete() {
+    // Naming is optional: anything left unidentified simply gets its sequence number.
     if (unnamed.length) {
-      toast.error(
-        `${unnamed.length} scan${unnamed.length === 1 ? "" : "s"} still need${
-          unnamed.length === 1 ? "s" : ""
-        } to be named before this upload can be confirmed.`,
+      for (const f of unnamed) {
+        try {
+          await renameScanFile({
+            archiveId: letter.archive_id,
+            file: f,
+            label: String(f.seq ?? f.sort_order ?? 1).padStart(3, "0"),
+            otherFiles: files,
+          });
+        } catch {
+          /* keep going — the master is untouched either way */
+        }
+      }
+      toast.info(
+        `${unnamed.length} unidentified scan${unnamed.length === 1 ? "" : "s"} numbered sequentially.`,
       );
-      jumpToScan(unnamed[0].id);
-      return;
+      refresh();
     }
     const todo = pending;
     if (!todo.length) return toast.info("Every master already has a viewing JPEG and thumbnail.");
