@@ -156,9 +156,13 @@ function Dashboard() {
       to: "/sources",
     },
 
-    { label: "Total items", value: itemCounts?.totalItems ?? 0, tone: "emerald", icon: Layers },
-    { label: "Items scanned", value: itemCounts?.itemsScanned ?? 0, tone: "teal", icon: ScanLine },
-    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "teal", icon: Images },
+    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "emerald", icon: Layers },
+    {
+      label: "Records scanned",
+      value: itemCounts?.itemsScanned ?? 0,
+      tone: "teal",
+      icon: ScanLine,
+    },
     {
       label: "Cataloged",
       value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
