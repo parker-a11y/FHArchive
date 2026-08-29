@@ -212,11 +212,14 @@ export async function createLetter(
  * the number is reused by the next record.
  */
 export async function deleteLetter(letter: Pick<Letter, "id" | "fh_seq">): Promise<boolean> {
-  const { data: scans } = await supabase
-    .from("letter_scans")
-    .select("storage_path")
-    .eq("letter_id", letter.id);
-  const paths = (scans ?? []).map((s) => s.storage_path).filter(Boolean);
+  const [masters, derivatives] = await Promise.all([
+    supabase.from("digital_files").select("master_path").eq("letter_id", letter.id),
+    supabase.from("file_derivatives").select("storage_path").eq("letter_id", letter.id),
+  ]);
+  const paths = [
+    ...(masters.data ?? []).map((f) => f.master_path),
+    ...(derivatives.data ?? []).map((d) => d.storage_path),
+  ].filter(Boolean) as string[];
   if (paths.length) await supabase.storage.from("scans").remove(paths);
 
   const { error } = await supabase.from("letters").delete().eq("id", letter.id);
