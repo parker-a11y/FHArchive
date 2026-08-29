@@ -1706,6 +1706,39 @@ export type Database = {
         }
         Relationships: []
       }
+      record_categories: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          owner_id: string
+          parent_type: string | null
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          label: string
+          owner_id?: string
+          parent_type?: string | null
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          owner_id?: string
+          parent_type?: string | null
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       record_shares: {
         Row: {
           created_at: string
