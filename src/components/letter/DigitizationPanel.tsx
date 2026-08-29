@@ -125,6 +125,19 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   });
 
   const masters = files.length;
+
+  // Keep the record's scan count in step with the digital files it holds.
+  useEffect(() => {
+    const status = masters > 0 ? "scanned" : "not_scanned";
+    if (letter.image_count === masters && letter.scan_status === status) return;
+    supabase
+      .from("letters")
+      .update({ image_count: masters, scan_status: status } as never)
+      .eq("id", letter.id)
+      .then(() => refreshLetter());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masters, letter.id, letter.image_count, letter.scan_status]);
+
   const jpegFiles = files.filter(hasJpeg);
   const thumbFiles = files.filter(hasThumb);
   const jpegCount = jpegFiles.length;
