@@ -869,7 +869,76 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 </div>
               );
             })}
+      </div>
+
+      {/* Viewing JPGs */}
+      <div>
+        <h4 className="field-label mb-1">Viewing JPGs — {jpegCount} files</h4>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Lower-resolution reading copies used everywhere in the archive so the full TIFF never
+          has to load.
+        </p>
+        {jpegCount === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            None yet — confirm the upload to generate them.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            {jpegFiles.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => {
+                  const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
+                  if (idx < 0) return;
+                  setViewerIndex(idx);
+                  setViewerOpen(true);
+                }}
+                className="rounded border border-border bg-card p-1.5 text-left"
+              >
+                <img
+                  src={f.viewUrl}
+                  alt={f.label || f.original_filename}
+                  loading="lazy"
+                  style={{ transform: `rotate(${f.rotation}deg)` }}
+                  className="h-24 w-full rounded bg-muted object-contain"
+                />
+                <p className="mt-1 truncate text-[10px]">{basenameOf(f.master_path)}.jpg</p>
+              </button>
+            ))}
           </div>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      <div>
+        <h4 className="field-label mb-1">Thumbnails — {thumbCount} files</h4>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Small browsing images used in galleries and lists.
+        </p>
+        {thumbCount === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            None yet — confirm the upload to generate them.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {thumbFiles.map((f) => (
+              <div key={f.id} className="w-24">
+                <img
+                  src={f.thumbUrl}
+                  alt={f.label || f.original_filename}
+                  loading="lazy"
+                  style={{ transform: `rotate(${f.rotation}deg)` }}
+                  className="h-16 w-24 rounded border border-border bg-muted object-contain"
+                />
+                <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                  {basenameOf(f.master_path)}_thumb.jpg
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
         )}
         <datalist id={`labels-${letter.id}`}>
           {labels.map((l) => (
