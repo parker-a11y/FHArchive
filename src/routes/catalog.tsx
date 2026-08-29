@@ -148,6 +148,9 @@ function QuickEntry() {
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
   const isLetter = isLetterType(form.record_type);
+  const recordTypeOptions = useRecordTypeOptions();
+  const subtypeOptions = useSubtypeOptions(form.record_type);
+  const invalidateCategories = useInvalidateCategories();
 
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
