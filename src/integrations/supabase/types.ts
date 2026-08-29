@@ -1432,6 +1432,7 @@ export type Database = {
           summary_short: string | null
           title: string | null
           tones: string[]
+          transcription_ai_generated_at: string | null
           transcription_raw_ai: string | null
           transcription_status: string
           transcription_verified: string | null
@@ -1498,6 +1499,7 @@ export type Database = {
           summary_short?: string | null
           title?: string | null
           tones?: string[]
+          transcription_ai_generated_at?: string | null
           transcription_raw_ai?: string | null
           transcription_status?: string
           transcription_verified?: string | null
@@ -1564,6 +1566,7 @@ export type Database = {
           summary_short?: string | null
           title?: string | null
           tones?: string[]
+          transcription_ai_generated_at?: string | null
           transcription_raw_ai?: string | null
           transcription_status?: string
           transcription_verified?: string | null
@@ -1759,6 +1762,75 @@ export type Database = {
           },
           {
             foreignKeyName: "record_shares_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scan_transcriptions: {
+        Row: {
+          ai_generated_at: string | null
+          ai_text: string | null
+          created_at: string
+          error: string | null
+          file_id: string
+          id: string
+          letter_id: string
+          model: string | null
+          owner_id: string
+          page_index: number | null
+          page_label: string | null
+          status: string
+          updated_at: string
+          verified_at: string | null
+          verified_text: string | null
+        }
+        Insert: {
+          ai_generated_at?: string | null
+          ai_text?: string | null
+          created_at?: string
+          error?: string | null
+          file_id: string
+          id?: string
+          letter_id: string
+          model?: string | null
+          owner_id?: string
+          page_index?: number | null
+          page_label?: string | null
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_text?: string | null
+        }
+        Update: {
+          ai_generated_at?: string | null
+          ai_text?: string | null
+          created_at?: string
+          error?: string | null
+          file_id?: string
+          id?: string
+          letter_id?: string
+          model?: string | null
+          owner_id?: string
+          page_index?: number | null
+          page_label?: string | null
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_transcriptions_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: true
+            referencedRelation: "digital_files"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_transcriptions_letter_id_fkey"
             columns: ["letter_id"]
             isOneToOne: false
             referencedRelation: "letters"

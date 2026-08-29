@@ -54,6 +54,10 @@ function SearchPage() {
         supabase.from("letter_organizations").select("letter_id, organizations(name)"),
         supabase.from("letter_events").select("letter_id, events(name)"),
       ]);
+      // Transcription text participates in archive-wide search.
+      const tr = await supabase
+        .from("scan_transcriptions")
+        .select("letter_id, ai_text, verified_text");
       const map: Record<string, string[]> = {};
       const push = (id: string, v?: string | null) => v && (map[id] ??= []).push(v);
       (k.data ?? []).forEach((r) => push(r.letter_id, r.keywords?.name));
@@ -65,6 +69,10 @@ function SearchPage() {
         push(r.letter_id, r.reference);
         push(r.letter_id, r.notes);
         push(r.letter_id, r.description);
+      });
+      (tr.data ?? []).forEach((r) => {
+        push(r.letter_id, r.verified_text);
+        push(r.letter_id, r.ai_text);
       });
       return map;
     },
