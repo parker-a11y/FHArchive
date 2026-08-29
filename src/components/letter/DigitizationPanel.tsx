@@ -522,7 +522,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           <p className="mt-2 text-sm text-amber-700">
             <FileWarning className="mr-1.5 inline size-4" />
             {failedDerivatives.length} master{failedDerivatives.length === 1 ? " is" : "s are"}{" "}
-            safely stored but the JPEG derivative needs attention — use “Regenerate” on the file.
+            safely stored but the JPEG derivative needs attention — click “Confirm Upload Complete”
+            to retry.
           </p>
         )}
         {mismatched.length > 0 && (
