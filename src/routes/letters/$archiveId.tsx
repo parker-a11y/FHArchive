@@ -45,7 +45,6 @@ import {
   displayDate,
   isLetterType,
   labelOf,
-  subtypesFor,
 } from "@/lib/archive";
 
 import { PersonCombobox } from "@/components/PersonCombobox";
@@ -394,35 +393,37 @@ function LetterPage() {
           <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="field-label">Record type</label>
-              <select
-                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+              <CategorySelect
                 value={(form.record_type as string) ?? "letter"}
-                onChange={(e) => {
-                  set("record_type", e.target.value);
+                onChange={(v) => {
+                  set("record_type", v);
                   set("subtype", "");
                 }}
-              >
-                {RECORD_TYPES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={recordTypeOptions}
+                onCreate={async (label) => {
+                  const v = await addRecordType(label, recordTypeOptions);
+                  invalidateCategories();
+                  return v;
+                }}
+              />
             </div>
             <div>
               <label className="field-label">Subtype</label>
-              <select
-                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+              <CategorySelect
                 value={(form.subtype as string) ?? ""}
-                onChange={(e) => set("subtype", e.target.value)}
-              >
-                <option value="">—</option>
-                {subtypesFor((form.record_type as string) ?? "letter").map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                allowEmpty
+                onChange={(v) => set("subtype", v)}
+                options={subtypeOptions.map((s) => ({ value: s, label: s }))}
+                onCreate={async (label) => {
+                  const v = await addSubtype(
+                    (form.record_type as string) ?? "letter",
+                    label,
+                    subtypeOptions,
+                  );
+                  invalidateCategories();
+                  return v;
+                }}
+              />
             </div>
             <div>
               <label className="field-label">Title / short description</label>
