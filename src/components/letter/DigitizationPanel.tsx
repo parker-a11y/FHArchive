@@ -186,8 +186,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         continue;
       }
       added++;
-      const fileId = (inserted as { id: string }).id;
-
       // Derivatives are intentionally NOT generated here — they are produced
       // only after "Confirm Upload Complete".
     }
