@@ -87,6 +87,38 @@ function AuthPage() {
           <Button type="submit" className="w-full" disabled={busy}>
             {mode === "in" ? "Sign in" : "Create account"}
           </Button>
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            disabled={busy}
+            onClick={signInWithGoogle}
+          >
+            <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M23.5 12.3c0-.9-.1-1.5-.2-2.2H12v4.1h6.6c-.1 1.1-.9 2.8-2.5 3.9l-.02.15 3.6 2.8.25.03c2.3-2.1 3.6-5.2 3.6-8.8Z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.3 0 6-1.1 8-2.9l-3.8-3c-1 .7-2.4 1.2-4.2 1.2a7.3 7.3 0 0 1-6.9-5l-.14.01-3.7 2.9-.05.14A12 12 0 0 0 12 24Z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.1 14.3a7.4 7.4 0 0 1 0-4.6l-.01-.15-3.75-2.9-.12.06a12 12 0 0 0 0 10.6l3.88-3Z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.7c2.1 0 3.5.9 4.3 1.7l3.2-3.1C17.9 1.4 15.3 0 12 0 7.3 0 3.2 2.7 1.2 6.7l3.9 3a7.3 7.3 0 0 1 6.9-5Z"
+              />
+            </svg>
+            Continue with Google
+          </Button>
           {mode === "in" && (
             <Link
               to="/forgot-password"
