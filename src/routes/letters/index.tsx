@@ -535,13 +535,21 @@ function LettersTable() {
                       onDoubleClick={() => c.editable && setEditing({ id: l.id, key: c.key })}
                     >
                       {c.key === "archive_id" ? (
-                        <Link
-                          to="/letters/$archiveId"
-                          params={{ archiveId: l.archive_id }}
-                          className="archive-id text-primary hover:underline"
-                        >
-                          {l.archive_id}
-                        </Link>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Link
+                            to="/letters/$archiveId"
+                            params={{ archiveId: l.archive_id }}
+                            className="archive-id text-primary hover:underline"
+                          >
+                            {l.archive_id}
+                          </Link>
+                          <span
+                            title={recordHealth(l).label}
+                            aria-label={recordHealth(l).label}
+                            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
+                            style={{ backgroundColor: recordHealth(l).color }}
+                          />
+                        </span>
                       ) : isEditing ? (
                         <input
                           autoFocus
