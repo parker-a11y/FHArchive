@@ -55,7 +55,9 @@ export async function applySuggestion(
   if (!text) return { applied: false, note: "Nothing to apply" };
 
   if (fieldKey === "summary_short" || fieldKey === "summary_long") {
-    const { error } = await supabase.from("letters").update({ [fieldKey]: text }).eq("id", letterId);
+    const patch = fieldKey === "summary_short" ? { summary_short: text } : { summary_long: text };
+    const { error } = await supabase.from("letters").update(patch).eq("id", letterId);
+
     if (error) throw new Error(error.message);
     await logEdits(letterId, letterBefore, { [fieldKey]: text });
     return { applied: true, note: "Summary saved to the record" };
