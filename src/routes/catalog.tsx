@@ -123,7 +123,7 @@ function QuickEntry() {
   const [form, setForm] = useState({ ...blank });
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
-  const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; lines: string[] } | null>(
+  const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; title: string; lines: string[] } | null>(
     null,
   );
   const dateRef = useRef<HTMLInputElement>(null);
