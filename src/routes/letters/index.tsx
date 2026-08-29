@@ -90,7 +90,6 @@ const COLUMNS: Col[] = [
   { key: "recipient", label: "To", width: 150, editable: true },
   { key: "origin", label: "Origin", width: 160, editable: true },
   { key: "storage", label: "Storage", width: 200 },
-  { key: "storage_container", label: "Container / box", width: 150, editable: true },
   { key: "period", label: "Period", width: 100 },
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
