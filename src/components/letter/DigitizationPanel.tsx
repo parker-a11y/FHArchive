@@ -116,6 +116,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const mismatched = files.filter((f) => !f.filename_matches);
   const isLetterType = (letter.record_type ?? "letter") === "letter";
   const labels = suggestedLabels(letter.record_type);
+  const quickChoices = quickIdentifyChoices(letter.record_type, letter.subtype);
+  const lastIdentified =
+    lastLabel ?? [...files].reverse().find((f) => f.label)?.label ?? null;
+  const suggestedNext = nextSuggestedChoice(lastIdentified, quickChoices);
 
   /* ------------------------------- upload ------------------------------- */
 
