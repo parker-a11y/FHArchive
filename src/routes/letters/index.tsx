@@ -144,9 +144,24 @@ function LettersTable() {
 
   const search = Route.useSearch();
   const [q, setQ] = useState("");
-  const [period, setPeriod] = useState("");
-  const [tStatus, setTStatus] = useState("");
+  const [period, setPeriod] = useState(search.period ?? "");
+  const [tStatus, setTStatus] = useState(search.tstatus ?? "");
   const [rType, setRType] = useState(search.type ?? "");
+  const [review, setReview] = useState(search.review ?? "");
+  const [scanF, setScanF] = useState(search.scan ?? "");
+  const [catalogedOnly, setCatalogedOnly] = useState(search.cataloged === "1");
+  const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
+
+  // Keep filters in sync when arriving from a dashboard stat link.
+  useEffect(() => {
+    setRType(search.type ?? "");
+    setPeriod(search.period ?? "");
+    setTStatus(search.tstatus ?? "");
+    setReview(search.review ?? "");
+    setScanF(search.scan ?? "");
+    setCatalogedOnly(search.cataloged === "1");
+    setUncertainOnly(search.uncertain === "1");
+  }, [search]);
   const recordTypeOptions = useRecordTypeOptions();
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
