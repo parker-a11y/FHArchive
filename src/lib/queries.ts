@@ -135,20 +135,15 @@ export type ArchiveItemCounts = {
   totalScans: number;
 };
 
-/** Aggregate counts across child items and scans (whole archive). */
+/** Aggregate counts across digitized files (whole archive). */
 export async function fetchItemCounts(): Promise<ArchiveItemCounts> {
-  const [itemsRes, scansRes] = await Promise.all([
-    supabase.from("letter_items").select("id"),
-    supabase.from("letter_scans").select("id,item_id"),
-  ]);
-  if (itemsRes.error) throw itemsRes.error;
-  if (scansRes.error) throw scansRes.error;
-  const scans = (scansRes.data ?? []) as { id: string; item_id: string | null }[];
-  const scannedItemIds = new Set(scans.map((s) => s.item_id).filter(Boolean) as string[]);
+  const { data, error } = await supabase.from("digital_files").select("id,letter_id");
+  if (error) throw error;
+  const files = (data ?? []) as { id: string; letter_id: string }[];
   return {
-    totalItems: (itemsRes.data ?? []).length,
-    itemsScanned: scannedItemIds.size,
-    totalScans: scans.length,
+    totalItems: files.length,
+    itemsScanned: new Set(files.map((f) => f.letter_id)).size,
+    totalScans: files.length,
   };
 }
 
