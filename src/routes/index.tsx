@@ -168,6 +168,10 @@ function Dashboard() {
     queryKey: ["ds-file-counts"],
     queryFn: fetchDsFileCounts,
   });
+  const { data: daily } = useQuery({
+    queryKey: ["daily-summary"],
+    queryFn: fetchDailySummary,
+  });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
