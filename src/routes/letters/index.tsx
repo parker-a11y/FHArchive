@@ -436,6 +436,15 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <div className="w-60">
+          <ToneMultiSelect
+            value={tones}
+            onChange={setTones}
+            placeholder="All tones / sentiments"
+          />
+        </div>
+
+
 
         <div className="ml-auto flex items-center gap-2">
           <span className="field-label">Views</span>
