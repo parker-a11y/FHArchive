@@ -49,6 +49,7 @@ import {
 } from "@/lib/archive";
 
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { ItemsPanel } from "@/components/letter/ItemsPanel";
@@ -119,6 +120,7 @@ function LetterPage() {
   const { data: containers = [] } = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
   const [form, setForm] = useState<Record<string, string | boolean>>({});
+  const [tones, setTones] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -170,6 +172,7 @@ function LetterPage() {
       publication_status: letter.publication_status,
       research_needed: letter.research_needed,
     });
+    setTones(letter.tones ?? []);
     setDirty(false);
   }, [letter]);
 
@@ -209,6 +212,7 @@ function LetterPage() {
     payload.original_copy = form.original_copy || "unknown";
     payload.research_status = form.research_status || "unreviewed";
     payload.identification_status = form.identification_status || "unidentified";
+    payload.tones = tones;
 
 
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
@@ -495,6 +499,22 @@ function LetterPage() {
                 </select>
               </div>
             ))}
+
+            <div className="col-span-full rounded border border-border bg-card p-4">
+              <div className="field-label mb-1">Tone / sentiment (optional)</div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                The emotional character of this record — kept separate from keywords/subjects.
+              </p>
+              <div className="max-w-md">
+                <ToneMultiSelect
+                  value={tones}
+                  onChange={(v) => {
+                    setTones(v);
+                    setDirty(true);
+                  }}
+                />
+              </div>
+            </div>
 
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
