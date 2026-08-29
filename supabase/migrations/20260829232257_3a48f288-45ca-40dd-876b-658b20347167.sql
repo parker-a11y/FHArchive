@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.sync_letter_scan_counts() FROM PUBLIC, anon, authenticated;
