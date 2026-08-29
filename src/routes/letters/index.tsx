@@ -574,6 +574,11 @@ function LettersTable() {
         {rows.length === 0 && (
           <p className="px-4 sm:px-8 py-6 sm:py-8 text-sm text-muted-foreground">No matching records.</p>
         )}
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 sm:px-8 pt-3 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} /> Transcribed &amp; human checked</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} /> Scanned, transcription pending</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} /> No scans or problem detected</span>
+        </p>
         <p className="px-4 sm:px-8 py-3 text-xs text-muted-foreground">
           Double-click an editable cell (From, To, Origin, Sheets, Notes) to edit inline. Changes
           are recorded in the letter's edit history.
