@@ -163,19 +163,30 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
     qc.invalidateQueries({ queryKey: qk });
   }
 
-  async function save(file: ContainerFile, patch: Partial<ContainerFile>) {
-    const { error } = await supabase
-      .from("container_files")
-      .update(patch as never)
-      .eq("id", file.id);
-    if (error) return toast.error(error.message);
+  async function reorder(targetId: string) {
+    if (!dragId || dragId === targetId) return;
+    const list = [...files];
+    const from = list.findIndex((f) => f.id === dragId);
+    const to = list.findIndex((f) => f.id === targetId);
+    if (from < 0 || to < 0) return;
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    setDragId(null);
+    await Promise.all(
+      list.map((f, i) =>
+        supabase
+          .from("container_files")
+          .update({ sort_order: i + 1 } as never)
+          .eq("id", f.id),
+      ),
+    );
     qc.invalidateQueries({ queryKey: qk });
   }
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h3 className="field-label">Documentation photographs ({files.length})</h3>
+        <h3 className="field-label">Container photos ({files.length})</h3>
         <input
           ref={inputRef}
           type="file"
@@ -185,12 +196,12 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
           onChange={(e) => upload(e.target.files)}
         />
         <Button size="sm" className="gap-2" disabled={busy} onClick={() => inputRef.current?.click()}>
-          <Upload className="size-3.5" /> {busy ? "Uploading…" : "Add photographs"}
+          <Upload className="size-3.5" /> {busy ? "Uploading…" : "Add photos"}
         </Button>
       </div>
       <p className="mb-4 max-w-2xl text-sm text-muted-foreground">
         Photographs of the container as found — lids, labels, inscriptions, contents in place. These are
-        collection documentation and are not assigned FH numbers.
+        collection documentation and are not assigned FH numbers. Drag a photo onto another to reorder.
       </p>
       {files.length === 0 ? (
         <p className="text-sm text-muted-foreground">No photographs yet.</p>
