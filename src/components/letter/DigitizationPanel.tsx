@@ -670,8 +670,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           The TIFF you upload is stored byte-for-byte as the archival master and is never resized,
-          recompressed or replaced. JPEG viewing copies and thumbnails are generated automatically
-          from it.
+          recompressed or replaced. Name each scan, then click “Confirm Upload Complete” to
+          generate the JPEG viewing copies and thumbnails.
         </p>
         {progress && (
           <div className="mx-auto mt-4 max-w-md text-left">
