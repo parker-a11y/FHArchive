@@ -18,6 +18,7 @@ import {
   Globe,
   Box,
   ShieldCheck,
+  Mail,
   Menu,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
