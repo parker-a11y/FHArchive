@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BackupsRouteImport } from './routes/backups'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as EmailsRouteImport } from './routes/emails'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -62,6 +63,11 @@ const CatalogRoute = CatalogRouteImport.update({
 const CategoriesRoute = CategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailsRoute = EmailsRouteImport.update({
+  id: '/emails',
+  path: '/emails',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/categories': typeof CategoriesRoute
+  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/categories': typeof CategoriesRoute
+  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/categories': typeof CategoriesRoute
+  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/emails'
     | '/forgot-password'
     | '/queues'
     | '/reset-password'
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/emails'
     | '/forgot-password'
     | '/queues'
     | '/reset-password'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/emails'
     | '/forgot-password'
     | '/queues'
     | '/reset-password'
@@ -382,6 +394,7 @@ export interface RootRouteChildren {
   BackupsRoute: typeof BackupsRoute
   CatalogRoute: typeof CatalogRoute
   CategoriesRoute: typeof CategoriesRoute
+  EmailsRoute: typeof EmailsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   QueuesRoute: typeof QueuesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -443,6 +456,13 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/emails': {
+      id: '/emails'
+      path: '/emails'
+      fullPath: '/emails'
+      preLoaderRoute: typeof EmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -622,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   BackupsRoute: BackupsRoute,
   CatalogRoute: CatalogRoute,
   CategoriesRoute: CategoriesRoute,
+  EmailsRoute: EmailsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   QueuesRoute: QueuesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
