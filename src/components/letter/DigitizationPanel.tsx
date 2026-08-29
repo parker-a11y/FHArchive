@@ -38,6 +38,14 @@ import {
   type DigitalFileWithDerivatives,
 } from "@/lib/digital-files";
 import { labelOf } from "@/lib/archive";
+import {
+  basenameOf,
+  extensionOf,
+  nextSuggestedChoice,
+  quickIdentifyChoices,
+  renameScanFile,
+  sanitizeLabel,
+} from "@/lib/scan-rename";
 import { transcribeScans } from "@/lib/transcription.functions";
 import type { Letter } from "@/lib/queries";
 
@@ -74,6 +82,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [transcribing, setTranscribing] = useState<string[]>([]);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [lastLabel, setLastLabel] = useState<string | null>(null);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
@@ -114,6 +124,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const mismatched = files.filter((f) => !f.filename_matches);
   const isLetterType = (letter.record_type ?? "letter") === "letter";
   const labels = suggestedLabels(letter.record_type);
+  const quickChoices = quickIdentifyChoices(letter.record_type, letter.subtype);
+  const lastIdentified =
+    lastLabel ?? [...files].reverse().find((f) => f.label)?.label ?? null;
+  const suggestedNext = nextSuggestedChoice(lastIdentified, quickChoices);
 
   /* ------------------------------- upload ------------------------------- */
 
@@ -249,6 +263,35 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     const { error } = await supabase.from("digital_files").update(patch as never).eq("id", id);
     if (error) return toast.error(error.message);
     refresh();
+  }
+
+  /* --------------------- fast identification / renaming -------------------- */
+
+  async function identify(file: DigitalFileWithDerivatives, label: string) {
+    setRenamingId(file.id);
+    try {
+      const name = await renameScanFile({
+        archiveId: letter.archive_id,
+        file,
+        label,
+        otherFiles: files,
+      });
+      setLastLabel(label);
+      refresh();
+      toast.success(`Renamed to ${name}`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRenamingId(null);
+    }
+  }
+
+  function identifyCustom(file: DigitalFileWithDerivatives) {
+    const raw = window.prompt("Describe this scan (e.g. Christmas Card, Newspaper Clipping)");
+    if (!raw) return;
+    const clean = sanitizeLabel(raw);
+    if (!clean) return toast.error("That description could not be used as a filename.");
+    identify(file, clean.replace(/-/g, " "));
   }
 
   async function reorder(targetId: string) {
@@ -635,8 +678,17 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     )}
                   </button>
 
-                  <p className="mt-1 truncate text-[11px] text-muted-foreground" title={f.original_filename}>
-                    {f.original_filename}
+                  <p
+                    className="mt-1 truncate text-[11px] font-medium"
+                    title={`Archival filename · original scanner name: ${f.original_filename}`}
+                  >
+                    {basenameOf(f.master_path)}.{extensionOf(f.master_path)}
+                  </p>
+                  <p
+                    className="truncate text-[10px] text-muted-foreground"
+                    title={f.original_filename}
+                  >
+                    from {f.original_filename}
                   </p>
 
                   <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
@@ -649,16 +701,45 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     )}
                   </div>
 
-                  <Input
-                    list={`labels-${letter.id}`}
-                    className="mt-1.5 h-7 text-xs"
-                    placeholder="Label (optional)"
-                    defaultValue={f.label ?? ""}
-                    onBlur={(e) => {
-                      if ((f.label ?? "") !== e.target.value)
-                        patchFile(f.id, { label: e.target.value || null });
-                    }}
-                  />
+                  {/* One-click identification — renames master + derivatives */}
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {renamingId === f.id ? (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Loader2 className="size-3 animate-spin" /> Renaming…
+                      </span>
+                    ) : (
+                      <>
+                        {quickChoices.map((c) => {
+                          const isCurrent = f.label === c;
+                          const isNext = !f.label && c === suggestedNext;
+                          return (
+                            <button
+                              key={c}
+                              onClick={() => identify(f, c)}
+                              className={`rounded border px-1.5 py-0.5 text-[10px] leading-tight transition ${
+                                isCurrent
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : isNext
+                                    ? "border-primary bg-primary/10 font-medium text-primary"
+                                    : "border-border bg-background hover:bg-secondary"
+                              }`}
+                              title={
+                                isNext ? "Suggested next — click to confirm" : `Rename to ${c}`
+                              }
+                            >
+                              {c}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => identifyCustom(f)}
+                          className="rounded border border-dashed border-border px-1.5 py-0.5 text-[10px] hover:bg-secondary"
+                        >
+                          + Custom
+                        </button>
+                      </>
+                    )}
+                  </div>
 
                   <div className="mt-1 flex items-center justify-between">
                     <Button
