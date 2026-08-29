@@ -10,8 +10,6 @@ const BUCKETS = ["scans", "ds-files"] as const;
 // Every table that must be recreatable from a backup.
 const TABLES = [
   "letters",
-  "letter_items",
-  "letter_scans",
   "letter_people",
   "letter_places",
   "letter_keywords",
