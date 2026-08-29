@@ -985,65 +985,6 @@ export type Database = {
           },
         ]
       }
-      letter_items: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          item_date: string | null
-          item_type: string
-          letter_id: string
-          normalized_date: string | null
-          notes: string | null
-          owner_id: string
-          page_number: string | null
-          people: string | null
-          side: string | null
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          item_date?: string | null
-          item_type?: string
-          letter_id: string
-          normalized_date?: string | null
-          notes?: string | null
-          owner_id?: string
-          page_number?: string | null
-          people?: string | null
-          side?: string | null
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          item_date?: string | null
-          item_type?: string
-          letter_id?: string
-          normalized_date?: string | null
-          notes?: string | null
-          owner_id?: string
-          page_number?: string | null
-          people?: string | null
-          side?: string | null
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "letter_items_letter_id_fkey"
-            columns: ["letter_id"]
-            isOneToOne: false
-            referencedRelation: "letters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       letter_keywords: {
         Row: {
           confirmed: boolean
@@ -1263,66 +1204,6 @@ export type Database = {
           {
             foreignKeyName: "letter_relations_related_letter_id_fkey"
             columns: ["related_letter_id"]
-            isOneToOne: false
-            referencedRelation: "letters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      letter_scans: {
-        Row: {
-          created_at: string
-          file_label: string
-          id: string
-          image_type: string
-          item_id: string | null
-          letter_id: string
-          original_filename: string | null
-          owner_id: string
-          rotation: number
-          sort_order: number
-          storage_path: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          file_label: string
-          id?: string
-          image_type?: string
-          item_id?: string | null
-          letter_id: string
-          original_filename?: string | null
-          owner_id?: string
-          rotation?: number
-          sort_order?: number
-          storage_path: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          file_label?: string
-          id?: string
-          image_type?: string
-          item_id?: string | null
-          letter_id?: string
-          original_filename?: string | null
-          owner_id?: string
-          rotation?: number
-          sort_order?: number
-          storage_path?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "letter_scans_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "letter_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "letter_scans_letter_id_fkey"
-            columns: ["letter_id"]
             isOneToOne: false
             referencedRelation: "letters"
             referencedColumns: ["id"]
