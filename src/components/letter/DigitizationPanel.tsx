@@ -188,59 +188,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       added++;
       const fileId = (inserted as { id: string }).id;
 
-      if (!canDerive(file)) continue;
-
-      step("Generating JPEG + thumbnail…");
-      try {
-        const derived = await makeDerivatives(file);
-        const base = `${letter.archive_id}/derivatives/${fileId}`;
-        const viewPath = `${base}_view.jpg`;
-        const thumbPath = `${base}_thumb.jpg`;
-        const [v, t] = await Promise.all([
-          supabase.storage
-            .from("scans")
-            .upload(viewPath, derived.view.blob, { upsert: true, contentType: "image/jpeg" }),
-          supabase.storage
-            .from("scans")
-            .upload(thumbPath, derived.thumb.blob, { upsert: true, contentType: "image/jpeg" }),
-        ]);
-        if (v.error || t.error) throw new Error(v.error?.message ?? t.error?.message);
-        await supabase.from("file_derivatives").insert([
-          {
-            letter_id: letter.id,
-            file_id: fileId,
-            kind: "jpeg",
-            status: "complete",
-            storage_path: viewPath,
-            mime_type: "image/jpeg",
-            file_size: derived.view.blob.size,
-            width: derived.view.width,
-            height: derived.view.height,
-          },
-          {
-            letter_id: letter.id,
-            file_id: fileId,
-            kind: "thumbnail",
-            status: "complete",
-            storage_path: thumbPath,
-            mime_type: "image/jpeg",
-            file_size: derived.thumb.blob.size,
-            width: derived.thumb.width,
-            height: derived.thumb.height,
-          },
-        ] as never);
-      } catch (err) {
-        await supabase.from("file_derivatives").insert({
-          letter_id: letter.id,
-          file_id: fileId,
-          kind: "jpeg",
-          status: "failed",
-          error: (err as Error).message,
-        } as never);
-        toast.warning(
-          `${file.name}: master stored safely, but the JPEG derivative could not be generated.`,
-        );
-      }
+      // Derivatives are intentionally NOT generated here — they are produced
+      // only after "Confirm Upload Complete".
     }
 
     setProgress(null);
