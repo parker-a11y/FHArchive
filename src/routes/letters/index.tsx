@@ -204,7 +204,7 @@ function LettersTable() {
   function exportRows() {
     return rows.map((l) => ({
       fh_id: l.archive_id,
-      record_type: labelOf(RECORD_TYPES, l.record_type),
+      record_type: labelOf(recordTypeOptions, l.record_type),
       subtype: l.subtype ?? "",
       title: l.title ?? "",
       primary_person: l.primary_person ?? "",
@@ -267,7 +267,7 @@ function LettersTable() {
       case "date":
         return displayDate(l);
       case "record_type":
-        return labelOf(RECORD_TYPES, l.record_type);
+        return labelOf(recordTypeOptions, l.record_type);
       case "date_precision":
         return labelOf(DATE_PRECISION, l.date_precision);
       case "identification_status":
