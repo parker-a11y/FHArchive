@@ -67,8 +67,18 @@ export const Route = createFileRoute("/letters/")({
 });
 
 type Col = { key: string; label: string; width: number; editable?: boolean };
+
+/** macOS-style traffic-light dot summarizing scan/transcription state. */
+function recordHealth(l: Letter): { color: string; label: string } {
+  if (l.scan_status === "not_scanned" || l.transcription_status === "failed")
+    return { color: "#FF5F57", label: "No scans or a problem detected with this record" };
+  if (l.transcription_status === "human_verified")
+    return { color: "#28C840", label: "Transcribed, AI summary, human checked" };
+  return { color: "#FEBC2E", label: "Scans uploaded, transcription pending" };
+}
+
 const COLUMNS: Col[] = [
-  { key: "archive_id", label: "FH ID", width: 110 },
+  { key: "archive_id", label: "FH ID", width: 130 },
   { key: "record_type", label: "Type", width: 150 },
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
