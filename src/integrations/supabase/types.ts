@@ -2141,66 +2141,24 @@ export type Database = {
     }
     Functions: {
       can_read_archive: { Args: { _user_id: string }; Returns: boolean }
-      create_digital_source:
-        | {
-            Args: {
-              p_creator: string
-              p_date_accessed: string
-              p_description: string
-              p_historical_date_range: string
-              p_institution: string
-              p_notes: string
-              p_original_date: string
-              p_source_type: string
-              p_title: string
-              p_url: string
-            }
-            Returns: {
-              ds_id: string
-              ds_seq: number
-              id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_creator: string
-              p_date_accessed: string
-              p_date_precision?: string
-              p_description: string
-              p_historical_date_range: string
-              p_institution: string
-              p_normalized_date?: string
-              p_notes: string
-              p_original_date: string
-              p_source_type: string
-              p_title: string
-              p_url: string
-            }
-            Returns: {
-              ds_id: string
-              ds_seq: number
-              id: string
-            }[]
-          }
-      create_letter: {
+      create_digital_source: {
         Args: {
-          p_author: string
-          p_date_as_written: string
-          p_date_certainty: string
-          p_date_precision: string
-          p_destination: string
-          p_has_enclosures: boolean
-          p_has_envelope: boolean
-          p_normalized_date: string
+          p_creator: string
+          p_date_accessed: string
+          p_date_precision?: string
+          p_description: string
+          p_historical_date_range: string
+          p_institution: string
+          p_normalized_date?: string
           p_notes: string
-          p_origin: string
-          p_period: string
-          p_recipient: string
-          p_sheets: number
+          p_original_date: string
+          p_source_type: string
+          p_title: string
+          p_url: string
         }
         Returns: {
-          archive_id: string
-          fh_seq: number
+          ds_id: string
+          ds_seq: number
           id: string
         }[]
       }
@@ -2280,6 +2238,7 @@ export type Database = {
           ds_seq: number
         }[]
       }
+      require_admin: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "guest"
