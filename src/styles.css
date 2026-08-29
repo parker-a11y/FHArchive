@@ -189,6 +189,11 @@
   color: var(--color-muted-foreground);
 }
 
+/* The printable label lives in a body-level portal; it is print-only. */
+.print-label {
+  display: none;
+}
+
 @media print {
   html,
   body {
@@ -199,57 +204,26 @@
     overflow: hidden !important;
     background: white;
   }
-  .no-print {
+  /* Everything except the label portal is removed from the print layout,
+     so the app's full height can never spill onto extra label sheets. */
+  body > *:not(.print-label) {
     display: none !important;
-  }
-  /* Remove every top-level branch that does not hold the label from the
-     print layout entirely. `visibility: hidden` alone keeps the app's full
-     height in flow, which is what produced several blank label sheets. */
-  body > *:not(:has(.print-label)) {
-    display: none !important;
-  }
-  /* Inside the branch that does hold the label, hide the dialog chrome. */
-  body * {
-    visibility: hidden !important;
-  }
-  body > *:has(.print-label) {
-    display: block !important;
-    position: static !important;
-    inset: auto !important;
-    width: 4in !important;
-    height: 6in !important;
-    max-width: none !important;
-    padding: 0 !important;
-    gap: 0 !important;
-    border: none !important;
-    background: white !important;
-    overflow: hidden !important;
-    /* These create a containing block for the fixed label if left in place. */
-    transform: none !important;
-    translate: none !important;
-    scale: none !important;
-    filter: none !important;
-  }
-  .print-label,
-  .print-label * {
-    visibility: visible !important;
   }
   .print-label {
-    position: fixed !important;
+    display: block !important;
+    position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 4in !important;
     height: 6in !important;
-    margin: 0 !important;
-    transform: none !important;
-    translate: none !important;
-    scale: none !important;
-    border: none !important;
-    box-shadow: none !important;
     overflow: hidden !important;
     background: white;
-    page-break-after: avoid;
     break-after: avoid;
+    page-break-after: avoid;
+  }
+  .print-label > * {
+    border: none !important;
+    box-shadow: none !important;
   }
   @page {
     size: 4in 6in;
