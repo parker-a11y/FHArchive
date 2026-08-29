@@ -40,6 +40,12 @@ import { toast } from "sonner";
 
 const searchSchema = z.object({
   type: z.string().optional(),
+  period: z.string().optional(),
+  tstatus: z.string().optional(),
+  review: z.string().optional(),
+  scan: z.string().optional(), // "has" | "none"
+  cataloged: z.string().optional(), // "1"
+  uncertain: z.string().optional(), // "1"
 });
 
 export const Route = createFileRoute("/letters/")({
