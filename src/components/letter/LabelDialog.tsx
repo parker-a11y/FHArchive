@@ -10,10 +10,12 @@ import type { Letter } from "@/lib/queries";
 export function LabelCard({
   archiveId,
   dateText,
+  title = "",
   lines = [],
 }: {
   archiveId: string;
   dateText: string;
+  title?: string;
   lines?: string[];
 }) {
   return (
@@ -24,6 +26,14 @@ export function LabelCard({
       >
         {archiveId}
       </div>
+      {title.trim() !== "" && (
+        <div
+          className="mt-[0.25in] px-[0.3in] font-semibold text-black"
+          style={{ fontSize: "0.26in", lineHeight: 1.25 }}
+        >
+          {title}
+        </div>
+      )}
       <div
         className="mt-[0.35in] font-semibold text-black"
         style={{ fontSize: "0.32in", letterSpacing: "0.04em" }}
@@ -70,16 +80,27 @@ export function labelLines(letter: Partial<Letter>): string[] {
   return lines;
 }
 
+/** Title / short description shown under the FH number. */
+export function labelTitle(letter: Partial<Letter>): string {
+  const raw = (letter.title ?? "").trim() || (letter.physical_description ?? "").trim();
+  if (!raw) return "";
+  return raw.length > 80 ? raw.slice(0, 80) + "…" : raw;
+}
+
 export function LabelDialog({ letter }: { letter: Letter }) {
   const [open, setOpen] = useState(false);
   const [dateText, setDateText] = useState(labelDate(letter));
+  const [titleText, setTitleText] = useState(labelTitle(letter));
 
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
-        if (v) setDateText(labelDate(letter));
+        if (v) {
+          setDateText(labelDate(letter));
+          setTitleText(labelTitle(letter));
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -90,6 +111,12 @@ export function LabelDialog({ letter }: { letter: Letter }) {
       <DialogContent className="sm:max-w-md">
         <DialogTitle>4 × 6 Folder Label</DialogTitle>
         <div className="no-print space-y-2">
+          <label className="field-label">Title / short description</label>
+          <Input
+            value={titleText}
+            onChange={(e) => setTitleText(e.target.value)}
+            placeholder="e.g. Bell Bottom Trousers — handwritten lyrics"
+          />
           <label className="field-label">Date line</label>
           <Input value={dateText} onChange={(e) => setDateText(e.target.value.toUpperCase())} />
           <p className="text-xs text-muted-foreground">
@@ -97,7 +124,12 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           </p>
         </div>
 
-        <LabelCard archiveId={letter.archive_id} dateText={dateText} lines={labelLines(letter)} />
+        <LabelCard
+          archiveId={letter.archive_id}
+          dateText={dateText}
+          title={titleText}
+          lines={labelLines(letter)}
+        />
 
         <PrintButton />
       </DialogContent>
@@ -111,32 +143,45 @@ export function EntryLabelDialog({
   onOpenChange,
   archiveId,
   defaultDate,
+  defaultTitle = "",
   lines,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   archiveId: string;
   defaultDate: string;
+  defaultTitle?: string;
   lines: string[];
 }) {
   const [dateText, setDateText] = useState(defaultDate);
+  const [titleText, setTitleText] = useState(defaultTitle);
 
   return (
     <Dialog
       open={open}
       onOpenChange={(v) => {
         onOpenChange(v);
-        if (v) setDateText(defaultDate);
+        if (v) {
+          setDateText(defaultDate);
+          setTitleText(defaultTitle);
+        }
       }}
     >
       <DialogContent className="sm:max-w-md">
         <DialogTitle>4 × 6 Folder Label — {archiveId}</DialogTitle>
         <div className="no-print space-y-2">
+          <label className="field-label">Title / short description</label>
+          <Input value={titleText} onChange={(e) => setTitleText(e.target.value)} />
           <label className="field-label">Date line</label>
           <Input value={dateText} onChange={(e) => setDateText(e.target.value.toUpperCase())} />
         </div>
 
-        <LabelCard archiveId={archiveId} dateText={dateText} lines={lines} />
+        <LabelCard
+          archiveId={archiveId}
+          dateText={dateText}
+          title={titleText}
+          lines={lines}
+        />
 
         <PrintButton />
       </DialogContent>

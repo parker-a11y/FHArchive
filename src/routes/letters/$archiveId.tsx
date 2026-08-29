@@ -59,7 +59,6 @@ import { PersonCombobox } from "@/components/PersonCombobox";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
-import { ItemsPanel } from "@/components/letter/ItemsPanel";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
@@ -391,8 +390,7 @@ function LetterPage() {
       <Tabs defaultValue="catalog" className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
-          <TabsTrigger value="digitization">Digital Files</TabsTrigger>
-          <TabsTrigger value="scans">Items &amp; Scans ({letter.image_count})</TabsTrigger>
+          <TabsTrigger value="digitization">Scans &amp; Files ({letter.image_count})</TabsTrigger>
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
@@ -708,11 +706,6 @@ function LetterPage() {
 
         <TabsContent value="digitization" className="mt-6">
           <DigitizationPanel letter={letter} />
-        </TabsContent>
-
-
-        <TabsContent value="scans" className="mt-6">
-          <ItemsPanel letter={letter} />
         </TabsContent>
 
         <TabsContent value="transcription" className="mt-6">
