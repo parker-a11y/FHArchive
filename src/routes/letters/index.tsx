@@ -1,3 +1,4 @@
+import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -135,6 +136,7 @@ function LettersTable() {
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
   const [rType, setRType] = useState(search.type ?? "");
+  const recordTypeOptions = useRecordTypeOptions();
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
   const [digStatus, setDigStatus] = useState("");
@@ -369,7 +371,7 @@ function LettersTable() {
           onChange={(e) => setRType(e.target.value)}
         >
           <option value="">All record types</option>
-          {RECORD_TYPES.map((t) => (
+          {recordTypeOptions.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
             </option>

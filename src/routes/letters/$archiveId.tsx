@@ -1,5 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CategorySelect } from "@/components/CategorySelect";
+import {
+  addRecordType,
+  addSubtype,
+  useInvalidateCategories,
+  useRecordTypeOptions,
+  useSubtypeOptions,
+} from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -45,7 +53,6 @@ import {
   displayDate,
   isLetterType,
   labelOf,
-  subtypesFor,
 } from "@/lib/archive";
 
 import { PersonCombobox } from "@/components/PersonCombobox";
@@ -120,6 +127,9 @@ function LetterPage() {
   const { data: containers = [] } = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
   const [form, setForm] = useState<Record<string, string | boolean>>({});
+  const recordTypeOptions = useRecordTypeOptions();
+  const subtypeOptions = useSubtypeOptions((form.record_type as string) || "letter");
+  const invalidateCategories = useInvalidateCategories();
   const [tones, setTones] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -258,7 +268,8 @@ function LetterPage() {
             <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
             <div className="mt-2 text-sm">
               <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
-                {labelOf(RECORD_TYPES, letter.record_type)}
+                {recordTypeOptions.find((o) => o.value === letter.record_type)?.label ??
+                  labelOf(RECORD_TYPES, letter.record_type)}
                 {letter.subtype ? ` · ${letter.subtype}` : ""}
               </span>
               {letter.title && <span className="ml-3 font-medium">{letter.title}</span>}
@@ -394,35 +405,37 @@ function LetterPage() {
           <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="field-label">Record type</label>
-              <select
-                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+              <CategorySelect
                 value={(form.record_type as string) ?? "letter"}
-                onChange={(e) => {
-                  set("record_type", e.target.value);
+                onChange={(v) => {
+                  set("record_type", v);
                   set("subtype", "");
                 }}
-              >
-                {RECORD_TYPES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={recordTypeOptions}
+                onCreate={async (label) => {
+                  const v = await addRecordType(label, recordTypeOptions);
+                  invalidateCategories();
+                  return v;
+                }}
+              />
             </div>
             <div>
               <label className="field-label">Subtype</label>
-              <select
-                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+              <CategorySelect
                 value={(form.subtype as string) ?? ""}
-                onChange={(e) => set("subtype", e.target.value)}
-              >
-                <option value="">—</option>
-                {subtypesFor((form.record_type as string) ?? "letter").map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                allowEmpty
+                onChange={(v) => set("subtype", v)}
+                options={subtypeOptions.map((s) => ({ value: s, label: s }))}
+                onCreate={async (label) => {
+                  const v = await addSubtype(
+                    (form.record_type as string) ?? "letter",
+                    label,
+                    subtypeOptions,
+                  );
+                  invalidateCategories();
+                  return v;
+                }}
+              />
             </div>
             <div>
               <label className="field-label">Title / short description</label>

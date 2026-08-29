@@ -39,6 +39,7 @@ const NAV = [
   { to: "/events", label: "Events", icon: CalendarDays },
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
+  { to: "/categories", label: "Categories", icon: Tags },
   { to: "/backups", label: "Backups", icon: ShieldCheck },
 ];
 
