@@ -8,3 +8,5 @@
 - [x] Print label includes Title \/ short description
 - [x] Connect AI Analysis (Lovable AI Gateway) to FH records with reviewable suggestions
 - [x] Add "Publication / Printed Material" record type with printed-material subtypes
+- [x] AI panel: Accept All button honoring edits and rejections
+- [x] Dashboard: Daily Summary Report (new records, files uploaded, transcriptions generated)

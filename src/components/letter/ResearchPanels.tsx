@@ -610,6 +610,44 @@ export function AiPanel({ letter }: { letter: Letter }) {
     qc.invalidateQueries({ queryKey: ["ai_pending"] });
   }
 
+  const acceptable = rows.filter(
+    (r) => r.status !== "rejected" && (editing[r.id] ?? r.content ?? "").trim() !== "",
+  );
+
+  async function acceptAll() {
+    setBusy(true);
+    setError(null);
+    let ok = 0;
+    let failed = 0;
+    try {
+      for (const row of acceptable) {
+        const content = editing[row.id] ?? row.content ?? "";
+        await supabase.from("ai_suggestions").update({ status: "accepted", content }).eq("id", row.id);
+        try {
+          await applySuggestion(
+            letter.id,
+            row.field_key,
+            content,
+            letter as unknown as Record<string, unknown>,
+          );
+          ok++;
+        } catch {
+          failed++;
+        }
+      }
+      qc.invalidateQueries({ queryKey: ["ai", letter.id] });
+      qc.invalidateQueries({ queryKey: ["ai_pending"] });
+      qc.invalidateQueries({ queryKey: ["links", letter.id] });
+      qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
+      qc.invalidateQueries({ queryKey: ["entities"] });
+      qc.invalidateQueries({ queryKey: ["history", letter.id] });
+      if (failed) toast.warning(`Accepted ${ok}; ${failed} failed to apply`);
+      else toast.success(`Accepted ${ok} suggestion(s)`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="max-w-4xl space-y-4">
       <div className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-3">
@@ -618,9 +656,16 @@ export function AiPanel({ letter }: { letter: Letter }) {
             AI analysis reads this record&apos;s transcription and proposes suggestions. Nothing is
             written to archival metadata until you accept it.
           </p>
-          <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
-            {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
-          </Button>
+          <div className="flex gap-2">
+            {acceptable.length > 0 && (
+              <Button size="sm" variant="outline" onClick={acceptAll} disabled={busy}>
+                Accept all ({acceptable.length})
+              </Button>
+            )}
+            <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
+              {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
+            </Button>
+          </div>
         </div>
         {!hasTranscript && (
           <p className="mt-2 text-sm text-muted-foreground">

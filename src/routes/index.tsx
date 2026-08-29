@@ -31,9 +31,40 @@ import {
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
 import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
+
+async function fetchDailySummary() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const iso = start.toISOString();
+  const count = async (
+    table: "letters" | "digital_sources" | "digital_files" | "ds_files" | "container_files" | "scan_transcriptions",
+    column = "created_at",
+  ) => {
+    const { count: n } = await supabase
+      .from(table)
+      .select("id", { count: "exact", head: true })
+      .gte(column, iso);
+    return n ?? 0;
+  };
+  const [records, dsRecords, scans, dsFiles, containerPhotos, transcriptions] = await Promise.all([
+    count("letters"),
+    count("digital_sources"),
+    count("digital_files"),
+    count("ds_files"),
+    count("container_files"),
+    count("scan_transcriptions"),
+  ]);
+  return {
+    records,
+    dsRecords,
+    filesUploaded: scans + dsFiles + containerPhotos,
+    transcriptions,
+  };
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -136,6 +167,10 @@ function Dashboard() {
   const { data: dsFileCounts = {} } = useQuery({
     queryKey: ["ds-file-counts"],
     queryFn: fetchDsFileCounts,
+  });
+  const { data: daily } = useQuery({
+    queryKey: ["daily-summary"],
+    queryFn: fetchDailySummary,
   });
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
@@ -241,6 +276,23 @@ function Dashboard() {
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
               ))}
+            </div>
+
+            <div className="mt-10 mb-3 flex items-baseline justify-between">
+              <h2 className="field-label">Daily summary — today</h2>
+              <span className="text-xs text-muted-foreground">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <Stat label="New FH records" value={daily?.records ?? 0} tone="blue" icon={Hash} />
+              <Stat label="New digital sources" value={daily?.dsRecords ?? 0} tone="teal" icon={Globe} />
+              <Stat label="Files uploaded" value={daily?.filesUploaded ?? 0} tone="amber" icon={Paperclip} />
+              <Stat label="Transcriptions generated" value={daily?.transcriptions ?? 0} tone="emerald" icon={PenLine} />
             </div>
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
