@@ -269,7 +269,7 @@ function SearchPage() {
               }}
             >
               <option value="">Any</option>
-              {RECORD_TYPES.map((o) => (
+              {recordTypeOptions.map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>
@@ -285,7 +285,7 @@ function SearchPage() {
                 onChange={(e) => setSubtype(e.target.value)}
               >
                 <option value="">Any</option>
-                {subtypesFor(rtype).map((s) => (
+                {searchSubtypes.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>
