@@ -869,6 +869,13 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 </div>
               );
             })}
+          </div>
+        )}
+        <datalist id={`labels-${letter.id}`}>
+          {labels.map((l) => (
+            <option key={l} value={l} />
+          ))}
+        </datalist>
       </div>
 
       {/* Viewing JPGs */}
