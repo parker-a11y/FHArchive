@@ -67,8 +67,18 @@ export const Route = createFileRoute("/letters/")({
 });
 
 type Col = { key: string; label: string; width: number; editable?: boolean };
+
+/** macOS-style traffic-light dot summarizing scan/transcription state. */
+function recordHealth(l: Letter): { color: string; label: string } {
+  if (l.scan_status === "not_scanned" || l.transcription_status === "failed")
+    return { color: "#FF5F57", label: "No scans or a problem detected with this record" };
+  if (l.transcription_status === "human_verified")
+    return { color: "#28C840", label: "Transcribed, AI summary, human checked" };
+  return { color: "#FEBC2E", label: "Scans uploaded, transcription pending" };
+}
+
 const COLUMNS: Col[] = [
-  { key: "archive_id", label: "FH ID", width: 110 },
+  { key: "archive_id", label: "FH ID", width: 130 },
   { key: "record_type", label: "Type", width: 150 },
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
@@ -525,13 +535,21 @@ function LettersTable() {
                       onDoubleClick={() => c.editable && setEditing({ id: l.id, key: c.key })}
                     >
                       {c.key === "archive_id" ? (
-                        <Link
-                          to="/letters/$archiveId"
-                          params={{ archiveId: l.archive_id }}
-                          className="archive-id text-primary hover:underline"
-                        >
-                          {l.archive_id}
-                        </Link>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Link
+                            to="/letters/$archiveId"
+                            params={{ archiveId: l.archive_id }}
+                            className="archive-id text-primary hover:underline"
+                          >
+                            {l.archive_id}
+                          </Link>
+                          <span
+                            title={recordHealth(l).label}
+                            aria-label={recordHealth(l).label}
+                            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
+                            style={{ backgroundColor: recordHealth(l).color }}
+                          />
+                        </span>
                       ) : isEditing ? (
                         <input
                           autoFocus
@@ -556,6 +574,11 @@ function LettersTable() {
         {rows.length === 0 && (
           <p className="px-4 sm:px-8 py-6 sm:py-8 text-sm text-muted-foreground">No matching records.</p>
         )}
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 sm:px-8 pt-3 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} /> Transcribed &amp; human checked</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} /> Scanned, transcription pending</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} /> No scans or problem detected</span>
+        </p>
         <p className="px-4 sm:px-8 py-3 text-xs text-muted-foreground">
           Double-click an editable cell (From, To, Origin, Sheets, Notes) to edit inline. Changes
           are recorded in the letter's edit history.
