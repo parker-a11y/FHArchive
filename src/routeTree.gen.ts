@@ -18,6 +18,7 @@ import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as ContainersIndexRouteImport } from './routes/containers/index'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
@@ -78,6 +79,11 @@ const SearchRoute = SearchRouteImport.update({
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContainersIndexRoute = ContainersIndexRouteImport.update({
+  id: '/containers/',
+  path: '/containers/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DTokenRoute = DTokenRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
+  '/containers/': typeof ContainersIndexRoute
   '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
+  '/containers': typeof ContainersIndexRoute
   '/events': typeof EventsIndexRoute
   '/keywords': typeof KeywordsIndexRoute
   '/letters': typeof LettersIndexRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
+  '/containers/': typeof ContainersIndexRoute
   '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/containers/'
     | '/events/'
     | '/keywords/'
     | '/letters/'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/containers'
     | '/events'
     | '/keywords'
     | '/letters'
@@ -317,6 +328,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/containers/'
     | '/events/'
     | '/keywords/'
     | '/letters/'
@@ -345,6 +357,7 @@ export interface RootRouteChildren {
   STokenRoute: typeof STokenRoute
   SourcesDsIdRoute: typeof SourcesDsIdRoute
   SourcesNewRoute: typeof SourcesNewRoute
+  ContainersIndexRoute: typeof ContainersIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   KeywordsIndexRoute: typeof KeywordsIndexRoute
   LettersIndexRoute: typeof LettersIndexRoute
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/containers/': {
+      id: '/containers/'
+      path: '/containers'
+      fullPath: '/containers/'
+      preLoaderRoute: typeof ContainersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/d/$token': {
@@ -553,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   STokenRoute: STokenRoute,
   SourcesDsIdRoute: SourcesDsIdRoute,
   SourcesNewRoute: SourcesNewRoute,
+  ContainersIndexRoute: ContainersIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   KeywordsIndexRoute: KeywordsIndexRoute,
   LettersIndexRoute: LettersIndexRoute,
