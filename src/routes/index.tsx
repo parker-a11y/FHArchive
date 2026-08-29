@@ -31,9 +31,40 @@ import {
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
 import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
+
+async function fetchDailySummary() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const iso = start.toISOString();
+  const count = async (
+    table: "letters" | "digital_sources" | "digital_files" | "ds_files" | "container_files" | "scan_transcriptions",
+    column = "created_at",
+  ) => {
+    const { count: n } = await supabase
+      .from(table)
+      .select("id", { count: "exact", head: true })
+      .gte(column, iso);
+    return n ?? 0;
+  };
+  const [records, dsRecords, scans, dsFiles, containerPhotos, transcriptions] = await Promise.all([
+    count("letters"),
+    count("digital_sources"),
+    count("digital_files"),
+    count("ds_files"),
+    count("container_files"),
+    count("scan_transcriptions"),
+  ]);
+  return {
+    records,
+    dsRecords,
+    filesUploaded: scans + dsFiles + containerPhotos,
+    transcriptions,
+  };
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
