@@ -730,9 +730,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   className={`rounded border bg-card p-2 ${
                     highlightId === f.id
                       ? "border-amber-500 ring-2 ring-amber-400"
-                      : !isNamed(f)
-                        ? "border-amber-300"
-                        : "border-border"
+                      : "border-border"
                   }`}
                 >
                   <div className="mb-1 flex items-center gap-1">
