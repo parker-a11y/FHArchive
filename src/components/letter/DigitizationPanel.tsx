@@ -19,7 +19,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
-import { canDerive, makeDerivatives } from "@/lib/derivatives";
+import {
+  SCAN_STATUS_LABEL,
+  derivativeFailed,
+  generateDerivatives,
+  hasJpeg,
+  hasThumb,
+  isNamed,
+  pendingFiles,
+  recordDerivativeFailure,
+  scanStatus,
+  unnamedFiles,
+} from "@/lib/scan-confirm";
 import {
   DIGITIZATION_STATUS,
   MASTER_ACCEPT,
@@ -37,7 +48,7 @@ import {
   signedScanUrl,
   type DigitalFileWithDerivatives,
 } from "@/lib/digital-files";
-import { labelOf } from "@/lib/archive";
+
 import {
   basenameOf,
   extensionOf,
@@ -84,6 +95,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [transcribing, setTranscribing] = useState<string[]>([]);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [lastLabel, setLastLabel] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
@@ -112,12 +125,13 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   });
 
   const masters = files.length;
-  const jpegCount = files.filter((f) =>
-    f.derivatives.some((d) => d.kind === "jpeg" && d.status === "complete"),
-  ).length;
-  const thumbCount = files.filter((f) =>
-    f.derivatives.some((d) => d.kind === "thumbnail" && d.status === "complete"),
-  ).length;
+  const jpegFiles = files.filter(hasJpeg);
+  const thumbFiles = files.filter(hasThumb);
+  const jpegCount = jpegFiles.length;
+  const thumbCount = thumbFiles.length;
+  const unnamed = unnamedFiles(files);
+  const pending = pendingFiles(files);
+  const scanState = scanStatus(files, { uploading: !!progress, generating: !!generating });
   const failedDerivatives = files.filter((f) =>
     f.derivatives.some((d) => d.status === "failed"),
   );
@@ -175,61 +189,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         continue;
       }
       added++;
-      const fileId = (inserted as { id: string }).id;
-
-      if (!canDerive(file)) continue;
-
-      step("Generating JPEG + thumbnail…");
-      try {
-        const derived = await makeDerivatives(file);
-        const base = `${letter.archive_id}/derivatives/${fileId}`;
-        const viewPath = `${base}_view.jpg`;
-        const thumbPath = `${base}_thumb.jpg`;
-        const [v, t] = await Promise.all([
-          supabase.storage
-            .from("scans")
-            .upload(viewPath, derived.view.blob, { upsert: true, contentType: "image/jpeg" }),
-          supabase.storage
-            .from("scans")
-            .upload(thumbPath, derived.thumb.blob, { upsert: true, contentType: "image/jpeg" }),
-        ]);
-        if (v.error || t.error) throw new Error(v.error?.message ?? t.error?.message);
-        await supabase.from("file_derivatives").insert([
-          {
-            letter_id: letter.id,
-            file_id: fileId,
-            kind: "jpeg",
-            status: "complete",
-            storage_path: viewPath,
-            mime_type: "image/jpeg",
-            file_size: derived.view.blob.size,
-            width: derived.view.width,
-            height: derived.view.height,
-          },
-          {
-            letter_id: letter.id,
-            file_id: fileId,
-            kind: "thumbnail",
-            status: "complete",
-            storage_path: thumbPath,
-            mime_type: "image/jpeg",
-            file_size: derived.thumb.blob.size,
-            width: derived.thumb.width,
-            height: derived.thumb.height,
-          },
-        ] as never);
-      } catch (err) {
-        await supabase.from("file_derivatives").insert({
-          letter_id: letter.id,
-          file_id: fileId,
-          kind: "jpeg",
-          status: "failed",
-          error: (err as Error).message,
-        } as never);
-        toast.warning(
-          `${file.name}: master stored safely, but the JPEG derivative could not be generated.`,
-        );
-      }
+      // Derivatives are intentionally NOT generated here — they are produced
+      // only after "Confirm Upload Complete".
     }
 
     setProgress(null);
@@ -237,9 +198,62 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     if (added) {
       if ((letter.digitization_status ?? "not_scanned") === "not_scanned")
         await patchLetter({ digitization_status: "in_progress" });
-      toast.success(`${added} archival master${added === 1 ? "" : "s"} stored unmodified.`);
+      toast.success(
+        `${added} archival master${added === 1 ? "" : "s"} stored unmodified. Name them, then Confirm Upload Complete.`,
+      );
     }
   }
+
+  /* --------------------- confirm upload → derivatives --------------------- */
+
+  function jumpToScan(id: string) {
+    setHighlightId(id);
+    document.getElementById(`scan-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => setHighlightId((cur) => (cur === id ? null : cur)), 2500);
+  }
+
+  async function confirmUploadComplete() {
+    if (unnamed.length) {
+      toast.error(
+        `${unnamed.length} scan${unnamed.length === 1 ? "" : "s"} still need${
+          unnamed.length === 1 ? "s" : ""
+        } to be named before this upload can be confirmed.`,
+      );
+      jumpToScan(unnamed[0].id);
+      return;
+    }
+    const todo = pending;
+    if (!todo.length) return toast.info("Every master already has a viewing JPEG and thumbnail.");
+
+    setGenerating({ done: 0, total: todo.length });
+    let ok = 0;
+    let failed = 0;
+    for (let i = 0; i < todo.length; i++) {
+      setGenerating({ done: i, total: todo.length });
+      try {
+        await generateDerivatives(letter.archive_id, letter.id, todo[i]);
+        ok++;
+      } catch (err) {
+        failed++;
+        await recordDerivativeFailure(letter.id, todo[i].id, (err as Error).message);
+        toast.error(
+          `${basenameOf(todo[i].master_path)}: derivative failed — the archival master is untouched.`,
+        );
+      }
+    }
+    setGenerating(null);
+    refresh();
+    if (ok && !failed) {
+      await patchLetter({
+        digitization_status: "complete",
+        digitization_completed_at: new Date().toISOString(),
+      });
+      toast.success(`Processing complete — ${ok} viewing JPEG${ok === 1 ? "" : "s"} and thumbnails generated.`);
+    } else if (ok) {
+      toast.warning(`${ok} processed, ${failed} failed. Masters are all safe.`);
+    }
+  }
+
 
   /* ----------------------------- transcription ---------------------------- */
 
@@ -405,19 +419,78 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           <Stat
-            label="Status"
-            value={labelOf(DIGITIZATION_STATUS, status)}
-            tone={complete ? "good" : status === "not_scanned" ? "warn" : "default"}
+            label="Processing status"
+            value={SCAN_STATUS_LABEL[scanState]}
+            tone={
+              scanState === "complete"
+                ? "good"
+                : scanState === "error" || scanState === "needs_naming"
+                  ? "warn"
+                  : "default"
+            }
           />
           <Stat label="Archival masters" value={String(masters)} />
           <Stat label="Expected" value={expected === null ? "Not set" : String(expected)} />
           <Stat
-            label="Viewing derivatives"
+            label="Viewing JPGs"
             value={`${jpegCount} of ${masters}`}
             tone={masters > 0 && jpegCount === masters ? "good" : masters ? "warn" : "default"}
           />
           <Stat label="Thumbnails" value={`${thumbCount} of ${masters}`} />
         </div>
+
+        {/* Confirm upload complete → derivative generation */}
+        {masters > 0 && (
+          <div className="mt-3 rounded border border-border bg-card p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm">
+                {generating ? (
+                  <span className="flex items-center gap-2 text-primary">
+                    <Loader2 className="size-4 animate-spin" />
+                    Generating derivatives — {generating.done + 1} of {generating.total}
+                  </span>
+                ) : unnamed.length ? (
+                  <span className="text-amber-700">
+                    <AlertTriangle className="mr-1.5 inline size-4" />
+                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} still need
+                    {unnamed.length === 1 ? "s" : ""} to be named before this upload can be
+                    confirmed.{" "}
+                    <button
+                      className="font-medium underline underline-offset-2"
+                      onClick={() => jumpToScan(unnamed[0].id)}
+                    >
+                      Go to that scan
+                    </button>
+                  </span>
+                ) : pending.length ? (
+                  <span>
+                    {pending.length} master{pending.length === 1 ? "" : "s"} ready for derivative
+                    generation. Masters are never altered.
+                  </span>
+                ) : (
+                  <span className="text-emerald-700">
+                    <CheckCircle2 className="mr-1.5 inline size-4" />
+                    {masters} Master TIFF{masters === 1 ? "" : "s"} · {jpegCount} Viewing JPG
+                    {jpegCount === 1 ? "" : "s"} · {thumbCount} Thumbnail
+                    {thumbCount === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
+              <Button
+                onClick={confirmUploadComplete}
+                disabled={!!generating || !!progress || pending.length === 0}
+              >
+                <ShieldCheck className="mr-1.5 size-4" />
+                Confirm Upload Complete
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Confirming is not a lock — you can add, replace or rename scans later and confirm
+              again. Only new or changed masters are processed.
+            </p>
+          </div>
+        )}
+
 
         {expected !== null && (
           <p
@@ -449,7 +522,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           <p className="mt-2 text-sm text-amber-700">
             <FileWarning className="mr-1.5 inline size-4" />
             {failedDerivatives.length} master{failedDerivatives.length === 1 ? " is" : "s are"}{" "}
-            safely stored but the JPEG derivative needs attention — use “Regenerate” on the file.
+            safely stored but the JPEG derivative needs attention — click “Confirm Upload Complete”
+            to retry.
           </p>
         )}
         {mismatched.length > 0 && (
@@ -596,8 +670,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           The TIFF you upload is stored byte-for-byte as the archival master and is never resized,
-          recompressed or replaced. JPEG viewing copies and thumbnails are generated automatically
-          from it.
+          recompressed or replaced. Name each scan, then click “Confirm Upload Complete” to
+          generate the JPEG viewing copies and thumbnails.
         </p>
         {progress && (
           <div className="mx-auto mt-4 max-w-md text-left">
@@ -620,7 +694,11 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
       {/* Gallery */}
       <div>
-        <h4 className="field-label mb-3">Scan gallery — {masters} master files</h4>
+        <h4 className="field-label mb-1">Original TIFFs — {masters} archival masters</h4>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Preservation files. Identify each scan here, then confirm the upload to produce the
+          viewing and thumbnail sets below.
+        </p>
         {masters === 0 ? (
           <p className="text-sm text-muted-foreground">
             No archival masters uploaded for {letter.archive_id} yet.
@@ -628,13 +706,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {files.map((f, i) => {
-              const jpegOk = f.derivatives.some(
-                (d) => d.kind === "jpeg" && d.status === "complete",
-              );
-              const derivFailed = f.derivatives.some((d) => d.status === "failed");
+              const jpegOk = hasJpeg(f);
+              const derivFailed = derivativeFailed(f);
               return (
                 <div
                   key={f.id}
+                  id={`scan-${f.id}`}
                   draggable
                   onDragStart={() => setDragId(f.id)}
                   onDragOver={(e) => e.preventDefault()}
@@ -642,7 +719,13 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     e.preventDefault();
                     reorder(f.id);
                   }}
-                  className="rounded border border-border bg-card p-2"
+                  className={`rounded border bg-card p-2 ${
+                    highlightId === f.id
+                      ? "border-amber-500 ring-2 ring-amber-400"
+                      : !isNamed(f)
+                        ? "border-amber-300"
+                        : "border-border"
+                  }`}
                 >
                   <div className="mb-1 flex items-center gap-1">
                     <GripVertical className="size-3.5 cursor-grab text-muted-foreground" />
@@ -694,6 +777,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
                     <span className="rounded bg-secondary px-1 py-0.5 font-medium">MASTER</span>
                     {jpegOk && <span className="rounded bg-secondary px-1 py-0.5">JPEG</span>}
+                    {hasThumb(f) && <span className="rounded bg-secondary px-1 py-0.5">THUMB</span>}
+                    {!isNamed(f) && (
+                      <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-800">
+                        needs naming
+                      </span>
+                    )}
                     {derivFailed && (
                       <span className="rounded bg-destructive/10 px-1 py-0.5 text-destructive">
                         derivative failed
@@ -787,6 +876,74 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
             <option key={l} value={l} />
           ))}
         </datalist>
+      </div>
+
+      {/* Viewing JPGs */}
+      <div>
+        <h4 className="field-label mb-1">Viewing JPGs — {jpegCount} files</h4>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Lower-resolution reading copies used everywhere in the archive so the full TIFF never
+          has to load.
+        </p>
+        {jpegCount === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            None yet — confirm the upload to generate them.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            {jpegFiles.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => {
+                  const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
+                  if (idx < 0) return;
+                  setViewerIndex(idx);
+                  setViewerOpen(true);
+                }}
+                className="rounded border border-border bg-card p-1.5 text-left"
+              >
+                <img
+                  src={f.viewUrl}
+                  alt={f.label || f.original_filename}
+                  loading="lazy"
+                  style={{ transform: `rotate(${f.rotation}deg)` }}
+                  className="h-24 w-full rounded bg-muted object-contain"
+                />
+                <p className="mt-1 truncate text-[10px]">{basenameOf(f.master_path)}.jpg</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      <div>
+        <h4 className="field-label mb-1">Thumbnails — {thumbCount} files</h4>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Small browsing images used in galleries and lists.
+        </p>
+        {thumbCount === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            None yet — confirm the upload to generate them.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {thumbFiles.map((f) => (
+              <div key={f.id} className="w-24">
+                <img
+                  src={f.thumbUrl}
+                  alt={f.label || f.original_filename}
+                  loading="lazy"
+                  style={{ transform: `rotate(${f.rotation}deg)` }}
+                  className="h-16 w-24 rounded border border-border bg-muted object-contain"
+                />
+                <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                  {basenameOf(f.master_path)}_thumb.jpg
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <MediaLightbox
