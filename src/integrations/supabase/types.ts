@@ -160,6 +160,77 @@ export type Database = {
         }
         Relationships: []
       }
+      container_counter: {
+        Row: {
+          last_seq: number
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          last_seq?: number
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          last_seq?: number
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      container_files: {
+        Row: {
+          container_id: string
+          created_at: string
+          file_label: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          notes: string | null
+          original_filename: string | null
+          owner_id: string
+          sort_order: number
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          container_id: string
+          created_at?: string
+          file_label?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          original_filename?: string | null
+          owner_id?: string
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          container_id?: string
+          created_at?: string
+          file_label?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          original_filename?: string | null
+          owner_id?: string
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "container_files_container_id_fkey"
+            columns: ["container_id"]
+            isOneToOne: false
+            referencedRelation: "source_containers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       digital_files: {
         Row: {
           created_at: string
@@ -1329,6 +1400,7 @@ export type Database = {
           ocr_text: string | null
           origin: string | null
           original_copy: string
+          original_order_notes: string | null
           owner_id: string
           period: string
           photo_back_scanned: boolean
@@ -1348,6 +1420,7 @@ export type Database = {
           scan_status: string
           sheets: number | null
           sort_date: string | null
+          source_container_id: string | null
           storage_container: string | null
           storage_folder: string | null
           storage_location: string | null
@@ -1392,6 +1465,7 @@ export type Database = {
           ocr_text?: string | null
           origin?: string | null
           original_copy?: string
+          original_order_notes?: string | null
           owner_id?: string
           period?: string
           photo_back_scanned?: boolean
@@ -1411,6 +1485,7 @@ export type Database = {
           scan_status?: string
           sheets?: number | null
           sort_date?: string | null
+          source_container_id?: string | null
           storage_container?: string | null
           storage_folder?: string | null
           storage_location?: string | null
@@ -1455,6 +1530,7 @@ export type Database = {
           ocr_text?: string | null
           origin?: string | null
           original_copy?: string
+          original_order_notes?: string | null
           owner_id?: string
           period?: string
           photo_back_scanned?: boolean
@@ -1474,6 +1550,7 @@ export type Database = {
           scan_status?: string
           sheets?: number | null
           sort_date?: string | null
+          source_container_id?: string | null
           storage_container?: string | null
           storage_folder?: string | null
           storage_location?: string | null
@@ -1490,7 +1567,15 @@ export type Database = {
           updated_at?: string
           visibility?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "letters_source_container_id_fkey"
+            columns: ["source_container_id"]
+            isOneToOne: false
+            referencedRelation: "source_containers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       organizations: {
         Row: {
@@ -1678,6 +1763,68 @@ export type Database = {
           },
         ]
       }
+      source_containers: {
+        Row: {
+          artifact_letter_id: string | null
+          box_id: string
+          box_seq: number
+          condition: string | null
+          container_type: string
+          created_at: string
+          date_photographed: string | null
+          description: string | null
+          id: string
+          inscriptions: string | null
+          notes: string | null
+          owner_id: string
+          processing_status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          artifact_letter_id?: string | null
+          box_id: string
+          box_seq: number
+          condition?: string | null
+          container_type?: string
+          created_at?: string
+          date_photographed?: string | null
+          description?: string | null
+          id?: string
+          inscriptions?: string | null
+          notes?: string | null
+          owner_id?: string
+          processing_status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          artifact_letter_id?: string | null
+          box_id?: string
+          box_seq?: number
+          condition?: string | null
+          container_type?: string
+          created_at?: string
+          date_photographed?: string | null
+          description?: string | null
+          id?: string
+          inscriptions?: string | null
+          notes?: string | null
+          owner_id?: string
+          processing_status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_containers_artifact_letter_id_fkey"
+            columns: ["artifact_letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_shares: {
         Row: {
           created_at: string
@@ -1835,6 +1982,23 @@ export type Database = {
         Returns: {
           archive_id: string
           fh_seq: number
+          id: string
+        }[]
+      }
+      create_source_container: {
+        Args: {
+          p_condition?: string
+          p_container_type?: string
+          p_date_photographed?: string
+          p_description?: string
+          p_inscriptions?: string
+          p_notes?: string
+          p_processing_status?: string
+          p_title: string
+        }
+        Returns: {
+          box_id: string
+          box_seq: number
           id: string
         }[]
       }
