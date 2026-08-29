@@ -320,8 +320,56 @@ function QuickEntry() {
                 ref={dateRef}
                 type="date"
                 value={form.normalized_date}
-                onChange={(e) => set("normalized_date", e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!value) return set("normalized_date", "");
+                  if (form.date_precision === "year") {
+                    return set("normalized_date", `${value.slice(0, 4)}-01-01`);
+                  }
+                  if (form.date_precision === "month") {
+                    return set("normalized_date", `${value.slice(0, 7)}-01`);
+                  }
+                  set("normalized_date", value);
+                }}
               />
+              <div className="flex gap-3 pt-1">
+                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 accent-primary"
+                    checked={form.date_precision === "year"}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        date_precision: e.target.checked ? "year" : "exact",
+                        normalized_date:
+                          e.target.checked && f.normalized_date
+                            ? `${f.normalized_date.slice(0, 4)}-01-01`
+                            : f.normalized_date,
+                      }))
+                    }
+                  />
+                  Year only
+                </label>
+                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 accent-primary"
+                    checked={form.date_precision === "month"}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        date_precision: e.target.checked ? "month" : "exact",
+                        normalized_date:
+                          e.target.checked && f.normalized_date
+                            ? `${f.normalized_date.slice(0, 7)}-01`
+                            : f.normalized_date,
+                      }))
+                    }
+                  />
+                  Month / year only
+                </label>
+              </div>
               <p className="text-[11px] text-muted-foreground">
                 Leave blank — the record saves as Undated.
               </p>
