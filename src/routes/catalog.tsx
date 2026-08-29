@@ -212,7 +212,7 @@ function QuickEntry() {
       setLabelFor({
         archiveId: created.archive_id,
         date: labelDate({ ...form, date_precision: precision }),
-        title: labelTitle(form),
+        title: labelTitle({ title: form.title, physical_description: form.physical_description }),
         lines: labelLines({
           ...form,
           sheets: form.sheets ? Number(form.sheets) : null,
