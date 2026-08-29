@@ -18,15 +18,21 @@ import {
   IDENTIFICATION_STATUS,
   ORIGINAL_COPY,
   PERIODS,
-  RECORD_TYPES,
   STORAGE_TYPES,
   isLetterType,
   labelDate,
-  subtypesFor,
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { CategorySelect } from "@/components/CategorySelect";
+import {
+  addRecordType,
+  addSubtype,
+  useInvalidateCategories,
+  useRecordTypeOptions,
+  useSubtypeOptions,
+} from "@/lib/categories";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
