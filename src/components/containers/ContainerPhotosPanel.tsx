@@ -110,6 +110,7 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<LightboxItem[] | null>(null);
   const qk = ["container-files", container.id];
 
