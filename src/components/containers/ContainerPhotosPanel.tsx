@@ -233,6 +233,8 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
               }
               onSave={(patch) => save(f, patch)}
               onDelete={() => remove(f)}
+              onDragStart={() => setDragId(f.id)}
+              onDrop={() => reorder(f.id)}
             />
           ))}
         </div>
