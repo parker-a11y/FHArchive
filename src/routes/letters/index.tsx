@@ -136,6 +136,7 @@ function LettersTable() {
   const [period, setPeriod] = useState("");
   const [tStatus, setTStatus] = useState("");
   const [rType, setRType] = useState(search.type ?? "");
+  const recordTypeOptions = useRecordTypeOptions();
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
   const [digStatus, setDigStatus] = useState("");
