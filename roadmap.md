@@ -6,3 +6,5 @@
 - [x] Fix Print Label printing multiple pages instead of one 4x6 label
 - [x] Container Photos: gallery with upload, delete, drag-to-reorder
 - [x] Print label includes Title \/ short description
+- [x] Connect AI Analysis (Lovable AI Gateway) to FH records with reviewable suggestions
+- [x] Add "Publication / Printed Material" record type with printed-material subtypes
