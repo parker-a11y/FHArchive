@@ -19,7 +19,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
-import { canDerive, makeDerivatives } from "@/lib/derivatives";
+import {
+  SCAN_STATUS_LABEL,
+  derivativeFailed,
+  generateDerivatives,
+  hasJpeg,
+  hasThumb,
+  isNamed,
+  pendingFiles,
+  recordDerivativeFailure,
+  scanStatus,
+  unnamedFiles,
+} from "@/lib/scan-confirm";
 import {
   DIGITIZATION_STATUS,
   MASTER_ACCEPT,
