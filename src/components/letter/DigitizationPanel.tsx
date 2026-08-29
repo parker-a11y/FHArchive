@@ -777,6 +777,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
                     <span className="rounded bg-secondary px-1 py-0.5 font-medium">MASTER</span>
                     {jpegOk && <span className="rounded bg-secondary px-1 py-0.5">JPEG</span>}
+                    {hasThumb(f) && <span className="rounded bg-secondary px-1 py-0.5">THUMB</span>}
+                    {!isNamed(f) && (
+                      <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-800">
+                        needs naming
+                      </span>
+                    )}
                     {derivFailed && (
                       <span className="rounded bg-destructive/10 px-1 py-0.5 text-destructive">
                         derivative failed
