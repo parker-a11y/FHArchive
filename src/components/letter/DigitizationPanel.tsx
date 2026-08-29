@@ -640,7 +640,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     }}
                   />
 
-                  <div className="mt-1 flex justify-between">
+                  <div className="mt-1 flex items-center justify-between">
                     <Button
                       size="icon"
                       variant="ghost"
@@ -651,6 +651,21 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       <Download className="size-3.5" />
                     </Button>
                     <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-1.5 text-[11px]"
+                      title="Transcribe this scan with ChatGPT (the master is never altered)"
+                      disabled={transcribing.includes(f.id)}
+                      onClick={() => transcribeOne(f.id)}
+                    >
+                      {transcribing.includes(f.id) ? (
+                        <Loader2 className="mr-1 size-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-1 size-3.5" />
+                      )}
+                      Transcribe
+                    </Button>
+                    <Button
                       size="icon"
                       variant="ghost"
                       className="size-7 text-destructive"
@@ -659,6 +674,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       <Trash2 className="size-3.5" />
                     </Button>
                   </div>
+
                   <span className="sr-only">{i}</span>
                 </div>
               );
