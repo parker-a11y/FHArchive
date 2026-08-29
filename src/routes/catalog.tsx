@@ -256,26 +256,32 @@ function QuickEntry() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Select_
-              label="Record type *"
-              value={form.record_type}
-              onChange={(v) => setForm((f) => ({ ...f, record_type: v, subtype: "" }))}
-              options={RECORD_TYPES}
-            />
+            <div className="space-y-1.5">
+              <Label className="field-label">Record type *</Label>
+              <CategorySelect
+                value={form.record_type}
+                onChange={(v) => setForm((f) => ({ ...f, record_type: v, subtype: "" }))}
+                options={recordTypeOptions}
+                onCreate={async (label) => {
+                  const v = await addRecordType(label, recordTypeOptions);
+                  invalidateCategories();
+                  return v;
+                }}
+              />
+            </div>
             <div className="space-y-1.5">
               <Label className="field-label">Subtype</Label>
-              <select
+              <CategorySelect
                 value={form.subtype}
-                onChange={(e) => set("subtype", e.target.value)}
-                className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
-              >
-                <option value="">—</option>
-                {subtypesFor(form.record_type).map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+                allowEmpty
+                onChange={(v) => set("subtype", v)}
+                options={subtypeOptions.map((s) => ({ value: s, label: s }))}
+                onCreate={async (label) => {
+                  const v = await addSubtype(form.record_type, label, subtypeOptions);
+                  invalidateCategories();
+                  return v;
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="field-label">Primary person</Label>
