@@ -187,7 +187,15 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
               key={f.id}
               file={f}
               onOpen={(url) =>
-                setLightbox([{ url, type: "image", label: f.file_label || f.original_filename || "" }])
+                setLightbox([
+                  {
+                    id: f.id,
+                    url,
+                    type: "image",
+                    title: f.file_label || f.original_filename || "Container photograph",
+                    filename: f.original_filename,
+                  },
+                ])
               }
               onSave={(patch) => save(f, patch)}
               onDelete={() => remove(f)}
@@ -195,9 +203,11 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
           ))}
         </div>
       )}
-      {lightbox && (
-        <MediaLightbox items={lightbox} index={0} onIndexChange={() => {}} onClose={() => setLightbox(null)} />
-      )}
+      <MediaLightbox
+        items={lightbox ?? []}
+        open={!!lightbox}
+        onClose={() => setLightbox(null)}
+      />
     </div>
   );
 }
