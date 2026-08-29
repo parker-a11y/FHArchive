@@ -10,10 +10,12 @@ import type { Letter } from "@/lib/queries";
 export function LabelCard({
   archiveId,
   dateText,
+  title = "",
   lines = [],
 }: {
   archiveId: string;
   dateText: string;
+  title?: string;
   lines?: string[];
 }) {
   return (
@@ -24,6 +26,14 @@ export function LabelCard({
       >
         {archiveId}
       </div>
+      {title.trim() !== "" && (
+        <div
+          className="mt-[0.25in] px-[0.3in] font-semibold text-black"
+          style={{ fontSize: "0.26in", lineHeight: 1.25 }}
+        >
+          {title}
+        </div>
+      )}
       <div
         className="mt-[0.35in] font-semibold text-black"
         style={{ fontSize: "0.32in", letterSpacing: "0.04em" }}
