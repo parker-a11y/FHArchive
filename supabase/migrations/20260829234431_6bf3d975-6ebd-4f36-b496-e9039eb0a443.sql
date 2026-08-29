@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_letter_transcription_status() FROM PUBLIC, anon, authenticated;
