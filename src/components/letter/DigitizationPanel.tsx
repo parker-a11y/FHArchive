@@ -227,15 +227,20 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
   async function confirmUploadComplete() {
     // Naming is optional: anything left unidentified simply gets its sequence number.
+    let current = [...files];
     if (unnamed.length) {
       for (const f of unnamed) {
         try {
-          await renameScanFile({
+          const name = await renameScanFile({
             archiveId: letter.archive_id,
             file: f,
             label: String(f.seq ?? f.sort_order ?? 1).padStart(3, "0"),
-            otherFiles: files,
+            otherFiles: current,
           });
+          const newPath = `${letter.archive_id}/masters/${name}`;
+          current = current.map((c) =>
+            c.id === f.id ? { ...c, master_path: newPath, label: name } : c,
+          );
         } catch {
           /* keep going — the master is untouched either way */
         }
@@ -245,8 +250,9 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       );
       refresh();
     }
-    const todo = pending;
+    const todo = pendingFiles(current);
     if (!todo.length) return toast.info("Every master already has a viewing JPEG and thumbnail.");
+
 
     setGenerating({ done: 0, total: todo.length });
     let ok = 0;
