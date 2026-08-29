@@ -2,7 +2,7 @@ import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Eye } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -181,8 +181,18 @@ function LettersTable() {
       if (view === "undated" && !needsDating(l)) return false;
       if (view === "unidphoto" && !isUnidentifiedPhoto(l)) return false;
       if (period && l.period !== period) return false;
-      if (tStatus && l.transcription_status !== tStatus) return false;
+      if (tStatus) {
+        if (tStatus.startsWith("!")) {
+          if (l.transcription_status === tStatus.slice(1)) return false;
+        } else if (l.transcription_status !== tStatus) return false;
+      }
       if (rType && (l.record_type ?? "letter") !== rType) return false;
+      if (review && l.review_status !== review) return false;
+      if (scanF === "has" && l.image_count === 0) return false;
+      if (scanF === "none" && l.image_count > 0) return false;
+      if (catalogedOnly && !(l.author || l.recipient || l.normalized_date)) return false;
+      if (uncertainOnly && l.date_certainty === "confirmed" && l.date_precision === "exact")
+        return false;
       if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
       if (dStatus && l.date_precision !== dStatus) return false;
       if (digStatus && (l.digitization_status ?? "not_scanned") !== digStatus) return false;
