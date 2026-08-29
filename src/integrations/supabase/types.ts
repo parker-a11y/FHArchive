@@ -1431,6 +1431,7 @@ export type Database = {
           summary_long: string | null
           summary_short: string | null
           title: string | null
+          tones: string[]
           transcription_raw_ai: string | null
           transcription_status: string
           transcription_verified: string | null
@@ -1496,6 +1497,7 @@ export type Database = {
           summary_long?: string | null
           summary_short?: string | null
           title?: string | null
+          tones?: string[]
           transcription_raw_ai?: string | null
           transcription_status?: string
           transcription_verified?: string | null
@@ -1561,6 +1563,7 @@ export type Database = {
           summary_long?: string | null
           summary_short?: string | null
           title?: string | null
+          tones?: string[]
           transcription_raw_ai?: string | null
           transcription_status?: string
           transcription_verified?: string | null
@@ -1887,6 +1890,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tone_options: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

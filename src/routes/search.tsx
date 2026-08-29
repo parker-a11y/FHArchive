@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
+import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -121,6 +122,7 @@ function SearchPage() {
   const [personId, setPersonId] = useState("");
   const [orgId, setOrgId] = useState("");
   const [eventId, setEventId] = useState("");
+  const [tones, setTones] = useState<string[]>([]);
 
 
   const results = useMemo(() => {
@@ -140,6 +142,7 @@ function SearchPage() {
       if (rtype && (l.record_type ?? "letter") !== rtype) return false;
       if (subtype && (l.subtype ?? "") !== subtype) return false;
       if (research && (l.research_status ?? "unreviewed") !== research) return false;
+      if (tones.length && !tones.every((t) => (l.tones ?? []).includes(t))) return false;
       if (
         personId &&
         !(linkSets?.people ?? []).some((r) => r.letter_id === l.id && r.person_id === personId)
@@ -176,6 +179,7 @@ function SearchPage() {
         l.historical_notes,
         l.research_notes,
         l.ocr_text,
+        ...(l.tones ?? []),
         ...((index ?? {})[l.id] ?? []),
       ]
         .join(" \n ")
@@ -200,6 +204,7 @@ function SearchPage() {
     personId,
     orgId,
     eventId,
+    tones,
     linkSets,
     index,
   ]);
@@ -236,6 +241,14 @@ function SearchPage() {
           <div>
             <label className="field-label">Location</label>
             <Input value={place} onChange={(e) => setPlace(e.target.value)} className="h-8" />
+          </div>
+          <div>
+            <label className="field-label">Tone / sentiment</label>
+            <ToneMultiSelect
+              value={tones}
+              onChange={setTones}
+              placeholder="Any tone"
+            />
           </div>
           <div>
             <label className="field-label">Record type</label>

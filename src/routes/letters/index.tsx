@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Download, Eye } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -90,6 +91,7 @@ const COLUMNS: Col[] = [
   { key: "review_status", label: "Review", width: 110 },
   { key: "research_status", label: "Research", width: 120 },
   { key: "visibility", label: "Sharing", width: 120 },
+  { key: "tones", label: "Tone / sentiment", width: 200 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
 ];
@@ -136,6 +138,7 @@ function LettersTable() {
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
   const [digStatus, setDigStatus] = useState("");
+  const [tones, setTones] = useState<string[]>([]);
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
@@ -155,6 +158,7 @@ function LettersTable() {
       if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
       if (dStatus && l.date_precision !== dStatus) return false;
       if (digStatus && (l.digitization_status ?? "not_scanned") !== digStatus) return false;
+      if (tones.length && !tones.every((t) => (l.tones ?? []).includes(t))) return false;
 
       if (!q) return true;
       const hay = [
@@ -165,6 +169,7 @@ function LettersTable() {
         l.origin,
         l.notes,
         storageText(l),
+        ...(l.tones ?? []),
         ...(keywordsByLetter[l.id] ?? []),
       ]
         .join(" ")
@@ -191,7 +196,7 @@ function LettersTable() {
       return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, idStatus, dStatus, digStatus, view, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
 
 
   function exportRows() {
@@ -235,6 +240,7 @@ function LettersTable() {
       review_status: l.review_status,
       publication_status: l.publication_status,
       keywords: (keywordsByLetter[l.id] ?? []).join("; "),
+      tones: (l.tones ?? []).join("; "),
       summary_short: l.summary_short ?? "",
       notes: l.notes ?? "",
       transcription_verified: l.transcription_verified ?? "",
@@ -283,6 +289,8 @@ function LettersTable() {
         return l.has_envelope ? "Yes" : "No";
       case "keywords":
         return (keywordsByLetter[l.id] ?? []).join(", ");
+      case "tones":
+        return (l.tones ?? []).join(", ");
       case "visibility":
         return (
           VISIBILITY.find((v) => v.value === ((l as Letter & { visibility?: string }).visibility ?? "private"))
@@ -429,6 +437,15 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <div className="w-60">
+          <ToneMultiSelect
+            value={tones}
+            onChange={setTones}
+            placeholder="All tones / sentiments"
+          />
+        </div>
+
+
 
         <div className="ml-auto flex items-center gap-2">
           <span className="field-label">Views</span>

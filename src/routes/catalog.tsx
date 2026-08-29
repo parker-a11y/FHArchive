@@ -26,6 +26,7 @@ import {
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 
 export const Route = createFileRoute("/catalog")({
   head: () => ({
@@ -60,6 +61,7 @@ const blank = {
   date_precision: "exact",
   date_certainty: "confirmed",
   primary_person: "",
+  tones: [] as string[],
   author: "",
   recipient: "",
   origin: "",
@@ -182,6 +184,7 @@ function QuickEntry() {
         storage_notes: form.storage_notes || null,
         source_container_id: form.source_container_id || null,
         original_order_notes: form.original_order_notes || null,
+        tones: form.tones,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
     } catch (e) {
@@ -280,6 +283,10 @@ function QuickEntry() {
                 value={form.primary_person}
                 onChange={(v) => set("primary_person", v)}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="field-label">Tone / sentiment (optional)</Label>
+              <ToneMultiSelect value={form.tones} onChange={(v) => set("tones", v)} />
             </div>
 
             <div className="col-span-full space-y-1.5">
