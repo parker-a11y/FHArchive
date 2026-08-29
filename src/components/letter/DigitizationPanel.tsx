@@ -213,14 +213,24 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   }
 
   async function confirmUploadComplete() {
+    // Naming is optional: anything left unidentified simply gets its sequence number.
     if (unnamed.length) {
-      toast.error(
-        `${unnamed.length} scan${unnamed.length === 1 ? "" : "s"} still need${
-          unnamed.length === 1 ? "s" : ""
-        } to be named before this upload can be confirmed.`,
+      for (const f of unnamed) {
+        try {
+          await renameScanFile({
+            archiveId: letter.archive_id,
+            file: f,
+            label: String(f.seq ?? f.sort_order ?? 1).padStart(3, "0"),
+            otherFiles: files,
+          });
+        } catch {
+          /* keep going — the master is untouched either way */
+        }
+      }
+      toast.info(
+        `${unnamed.length} unidentified scan${unnamed.length === 1 ? "" : "s"} numbered sequentially.`,
       );
-      jumpToScan(unnamed[0].id);
-      return;
+      refresh();
     }
     const todo = pending;
     if (!todo.length) return toast.info("Every master already has a viewing JPEG and thumbnail.");
@@ -450,11 +460,9 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     Generating derivatives — {generating.done + 1} of {generating.total}
                   </span>
                 ) : unnamed.length ? (
-                  <span className="text-amber-700">
-                    <AlertTriangle className="mr-1.5 inline size-4" />
-                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} still need
-                    {unnamed.length === 1 ? "s" : ""} to be named before this upload can be
-                    confirmed.{" "}
+                  <span className="text-muted-foreground">
+                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} not identified — they
+                    will be numbered sequentially on confirm.{" "}
                     <button
                       className="font-medium underline underline-offset-2"
                       onClick={() => jumpToScan(unnamed[0].id)}
@@ -722,9 +730,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   className={`rounded border bg-card p-2 ${
                     highlightId === f.id
                       ? "border-amber-500 ring-2 ring-amber-400"
-                      : !isNamed(f)
-                        ? "border-amber-300"
-                        : "border-border"
+                      : "border-border"
                   }`}
                 >
                   <div className="mb-1 flex items-center gap-1">
@@ -779,8 +785,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     {jpegOk && <span className="rounded bg-secondary px-1 py-0.5">JPEG</span>}
                     {hasThumb(f) && <span className="rounded bg-secondary px-1 py-0.5">THUMB</span>}
                     {!isNamed(f) && (
-                      <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-800">
-                        needs naming
+                      <span className="rounded bg-secondary px-1 py-0.5 text-muted-foreground">
+                        unidentified — will be numbered
                       </span>
                     )}
                     {derivFailed && (

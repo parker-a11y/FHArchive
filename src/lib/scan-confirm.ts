@@ -66,7 +66,7 @@ export function scanStatus(
   if (opts.generating) return "generating";
   if (opts.uploading) return "uploading";
   if (!files.length) return "empty";
-  if (unnamedFiles(files).length) return "needs_naming";
+  // Naming is optional — unnamed masters are sequentially numbered on confirm.
   const pending = pendingFiles(files);
   if (!pending.length) return files.some(derivativeFailed) ? "error" : "complete";
   if (pending.some(derivativeFailed)) return "error";
