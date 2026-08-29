@@ -236,11 +236,14 @@ export const PERIODS = [
 ] as const;
 
 export const TRANSCRIPTION_STATUS = [
-  { value: "not_started", label: "Not Started" },
+  { value: "not_started", label: "Not Transcribed" },
+  { value: "processing", label: "Processing" },
   { value: "ai_transcribed", label: "AI Transcribed" },
   { value: "needs_review", label: "Needs Review" },
   { value: "human_verified", label: "Human Verified" },
+  { value: "failed", label: "Failed" },
 ] as const;
+
 
 export const SCAN_STATUS = [
   { value: "not_scanned", label: "Not Scanned" },
