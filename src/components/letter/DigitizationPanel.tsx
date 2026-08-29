@@ -9,6 +9,8 @@ import {
   GripVertical,
   ImageIcon,
   Layers,
+  Loader2,
+  Sparkles,
   ShieldCheck,
   Trash2,
   UploadCloud,
@@ -36,6 +38,7 @@ import {
   type DigitalFileWithDerivatives,
 } from "@/lib/digital-files";
 import { labelOf } from "@/lib/archive";
+import { transcribeScans } from "@/lib/transcription.functions";
 import type { Letter } from "@/lib/queries";
 
 type Progress = { total: number; done: number; current: string; stage: string } | null;
@@ -70,6 +73,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [transcribing, setTranscribing] = useState<string[]>([]);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
@@ -220,6 +224,22 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       if ((letter.digitization_status ?? "not_scanned") === "not_scanned")
         await patchLetter({ digitization_status: "in_progress" });
       toast.success(`${added} archival master${added === 1 ? "" : "s"} stored unmodified.`);
+    }
+  }
+
+  /* ----------------------------- transcription ---------------------------- */
+
+  async function transcribeOne(fileId: string) {
+    setTranscribing((t) => [...t, fileId]);
+    try {
+      const [result] = await transcribeScans({ data: { fileIds: [fileId] } });
+      if (result?.ok) toast.success("Scan transcribed — review it in the Transcription tab.");
+      else toast.error(result?.error ?? "Transcription failed");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setTranscribing((t) => t.filter((id) => id !== fileId));
+      qc.invalidateQueries({ queryKey: ["scan-transcriptions", letter.id] });
     }
   }
 
