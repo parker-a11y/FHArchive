@@ -1,3 +1,4 @@
+import { useRecordTypeOptions, useSubtypeOptions } from "@/lib/categories";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -9,12 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   PERIODS,
   RECORD_RESEARCH_STATUS,
-  RECORD_TYPES,
   REVIEW_STATUS,
   SCAN_STATUS,
   TRANSCRIPTION_STATUS,
   displayDate,
-  subtypesFor,
 } from "@/lib/archive";
 
 
@@ -125,6 +124,8 @@ function SearchPage() {
   const [sstat, setSstat] = useState("");
   const [rstat, setRstat] = useState("");
   const [rtype, setRtype] = useState("");
+  const recordTypeOptions = useRecordTypeOptions();
+  const searchSubtypes = useSubtypeOptions(rtype);
   const [subtype, setSubtype] = useState("");
   const [research, setResearch] = useState("");
   const [personId, setPersonId] = useState("");
