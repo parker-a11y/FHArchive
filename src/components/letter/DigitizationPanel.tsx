@@ -74,6 +74,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [transcribing, setTranscribing] = useState<string[]>([]);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [lastLabel, setLastLabel] = useState<string | null>(null);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
