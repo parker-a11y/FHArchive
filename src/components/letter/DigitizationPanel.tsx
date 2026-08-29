@@ -125,12 +125,13 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   });
 
   const masters = files.length;
-  const jpegCount = files.filter((f) =>
-    f.derivatives.some((d) => d.kind === "jpeg" && d.status === "complete"),
-  ).length;
-  const thumbCount = files.filter((f) =>
-    f.derivatives.some((d) => d.kind === "thumbnail" && d.status === "complete"),
-  ).length;
+  const jpegFiles = files.filter(hasJpeg);
+  const thumbFiles = files.filter(hasThumb);
+  const jpegCount = jpegFiles.length;
+  const thumbCount = thumbFiles.length;
+  const unnamed = unnamedFiles(files);
+  const pending = pendingFiles(files);
+  const scanState = scanStatus(files, { uploading: !!progress, generating: !!generating });
   const failedDerivatives = files.filter((f) =>
     f.derivatives.some((d) => d.status === "failed"),
   );
