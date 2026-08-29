@@ -202,10 +202,22 @@
   .no-print {
     display: none !important;
   }
-  /* Hide everything except the label card, so the rest of the page
-     never spills onto extra sheets of label stock. */
+  /* Remove every top-level branch that does not hold the label from the
+     print layout entirely. `visibility: hidden` alone keeps the app's full
+     height in flow, which is what produced several blank label sheets. */
+  body > *:not(:has(.print-label)) {
+    display: none !important;
+  }
+  /* Inside the branch that does hold the label, hide the dialog chrome. */
   body * {
     visibility: hidden !important;
+  }
+  body > *:has(.print-label) {
+    display: block !important;
+    position: static !important;
+    width: 4in !important;
+    height: 6in !important;
+    overflow: hidden !important;
   }
   .print-label,
   .print-label * {
