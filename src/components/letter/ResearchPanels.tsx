@@ -536,10 +536,13 @@ export function RelationsPanel({ letter }: { letter: Letter }) {
   );
 }
 
-/* ---------------- AI analysis (placeholders) ---------------- */
+/* ---------------- AI analysis ---------------- */
 
 export function AiPanel({ letter }: { letter: Letter }) {
   const qc = useQueryClient();
+  const runAnalysis = useServerFn(analyzeRecord);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { data: rows = [] } = useQuery({
     queryKey: ["ai", letter.id],
     queryFn: async () => {
@@ -553,21 +556,76 @@ export function AiPanel({ letter }: { letter: Letter }) {
   });
   const [editing, setEditing] = useState<Record<string, string>>({});
 
+  const hasTranscript = Boolean(
+    (letter.transcription_verified ?? "").trim() || (letter.transcription_raw_ai ?? "").trim(),
+  );
+
+  async function analyze() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await runAnalysis({ data: { letterId: letter.id } });
+      qc.invalidateQueries({ queryKey: ["ai", letter.id] });
+      qc.invalidateQueries({ queryKey: ["ai_pending"] });
+      toast.success(`AI analysis complete — ${res.suggestions} suggestion(s) awaiting review`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "AI analysis failed";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function setStatus(id: string, status: string, content?: string) {
+    const row = rows.find((r) => r.id === id);
     await supabase
       .from("ai_suggestions")
       .update({ status, ...(content !== undefined ? { content } : {}) })
       .eq("id", id);
+
+    if (status === "accepted" && row) {
+      try {
+        const result = await applySuggestion(
+          letter.id,
+          row.field_key,
+          content ?? row.content ?? "",
+          letter as unknown as Record<string, unknown>,
+        );
+        toast.success(result.note);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not apply the suggestion");
+      }
+      qc.invalidateQueries({ queryKey: ["links", letter.id] });
+      qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
+      qc.invalidateQueries({ queryKey: ["entities"] });
+      qc.invalidateQueries({ queryKey: ["history", letter.id] });
+    }
+
     qc.invalidateQueries({ queryKey: ["ai", letter.id] });
     qc.invalidateQueries({ queryKey: ["ai_pending"] });
   }
 
   return (
     <div className="max-w-4xl space-y-4">
-      <p className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-2 text-sm text-archive-ai">
-        AI analysis is not connected yet. When an OCR/analysis service is added, its output lands
-        here as pending suggestions — it never writes archival metadata directly.
-      </p>
+      <div className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-archive-ai">
+            AI analysis reads this record&apos;s transcription and proposes suggestions. Nothing is
+            written to archival metadata until you accept it.
+          </p>
+          <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
+            {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
+          </Button>
+        </div>
+        {!hasTranscript && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            No transcription yet — transcribe the scans first, then run analysis.
+          </p>
+        )}
+        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      </div>
+
       {AI_FIELDS.map((f) => {
         const row = rows.find((r) => r.field_key === f.key);
         return (
