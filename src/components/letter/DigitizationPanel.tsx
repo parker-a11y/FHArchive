@@ -48,7 +48,7 @@ import {
   signedScanUrl,
   type DigitalFileWithDerivatives,
 } from "@/lib/digital-files";
-import { labelOf } from "@/lib/archive";
+
 import {
   basenameOf,
   extensionOf,
