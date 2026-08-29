@@ -1,5 +1,4 @@
-import {
-  Box, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
@@ -17,6 +16,7 @@ import {
   CalendarDays,
   BookOpen,
   Globe,
+  Box,
   ShieldCheck,
   Menu,
 } from "lucide-react";
