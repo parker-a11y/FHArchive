@@ -465,7 +465,8 @@ function LetterPage() {
                     type="checkbox"
                     className="h-3.5 w-3.5 accent-primary"
                     checked={form.date_precision === "year"}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      setDirty(true);
                       setForm((f) => ({
                         ...f,
                         date_precision: e.target.checked ? "year" : "exact",
@@ -473,8 +474,8 @@ function LetterPage() {
                           e.target.checked && f.normalized_date
                             ? `${String(f.normalized_date).slice(0, 4)}-01-01`
                             : f.normalized_date,
-                      }))
-                    }
+                      }));
+                    }}
                   />
                   Year only
                 </label>
