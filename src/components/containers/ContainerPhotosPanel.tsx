@@ -36,18 +36,31 @@ function PhotoCard({
   onOpen,
   onSave,
   onDelete,
+  onDragStart,
+  onDrop,
 }: {
   file: ContainerFile;
   onOpen: (url: string) => void;
   onSave: (patch: Partial<ContainerFile>) => void;
   onDelete: () => void;
+  onDragStart: () => void;
+  onDrop: () => void;
 }) {
   const url = useSignedUrl(file.storage_path);
   const [label, setLabel] = useState(file.file_label);
   const isImage = (file.mime_type ?? "").startsWith("image/");
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3 shadow-sm">
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
+      className="cursor-grab rounded-xl border border-border bg-card p-3 shadow-sm active:cursor-grabbing"
+    >
       <div className="mb-2 overflow-hidden rounded-lg bg-muted">
         {isImage && url ? (
           <button
