@@ -52,6 +52,8 @@ export type Letter = {
   digitization_override: boolean;
   digitization_completed_at: string | null;
   provenance: string | null;
+  source_container_id: string | null;
+  original_order_notes: string | null;
   ocr_text: string | null;
   digitization_notes: string | null;
   research_status: string;

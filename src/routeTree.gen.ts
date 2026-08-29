@@ -18,6 +18,8 @@ import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as ContainersIndexRouteImport } from './routes/containers/index'
+import { Route as ContainersBoxIdRouteImport } from './routes/containers/$boxId'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
@@ -78,6 +80,16 @@ const SearchRoute = SearchRouteImport.update({
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContainersIndexRoute = ContainersIndexRouteImport.update({
+  id: '/containers/',
+  path: '/containers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContainersBoxIdRoute = ContainersBoxIdRouteImport.update({
+  id: '/containers/$boxId',
+  path: '/containers/$boxId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DTokenRoute = DTokenRouteImport.update({
@@ -171,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/letters/$archiveId': typeof LettersArchiveIdRoute
@@ -179,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
+  '/containers/': typeof ContainersIndexRoute
   '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
@@ -198,6 +212,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/letters/$archiveId': typeof LettersArchiveIdRoute
@@ -206,6 +221,7 @@ export interface FileRoutesByTo {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
+  '/containers': typeof ContainersIndexRoute
   '/events': typeof EventsIndexRoute
   '/keywords': typeof KeywordsIndexRoute
   '/letters': typeof LettersIndexRoute
@@ -226,6 +242,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/letters/$archiveId': typeof LettersArchiveIdRoute
@@ -234,6 +251,7 @@ export interface FileRoutesById {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
+  '/containers/': typeof ContainersIndexRoute
   '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
@@ -255,6 +273,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/timeline'
+    | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -263,6 +282,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/containers/'
     | '/events/'
     | '/keywords/'
     | '/letters/'
@@ -282,6 +302,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/timeline'
+    | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -290,6 +311,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/containers'
     | '/events'
     | '/keywords'
     | '/letters'
@@ -309,6 +331,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/timeline'
+    | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -317,6 +340,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/containers/'
     | '/events/'
     | '/keywords/'
     | '/letters/'
@@ -337,6 +361,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   TimelineRoute: typeof TimelineRoute
+  ContainersBoxIdRoute: typeof ContainersBoxIdRoute
   DTokenRoute: typeof DTokenRoute
   KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
   LettersArchiveIdRoute: typeof LettersArchiveIdRoute
@@ -345,6 +370,7 @@ export interface RootRouteChildren {
   STokenRoute: typeof STokenRoute
   SourcesDsIdRoute: typeof SourcesDsIdRoute
   SourcesNewRoute: typeof SourcesNewRoute
+  ContainersIndexRoute: typeof ContainersIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   KeywordsIndexRoute: typeof KeywordsIndexRoute
   LettersIndexRoute: typeof LettersIndexRoute
@@ -418,6 +444,20 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/containers/': {
+      id: '/containers/'
+      path: '/containers'
+      fullPath: '/containers/'
+      preLoaderRoute: typeof ContainersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/containers/$boxId': {
+      id: '/containers/$boxId'
+      path: '/containers/$boxId'
+      fullPath: '/containers/$boxId'
+      preLoaderRoute: typeof ContainersBoxIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/d/$token': {
@@ -545,6 +585,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   TimelineRoute: TimelineRoute,
+  ContainersBoxIdRoute: ContainersBoxIdRoute,
   DTokenRoute: DTokenRoute,
   KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
   LettersArchiveIdRoute: LettersArchiveIdRoute,
@@ -553,6 +594,7 @@ const rootRouteChildren: RootRouteChildren = {
   STokenRoute: STokenRoute,
   SourcesDsIdRoute: SourcesDsIdRoute,
   SourcesNewRoute: SourcesNewRoute,
+  ContainersIndexRoute: ContainersIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   KeywordsIndexRoute: KeywordsIndexRoute,
   LettersIndexRoute: LettersIndexRoute,

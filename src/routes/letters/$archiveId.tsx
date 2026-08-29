@@ -17,6 +17,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { ContainerSelect } from "@/components/containers/ContainerSelect";
+import { fetchContainers } from "@/lib/containers";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +116,7 @@ function LetterPage() {
     queryFn: () => fetchLetterByArchiveId(archiveId),
   });
   const { data: all = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
+  const { data: containers = [] } = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
   const [form, setForm] = useState<Record<string, string | boolean>>({});
   const [dirty, setDirty] = useState(false);
@@ -138,6 +141,8 @@ function LetterPage() {
       storage_notes: letter.storage_notes ?? "",
       identification_status: letter.identification_status ?? "unidentified",
       provenance: letter.provenance ?? "",
+      source_container_id: letter.source_container_id ?? "",
+      original_order_notes: letter.original_order_notes ?? "",
       digitization_notes: letter.digitization_notes ?? "",
       research_status: letter.research_status ?? "unreviewed",
       research_notes: letter.research_notes ?? "",
@@ -518,6 +523,42 @@ function LetterPage() {
                     />
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="col-span-full rounded border border-border bg-card p-4">
+              <div className="field-label mb-1">Original source container (provenance)</div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Permanent record of where this item was found — separate from its current storage
+                location above.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <ContainerSelect
+                    value={(form.source_container_id as string) ?? ""}
+                    onChange={(v) => set("source_container_id", v)}
+                  />
+                  {form.source_container_id ? (
+                    <Link
+                      to="/containers/$boxId"
+                      params={{
+                        boxId:
+                          containers.find((c) => c.id === form.source_container_id)?.box_id ?? "",
+                      }}
+                      className="mt-2 inline-block text-xs text-primary hover:underline"
+                    >
+                      Open container record
+                    </Link>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="field-label">Original order / position notes</label>
+                  <Input
+                    placeholder="Third bundle from top, tied with blue ribbon"
+                    value={(form.original_order_notes as string) ?? ""}
+                    onChange={(e) => set("original_order_notes", e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
