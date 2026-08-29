@@ -164,46 +164,8 @@ export async function previewNextArchiveId(): Promise<{ fh_seq: number; archive_
   return row as { fh_seq: number; archive_id: string };
 }
 
-export type NewLetterInput = {
-  p_date_as_written?: string;
-  p_normalized_date?: string;
-  p_date_precision: string;
-  p_date_certainty: string;
-  p_author?: string;
-  p_recipient?: string;
-  p_origin?: string;
-  p_destination?: string;
-  p_period: string;
-  p_sheets?: number;
-  p_has_envelope: boolean;
-  p_has_enclosures: boolean;
-  p_notes?: string;
-};
 
-export async function createLetter(
-  input: NewLetterInput,
-): Promise<{ id: string; fh_seq: number; archive_id: string }> {
-  // PostgREST requires every argument to be present (the function has no defaults).
-  const payload = {
-    p_date_as_written: input.p_date_as_written ?? null,
-    p_normalized_date: input.p_normalized_date ?? null,
-    p_date_precision: input.p_date_precision,
-    p_date_certainty: input.p_date_certainty,
-    p_author: input.p_author ?? null,
-    p_recipient: input.p_recipient ?? null,
-    p_origin: input.p_origin ?? null,
-    p_destination: input.p_destination ?? null,
-    p_period: input.p_period,
-    p_sheets: input.p_sheets ?? null,
-    p_has_envelope: input.p_has_envelope,
-    p_has_enclosures: input.p_has_enclosures,
-    p_notes: input.p_notes ?? null,
-  };
-  const { data, error } = await supabase.rpc("create_letter", payload as never);
-  if (error) throw error;
-  const row = Array.isArray(data) ? data[0] : data;
-  return row as { id: string; fh_seq: number; archive_id: string };
-}
+
 
 
 /**
