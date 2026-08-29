@@ -113,7 +113,7 @@ function CategoriesPage() {
     <AppShell>
       <PageHeader
         title="Categories"
-        subtitle="Record types and subtypes you have added. Built-in categories cannot be edited."
+        description="Record types and subtypes you have added. Built-in categories cannot be edited."
       />
 
       <div className="max-w-3xl rounded border border-border bg-card p-4">
