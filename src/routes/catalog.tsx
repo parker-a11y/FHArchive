@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
+import { ContainerSelect } from "@/components/containers/ContainerSelect";
+import { getCarriedContainer, setCarriedContainer } from "@/lib/containers";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
@@ -72,6 +74,8 @@ const blank = {
   storage_folder: "",
   storage_position: "",
   storage_notes: "",
+  source_container_id: "",
+  original_order_notes: "",
   identification_status: "unidentified",
   original_copy: "original",
   notes: "",
@@ -129,6 +133,9 @@ function QuickEntry() {
 
   useEffect(() => {
     loadNext();
+    // Carry the container being processed forward across sessions until changed.
+    const carried = getCarriedContainer();
+    if (carried) setForm((f) => ({ ...f, source_container_id: carried }));
   }, []);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -173,6 +180,8 @@ function QuickEntry() {
         storage_folder: form.storage_folder || null,
         storage_position: form.storage_position || null,
         storage_notes: form.storage_notes || null,
+        source_container_id: form.source_container_id || null,
+        original_order_notes: form.original_order_notes || null,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
     } catch (e) {
@@ -208,6 +217,7 @@ function QuickEntry() {
       storage_container: f.storage_container,
       storage_folder: f.storage_folder,
       storage_position: f.storage_position,
+      source_container_id: f.source_container_id,
       original_copy: f.original_copy,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
@@ -422,6 +432,30 @@ function QuickEntry() {
                   <Input
                     value={form.storage_notes}
                     onChange={(e) => set("storage_notes", e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="col-span-full rounded border border-border bg-card p-4">
+              <div className="field-label mb-1">Original source container (provenance)</div>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Where this item was found. Carried forward to the next record until you change it —
+                separate from current physical storage above.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <ContainerSelect
+                  value={form.source_container_id}
+                  onChange={(v) => {
+                    set("source_container_id", v);
+                    setCarriedContainer(v);
+                  }}
+                />
+                <div className="space-y-1.5">
+                  <Label className="field-label">Original order / position notes</Label>
+                  <Input
+                    value={form.original_order_notes}
+                    onChange={(e) => set("original_order_notes", e.target.value)}
+                    placeholder="Third bundle from top, tied with blue ribbon"
                   />
                 </div>
               </div>

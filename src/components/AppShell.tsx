@@ -1,4 +1,5 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  Box, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
@@ -29,6 +30,7 @@ const NAV = [
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare },
   { to: "/letters", label: "All Records", icon: Files },
   { to: "/sources", label: "Digital Sources", icon: Globe },
+  { to: "/containers", label: "Source Containers", icon: Box },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks },
