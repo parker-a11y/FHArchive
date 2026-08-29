@@ -130,27 +130,6 @@ export const getSharedRecord = createServerFn({ method: "GET" })
       });
     }
 
-    // Legacy item scans (already web-format JPEGs).
-    if (share.scope === "record") {
-      const { data: scans } = await supabaseAdmin
-        .from("letter_scans")
-        .select("*")
-        .eq("letter_id", share.letter_id)
-        .order("sort_order", { ascending: true });
-      for (const s of (scans ?? []) as Record<string, unknown>[]) {
-        const signed = await supabaseAdmin.storage
-          .from("scans")
-          .createSignedUrl(String(s['storage_path']), 3600);
-        if (!signed.data?.signedUrl) continue;
-        pages.push({
-          id: String(s['id']),
-          label: String(s['file_label'] ?? "Scan"),
-          url: signed.data.signedUrl,
-          thumbUrl: signed.data.signedUrl,
-          rotation: Number(s['rotation'] ?? 0),
-        });
-      }
-    }
 
     void supabaseAdmin
       .from("record_shares")
