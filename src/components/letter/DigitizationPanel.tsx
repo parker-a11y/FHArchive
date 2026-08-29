@@ -694,7 +694,11 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
       {/* Gallery */}
       <div>
-        <h4 className="field-label mb-3">Scan gallery — {masters} master files</h4>
+        <h4 className="field-label mb-1">Original TIFFs — {masters} archival masters</h4>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Preservation files. Identify each scan here, then confirm the upload to produce the
+          viewing and thumbnail sets below.
+        </p>
         {masters === 0 ? (
           <p className="text-sm text-muted-foreground">
             No archival masters uploaded for {letter.archive_id} yet.
@@ -702,13 +706,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {files.map((f, i) => {
-              const jpegOk = f.derivatives.some(
-                (d) => d.kind === "jpeg" && d.status === "complete",
-              );
-              const derivFailed = f.derivatives.some((d) => d.status === "failed");
+              const jpegOk = hasJpeg(f);
+              const derivFailed = derivativeFailed(f);
               return (
                 <div
                   key={f.id}
+                  id={`scan-${f.id}`}
                   draggable
                   onDragStart={() => setDragId(f.id)}
                   onDragOver={(e) => e.preventDefault()}
@@ -716,7 +719,13 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     e.preventDefault();
                     reorder(f.id);
                   }}
-                  className="rounded border border-border bg-card p-2"
+                  className={`rounded border bg-card p-2 ${
+                    highlightId === f.id
+                      ? "border-amber-500 ring-2 ring-amber-400"
+                      : !isNamed(f)
+                        ? "border-amber-300"
+                        : "border-border"
+                  }`}
                 >
                   <div className="mb-1 flex items-center gap-1">
                     <GripVertical className="size-3.5 cursor-grab text-muted-foreground" />
