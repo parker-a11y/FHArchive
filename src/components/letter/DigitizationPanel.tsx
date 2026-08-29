@@ -460,11 +460,9 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     Generating derivatives — {generating.done + 1} of {generating.total}
                   </span>
                 ) : unnamed.length ? (
-                  <span className="text-amber-700">
-                    <AlertTriangle className="mr-1.5 inline size-4" />
-                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} still need
-                    {unnamed.length === 1 ? "s" : ""} to be named before this upload can be
-                    confirmed.{" "}
+                  <span className="text-muted-foreground">
+                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} not identified — they
+                    will be numbered sequentially on confirm.{" "}
                     <button
                       className="font-medium underline underline-offset-2"
                       onClick={() => jumpToScan(unnamed[0].id)}
