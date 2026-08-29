@@ -198,9 +198,62 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     if (added) {
       if ((letter.digitization_status ?? "not_scanned") === "not_scanned")
         await patchLetter({ digitization_status: "in_progress" });
-      toast.success(`${added} archival master${added === 1 ? "" : "s"} stored unmodified.`);
+      toast.success(
+        `${added} archival master${added === 1 ? "" : "s"} stored unmodified. Name them, then Confirm Upload Complete.`,
+      );
     }
   }
+
+  /* --------------------- confirm upload → derivatives --------------------- */
+
+  function jumpToScan(id: string) {
+    setHighlightId(id);
+    document.getElementById(`scan-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => setHighlightId((cur) => (cur === id ? null : cur)), 2500);
+  }
+
+  async function confirmUploadComplete() {
+    if (unnamed.length) {
+      toast.error(
+        `${unnamed.length} scan${unnamed.length === 1 ? "" : "s"} still need${
+          unnamed.length === 1 ? "s" : ""
+        } to be named before this upload can be confirmed.`,
+      );
+      jumpToScan(unnamed[0].id);
+      return;
+    }
+    const todo = pending;
+    if (!todo.length) return toast.info("Every master already has a viewing JPEG and thumbnail.");
+
+    setGenerating({ done: 0, total: todo.length });
+    let ok = 0;
+    let failed = 0;
+    for (let i = 0; i < todo.length; i++) {
+      setGenerating({ done: i, total: todo.length });
+      try {
+        await generateDerivatives(letter.archive_id, letter.id, todo[i]);
+        ok++;
+      } catch (err) {
+        failed++;
+        await recordDerivativeFailure(letter.id, todo[i].id, (err as Error).message);
+        toast.error(
+          `${basenameOf(todo[i].master_path)}: derivative failed — the archival master is untouched.`,
+        );
+      }
+    }
+    setGenerating(null);
+    refresh();
+    if (ok && !failed) {
+      await patchLetter({
+        digitization_status: "complete",
+        digitization_completed_at: new Date().toISOString(),
+      });
+      toast.success(`Processing complete — ${ok} viewing JPEG${ok === 1 ? "" : "s"} and thumbnails generated.`);
+    } else if (ok) {
+      toast.warning(`${ok} processed, ${failed} failed. Masters are all safe.`);
+    }
+  }
+
 
   /* ----------------------------- transcription ---------------------------- */
 
