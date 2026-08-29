@@ -1,5 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CategorySelect } from "@/components/CategorySelect";
+import {
+  addRecordType,
+  addSubtype,
+  useInvalidateCategories,
+  useRecordTypeOptions,
+  useSubtypeOptions,
+} from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
@@ -119,6 +127,9 @@ function LetterPage() {
   const { data: containers = [] } = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
   const [form, setForm] = useState<Record<string, string | boolean>>({});
+  const recordTypeOptions = useRecordTypeOptions();
+  const subtypeOptions = useSubtypeOptions((form.record_type as string) || "letter");
+  const invalidateCategories = useInvalidateCategories();
   const [tones, setTones] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
