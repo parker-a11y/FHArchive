@@ -251,6 +251,35 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     refresh();
   }
 
+  /* --------------------- fast identification / renaming -------------------- */
+
+  async function identify(file: DigitalFileWithDerivatives, label: string) {
+    setRenamingId(file.id);
+    try {
+      const name = await renameScanFile({
+        archiveId: letter.archive_id,
+        file,
+        label,
+        otherFiles: files,
+      });
+      setLastLabel(label);
+      refresh();
+      toast.success(`Renamed to ${name}`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRenamingId(null);
+    }
+  }
+
+  function identifyCustom(file: DigitalFileWithDerivatives) {
+    const raw = window.prompt("Describe this scan (e.g. Christmas Card, Newspaper Clipping)");
+    if (!raw) return;
+    const clean = sanitizeLabel(raw);
+    if (!clean) return toast.error("That description could not be used as a filename.");
+    identify(file, clean.replace(/-/g, " "));
+  }
+
   async function reorder(targetId: string) {
     if (!dragId || dragId === targetId) return;
     const list = [...files];
