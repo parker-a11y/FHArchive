@@ -163,6 +163,15 @@ export function ContainerPhotosPanel({ container }: { container: SourceContainer
     qc.invalidateQueries({ queryKey: qk });
   }
 
+  async function save(file: ContainerFile, patch: Partial<ContainerFile>) {
+    const { error } = await supabase
+      .from("container_files")
+      .update(patch as never)
+      .eq("id", file.id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: qk });
+  }
+
   async function reorder(targetId: string) {
     if (!dragId || dragId === targetId) return;
     const list = [...files];
