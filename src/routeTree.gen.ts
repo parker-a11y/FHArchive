@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as ContainersIndexRouteImport } from './routes/containers/index'
+import { Route as ContainersBoxIdRouteImport } from './routes/containers/$boxId'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as KeywordsIndexRouteImport } from './routes/keywords/index'
@@ -84,6 +85,11 @@ const TimelineRoute = TimelineRouteImport.update({
 const ContainersIndexRoute = ContainersIndexRouteImport.update({
   id: '/containers/',
   path: '/containers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContainersBoxIdRoute = ContainersBoxIdRouteImport.update({
+  id: '/containers/$boxId',
+  path: '/containers/$boxId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DTokenRoute = DTokenRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/letters/$archiveId': typeof LettersArchiveIdRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/letters/$archiveId': typeof LettersArchiveIdRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/timeline': typeof TimelineRoute
+  '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
   '/letters/$archiveId': typeof LettersArchiveIdRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/timeline'
+    | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/timeline'
+    | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/search'
     | '/timeline'
+    | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -349,6 +361,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   TimelineRoute: typeof TimelineRoute
+  ContainersBoxIdRoute: typeof ContainersBoxIdRoute
   DTokenRoute: typeof DTokenRoute
   KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
   LettersArchiveIdRoute: typeof LettersArchiveIdRoute
@@ -438,6 +451,13 @@ declare module '@tanstack/react-router' {
       path: '/containers'
       fullPath: '/containers/'
       preLoaderRoute: typeof ContainersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/containers/$boxId': {
+      id: '/containers/$boxId'
+      path: '/containers/$boxId'
+      fullPath: '/containers/$boxId'
+      preLoaderRoute: typeof ContainersBoxIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/d/$token': {
@@ -565,6 +585,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   TimelineRoute: TimelineRoute,
+  ContainersBoxIdRoute: ContainersBoxIdRoute,
   DTokenRoute: DTokenRoute,
   KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
   LettersArchiveIdRoute: LettersArchiveIdRoute,
