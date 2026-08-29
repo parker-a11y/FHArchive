@@ -95,6 +95,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [transcribing, setTranscribing] = useState<string[]>([]);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [lastLabel, setLastLabel] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
