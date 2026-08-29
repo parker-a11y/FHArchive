@@ -242,6 +242,8 @@
     height: 6in !important;
     margin: 0 !important;
     transform: none !important;
+    translate: none !important;
+    scale: none !important;
     border: none !important;
     box-shadow: none !important;
     overflow: hidden !important;
