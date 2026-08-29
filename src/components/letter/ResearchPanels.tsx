@@ -656,9 +656,16 @@ export function AiPanel({ letter }: { letter: Letter }) {
             AI analysis reads this record&apos;s transcription and proposes suggestions. Nothing is
             written to archival metadata until you accept it.
           </p>
-          <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
-            {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
-          </Button>
+          <div className="flex gap-2">
+            {acceptable.length > 0 && (
+              <Button size="sm" variant="outline" onClick={acceptAll} disabled={busy}>
+                Accept all ({acceptable.length})
+              </Button>
+            )}
+            <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
+              {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
+            </Button>
+          </div>
         </div>
         {!hasTranscript && (
           <p className="mt-2 text-sm text-muted-foreground">
