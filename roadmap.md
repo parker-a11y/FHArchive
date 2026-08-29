@@ -9,4 +9,4 @@
 - [x] Connect AI Analysis (Lovable AI Gateway) to FH records with reviewable suggestions
 - [x] Add "Publication / Printed Material" record type with printed-material subtypes
 - [x] AI panel: Accept All button honoring edits and rejections
-- [ ] Dashboard: Daily Summary Report (new records, scans uploaded, transcriptions generated)
+- [x] Dashboard: Daily Summary Report (new records, files uploaded, transcriptions generated)
