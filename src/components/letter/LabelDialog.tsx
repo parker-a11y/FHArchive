@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -6,20 +7,40 @@ import { Input } from "@/components/ui/input";
 import { labelDate, labelOf, PERIODS } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
 
-/** Pure 4×6 label card — renders identically on screen (scaled) and in print. */
-export function LabelCard({
-  archiveId,
-  dateText,
-  title = "",
-  lines = [],
-}: {
+type LabelProps = {
   archiveId: string;
   dateText: string;
   title?: string;
   lines?: string[];
-}) {
+};
+
+/**
+ * Pure 4×6 label card — shown scaled on screen, and printed once from a
+ * body-level portal so no dialog/app markup can spill onto extra label stock.
+ */
+export function LabelCard(props: LabelProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
-    <div className="print-label mx-auto flex h-[6in] w-[4in] max-w-full origin-top scale-[0.62] flex-col items-center justify-center border border-border bg-white text-center sm:scale-75">
+    <>
+      <div className="no-print mx-auto origin-top scale-[0.62] sm:scale-75">
+        <LabelFace {...props} />
+      </div>
+      {mounted &&
+        createPortal(
+          <div className="print-label">
+            <LabelFace {...props} />
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
+function LabelFace({ archiveId, dateText, title = "", lines = [] }: LabelProps) {
+  return (
+    <div className="flex h-[6in] w-[4in] flex-col items-center justify-center border border-border bg-white text-center">
       <div
         className="archive-id leading-none font-bold text-black"
         style={{ fontSize: "1.1in", letterSpacing: "0.02em" }}
