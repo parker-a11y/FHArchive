@@ -635,8 +635,17 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     )}
                   </button>
 
-                  <p className="mt-1 truncate text-[11px] text-muted-foreground" title={f.original_filename}>
-                    {f.original_filename}
+                  <p
+                    className="mt-1 truncate text-[11px] font-medium"
+                    title={`Archival filename · original scanner name: ${f.original_filename}`}
+                  >
+                    {basenameOf(f.master_path)}.{extensionOf(f.master_path)}
+                  </p>
+                  <p
+                    className="truncate text-[10px] text-muted-foreground"
+                    title={f.original_filename}
+                  >
+                    from {f.original_filename}
                   </p>
 
                   <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
@@ -649,16 +658,45 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     )}
                   </div>
 
-                  <Input
-                    list={`labels-${letter.id}`}
-                    className="mt-1.5 h-7 text-xs"
-                    placeholder="Label (optional)"
-                    defaultValue={f.label ?? ""}
-                    onBlur={(e) => {
-                      if ((f.label ?? "") !== e.target.value)
-                        patchFile(f.id, { label: e.target.value || null });
-                    }}
-                  />
+                  {/* One-click identification — renames master + derivatives */}
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {renamingId === f.id ? (
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Loader2 className="size-3 animate-spin" /> Renaming…
+                      </span>
+                    ) : (
+                      <>
+                        {quickChoices.map((c) => {
+                          const isCurrent = f.label === c;
+                          const isNext = !f.label && c === suggestedNext;
+                          return (
+                            <button
+                              key={c}
+                              onClick={() => identify(f, c)}
+                              className={`rounded border px-1.5 py-0.5 text-[10px] leading-tight transition ${
+                                isCurrent
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : isNext
+                                    ? "border-primary bg-primary/10 font-medium text-primary"
+                                    : "border-border bg-background hover:bg-secondary"
+                              }`}
+                              title={
+                                isNext ? "Suggested next — click to confirm" : `Rename to ${c}`
+                              }
+                            >
+                              {c}
+                            </button>
+                          );
+                        })}
+                        <button
+                          onClick={() => identifyCustom(f)}
+                          className="rounded border border-dashed border-border px-1.5 py-0.5 text-[10px] hover:bg-secondary"
+                        >
+                          + Custom
+                        </button>
+                      </>
+                    )}
+                  </div>
 
                   <div className="mt-1 flex items-center justify-between">
                     <Button
