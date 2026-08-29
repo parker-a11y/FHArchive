@@ -147,6 +147,8 @@ export function ScansPanel({
   async function upload(files: FileList | File[]) {
     setUploading(true);
     let index = scans.length + 1;
+    let ok = 0;
+    const failures: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop() ?? "jpg";
       const label = scanFileLabel(letter.archive_id, "page_front", index);
@@ -156,7 +158,7 @@ export function ScansPanel({
         contentType: file.type,
       });
       if (upErr) {
-        toast.error(upErr.message);
+        failures.push(`${file.name}: ${upErr.message}`);
         continue;
       }
       const { error } = await supabase.from("letter_scans").insert({
@@ -168,13 +170,26 @@ export function ScansPanel({
         sort_order: index,
         original_filename: file.name,
       });
-      if (error) toast.error(error.message);
+      if (error) {
+        // Roll back the orphaned object so storage and the catalog stay in sync.
+        await supabase.storage.from("scans").remove([path]);
+        failures.push(`${file.name}: ${error.message}`);
+        continue;
+      }
+      ok++;
       index++;
     }
     setUploading(false);
     qc.invalidateQueries({ queryKey: ["scans", letter.id, itemId] });
     await syncCount();
-    toast.success("Scans uploaded — originals are stored unmodified");
+
+    for (const f of failures.slice(0, 3)) toast.error(f, { duration: 10000 });
+    if (failures.length > 3)
+      toast.error(`…and ${failures.length - 3} more files failed to upload.`, { duration: 10000 });
+    if (ok && !failures.length)
+      toast.success(`${ok} scan${ok === 1 ? "" : "s"} uploaded — originals are stored unmodified`);
+    else if (ok)
+      toast.warning(`${ok} uploaded, ${failures.length} failed — see the errors above.`);
   }
 
   async function reorder(targetId: string) {

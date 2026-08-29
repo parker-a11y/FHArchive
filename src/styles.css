@@ -190,14 +190,41 @@
 }
 
 @media print {
+  html,
+  body {
+    width: 4in;
+    height: 6in;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: white;
+  }
   .no-print {
     display: none !important;
   }
+  /* Hide everything except the label card, so the rest of the page
+     never spills onto extra sheets of label stock. */
+  body * {
+    visibility: hidden !important;
+  }
+  .print-label,
+  .print-label * {
+    visibility: visible !important;
+  }
   .print-label {
-    position: fixed;
-    inset: 0;
-    margin: 0;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 4in !important;
+    height: 6in !important;
+    margin: 0 !important;
+    transform: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
     background: white;
+    page-break-after: avoid;
+    break-after: avoid;
   }
   @page {
     size: 4in 6in;
