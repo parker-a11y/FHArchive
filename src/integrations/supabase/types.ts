@@ -58,6 +58,39 @@ export type Database = {
           },
         ]
       }
+      archive_contacts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          last_used_at: string | null
+          name: string
+          notes: string | null
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          last_used_at?: string | null
+          name: string
+          notes?: string | null
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       archive_counter: {
         Row: {
           last_seq: number
@@ -72,6 +105,153 @@ export type Database = {
         Update: {
           last_seq?: number
           owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      archive_email_attachments: {
+        Row: {
+          archive_id: string | null
+          created_at: string
+          email_id: string
+          file_size: number | null
+          filename: string
+          id: string
+          letter_id: string | null
+          owner_id: string
+          storage_path: string | null
+        }
+        Insert: {
+          archive_id?: string | null
+          created_at?: string
+          email_id: string
+          file_size?: number | null
+          filename: string
+          id?: string
+          letter_id?: string | null
+          owner_id: string
+          storage_path?: string | null
+        }
+        Update: {
+          archive_id?: string | null
+          created_at?: string
+          email_id?: string
+          file_size?: number | null
+          filename?: string
+          id?: string
+          letter_id?: string | null
+          owner_id?: string
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archive_email_attachments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "archive_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "archive_email_attachments_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      archive_email_records: {
+        Row: {
+          archive_id: string
+          created_at: string
+          email_id: string
+          id: string
+          letter_id: string
+          owner_id: string
+          sort_order: number
+        }
+        Insert: {
+          archive_id: string
+          created_at?: string
+          email_id: string
+          id?: string
+          letter_id: string
+          owner_id: string
+          sort_order?: number
+        }
+        Update: {
+          archive_id?: string
+          created_at?: string
+          email_id?: string
+          id?: string
+          letter_id?: string
+          owner_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archive_email_records_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "archive_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "archive_email_records_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      archive_emails: {
+        Row: {
+          attachment_count: number
+          created_at: string
+          error: string | null
+          header_subtitle: string | null
+          header_title: string | null
+          id: string
+          message_body: string | null
+          owner_id: string
+          recipients: Json
+          sender_email: string | null
+          sent_at: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          attachment_count?: number
+          created_at?: string
+          error?: string | null
+          header_subtitle?: string | null
+          header_title?: string | null
+          id?: string
+          message_body?: string | null
+          owner_id: string
+          recipients?: Json
+          sender_email?: string | null
+          sent_at?: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          attachment_count?: number
+          created_at?: string
+          error?: string | null
+          header_subtitle?: string | null
+          header_title?: string | null
+          id?: string
+          message_body?: string | null
+          owner_id?: string
+          recipients?: Json
+          sender_email?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string
           updated_at?: string
         }
         Relationships: []
@@ -1587,6 +1767,39 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       record_categories: {
         Row: {
           created_at: string
@@ -1901,11 +2114,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_read_archive: { Args: { _user_id: string }; Returns: boolean }
       create_digital_source:
         | {
             Args: {
@@ -2015,6 +2250,15 @@ export type Database = {
           id: string
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_approved_guest: { Args: { _user_id: string }; Returns: boolean }
       next_archive_id: {
         Args: never
         Returns: {
@@ -2038,7 +2282,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "guest"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2165,6 +2409,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "guest"],
+    },
   },
 } as const
