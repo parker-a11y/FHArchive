@@ -785,8 +785,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     {jpegOk && <span className="rounded bg-secondary px-1 py-0.5">JPEG</span>}
                     {hasThumb(f) && <span className="rounded bg-secondary px-1 py-0.5">THUMB</span>}
                     {!isNamed(f) && (
-                      <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-800">
-                        needs naming
+                      <span className="rounded bg-secondary px-1 py-0.5 text-muted-foreground">
+                        unidentified — will be numbered
                       </span>
                     )}
                     {derivFailed && (
