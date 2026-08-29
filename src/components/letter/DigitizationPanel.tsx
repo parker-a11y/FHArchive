@@ -419,19 +419,78 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           <Stat
-            label="Status"
-            value={labelOf(DIGITIZATION_STATUS, status)}
-            tone={complete ? "good" : status === "not_scanned" ? "warn" : "default"}
+            label="Processing status"
+            value={SCAN_STATUS_LABEL[scanState]}
+            tone={
+              scanState === "complete"
+                ? "good"
+                : scanState === "error" || scanState === "needs_naming"
+                  ? "warn"
+                  : "default"
+            }
           />
           <Stat label="Archival masters" value={String(masters)} />
           <Stat label="Expected" value={expected === null ? "Not set" : String(expected)} />
           <Stat
-            label="Viewing derivatives"
+            label="Viewing JPGs"
             value={`${jpegCount} of ${masters}`}
             tone={masters > 0 && jpegCount === masters ? "good" : masters ? "warn" : "default"}
           />
           <Stat label="Thumbnails" value={`${thumbCount} of ${masters}`} />
         </div>
+
+        {/* Confirm upload complete → derivative generation */}
+        {masters > 0 && (
+          <div className="mt-3 rounded border border-border bg-card p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm">
+                {generating ? (
+                  <span className="flex items-center gap-2 text-primary">
+                    <Loader2 className="size-4 animate-spin" />
+                    Generating derivatives — {generating.done + 1} of {generating.total}
+                  </span>
+                ) : unnamed.length ? (
+                  <span className="text-amber-700">
+                    <AlertTriangle className="mr-1.5 inline size-4" />
+                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} still need
+                    {unnamed.length === 1 ? "s" : ""} to be named before this upload can be
+                    confirmed.{" "}
+                    <button
+                      className="font-medium underline underline-offset-2"
+                      onClick={() => jumpToScan(unnamed[0].id)}
+                    >
+                      Go to that scan
+                    </button>
+                  </span>
+                ) : pending.length ? (
+                  <span>
+                    {pending.length} master{pending.length === 1 ? "" : "s"} ready for derivative
+                    generation. Masters are never altered.
+                  </span>
+                ) : (
+                  <span className="text-emerald-700">
+                    <CheckCircle2 className="mr-1.5 inline size-4" />
+                    {masters} Master TIFF{masters === 1 ? "" : "s"} · {jpegCount} Viewing JPG
+                    {jpegCount === 1 ? "" : "s"} · {thumbCount} Thumbnail
+                    {thumbCount === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
+              <Button
+                onClick={confirmUploadComplete}
+                disabled={!!generating || !!progress || pending.length === 0}
+              >
+                <ShieldCheck className="mr-1.5 size-4" />
+                Confirm Upload Complete
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Confirming is not a lock — you can add, replace or rename scans later and confirm
+              again. Only new or changed masters are processed.
+            </p>
+          </div>
+        )}
+
 
         {expected !== null && (
           <p
