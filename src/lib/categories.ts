@@ -65,7 +65,7 @@ export function useRecordTypeOptions(): Option[] {
   const custom = data
     .filter((c) => c.kind === "record_type")
     .map((c) => ({ value: c.value, label: c.label }));
-  const seen = new Set(RECORD_TYPES.map((r) => r.value));
+  const seen = new Set<string>(RECORD_TYPES.map((r) => r.value as string));
   return [
     ...RECORD_TYPES.map((r) => ({ value: r.value, label: r.label })),
     ...custom.filter((c) => !seen.has(c.value)),
