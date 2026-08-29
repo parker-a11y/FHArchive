@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BackupsRouteImport } from './routes/backups'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as EmailsRouteImport } from './routes/emails'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -37,6 +38,7 @@ import { Route as SourcesIndexRouteImport } from './routes/sources/index'
 import { Route as SourcesDsIdRouteImport } from './routes/sources/$dsId'
 import { Route as SourcesNewRouteImport } from './routes/sources/new'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +63,11 @@ const CatalogRoute = CatalogRouteImport.update({
 const CategoriesRoute = CategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailsRoute = EmailsRouteImport.update({
+  id: '/emails',
+  path: '/emails',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -178,6 +185,12 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   path: '/api/public/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -185,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/categories': typeof CategoriesRoute
+  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -208,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/places/': typeof PlacesIndexRoute
   '/sources/': typeof SourcesIndexRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -215,6 +230,7 @@ export interface FileRoutesByTo {
   '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/categories': typeof CategoriesRoute
+  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -238,6 +254,7 @@ export interface FileRoutesByTo {
   '/places': typeof PlacesIndexRoute
   '/sources': typeof SourcesIndexRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,6 +263,7 @@ export interface FileRoutesById {
   '/backups': typeof BackupsRoute
   '/catalog': typeof CatalogRoute
   '/categories': typeof CategoriesRoute
+  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -269,6 +287,7 @@ export interface FileRoutesById {
   '/places/': typeof PlacesIndexRoute
   '/sources/': typeof SourcesIndexRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -278,6 +297,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/emails'
     | '/forgot-password'
     | '/queues'
     | '/reset-password'
@@ -301,6 +321,7 @@ export interface FileRouteTypes {
     | '/places/'
     | '/sources/'
     | '/api/public/backup'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -308,6 +329,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/emails'
     | '/forgot-password'
     | '/queues'
     | '/reset-password'
@@ -331,6 +353,7 @@ export interface FileRouteTypes {
     | '/places'
     | '/sources'
     | '/api/public/backup'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -338,6 +361,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/emails'
     | '/forgot-password'
     | '/queues'
     | '/reset-password'
@@ -361,6 +385,7 @@ export interface FileRouteTypes {
     | '/places/'
     | '/sources/'
     | '/api/public/backup'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -369,6 +394,7 @@ export interface RootRouteChildren {
   BackupsRoute: typeof BackupsRoute
   CatalogRoute: typeof CatalogRoute
   CategoriesRoute: typeof CategoriesRoute
+  EmailsRoute: typeof EmailsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   QueuesRoute: typeof QueuesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -392,6 +418,7 @@ export interface RootRouteChildren {
   PlacesIndexRoute: typeof PlacesIndexRoute
   SourcesIndexRoute: typeof SourcesIndexRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -429,6 +456,13 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/emails': {
+      id: '/emails'
+      path: '/emails'
+      fullPath: '/emails'
+      preLoaderRoute: typeof EmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -592,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -601,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   BackupsRoute: BackupsRoute,
   CatalogRoute: CatalogRoute,
   CategoriesRoute: CategoriesRoute,
+  EmailsRoute: EmailsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   QueuesRoute: QueuesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -624,6 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlacesIndexRoute: PlacesIndexRoute,
   SourcesIndexRoute: SourcesIndexRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

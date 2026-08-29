@@ -44,6 +44,7 @@ import {
   ShareSourceDialog,
   SourceShareStatusBadge,
 } from "@/components/sources/ShareSourceDialog";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 
 
 export const Route = createFileRoute("/sources/$dsId")({
@@ -154,6 +155,13 @@ function SourcePage() {
             <ChevronRight className="size-4" />
           </Button>
           <ShareSourceDialog source={source} />
+          <EmailArchiveDialog
+            kind="source"
+            id={source.id}
+            identifier={source.ds_id}
+            title={source.title}
+          />
+
           {source.url && (
             <Button variant="outline" className="gap-2" asChild>
               <a href={source.url} target="_blank" rel="noreferrer">

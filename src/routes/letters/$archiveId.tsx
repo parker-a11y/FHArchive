@@ -62,6 +62,7 @@ import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
 import {
   AiPanel,
@@ -315,6 +316,13 @@ function LetterPage() {
           <div className="flex shrink-0 items-center gap-2">
             <ShareStatusBadge letter={letter} />
             <ShareDialog letter={letter} />
+            <EmailArchiveDialog
+              kind="letter"
+              id={letter.id}
+              identifier={letter.archive_id}
+              title={letter.title}
+            />
+
             <LabelDialog letter={letter} />
             <AlertDialog>
               <AlertDialogTrigger asChild>
