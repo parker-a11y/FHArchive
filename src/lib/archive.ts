@@ -12,7 +12,7 @@ export const RECORD_TYPES = [
   { value: "employment", label: "Employment Record" },
   { value: "education", label: "Education Record" },
   { value: "travel", label: "Travel Document" },
-  { value: "ephemera", label: "Ephemera" },
+  { value: "personal_papers", label: "Personal Documents / Papers" },
   { value: "artifact", label: "Artifact / Object" },
   { value: "medal", label: "Medal / Decoration" },
   { value: "insignia", label: "Pin / Insignia" },
