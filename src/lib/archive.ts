@@ -26,6 +26,7 @@ export const RECORD_TYPES = [
 export const SUBTYPES: Record<string, readonly string[]> = {
   letter: [
     "Personal letter",
+    "Circular / Group letter",
     "V-Mail",
     "Postcard",
     "Telegram",
