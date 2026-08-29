@@ -132,7 +132,10 @@ function QuickEntry() {
 
   async function loadNext() {
     try {
-      setNext(await previewNextArchiveId());
+      const n = await previewNextArchiveId();
+      setNext(n);
+      // Folder / jacket defaults to the FH number; still editable.
+      setForm((f) => ({ ...f, storage_folder: n.archive_id }));
       setTimeout(() => dateRef.current?.focus(), 30);
     } catch (e) {
       toast.error((e as Error).message);
