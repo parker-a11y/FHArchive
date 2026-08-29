@@ -40,6 +40,7 @@ const NAV = [
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
   { to: "/categories", label: "Categories", icon: Tags },
+  { to: "/emails", label: "Sent Email", icon: Mail },
   { to: "/backups", label: "Backups", icon: ShieldCheck },
 ];
 
