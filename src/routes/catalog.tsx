@@ -22,7 +22,7 @@ import {
   isLetterType,
   labelDate,
 } from "@/lib/archive";
-import { EntryLabelDialog, labelLines } from "@/components/letter/LabelDialog";
+import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { CategorySelect } from "@/components/CategorySelect";
@@ -212,6 +212,7 @@ function QuickEntry() {
       setLabelFor({
         archiveId: created.archive_id,
         date: labelDate({ ...form, date_precision: precision }),
+        title: labelTitle(form),
         lines: labelLines({
           ...form,
           sheets: form.sheets ? Number(form.sheets) : null,
@@ -558,12 +559,14 @@ function QuickEntry() {
       </div>
 
       <EntryLabelDialog
+        key={labelFor?.archiveId ?? "none"}
         open={labelFor !== null}
         onOpenChange={(v) => {
           if (!v) setLabelFor(null);
         }}
         archiveId={labelFor?.archiveId ?? ""}
         defaultDate={labelFor?.date ?? ""}
+        defaultTitle={labelFor?.title ?? ""}
         lines={labelFor?.lines ?? []}
       />
     </>
