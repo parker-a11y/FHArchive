@@ -946,14 +946,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         )}
       </div>
 
-        )}
-        <datalist id={`labels-${letter.id}`}>
-          {labels.map((l) => (
-            <option key={l} value={l} />
-          ))}
-        </datalist>
-      </div>
-
       <MediaLightbox
         items={lightboxItems}
         initialIndex={viewerIndex}
