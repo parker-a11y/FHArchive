@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { template as archiveRecordTemplate } from './archive-record'
 
 export interface TemplateEntry {
   component: ComponentType<any>
