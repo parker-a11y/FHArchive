@@ -215,9 +215,20 @@
   body > *:has(.print-label) {
     display: block !important;
     position: static !important;
+    inset: auto !important;
     width: 4in !important;
     height: 6in !important;
+    max-width: none !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: none !important;
+    background: white !important;
     overflow: hidden !important;
+    /* These create a containing block for the fixed label if left in place. */
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    filter: none !important;
   }
   .print-label,
   .print-label * {
