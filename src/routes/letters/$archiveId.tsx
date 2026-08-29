@@ -315,6 +315,13 @@ function LetterPage() {
           <div className="flex shrink-0 items-center gap-2">
             <ShareStatusBadge letter={letter} />
             <ShareDialog letter={letter} />
+            <EmailArchiveDialog
+              kind="letter"
+              id={letter.id}
+              identifier={letter.archive_id}
+              title={letter.title}
+            />
+
             <LabelDialog letter={letter} />
             <AlertDialog>
               <AlertDialogTrigger asChild>
