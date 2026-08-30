@@ -39,6 +39,109 @@ export const Route = createFileRoute("/_authenticated/search")({
 });
 
 const SEARCH_LIMIT = 200;
+const SNIPPETS_SHOWN = 3;
+
+/** One search result: header, hit count, highlighted snippets, jump-to-match links. */
+function ResultCard({
+  letter,
+  term,
+  snippets,
+  tags,
+  hits,
+  meta,
+}: {
+  letter: Letter;
+  term: string;
+  snippets: Snippet[];
+  tags: string[];
+  hits: number;
+  meta: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const shown = showAll ? snippets : snippets.slice(0, SNIPPETS_SHOWN);
+  const jump = {
+    to: "/letters/$archiveId" as const,
+    params: { archiveId: letter.archive_id },
+    search: term ? { hl: term, tab: "transcription" } : {},
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline gap-2">
+          <Link {...jump} className="archive-id text-primary hover:underline">
+            {letter.archive_id}
+          </Link>
+          {hits > 0 && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+              {hits} match{hits === 1 ? "" : "es"}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground">{meta}</span>
+      </div>
+      <p className="mt-1 text-sm font-medium">
+        {[letter.author, letter.recipient].filter(Boolean).join(" → ") || letter.title || "Untitled"}
+      </p>
+
+      {tags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {tags.map((t) => (
+            <span key={t} className="rounded border border-border px-1.5 py-0.5 text-[11px]">
+              <HighlightedText text={t} term={term} />
+            </span>
+          ))}
+        </div>
+      )}
+
+      {shown.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          {shown.map((s, i) => (
+            <Link
+              key={`${s.label}-${i}`}
+              {...jump}
+              className="block rounded border border-transparent bg-muted/40 p-2 text-sm hover:border-border"
+            >
+              <span className="mr-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                {s.label}
+              </span>
+              <span className="text-muted-foreground">
+                <HighlightedText text={expanded ? s.full : s.text} term={term} />
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {(snippets.length > 0 || snippets.length > SNIPPETS_SHOWN) && (
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+          {snippets.length > SNIPPETS_SHOWN && (
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => setShowAll((v) => !v)}
+            >
+              {showAll ? "Show fewer matches" : `+${snippets.length - SNIPPETS_SHOWN} more matches`}
+            </button>
+          )}
+          {snippets.length > 0 && (
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => setExpanded((v) => !v)}
+            >
+              {expanded ? "Hide full context" : "Show full context"}
+            </button>
+          )}
+          <Link {...jump} className="text-primary hover:underline">
+            Open at match →
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Debounce the main text box so typing doesn't fire a query per keystroke. */
 function useDebounced<T>(value: T, ms = 400): T {
