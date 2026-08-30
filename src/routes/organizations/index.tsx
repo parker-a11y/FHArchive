@@ -2,22 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ListFilter, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_TYPES, labelOf } from "@/lib/archive";
+import { DeleteOrgButton } from "@/components/organizations/DeleteOrgButton";
+import { OrgRecordsButton } from "@/components/organizations/OrgRecordsButton";
 
 export const Route = createFileRoute("/organizations/")({
   head: () => ({
     meta: [
-      { title: "Organizations & Ships — The Francis Files" },
+      { title: "Organizations — The Francis Files" },
       {
         name: "description",
         content:
           "Reusable records for ships, military units, employers, schools and other organizations in The Francis Files.",
       },
-      { property: "og:title", content: "Organizations & Ships — The Francis Files" },
+      { property: "og:title", content: "Organizations — The Francis Files" },
       {
         property: "og:description",
         content: "Ships, units, employers and institutions linked to archive items.",
@@ -65,10 +68,7 @@ function Organizations() {
 
   return (
     <>
-      <PageHeader
-        title="Organizations, Ships & Units"
-        description={`${orgs.length} organization records`}
-      />
+      <PageHeader title="Organizations" description={`${orgs.length} organization records`} />
       <div className="max-w-4xl p-4 sm:p-8">
         <div className="mb-6 flex gap-2">
           <Input
@@ -98,6 +98,29 @@ function Organizations() {
                 <span className="font-medium">{o.name}</span>
                 <span className="text-xs text-muted-foreground">
                   {labelOf(ORG_TYPES, o.org_type)}
+                </span>
+                <span className="ml-auto flex items-center gap-1">
+                  <OrgRecordsButton orgId={o.id} name={o.name}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      aria-label={`View records matching ${o.name}`}
+                      title="View matching records"
+                    >
+                      <ListFilter className="h-4 w-4" />
+                    </Button>
+                  </OrgRecordsButton>
+                  <DeleteOrgButton orgId={o.id} name={o.name}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      aria-label={`Delete ${o.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </DeleteOrgButton>
                 </span>
               </div>
               <Input
