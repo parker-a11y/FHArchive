@@ -3,12 +3,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, RotateCcw } from "lucide-react";
+import { Download, Eye, Mail, RotateCcw } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
