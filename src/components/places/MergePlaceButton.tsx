@@ -108,7 +108,7 @@ export function MergePlaceButton({ placeId, name, children }: Props) {
         }
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {!isGuestViewer && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Merge “{name}” with other places</DialogTitle>
