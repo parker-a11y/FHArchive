@@ -53,14 +53,19 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 function UserManagementPage() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
+  const listProfilesFn = useServerFn(listProfiles);
+  const updateStatusFn = useServerFn(updateProfileStatus);
+  const deleteAccountFn = useServerFn(deleteGuestAccount);
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "profiles"],
-    queryFn: () => listProfiles(),
+    queryFn: () => listProfilesFn(),
     enabled: isAdmin,
   });
 
   const approveMutation = useMutation({
-    mutationFn: (userId: string) => updateProfileStatus({ userId, status: "approved" }),
+    mutationFn: (userId: string) =>
+      updateStatusFn({ data: { userId, status: "approved" } }),
     onSuccess: () => {
       toast.success("Guest approved");
       queryClient.invalidateQueries({ queryKey: ["admin", "profiles"] });
@@ -69,7 +74,8 @@ function UserManagementPage() {
   });
 
   const revokeMutation = useMutation({
-    mutationFn: (userId: string) => updateProfileStatus({ userId, status: "pending" }),
+    mutationFn: (userId: string) =>
+      updateStatusFn({ data: { userId, status: "pending" } }),
     onSuccess: () => {
       toast.success("Access revoked");
       queryClient.invalidateQueries({ queryKey: ["admin", "profiles"] });
@@ -78,7 +84,7 @@ function UserManagementPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (userId: string) => deleteGuestAccount({ userId }),
+    mutationFn: (userId: string) => deleteAccountFn({ data: { userId } }),
     onSuccess: () => {
       toast.success("Account removed");
       queryClient.invalidateQueries({ queryKey: ["admin", "profiles"] });
