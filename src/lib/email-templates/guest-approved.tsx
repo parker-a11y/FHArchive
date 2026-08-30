@@ -66,6 +66,7 @@ const container: React.CSSProperties = {
   padding: '28px 24px',
   maxWidth: '560px',
 }
+const logoImg: React.CSSProperties = { margin: '0 auto 12px', borderRadius: '50%' }
 const eyebrow: React.CSSProperties = {
   fontSize: '11px',
   letterSpacing: '0.12em',
