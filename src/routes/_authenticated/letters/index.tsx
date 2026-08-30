@@ -82,7 +82,7 @@ export const Route = createFileRoute("/_authenticated/letters/")({
   ),
 });
 
-type Col = { key: string; label: string; width: number; editable?: boolean };
+type Col = { key: string; label: string; width: number; minWidth?: number; editable?: boolean };
 
 /** macOS-style traffic-light dot summarizing scan/transcription state. */
 function recordHealth(l: Letter): { color: string; label: string } {
@@ -94,7 +94,7 @@ function recordHealth(l: Letter): { color: string; label: string } {
 }
 
 const COLUMNS: Col[] = [
-  { key: "archive_id", label: "FH ID", width: 130 },
+  { key: "archive_id", label: "FH ID", width: 160, minWidth: 150 },
   { key: "record_type", label: "Type", width: 150 },
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
@@ -667,7 +667,7 @@ function LettersTable() {
               {cols.map((c) => (
                 <th
                   key={c.key}
-                  style={{ width: widths[c.key] ?? c.width }}
+                  style={{ width: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
                   className="relative border-b border-border px-3 py-2 text-left font-medium select-none"
                 >
                   <button
@@ -686,10 +686,11 @@ function LettersTable() {
                     onMouseDown={(e) => {
                       const startX = e.clientX;
                       const startW = widths[c.key] ?? c.width;
+                      const minW = c.minWidth ?? 60;
                       const move = (ev: MouseEvent) =>
                         setWidths((w) => ({
                           ...w,
-                          [c.key]: Math.max(60, startW + ev.clientX - startX),
+                          [c.key]: Math.max(minW, startW + ev.clientX - startX),
                         }));
                        const up = () => {
                          window.removeEventListener("mousemove", move);
@@ -730,7 +731,7 @@ function LettersTable() {
                     <td
                       key={c.key}
                       className="truncate px-3 py-1.5 align-top"
-                      style={{ maxWidth: widths[c.key] ?? c.width }}
+                      style={{ maxWidth: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
                       onDoubleClick={() =>
                         c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
                       }
