@@ -132,6 +132,7 @@ function Organizations() {
                 placeholder="Description / notes…"
                 defaultValue={o.description ?? ""}
                 onBlur={(e) => update(o.id, { description: e.target.value })}
+                disabled={isGuestViewer}
               />
             </div>
           ))}

@@ -146,11 +146,13 @@ export function DuplicatesPanel() {
                 </div>
               ))}
             </RadioGroup>
-            <div className="mt-3">
-              <Button size="sm" disabled={busy} onClick={() => merge(gi, group)}>
-                Merge group
-              </Button>
-            </div>
+            {!isGuestViewer && (
+              <div className="mt-3">
+                <Button size="sm" disabled={busy} onClick={() => merge(gi, group)}>
+                  Merge group
+                </Button>
+              </div>
+            )}
           </div>
         );
       })}
