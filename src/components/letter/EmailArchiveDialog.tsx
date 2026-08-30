@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -21,24 +21,36 @@ import { sendArchiveEmail } from "@/lib/archive-email.functions";
 
 type Recipient = { email: string; name?: string | null };
 
+type RecordRef = { kind: "letter" | "source"; id: string; identifier: string; title?: string | null };
+
 export function EmailArchiveDialog({
   kind,
   id,
   identifier,
   title,
+  records,
+  trigger,
 }: {
-  kind: "letter" | "source";
-  id: string;
-  identifier: string;
+  kind?: "letter" | "source";
+  id?: string;
+  identifier?: string;
   title?: string | null;
+  records?: RecordRef[];
+  trigger?: ReactNode;
 }) {
+  const recordList: RecordRef[] =
+    records ?? [{ kind: kind!, id: id!, identifier: identifier!, title }];
+  const identifiers = recordList.map((r) => r.identifier).join(", ");
+  const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [entry, setEntry] = useState("");
   const [subject, setSubject] = useState(
-    title ? `${identifier} — ${title}` : `${identifier} from the Harrington Family Archive`,
+    single?.title
+      ? `${single.identifier} — ${single.title}`
+      : `${identifiers} from the Harrington Family Archive`,
   );
   const [headerSubtitle, setHeaderSubtitle] = useState("From the Harrington Family Archive");
   const [message, setMessage] = useState("");
@@ -73,7 +85,7 @@ export function EmailArchiveDialog({
           headerTitle: subject,
           headerSubtitle,
           message,
-          records: [{ kind, id }],
+          records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
           includeTranscription,
           includeImages,
         },
@@ -106,16 +118,18 @@ export function EmailArchiveDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Mail className="size-4" /> Email
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="gap-2">
+            <Mail className="size-4" /> Email
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
-            Sends {identifier} as a formatted email. Scans travel as an unlisted archive link you can
-            switch off later — file attachments are not supported.
+            Sends {identifiers} as a formatted email. Scans travel as an unlisted archive link you
+            can switch off later — file attachments are not supported.
           </DialogDescription>
         </DialogHeader>
 

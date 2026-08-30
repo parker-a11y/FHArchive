@@ -3,11 +3,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, RotateCcw } from "lucide-react";
+import { Download, Eye, Mail, RotateCcw } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -174,6 +176,7 @@ function LettersTable() {
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [editing, setEditing] = useState<{ id: string; key: string } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
 
@@ -236,6 +239,23 @@ function LettersTable() {
     });
     return r;
   }, [letters, q, period, tStatus, rType, review, scanF, catalogedOnly, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
+
+  const selectedRecords = useMemo(
+    () =>
+      rows
+        .filter((l) => selected.has(l.id))
+        .map((l) => ({ kind: "letter" as const, id: l.id, identifier: l.archive_id, title: l.title })),
+    [rows, selected],
+  );
+  const toggleSelected = (id: string, on: boolean) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const allSelected = rows.length > 0 && rows.every((l) => selected.has(l.id));
+
 
 
   function exportRows() {
@@ -381,6 +401,16 @@ function LettersTable() {
         description={`${rows.length} of ${letters.length} records`}
         actions={
           <>
+            {selectedRecords.length > 0 && (
+              <EmailArchiveDialog
+                records={selectedRecords}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Mail className="size-4" /> Email selected ({selectedRecords.length})
+                  </Button>
+                }
+              />
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -560,6 +590,15 @@ function LettersTable() {
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 bg-secondary">
             <tr>
+              <th className="w-8 border-b border-border px-2 py-2">
+                <Checkbox
+                  aria-label="Select all records"
+                  checked={allSelected}
+                  onCheckedChange={(v) =>
+                    setSelected(v ? new Set(rows.map((l) => l.id)) : new Set())
+                  }
+                />
+              </th>
               {cols.map((c) => (
                 <th
                   key={c.key}
@@ -603,6 +642,13 @@ function LettersTable() {
           <tbody>
             {rows.map((l) => (
               <tr key={l.id} className="border-b border-border hover:bg-muted/50">
+                <td className="px-2 py-1.5 align-top">
+                  <Checkbox
+                    aria-label={`Select ${l.archive_id}`}
+                    checked={selected.has(l.id)}
+                    onCheckedChange={(v) => toggleSelected(l.id, Boolean(v))}
+                  />
+                </td>
                 {cols.map((c) => {
                   const isEditing = editing?.id === l.id && editing.key === c.key;
                   return (
@@ -626,6 +672,22 @@ function LettersTable() {
                             aria-label={recordHealth(l).label}
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
                             style={{ backgroundColor: recordHealth(l).color }}
+                          />
+                          <EmailArchiveDialog
+                            kind="letter"
+                            id={l.id}
+                            identifier={l.archive_id}
+                            title={l.title}
+                            trigger={
+                              <button
+                                type="button"
+                                title={`Email ${l.archive_id}`}
+                                aria-label={`Email ${l.archive_id}`}
+                                className="text-muted-foreground hover:text-primary"
+                              >
+                                <Mail className="size-3.5" />
+                              </button>
+                            }
                           />
                         </span>
                       ) : isEditing ? (
