@@ -299,6 +299,40 @@ function LettersTable() {
     qc.invalidateQueries({ queryKey: ["letters"] });
   }
 
+  function resetFilters() {
+    setQ("");
+    setPeriod("");
+    setTStatus("");
+    setRType("");
+    setReview("");
+    setScanF("");
+    setCatalogedOnly(false);
+    setUncertainOnly(false);
+    setIdStatus("");
+    setDStatus("");
+    setDigStatus("");
+    setTones([]);
+    setView("");
+    setSort({ key: "archive_id", dir: 1 });
+    navigate({ to: "/letters", search: {} });
+  }
+
+  const activeFilterCount = [
+    q,
+    period,
+    tStatus,
+    rType,
+    review,
+    scanF,
+    idStatus,
+    dStatus,
+    digStatus,
+    view,
+    catalogedOnly ? "cataloged" : "",
+    uncertainOnly ? "uncertain" : "",
+    ...tones,
+  ].filter(Boolean).length;
+
   function cellValue(l: Letter, key: string) {
     switch (key) {
       case "date":
