@@ -1,5 +1,4 @@
 import { useRecordTypeOptions } from "@/lib/categories";
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
