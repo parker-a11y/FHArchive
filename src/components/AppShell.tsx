@@ -85,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto p-3">
-        {NAV.map((item) => {
+        {navItems.map((item) => {
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link
