@@ -144,9 +144,6 @@ function QuickEntry() {
 
   useEffect(() => {
     loadNext();
-    // Carry the container being processed forward across sessions until changed.
-    const carried = getCarriedContainer();
-    if (carried) setForm((f) => ({ ...f, source_container_id: carried }));
   }, []);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -512,14 +509,6 @@ function QuickEntry() {
                     value={form.storage_folder}
                     onChange={(e) => set("storage_folder", e.target.value)}
                     placeholder="FH-0268"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="field-label">Position / compartment</Label>
-                  <Input
-                    value={form.storage_position}
-                    onChange={(e) => set("storage_position", e.target.value)}
-                    placeholder="Compartment 07"
                   />
                 </div>
                 <div className="col-span-full space-y-1.5">
