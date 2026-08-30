@@ -47,6 +47,13 @@ const ArchiveRecordEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
+          <Img
+            src="https://fharchive.com/email-logo.png"
+            width="72"
+            height="72"
+            alt="The Francis Files logo"
+            style={logoImg}
+          />
           <Text style={eyebrow}>The Francis Files</Text>
           <Heading style={h1}>{headerTitle}</Heading>
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}

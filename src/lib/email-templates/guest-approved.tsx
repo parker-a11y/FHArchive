@@ -27,6 +27,13 @@ const GuestApprovedEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section>
+          <Img
+            src="https://fharchive.com/email-logo.png"
+            width="72"
+            height="72"
+            alt="The Francis Files logo"
+            style={logoImg}
+          />
           <Text style={eyebrow}>The Francis Files</Text>
           <Heading style={h1}>Your account has been approved</Heading>
         </Section>
