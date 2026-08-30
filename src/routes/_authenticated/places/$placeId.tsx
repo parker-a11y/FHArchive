@@ -141,7 +141,7 @@ function PlacePage() {
               )}
             </div>
           ))}
-        </div>
+        </fieldset>
         <div>
           <h3 className="field-label mb-2">Associated letters — {related.length}</h3>
           <div className="divide-y divide-border rounded border border-border bg-card">
