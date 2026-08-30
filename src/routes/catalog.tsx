@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
-import { getCarriedContainer, setCarriedContainer } from "@/lib/containers";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
@@ -80,7 +79,6 @@ const blank = {
   storage_type: "",
   storage_container: "",
   storage_folder: "",
-  storage_position: "",
   storage_notes: "",
   source_container_id: "",
   original_order_notes: "",
@@ -144,9 +142,6 @@ function QuickEntry() {
 
   useEffect(() => {
     loadNext();
-    // Carry the container being processed forward across sessions until changed.
-    const carried = getCarriedContainer();
-    if (carried) setForm((f) => ({ ...f, source_container_id: carried }));
   }, []);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
@@ -192,7 +187,6 @@ function QuickEntry() {
         storage_type: form.storage_type || null,
         storage_container: form.storage_container || null,
         storage_folder: form.storage_folder || null,
-        storage_position: form.storage_position || null,
         storage_notes: form.storage_notes || null,
         source_container_id: form.source_container_id || null,
         original_order_notes: form.original_order_notes || null,
@@ -232,8 +226,6 @@ function QuickEntry() {
       storage_type: f.storage_type,
       storage_container: f.storage_container,
       storage_folder: f.storage_folder,
-      storage_position: f.storage_position,
-      source_container_id: f.source_container_id,
       original_copy: f.original_copy,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
@@ -514,14 +506,6 @@ function QuickEntry() {
                     placeholder="FH-0268"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="field-label">Position / compartment</Label>
-                  <Input
-                    value={form.storage_position}
-                    onChange={(e) => set("storage_position", e.target.value)}
-                    placeholder="Compartment 07"
-                  />
-                </div>
                 <div className="col-span-full space-y-1.5">
                   <Label className="field-label">Location notes</Label>
                   <Input
@@ -534,16 +518,13 @@ function QuickEntry() {
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-1">Original source container (provenance)</div>
               <p className="mb-3 text-xs text-muted-foreground">
-                Where this item was found. Carried forward to the next record until you change it —
-                separate from current physical storage above.
+                Where this item was found — separate from current physical storage above. Defaults
+                to not selected.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
-                  onChange={(v) => {
-                    set("source_container_id", v);
-                    setCarriedContainer(v);
-                  }}
+                  onChange={(v) => set("source_container_id", v)}
                 />
                 <div className="space-y-1.5">
                   <Label className="field-label">Original order / position notes</Label>

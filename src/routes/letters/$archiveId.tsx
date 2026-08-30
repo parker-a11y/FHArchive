@@ -111,7 +111,6 @@ const TEXT_FIELDS = [
 const STORAGE_FIELDS = [
   { key: "storage_container", label: "Container / box", placeholder: "Artifact Box 01" },
   { key: "storage_folder", label: "Folder / jacket", placeholder: "FH-0268" },
-  { key: "storage_position", label: "Position / compartment", placeholder: "Compartment 07" },
   { key: "storage_notes", label: "Location notes", placeholder: "" },
   { key: "storage_location", label: "Legacy storage note", placeholder: "" },
 ];
@@ -154,7 +153,6 @@ function LetterPage() {
       storage_type: letter.storage_type ?? "",
       storage_container: letter.storage_container ?? "",
       storage_folder: letter.storage_folder ?? "",
-      storage_position: letter.storage_position ?? "",
       storage_notes: letter.storage_notes ?? "",
       identification_status: letter.identification_status ?? "",
       provenance: letter.provenance ?? "",
@@ -311,7 +309,6 @@ function LetterPage() {
                   labelOf(STORAGE_TYPES, letter.storage_type),
                   letter.storage_container,
                   letter.storage_folder,
-                  letter.storage_position,
                 ]
                   .filter((v) => v && v !== "—")
                   .join(" · ") || "—"}
