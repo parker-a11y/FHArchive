@@ -47,8 +47,9 @@ export function PersonCombobox({
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
 
   const options = useMemo(() => {
-    const seeded = PRIMARY_PERSONS.map((p) => p.value).filter(Boolean);
-    const names = new Set<string>(seeded);
+    // Only canonical People records are offered, so nicknames such as "Jaq"
+    // can never be stored on a record again.
+    const names = new Set<string>();
     for (const p of people) if (p.name) names.add(p.name);
     if (value) names.add(value);
     return Array.from(names).sort(comparePeopleNames);
