@@ -194,6 +194,21 @@ function QuickEntry() {
         tones: form.tones,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
+      if (mentions.length) {
+        const { data: auth } = await supabase.auth.getUser();
+        const ownerId = auth.user?.id;
+        if (ownerId) {
+          await supabase.from("letter_people").insert(
+            mentions.map((p) => ({
+              owner_id: ownerId,
+              letter_id: created.id,
+              person_id: p.id,
+              role: "mentioned",
+              source: "manual",
+            })),
+          );
+        }
+      }
     } catch (e) {
       setBusy(false);
       return toast.error((e as Error).message);
