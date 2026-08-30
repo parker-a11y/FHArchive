@@ -36,7 +36,7 @@ export function EmailArchiveDialog({
   identifier?: string;
   title?: string | null;
   records?: RecordRef[];
-  trigger?: React.ReactNode;
+  trigger?: ReactNode;
 }) {
   const recordList: RecordRef[] =
     records ?? [{ kind: kind!, id: id!, identifier: identifier!, title }];
