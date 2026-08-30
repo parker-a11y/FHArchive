@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DS_SOURCE_TYPES, dsTypeLabel, fetchDsFileCounts, fetchSources } from "@/lib/sources";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/sources/")({
   head: () => ({
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/sources/")({
 });
 
 function SourcesList() {
+  const { isGuestViewer } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [type, setType] = useState("all");
@@ -71,13 +73,15 @@ function SourcesList() {
         title="Digital Sources"
         description={`${sources.length} research sources cataloged`}
         actions={
-          <Button
-            size="lg"
-            className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
-            onClick={() => navigate({ to: "/sources/new" })}
-          >
-            <Plus className="size-4 text-archive-gold" /> ADD DIGITAL SOURCE
-          </Button>
+          isGuestViewer ? undefined : (
+            <Button
+              size="lg"
+              className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
+              onClick={() => navigate({ to: "/sources/new" })}
+            >
+              <Plus className="size-4 text-archive-gold" /> ADD DIGITAL SOURCE
+            </Button>
+          )
         }
       />
       <div className="p-4 sm:p-8">
