@@ -165,11 +165,11 @@ function Stat({
             <Icon className="size-4" />
           </div>
         )}
-        <span className="field-label line-clamp-2 h-10 leading-5">{label}</span>
+        <span className="field-label whitespace-normal leading-5">{label}</span>
       </div>
       <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
       {sub && (
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{sub}</p>
+        <p className="mt-1 whitespace-normal text-xs text-muted-foreground">{sub}</p>
       )}
     </div>
   );
