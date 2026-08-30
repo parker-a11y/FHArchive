@@ -1719,6 +1719,41 @@ export type Database = {
         }
         Relationships: []
       }
+      person_aliases: {
+        Row: {
+          alias: string
+          alias_norm: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          person_id: string
+        }
+        Insert: {
+          alias: string
+          alias_norm?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          person_id: string
+        }
+        Update: {
+          alias?: string
+          alias_norm?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_aliases_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       places: {
         Row: {
           canonical_name: string
@@ -2208,6 +2243,15 @@ export type Database = {
           id: string
         }[]
       }
+      find_person_matches: {
+        Args: { _limit?: number; _name: string }
+        Returns: {
+          id: string
+          matched_on: string
+          name: string
+          score: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2217,6 +2261,10 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_approved_guest: { Args: { _user_id: string }; Returns: boolean }
+      merge_people: {
+        Args: { _source_ids: string[]; _target_id: string }
+        Returns: undefined
+      }
       next_archive_id: {
         Args: never
         Returns: {
@@ -2239,6 +2287,8 @@ export type Database = {
         }[]
       }
       require_admin: { Args: never; Returns: undefined }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "guest"
