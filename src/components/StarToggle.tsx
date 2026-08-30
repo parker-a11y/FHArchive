@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { postArchiveNote } from "@/lib/archive-notes";
 import { cn } from "@/lib/utils";
+import { FffBadge, FFF_NAME, FFF_SHORT } from "@/components/FffBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,13 +35,13 @@ export function StarNoteDialog({
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const [title, setTitle] = useState("Of extreme interest");
+  const [title, setTitle] = useState(`${FFF_SHORT} — ${FFF_NAME}`);
   const [body, setBody] = useState("");
 
   useEffect(() => {
     if (open) {
-      setTitle("Of extreme interest");
-      setBody(`An archive item of interest has been added: ${label}.`);
+      setTitle(`${FFF_SHORT} — ${FFF_NAME}`);
+      setBody(`New Francis File Find: ${label}.`);
     }
   }, [open, label]);
 
@@ -60,10 +60,12 @@ export function StarNoteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Post a note from the archive?</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FffBadge size={22} /> Post an FFF note?
+          </DialogTitle>
           <DialogDescription>
-            This item is flagged of extreme interest. Add or edit the note shown to anyone browsing
-            the archive, or skip it — the star is already saved.
+            This item is flagged as a Francis File Find. Add or edit the note shown to anyone
+            browsing the archive, or skip it — the FFF mark is already saved.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -132,10 +134,10 @@ export function StarToggle({
     onSuccess: (next) => {
       invalidate();
       if (next) {
-        toast.success("Marked of extreme interest");
+        toast.success("Marked as a Francis File Find");
         if (isAdmin) setNoteOpen(true);
       } else {
-        toast.success("Star removed");
+        toast.success("FFF mark removed");
       }
     },
     onError: (e: Error) => toast.error(e.message),
@@ -147,13 +149,11 @@ export function StarToggle({
     return (
       <span
         className={cn("inline-flex items-center gap-2", className)}
-        title="Of extreme interest"
-        aria-label="Of extreme interest"
+        title={`${FFF_SHORT} — ${FFF_NAME}`}
+        aria-label={`${FFF_SHORT} — ${FFF_NAME}`}
       >
-        <Star
-          className={cn(size === "sm" ? "size-3.5" : "size-4", "fill-tone-amber text-tone-amber")}
-        />
-        {showLabel && <span className="text-sm">Of extreme interest</span>}
+        <FffBadge size={size === "sm" ? 16 : 20} />
+        {showLabel && <span className="text-sm">{FFF_SHORT}</span>}
       </span>
     );
   }
@@ -165,8 +165,8 @@ export function StarToggle({
         variant="ghost"
         size={showLabel ? "sm" : "icon"}
         aria-pressed={starred}
-        aria-label={starred ? "Remove of extreme interest" : "Mark of extreme interest"}
-        title={starred ? "Of extreme interest" : "Mark of extreme interest"}
+        aria-label={starred ? `Remove ${FFF_SHORT} mark` : `Mark as a ${FFF_NAME}`}
+        title={starred ? `${FFF_SHORT} — ${FFF_NAME}` : `Mark as a ${FFF_NAME}`}
         className={cn(showLabel && "gap-2", className)}
         disabled={toggle.isPending}
         onClick={(e) => {
@@ -175,13 +175,8 @@ export function StarToggle({
           toggle.mutate(!starred);
         }}
       >
-        <Star
-          className={cn(
-            size === "sm" ? "size-3.5" : "size-4",
-            starred ? "fill-tone-amber text-tone-amber" : "text-muted-foreground",
-          )}
-        />
-        {showLabel && <span>{starred ? "Of extreme interest" : "Mark of extreme interest"}</span>}
+        <FffBadge size={size === "sm" ? 16 : 20} muted={!starred} />
+        {showLabel && <span>{starred ? FFF_SHORT : `Mark as ${FFF_SHORT}`}</span>}
       </Button>
 
       <StarNoteDialog open={noteOpen} onOpenChange={setNoteOpen} label={label} />
