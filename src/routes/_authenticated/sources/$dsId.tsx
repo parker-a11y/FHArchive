@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, ExternalLink, Globe, Trash2 } from "lucide-react";
+import { StarToggle } from "@/components/StarToggle";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,6 +144,12 @@ function SourcePage() {
                 {dsTypeLabel(source.source_type)}
               </span>
               <SourceShareStatusBadge visibility={source.visibility} />
+              <StarToggle
+                table="digital_sources"
+                id={source.id}
+                starred={Boolean(source.starred)}
+                label={`${source.ds_id} — ${source.title}`}
+              />
             </div>
             <p className="mt-0.5 text-sm text-muted-foreground">{source.title}</p>
           </div>
