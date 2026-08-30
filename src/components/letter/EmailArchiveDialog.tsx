@@ -118,16 +118,18 @@ export function EmailArchiveDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Mail className="size-4" /> Email
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="gap-2">
+            <Mail className="size-4" /> Email
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
-            Sends {identifier} as a formatted email. Scans travel as an unlisted archive link you can
-            switch off later — file attachments are not supported.
+            Sends {identifiers} as a formatted email. Scans travel as an unlisted archive link you
+            can switch off later — file attachments are not supported.
           </DialogDescription>
         </DialogHeader>
 
