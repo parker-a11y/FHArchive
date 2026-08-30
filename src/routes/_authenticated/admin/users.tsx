@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShieldCheck, CheckCircle, XCircle, Trash2, UserCog } from "lucide-react";
+import { CheckCircle, XCircle, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   listProfiles,
