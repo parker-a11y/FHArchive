@@ -6,6 +6,8 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";
 
 export const Route = createFileRoute("/people/")({
   head: () => ({
@@ -54,31 +56,42 @@ function People() {
     <>
       <PageHeader title="People" description={`${people.length} person records`} />
       <div className="max-w-3xl p-4 sm:p-8">
-        <div className="mb-6 flex gap-2">
-          <Input
-            placeholder="New person name…"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && add()}
-          />
-          <Button onClick={add}>Add person</Button>
-        </div>
-        <div className="divide-y divide-border rounded border border-border bg-card">
-          {people.map((p) => (
-            <Link
-              key={p.id}
-              to="/people/$personId"
-              params={{ personId: p.id }}
-              className="flex items-baseline gap-4 px-4 py-2.5 text-sm hover:bg-muted/60"
-            >
-              <span className="font-medium">{p.name}</span>
-              <span className="text-muted-foreground">{p.relationship}</span>
-            </Link>
-          ))}
-          {people.length === 0 && (
-            <p className="px-4 py-6 text-sm text-muted-foreground">No people yet.</p>
-          )}
-        </div>
+        <Tabs defaultValue="all">
+          <TabsList className="mb-4">
+            <TabsTrigger value="all">All people</TabsTrigger>
+            <TabsTrigger value="dupes">Duplicates</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all">
+            <div className="mb-6 flex gap-2">
+              <Input
+                placeholder="New person name…"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && add()}
+              />
+              <Button onClick={add}>Add person</Button>
+            </div>
+            <div className="divide-y divide-border rounded border border-border bg-card">
+              {people.map((p) => (
+                <Link
+                  key={p.id}
+                  to="/people/$personId"
+                  params={{ personId: p.id }}
+                  className="flex items-baseline gap-4 px-4 py-2.5 text-sm hover:bg-muted/60"
+                >
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-muted-foreground">{p.relationship}</span>
+                </Link>
+              ))}
+              {people.length === 0 && (
+                <p className="px-4 py-6 text-sm text-muted-foreground">No people yet.</p>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="dupes">
+            <DuplicatesPanel />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );
