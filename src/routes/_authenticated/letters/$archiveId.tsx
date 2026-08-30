@@ -193,6 +193,24 @@ function LetterPage() {
     setDirty(false);
   }, [letter]);
 
+  useEffect(() => {
+    if (!letter) return;
+    let cancelled = false;
+    (async () => {
+      const [author, recipient] = await Promise.all([
+        fetchLetterPersonByRole(letter.id, "author"),
+        fetchLetterPersonByRole(letter.id, "recipient"),
+      ]);
+      if (cancelled) return;
+      setAuthorPerson(author ? { id: author.person_id, name: author.name } : null);
+      setRecipientPerson(recipient ? { id: recipient.person_id, name: recipient.name } : null);
+      setAuthorRecipientDirty(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [letter?.id]);
+
   if (isLoading) return <div className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</div>;
   if (!letter)
     return (
