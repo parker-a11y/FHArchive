@@ -43,8 +43,8 @@ function Keywords() {
       const { data, error } = await supabase.rpc("keyword_usage_counts");
       if (error) throw error;
       const m: Record<string, number> = {};
-      for (const r of (data ?? []) as { keyword_id: string; usage_count: number }[]) {
-        m[r.keyword_id] = Number(r.usage_count);
+      for (const r of data ?? []) {
+        m[r.keyword_id] = Number(r.uses);
       }
       return m;
     },

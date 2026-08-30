@@ -119,8 +119,8 @@ export async function fetchDsFileCounts(): Promise<Record<string, number>> {
   const { data, error } = await supabase.rpc("ds_file_counts");
   if (error) throw error;
   const map: Record<string, number> = {};
-  for (const r of (data ?? []) as { source_id: string; file_count: number }[]) {
-    map[r.source_id] = Number(r.file_count);
+  for (const r of data ?? []) {
+    map[r.source_id] = Number(r.files);
   }
   return map;
 }
