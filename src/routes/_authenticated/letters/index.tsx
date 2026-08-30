@@ -691,10 +691,18 @@ function LettersTable() {
                           ...w,
                           [c.key]: Math.max(60, startW + ev.clientX - startX),
                         }));
-                      const up = () => {
-                        window.removeEventListener("mousemove", move);
-                        window.removeEventListener("mouseup", up);
-                      };
+                       const up = () => {
+                         window.removeEventListener("mousemove", move);
+                         window.removeEventListener("mouseup", up);
+                         setWidths((w) => {
+                           try {
+                             localStorage.setItem("letters_col_widths", JSON.stringify(w));
+                           } catch {
+                             /* storage unavailable */
+                           }
+                           return w;
+                         });
+                       };
                       window.addEventListener("mousemove", move);
                       window.addEventListener("mouseup", up);
                     }}
