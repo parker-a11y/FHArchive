@@ -46,7 +46,7 @@ const searchSchema = z.object({
   tstatus: z.string().optional(),
   review: z.string().optional(),
   scan: z.string().optional(), // "has" | "none"
-  cataloged: z.coerce.string().optional(), // "1"
+  
   uncertain: z.coerce.string().optional(), // "1"
 });
 
@@ -151,7 +151,6 @@ function LettersTable() {
   const [rType, setRType] = useState(search.type ?? "");
   const [review, setReview] = useState(search.review ?? "");
   const [scanF, setScanF] = useState(search.scan ?? "");
-  const [catalogedOnly, setCatalogedOnly] = useState(search.cataloged === "1");
   const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
 
   // Keep filters in sync when arriving from a dashboard stat link.
@@ -161,7 +160,6 @@ function LettersTable() {
     setTStatus(search.tstatus ?? "");
     setReview(search.review ?? "");
     setScanF(search.scan ?? "");
-    setCatalogedOnly(search.cataloged === "1");
     setUncertainOnly(search.uncertain === "1");
   }, [search]);
   const recordTypeOptions = useRecordTypeOptions();
@@ -193,7 +191,6 @@ function LettersTable() {
       if (review && l.review_status !== review) return false;
       if (scanF === "has" && l.image_count === 0) return false;
       if (scanF === "none" && l.image_count > 0) return false;
-      if (catalogedOnly && !(l.author || l.recipient || l.normalized_date)) return false;
       if (uncertainOnly && l.date_certainty === "confirmed" && l.date_precision === "exact")
         return false;
       if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
@@ -237,7 +234,7 @@ function LettersTable() {
       return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, review, scanF, catalogedOnly, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, review, scanF, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
 
   const selectedRecords = useMemo(
     () =>
@@ -324,7 +321,6 @@ function LettersTable() {
     setRType("");
     setReview("");
     setScanF("");
-    setCatalogedOnly(false);
     setUncertainOnly(false);
     setIdStatus("");
     setDStatus("");
@@ -346,7 +342,6 @@ function LettersTable() {
     dStatus,
     digStatus,
     view,
-    catalogedOnly ? "cataloged" : "",
     uncertainOnly ? "uncertain" : "",
     ...tones,
   ].filter(Boolean).length;

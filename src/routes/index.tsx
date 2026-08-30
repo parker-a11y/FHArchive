@@ -252,14 +252,6 @@ function Dashboard() {
       to: "/letters?scan=has",
     },
     {
-      label: "Cataloged",
-      value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
-      sub: "Author, recipient, or date filled in",
-      tone: "amber",
-      icon: PenLine,
-      to: "/letters?cataloged=1",
-    },
-    {
       label: "Records with scans",
       value: c((l) => l.image_count > 0),
       tone: "teal",
