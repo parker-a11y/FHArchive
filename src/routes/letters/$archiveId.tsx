@@ -169,7 +169,6 @@ function LetterPage() {
       sheets: letter.sheets === null ? "" : String(letter.sheets),
       has_envelope: letter.has_envelope,
       has_enclosures: letter.has_enclosures,
-      physical_condition: letter.physical_condition ?? "",
       notes: letter.notes ?? "",
       summary_short: letter.summary_short ?? "",
       summary_long: letter.summary_long ?? "",
@@ -215,7 +214,6 @@ function LetterPage() {
     payload.scan_status = form.scan_status;
     payload.publication_status = form.publication_status;
     payload.record_type = form.record_type || "letter";
-    payload.original_copy = form.original_copy || "unknown";
     payload.research_status = form.research_status || "unreviewed";
     payload.identification_status = form.identification_status || "unidentified";
     payload.tones = tones;
