@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
+import { StarNoteDialog } from "@/components/StarToggle";
+import { Star } from "lucide-react";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import {
   DATE_CERTAINTY,
@@ -75,6 +77,7 @@ const blank = {
   sheets: "",
   has_envelope: false,
   has_enclosures: false,
+  starred: false,
   storage_type: "",
   storage_folder: "",
   source_container_id: "",
@@ -186,6 +189,7 @@ function QuickEntry() {
         source_container_id: form.source_container_id || null,
         original_order_notes: form.original_order_notes || null,
         tones: form.tones,
+        starred: form.starred,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
       if (mentions.length) {
@@ -211,6 +215,9 @@ function QuickEntry() {
     qc.invalidateQueries({ queryKey: ["letters"] });
     toast.success(`${created.archive_id} cataloged`);
     setSession((s) => [created.archive_id, ...s]);
+    if (form.starred) {
+      setStarNoteFor(`${created.archive_id}${form.title ? ` — ${form.title}` : ""}`);
+    }
     if (mode === "open") {
       navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
       return;
@@ -544,6 +551,19 @@ function QuickEntry() {
                   onChange={(e) => set("has_enclosures", e.target.checked)}
                 />
                 Enclosures
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.starred}
+                  onChange={(e) => set("starred", e.target.checked)}
+                />
+                <Star
+                  className={
+                    form.starred ? "size-4 fill-tone-amber text-tone-amber" : "size-4 text-muted-foreground"
+                  }
+                />
+                Of extreme interest
               </label>
             </div>
           </div>
