@@ -141,14 +141,97 @@ function SearchPage() {
   });
   const results: Letter[] = page?.rows ?? [];
   const totalMatches = page?.total ?? 0;
+  const resultIds = results.map((l) => l.id);
 
-  function snippet(l: Letter): string {
-    const text = (l.transcription_verified ?? "").replace(/\s+/g, " ");
-    if (!debouncedQ) return text.slice(0, 140);
-    const i = text.toLowerCase().indexOf(debouncedQ.toLowerCase());
-    if (i < 0) return (l.summary_short ?? text).slice(0, 140);
-    return "…" + text.slice(Math.max(0, i - 40), i + 100) + "…";
+  // Page-level scan transcriptions + linked entity names for the visible results,
+  // so a hit can be labelled with its page number or the keyword/person/place it came from.
+  const { data: context } = useQuery({
+    queryKey: ["search_context", debouncedQ, resultIds],
+    enabled: Boolean(debouncedQ) && resultIds.length > 0,
+    queryFn: async () => {
+      const like = `%${debouncedQ}%`;
+      const [pages, kw, ppl, plc] = await Promise.all([
+        supabase
+          .from("scan_transcriptions")
+          .select("letter_id,page_label,page_index,ai_text,verified_text")
+          .in("letter_id", resultIds)
+          .or(`verified_text.ilike.${like},ai_text.ilike.${like}`),
+        supabase
+          .from("letter_keywords")
+          .select("letter_id,keywords(name)")
+          .in("letter_id", resultIds),
+        supabase.from("letter_people").select("letter_id,people(name)").in("letter_id", resultIds),
+        supabase
+          .from("letter_places")
+          .select("letter_id,places(canonical_name)")
+          .in("letter_id", resultIds),
+      ]);
+      const byId = new Map<string, { snippets: Snippet[]; tags: string[] }>();
+      const bucket = (id: string) => {
+        let b = byId.get(id);
+        if (!b) {
+          b = { snippets: [], tags: [] };
+          byId.set(id, b);
+        }
+        return b;
+      };
+      for (const p of pages.data ?? []) {
+        const label = p.page_label || `Page ${(p.page_index ?? 0) + 1}`;
+        const text = p.verified_text || p.ai_text;
+        bucket(p.letter_id).snippets.push(...buildSnippets(label, text, debouncedQ, 2));
+      }
+      const term = debouncedQ.toLowerCase();
+      const addTag = (id: string, kind: string, name?: string | null) => {
+        if (name && name.toLowerCase().includes(term)) bucket(id).tags.push(`${kind}: ${name}`);
+      };
+      for (const r of kw.data ?? [])
+        addTag(r.letter_id, "Keyword", (r as { keywords: { name: string } | null }).keywords?.name);
+      for (const r of ppl.data ?? [])
+        addTag(r.letter_id, "Person", (r as { people: { name: string } | null }).people?.name);
+      for (const r of plc.data ?? [])
+        addTag(
+          r.letter_id,
+          "Place",
+          (r as { places: { canonical_name: string } | null }).places?.canonical_name,
+        );
+      return byId;
+    },
+  });
+
+  function matchesFor(l: Letter): { snippets: Snippet[]; tags: string[] } {
+    if (!debouncedQ) {
+      const text = (l.transcription_verified ?? l.summary_short ?? "").replace(/\s+/g, " ");
+      return text
+        ? { snippets: [{ label: "Summary", text: text.slice(0, 160), full: text.slice(0, 900) }], tags: [] }
+        : { snippets: [], tags: [] };
+    }
+    const extra = context?.get(l.id);
+    const snippets = [
+      ...buildSnippets("Verified transcription", l.transcription_verified, debouncedQ),
+      ...(extra?.snippets ?? []),
+      ...buildSnippets("AI transcription", l.transcription_raw_ai, debouncedQ),
+      ...buildSnippets("Summary", l.summary_short, debouncedQ, 1),
+      ...buildSnippets("Summary", l.summary_long, debouncedQ, 1),
+      ...buildSnippets("Notes", l.notes, debouncedQ, 2),
+      ...buildSnippets("Research notes", l.research_notes, debouncedQ, 1),
+      ...buildSnippets("Historical notes", l.historical_notes, debouncedQ, 1),
+      ...buildSnippets("Title", l.title, debouncedQ, 1),
+    ];
+    return { snippets, tags: extra?.tags ?? [] };
   }
+
+  function hitCount(l: Letter): number {
+    if (!debouncedQ) return 0;
+    return (
+      countMatches(l.transcription_verified, debouncedQ) +
+      countMatches(l.transcription_raw_ai, debouncedQ) +
+      countMatches(l.notes, debouncedQ) +
+      countMatches(l.summary_short, debouncedQ) +
+      countMatches(l.summary_long, debouncedQ) +
+      countMatches(l.title, debouncedQ)
+    );
+  }
+
 
   const sel =
     "h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring";
