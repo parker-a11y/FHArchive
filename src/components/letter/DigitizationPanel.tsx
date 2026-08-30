@@ -39,6 +39,7 @@ import {
   formatSeq,
   normalizeFh,
   parseScanFilename,
+  sortByFilename,
   suggestedLabels,
   usesPhotoSides,
 } from "@/lib/digitization";
@@ -90,6 +91,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const key = ["digital-files", letter.id];
   const [progress, setProgress] = useState<Progress>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [transcribing, setTranscribing] = useState<string[]>([]);
@@ -159,7 +161,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   /* ------------------------------- upload ------------------------------- */
 
   async function uploadFiles(list: FileList | File[]) {
-    const chosen = Array.from(list);
+    const chosen = sortByFilename(Array.from(list));
     if (!chosen.length) return;
     const startOrder = files.length;
     let added = 0;
@@ -182,13 +184,15 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
       const parsed = parseScanFilename(file.name);
       const matches = parsed.fh === null ? true : parsed.fh === normalizeFh(letter.archive_id);
+      const seq = parsed.seq ?? null;
+      const sortOrder = seq ?? startOrder + i + 1;
 
       const { data: inserted, error: insErr } = await supabase
         .from("digital_files")
         .insert({
           letter_id: letter.id,
-          seq: parsed.seq,
-          sort_order: parsed.seq ?? startOrder + i + 1,
+          seq,
+          sort_order: sortOrder,
           original_filename: file.name,
           master_path: masterPath,
           master_mime: file.type || null,
@@ -674,12 +678,28 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
       {/* Uploader */}
       <div
-        onDragOver={(e) => e.preventDefault()}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
         onDrop={(e) => {
           e.preventDefault();
+          setDragActive(false);
           if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
         }}
-        className="rounded border-2 border-dashed border-border bg-muted/40 px-6 py-8 text-center"
+        className={`rounded border-2 border-dashed px-6 py-8 text-center transition-colors ${
+          dragActive
+            ? "border-primary bg-primary/10"
+            : "border-border bg-muted/40"
+        }`}
       >
         <UploadCloud className="mx-auto mb-2 size-7 text-primary" />
         <p className="text-sm">
@@ -696,9 +716,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           — or drop a whole batch here (e.g. {letter.archive_id}_001.tif …_010.tif)
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          The TIFF you upload is stored byte-for-byte as the archival master and is never resized,
-          recompressed or replaced. Name each scan, then click “Confirm Upload Complete” to
-          generate the JPEG viewing copies and thumbnails.
+          Dropped batches are automatically sorted by filename so pages import in order. The TIFF you
+          upload is stored byte-for-byte as the archival master and is never resized, recompressed
+          or replaced. Name each scan, then click “Confirm Upload Complete” to generate the JPEG
+          viewing copies and thumbnails.
         </p>
         {progress && (
           <div className="mx-auto mt-4 max-w-md text-left">
