@@ -45,11 +45,19 @@ async function link(table: string, row: Record<string, unknown>) {
 
 export type ApplyResult = { applied: boolean; note: string };
 
+/**
+ * Resolves a proposed person name to an archive person. Supplied by the UI so
+ * near-duplicate names can be confirmed against existing records; returning
+ * null skips linking that name.
+ */
+export type PersonResolver = (name: string) => Promise<{ id: string; name: string } | null>;
+
 export async function applySuggestion(
   letterId: string,
   fieldKey: string,
   content: string,
   letterBefore: Record<string, unknown>,
+  resolvePerson?: PersonResolver,
 ): Promise<ApplyResult> {
   const text = content.trim();
   if (!text) return { applied: false, note: "Nothing to apply" };
