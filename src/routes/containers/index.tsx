@@ -28,7 +28,7 @@ export const Route = createFileRoute("/containers/")({
       { property: "og:title", content: "Source Containers — The Francis Files" },
       {
         property: "og:description",
-        content: "Original source containers documenting the provenance of the Harrington archive.",
+        content: "Original source containers documenting the provenance of The Francis Files.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

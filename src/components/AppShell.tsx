@@ -72,10 +72,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="flex min-w-0 flex-col">
           <span className="font-display text-lg leading-none font-semibold text-sidebar-accent-foreground">
-            Harrington
+            The Francis
           </span>
           <span className="mt-1 text-[10px] font-bold tracking-[0.2em] text-sidebar-foreground/60 uppercase">
-            Family Archive
+            Files
           </span>
         </div>
       </div>
