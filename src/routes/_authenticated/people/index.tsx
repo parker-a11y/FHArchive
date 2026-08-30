@@ -38,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/people/")({
 });
 
 function People() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
