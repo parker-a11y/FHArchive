@@ -162,6 +162,7 @@ export type LetterSearchParams = {
   author?: string;
   recipient?: string;
   place?: string;
+  starred?: boolean;
   sort?: string;
   dir?: "asc" | "desc";
   limit?: number;
