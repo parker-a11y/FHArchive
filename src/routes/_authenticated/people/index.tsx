@@ -46,9 +46,8 @@ export const Route = createFileRoute("/_authenticated/people/")({
 function People() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingName, setPendingName] = useState("");
   const [saving, setSaving] = useState(false);
+  const { resolvePerson, dialog: personDialog } = usePersonMatcher();
   const { data: people = [] } = useQuery({
     queryKey: ["people"],
     queryFn: async () => {
@@ -58,33 +57,32 @@ function People() {
     },
   });
 
-  function promptAdd() {
+  /**
+   * Search existing people first: an exact/alias hit or a close match opens the
+   * match dialog (merge into the existing person or confirm a new record),
+   * so near-duplicates never silently become a second person.
+   */
+  async function promptAdd() {
     const trimmed = name.trim();
-    if (!trimmed) return;
-    setPendingName(trimmed);
-    setConfirmOpen(true);
-  }
-
-  async function confirmAdd() {
-    if (!pendingName) return;
+    if (!trimmed || saving) return;
     setSaving(true);
-    const { error } = await supabase.from("people").insert({ name: pendingName });
-    setSaving(false);
-    if (error) {
-      setConfirmOpen(false);
-      return toast.error(error.message);
+    try {
+      const person = await resolvePerson(trimmed);
+      if (!person) return;
+      setName("");
+      await qc.invalidateQueries({ queryKey: ["people"] });
+      toast.success(
+        person.name.toLowerCase() === trimmed.toLowerCase()
+          ? `Created person: ${person.name}`
+          : `Matched to existing person: ${person.name}`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the person");
+    } finally {
+      setSaving(false);
     }
-    setName("");
-    setPendingName("");
-    setConfirmOpen(false);
-    qc.invalidateQueries({ queryKey: ["people"] });
-    toast.success(`Created person: ${pendingName}`);
   }
 
-  function cancelAdd() {
-    setConfirmOpen(false);
-    setPendingName("");
-  }
 
   return (
     <>
