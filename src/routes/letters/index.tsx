@@ -112,11 +112,9 @@ const COLUMNS: Col[] = [
 
 /** Human-readable one-line physical location. */
 function storageText(l: Letter) {
-  const parts = [
-    labelOf(STORAGE_TYPES, l.storage_type),
-    l.storage_container,
-    l.storage_folder,
-  ].filter((v) => v && v !== "—");
+  const parts = [labelOf(STORAGE_TYPES, l.storage_type), l.storage_folder].filter(
+    (v) => v && v !== "—",
+  );
   return parts.join(" · ") || (l.storage_location ?? "");
 }
 
@@ -281,7 +279,7 @@ function LettersTable() {
       original_copy: l.original_copy ?? "",
       identification_status: labelOf(IDENTIFICATION_STATUS, l.identification_status),
       storage_type: labelOf(STORAGE_TYPES, l.storage_type),
-      storage_container: l.storage_container ?? "",
+      
       storage_folder: l.storage_folder ?? "",
       storage_notes: l.storage_notes ?? "",
       storage_location: l.storage_location ?? "",

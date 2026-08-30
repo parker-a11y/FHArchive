@@ -308,7 +308,6 @@ function LetterPage() {
                 <span className="field-label mr-2">Stored</span>
                 {[
                   labelOf(STORAGE_TYPES, letter.storage_type),
-                  letter.storage_container,
                   letter.storage_folder,
                 ]
                   .filter((v) => v && v !== "—")
