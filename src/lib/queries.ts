@@ -196,6 +196,7 @@ export async function searchLetters(p: LetterSearchParams): Promise<LetterPage> 
     p_author: p.author || null,
     p_recipient: p.recipient || null,
     p_place: p.place || null,
+    p_starred: p.starred ?? false,
     p_sort: p.sort ?? "fh_seq",
     p_dir: p.dir ?? "asc",
     p_limit: p.limit ?? 100,
@@ -226,6 +227,8 @@ export type DashboardStats = {
   uncertain_dates: number;
   total_scans: number;
   letters_with_files: number;
+  starred_records: number;
+  starred_sources: number;
 };
 
 /** All dashboard counts in one database call. */
