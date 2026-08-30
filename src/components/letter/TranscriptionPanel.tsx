@@ -68,6 +68,7 @@ function PageEditor({
   onTranscribe,
   busy,
   onSaved,
+  highlight,
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
@@ -76,6 +77,7 @@ function PageEditor({
   onTranscribe: () => void;
   busy: boolean;
   onSaved: () => void;
+  highlight?: string;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -135,6 +137,20 @@ function PageEditor({
         </div>
 
         <div className="space-y-2">
+          {highlight && countMatches(text, highlight) > 0 && (
+            <details
+              open
+              className="rounded border border-yellow-300 bg-yellow-50 p-2 text-xs dark:bg-yellow-950/30"
+            >
+              <summary className="cursor-pointer font-medium">
+                “{highlight}” — {countMatches(text, highlight)} match
+                {countMatches(text, highlight) === 1 ? "" : "es"} in this page
+              </summary>
+              <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
+                <HighlightedText text={text} term={highlight} />
+              </div>
+            </details>
+          )}
           <Textarea
             rows={16}
             className="font-mono text-sm"
@@ -156,7 +172,7 @@ function PageEditor({
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Original AI transcription</summary>
                 <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded border border-archive-ai/40 bg-archive-ai-surface p-2 text-[11px]">
-                  {record.ai_text}
+                  <HighlightedText text={record.ai_text} term={highlight} />
                 </pre>
               </details>
             )}
