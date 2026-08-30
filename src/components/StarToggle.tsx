@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +20,73 @@ import {
 
 type Table = "letters" | "digital_sources";
 
+/**
+ * Prefilled "note from the archive" prompt shown after an item is starred.
+ * The star itself is already saved — posting the note is optional.
+ */
+export function StarNoteDialog({
+  open,
+  onOpenChange,
+  label,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  label: string;
+}) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [title, setTitle] = useState("Of extreme interest");
+  const [body, setBody] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setTitle("Of extreme interest");
+      setBody(`An archive item of interest has been added: ${label}.`);
+    }
+  }, [open, label]);
+
+  const post = useMutation({
+    mutationFn: async () =>
+      postArchiveNote({ title, body, authorId: user?.id, authorName: user?.email ?? null }),
+    onSuccess: () => {
+      onOpenChange(false);
+      qc.invalidateQueries({ queryKey: ["archive-notes"] });
+      toast.success("Note posted");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Post a note from the archive?</DialogTitle>
+          <DialogDescription>
+            This item is flagged of extreme interest. Add or edit the note shown to anyone browsing
+            the archive, or skip it — the star is already saved.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            placeholder="Title (optional)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Skip
+          </Button>
+          <Button onClick={() => post.mutate()} disabled={post.isPending || !body.trim()}>
+            {post.isPending ? "Posting…" : "Post note"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function StarToggle({
   table,
   id,
@@ -38,11 +105,9 @@ export function StarToggle({
   showLabel?: boolean;
   className?: string;
 }) {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const [noteOpen, setNoteOpen] = useState(false);
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteBody, setNoteBody] = useState("");
 
   const invalidate = () => {
     for (const key of [
@@ -68,30 +133,10 @@ export function StarToggle({
       invalidate();
       if (next) {
         toast.success("Marked of extreme interest");
-        if (isAdmin) {
-          setNoteTitle("Of extreme interest");
-          setNoteBody(`An archive item of interest has been added: ${label}.`);
-          setNoteOpen(true);
-        }
+        if (isAdmin) setNoteOpen(true);
       } else {
         toast.success("Star removed");
       }
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const post = useMutation({
-    mutationFn: async () =>
-      postArchiveNote({
-        title: noteTitle,
-        body: noteBody,
-        authorId: user?.id,
-        authorName: user?.email ?? null,
-      }),
-    onSuccess: () => {
-      setNoteOpen(false);
-      qc.invalidateQueries({ queryKey: ["archive-notes"] });
-      toast.success("Note posted");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -122,33 +167,7 @@ export function StarToggle({
         {showLabel && <span>{starred ? "Of extreme interest" : "Mark of extreme interest"}</span>}
       </Button>
 
-      <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Post a note from the archive?</DialogTitle>
-            <DialogDescription>
-              This item is now flagged of extreme interest. Add or edit the note shown to anyone
-              browsing the archive, or skip it — the star is already saved.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input
-              placeholder="Title (optional)"
-              value={noteTitle}
-              onChange={(e) => setNoteTitle(e.target.value)}
-            />
-            <Textarea rows={5} value={noteBody} onChange={(e) => setNoteBody(e.target.value)} />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNoteOpen(false)}>
-              Skip
-            </Button>
-            <Button onClick={() => post.mutate()} disabled={post.isPending || !noteBody.trim()}>
-              {post.isPending ? "Posting…" : "Post note"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <StarNoteDialog open={noteOpen} onOpenChange={setNoteOpen} label={label} />
     </>
   );
 }
