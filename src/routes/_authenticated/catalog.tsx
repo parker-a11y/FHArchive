@@ -376,9 +376,21 @@ function QuickEntry() {
                   ref={dateRef}
                   type="date"
                   value={form.normalized_date}
-                  onChange={(e) => set("normalized_date", e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setForm((f) => ({
+                      ...f,
+                      normalized_date: value,
+                      // A real date was entered — don't keep the record flagged undated.
+                      date_precision:
+                        value && (f.date_precision === "undated" || f.date_precision === "unknown")
+                          ? "exact"
+                          : f.date_precision,
+                    }));
+                  }}
                 />
               )}
+
               <div className="flex gap-3 pt-1">
                 <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <input

@@ -459,14 +459,23 @@ function LetterPage() {
                 onChange={(e) => {
                   const value = e.target.value;
                   if (!value) return set("normalized_date", "");
-                  if (form.date_precision === "year") {
+                  const precision = String(form.date_precision);
+                  if (precision === "year") {
                     return set("normalized_date", `${value.slice(0, 4)}-01-01`);
                   }
-                  if (form.date_precision === "month") {
+                  if (precision === "month") {
                     return set("normalized_date", `${value.slice(0, 7)}-01`);
                   }
-                  set("normalized_date", value);
+                  setDirty(true);
+                  setForm((f) => ({
+                    ...f,
+                    normalized_date: value,
+                    // A real date was entered — don't keep the record flagged undated.
+                    date_precision:
+                      precision === "undated" || precision === "unknown" ? "exact" : precision,
+                  }));
                 }}
+
               />
               <div className="flex gap-3 pt-1.5">
                 <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">

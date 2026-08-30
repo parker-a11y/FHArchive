@@ -407,7 +407,6 @@ type DateShape = {
 /** Label date rendering honouring precision/certainty — never invents precision. */
 export function labelDate(letter: DateShape) {
   if (letter.date_precision === "not_applicable") return "NO DATE";
-  if (letter.date_precision === "undated") return "UNDATED";
   const d = letter.normalized_date;
   if (!d) return "UNDATED";
   const [y, m, day] = d.split("-").map(Number);
@@ -424,9 +423,9 @@ export function labelDate(letter: DateShape) {
 }
 
 export function displayDate(letter: DateShape) {
-  if (letter.date_precision === "undated") return "Undated";
   if (letter.date_precision === "not_applicable") return "Not applicable";
   if (!letter.normalized_date) return letter.date_as_written || "Undated";
+
   const base = labelDate(letter);
   return base.charAt(0) + base.slice(1).toLowerCase();
 }
