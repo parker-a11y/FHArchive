@@ -130,12 +130,12 @@ function PersonPage() {
                 Delete person
               </Button>
             </DeletePersonButton>
-            <Button onClick={save}>Save</Button>
+            {!isGuestViewer && <Button onClick={save}>Save</Button>}
           </div>
         }
       />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
-        <div className="space-y-4">
+        <fieldset disabled={isGuestViewer} className="space-y-4">
           {FIELDS.map((f) =>
             f.area ? (
               <div key={f.key}>
@@ -157,7 +157,7 @@ function PersonPage() {
             ),
           )}
           <AliasManager personId={person.id} />
-        </div>
+        </fieldset>
         <div>
           <List title="Letters written by" rows={written} />
           <List title="Letters sent to" rows={received} />

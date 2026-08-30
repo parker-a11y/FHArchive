@@ -118,12 +118,12 @@ function PlacePage() {
                 <Trash2 className="mr-1.5 h-4 w-4" /> Delete
               </Button>
             </DeletePlaceButton>
-            <Button onClick={save}>Save</Button>
+            {!isGuestViewer && <Button onClick={save}>Save</Button>}
           </div>
         }
       />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <fieldset disabled={isGuestViewer} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FIELDS.map((f) => (
             <div key={f.key} className={f.area ? "col-span-full" : ""}>
               <label className="field-label">{f.label}</label>
