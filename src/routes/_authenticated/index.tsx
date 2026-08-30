@@ -343,6 +343,9 @@ function Dashboard() {
                 onClick={() => setDailyOpen((v) => !v)}
                 active={dailyOpen}
               />
+              {stats.map((s) => (
+                <Stat key={s.label} {...s} />
+              ))}
               <Stat
                 label="All categories"
                 value={categoryTiles.length}
@@ -352,9 +355,6 @@ function Dashboard() {
                 onClick={() => setCategoriesOpen((v) => !v)}
                 active={categoriesOpen}
               />
-              {stats.map((s) => (
-                <Stat key={s.label} {...s} />
-              ))}
             </div>
 
             {dailyOpen && (
