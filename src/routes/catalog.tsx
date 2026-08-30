@@ -76,15 +76,14 @@ const blank = {
   sheets: "",
   has_envelope: false,
   has_enclosures: false,
-  storage_location: "",
   storage_type: "",
+  
   
   storage_folder: "",
   storage_notes: "",
   source_container_id: "",
   original_order_notes: "",
   identification_status: "",
-  original_copy: "original",
   notes: "",
 };
 
