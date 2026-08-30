@@ -6,3 +6,4 @@
 - [x] Ship USS Doyle C. Barnes logo (sign-in, dashboard, sidebar, favicon) with "The Francis Files" wordmark
 - [x] Sign-in page: large logo on left, sign-in tools on right
 - [x] Drag-and-drop bulk scan uploads with automatic page ordering
+- [ ] Dashboard: Daily Summary becomes one top-section tile (count of new FH+Digital records today; click reveals scans/transcriptions detail)
