@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
-import { Star } from "lucide-react";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import {
   DATE_CERTAINTY,
