@@ -120,6 +120,7 @@ function Select_({
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
+  const [mentions, setMentions] = useState<PersonRef[]>([]);
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
   const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; title: string; lines: string[] } | null>(
