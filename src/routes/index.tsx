@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -35,6 +36,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
 import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
+import { useRecordTypeOptions } from "@/lib/categories";
+
+/** Tone/icon per built-in record type; anything else falls back to Box/indigo. */
+const CATEGORY_STYLES: Record<string, { tone: Tone; icon: LucideIcon }> = {
+  letter: { tone: "blue", icon: Mail },
+  photograph: { tone: "emerald", icon: Camera },
+  military: { tone: "rose", icon: Medal },
+  government: { tone: "indigo", icon: Landmark },
+  family: { tone: "amber", icon: Home },
+  newspaper: { tone: "teal", icon: Newspaper },
+  financial: { tone: "ochre", icon: Coins },
+  program: { tone: "plum", icon: CalendarDays },
+  artifact: { tone: "rose", icon: Gem },
+  other: { tone: "indigo", icon: Box },
+};
+
+/** Shorter dashboard labels for a few built-ins. */
+const CATEGORY_LABELS: Record<string, string> = {
+  letter: "Letters",
+  photograph: "Photographs",
+  military: "Military",
+  government: "Government",
+  family: "Personal / Family",
+  newspaper: "Newspaper",
+  financial: "Financial",
+  program: "Programs",
+  artifact: "Artifacts",
+};
+
+/** Always shown, even at zero. */
+const CORE_CATEGORIES = new Set(Object.keys(CATEGORY_STYLES));
 
 async function fetchDailySummary() {
   const start = new Date();
@@ -173,6 +205,27 @@ function Dashboard() {
     queryFn: fetchDailySummary,
   });
 
+  const typeOptions = useRecordTypeOptions();
+  const categoryTiles = useMemo(() => {
+    const known = new Set(typeOptions.map((o) => o.value));
+    const counts = new Map<string, number>();
+    for (const l of letters) {
+      const raw = (l.record_type as string) || "letter";
+      const key = known.has(raw) ? raw : "other";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const style = (v: string): { tone: Tone; icon: LucideIcon } =>
+      CATEGORY_STYLES[v] ?? { tone: "indigo", icon: Box };
+    return typeOptions
+      .filter((o) => (counts.get(o.value) ?? 0) > 0 || CORE_CATEGORIES.has(o.value))
+      .map((o) => ({
+        value: o.value,
+        label: CATEGORY_LABELS[o.value] ?? o.label,
+        count: counts.get(o.value) ?? 0,
+        ...style(o.value),
+      }));
+  }, [letters, typeOptions]);
+
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
     { label: "FH records", value: letters.length, tone: "blue", icon: Hash, to: "/letters" },
@@ -306,22 +359,11 @@ function Dashboard() {
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {[
-                { value: "letter", label: "Letters", tone: "blue" as Tone, icon: Mail },
-                { value: "photograph", label: "Photographs", tone: "emerald" as Tone, icon: Camera },
-                { value: "military", label: "Military", tone: "rose" as Tone, icon: Medal },
-                { value: "government", label: "Government", tone: "indigo" as Tone, icon: Landmark },
-                { value: "family", label: "Personal / Family", tone: "amber" as Tone, icon: Home },
-                { value: "newspaper", label: "Newspaper", tone: "teal" as Tone, icon: Newspaper },
-                { value: "financial", label: "Financial", tone: "ochre" as Tone, icon: Coins },
-                { value: "program", label: "Programs", tone: "plum" as Tone, icon: CalendarDays },
-                { value: "artifact", label: "Artifacts", tone: "rose" as Tone, icon: Gem },
-                { value: "other", label: "Other", tone: "indigo" as Tone, icon: Box },
-              ].map((cat) => (
+              {categoryTiles.map((cat) => (
                 <Stat
                   key={cat.value}
                   label={cat.label}
-                  value={letters.filter((l) => (l.record_type ?? "letter") === cat.value).length}
+                  value={cat.count}
                   to={`/letters?type=${cat.value}`}
                   tone={cat.tone}
                   icon={cat.icon}
