@@ -47,7 +47,7 @@ const searchSchema = z.object({
   review: z.string().optional(),
   scan: z.string().optional(), // "has" | "none"
   cataloged: z.coerce.string().optional(), // "1"
-  uncertain: z.string().optional(), // "1"
+  uncertain: z.coerce.string().optional(), // "1"
 });
 
 export const Route = createFileRoute("/letters/")({
