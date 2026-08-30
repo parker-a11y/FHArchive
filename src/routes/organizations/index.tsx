@@ -2,22 +2,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ListFilter, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ORG_TYPES, labelOf } from "@/lib/archive";
+import { DeleteOrgButton } from "@/components/organizations/DeleteOrgButton";
+import { OrgRecordsButton } from "@/components/organizations/OrgRecordsButton";
 
 export const Route = createFileRoute("/organizations/")({
   head: () => ({
     meta: [
-      { title: "Organizations & Ships — The Francis Files" },
+      { title: "Organizations — The Francis Files" },
       {
         name: "description",
         content:
           "Reusable records for ships, military units, employers, schools and other organizations in The Francis Files.",
       },
-      { property: "og:title", content: "Organizations & Ships — The Francis Files" },
+      { property: "og:title", content: "Organizations — The Francis Files" },
       {
         property: "og:description",
         content: "Ships, units, employers and institutions linked to archive items.",
