@@ -673,6 +673,22 @@ function LettersTable() {
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
                             style={{ backgroundColor: recordHealth(l).color }}
                           />
+                          <EmailArchiveDialog
+                            kind="letter"
+                            id={l.id}
+                            identifier={l.archive_id}
+                            title={l.title}
+                            trigger={
+                              <button
+                                type="button"
+                                title={`Email ${l.archive_id}`}
+                                aria-label={`Email ${l.archive_id}`}
+                                className="text-muted-foreground hover:text-primary"
+                              >
+                                <Mail className="size-3.5" />
+                              </button>
+                            }
+                          />
                         </span>
                       ) : isEditing ? (
                         <input
