@@ -170,6 +170,7 @@ function Stat({
         <span className="field-label">{label}</span>
       </div>
       <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
+      {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
   return to ? (
@@ -210,19 +211,24 @@ function Dashboard() {
     const counts = new Map<string, number>();
     for (const l of letters) {
       const raw = (l.record_type as string) || "letter";
-      const key = known.has(raw) ? raw : "other";
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      counts.set(raw, (counts.get(raw) ?? 0) + 1);
     }
     const style = (v: string): { tone: Tone; icon: LucideIcon } =>
       CATEGORY_STYLES[v] ?? { tone: "indigo", icon: Box };
-    return typeOptions
-      .filter((o) => (counts.get(o.value) ?? 0) > 0 || CORE_CATEGORIES.has(o.value))
-      .map((o) => ({
-        value: o.value,
-        label: CATEGORY_LABELS[o.value] ?? o.label,
-        count: counts.get(o.value) ?? 0,
-        ...style(o.value),
-      }));
+    const tiles = typeOptions.map((o) => ({
+      value: o.value,
+      label: CATEGORY_LABELS[o.value] ?? o.label,
+      count: counts.get(o.value) ?? 0,
+      ...style(o.value),
+    }));
+    // Record types present in data but not in the options list get their own
+    // tile instead of being lumped into "Other".
+    for (const [value, count] of counts) {
+      if (!known.has(value)) {
+        tiles.push({ value, label: value.replace(/_/g, " "), count, ...style(value) });
+      }
+    }
+    return tiles;
   }, [letters, typeOptions]);
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
