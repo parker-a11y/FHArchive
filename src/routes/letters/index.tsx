@@ -234,7 +234,7 @@ function LettersTable() {
       return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, review, scanF, catalogedOnly, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
 
 
   function exportRows() {
