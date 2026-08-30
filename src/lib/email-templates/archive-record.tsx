@@ -98,9 +98,8 @@ const ArchiveRecordEmail = ({
         <Hr style={hr} />
         <Text style={footer}>
           {senderName && senderName !== 'The Francis Files'
-            ? `Sent by ${senderName} from The Francis Files. `
-            : 'Sent by The Francis Files. '}
-          Links open private, unlisted archive pages and can be revoked at any time.
+            ? `Sent by ${senderName} from The Francis Files.`
+            : 'Sent by The Francis Files.'}
         </Text>
         {records[0]?.url ? (
           <Text style={footer}>
