@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { usePeopleNames } from "@/components/PersonCombobox";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
+import { comparePeopleNames } from "@/lib/archive";
 
 export type PersonRef = { id: string; name: string };
 
@@ -45,7 +46,10 @@ export function PersonMultiSelect({
 
   const selectedIds = useMemo(() => new Set(value.map((v) => v.id)), [value]);
   const options = useMemo(
-    () => people.filter((p) => p.name && !selectedIds.has(p.id)),
+    () =>
+      people
+        .filter((p) => p.name && !selectedIds.has(p.id))
+        .sort((a, b) => comparePeopleNames(a.name, b.name)),
     [people, selectedIds],
   );
 
