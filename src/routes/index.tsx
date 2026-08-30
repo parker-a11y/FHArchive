@@ -35,6 +35,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
 import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
+import { useRecordTypeOptions } from "@/lib/categories";
+
+/** Tone/icon per built-in record type; anything else falls back to Box/indigo. */
+const CATEGORY_STYLES: Record<string, { tone: Tone; icon: LucideIcon }> = {
+  letter: { tone: "blue", icon: Mail },
+  photograph: { tone: "emerald", icon: Camera },
+  military: { tone: "rose", icon: Medal },
+  government: { tone: "indigo", icon: Landmark },
+  family: { tone: "amber", icon: Home },
+  newspaper: { tone: "teal", icon: Newspaper },
+  financial: { tone: "ochre", icon: Coins },
+  program: { tone: "plum", icon: CalendarDays },
+  artifact: { tone: "rose", icon: Gem },
+  other: { tone: "indigo", icon: Box },
+};
+
+/** Shorter dashboard labels for a few built-ins. */
+const CATEGORY_LABELS: Record<string, string> = {
+  letter: "Letters",
+  photograph: "Photographs",
+  military: "Military",
+  government: "Government",
+  family: "Personal / Family",
+  newspaper: "Newspaper",
+  financial: "Financial",
+  program: "Programs",
+  artifact: "Artifacts",
+};
+
+/** Always shown, even at zero. */
+const CORE_CATEGORIES = new Set(Object.keys(CATEGORY_STYLES));
 
 async function fetchDailySummary() {
   const start = new Date();
