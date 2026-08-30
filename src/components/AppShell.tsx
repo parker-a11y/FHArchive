@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </Button>
-          <span className="font-display text-base font-semibold">Harrington Family Archive</span>
+          <span className="font-display text-base font-semibold">The Francis Files</span>
         </div>
         <main className="min-w-0 flex-1">{children}</main>
       </div>

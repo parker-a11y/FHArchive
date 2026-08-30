@@ -50,9 +50,9 @@ export function EmailArchiveDialog({
   const [subject, setSubject] = useState(
     single?.title
       ? `${single.identifier} — ${single.title}`
-      : `${identifiers} from the Harrington Family Archive`,
+      : `${identifiers} from The Francis Files`,
   );
-  const [headerSubtitle, setHeaderSubtitle] = useState("From the Harrington Family Archive");
+  const [headerSubtitle, setHeaderSubtitle] = useState("From The Francis Files");
   const [message, setMessage] = useState("");
   const [includeTranscription, setIncludeTranscription] = useState(false);
   const [includeImages, setIncludeImages] = useState(true);

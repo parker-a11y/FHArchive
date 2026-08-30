@@ -3,7 +3,7 @@
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_drive";
 
-const ROOT_FOLDER = "Harrington Family Archive Backups";
+const ROOT_FOLDER = "The Francis Files Backups";
 const FILES_FOLDER = "files";
 const BUCKETS = ["scans", "ds-files"] as const;
 

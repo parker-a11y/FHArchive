@@ -95,7 +95,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
             headerTitle: data.headerTitle || data.subject,
             headerSubtitle: data.headerSubtitle || undefined,
             message: data.message || undefined,
-            senderName: "the Harrington Family Archive",
+            senderName: "The Francis Files",
             records: records.map((r) => ({
               identifier: r.identifier,
               title: r.title,

@@ -10,12 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/keywords/")({
   head: () => ({
     meta: [
-      { title: "Keywords — Harrington Letter Archive" },
+      { title: "Keywords — The Francis Files" },
       {
         name: "description",
-        content: "Reusable topical tags applied across the Harrington letter collection.",
+        content: "Reusable topical tags applied across The Francis Files collection.",
       },
-      { property: "og:title", content: "Keywords — Harrington Letter Archive" },
+      { property: "og:title", content: "Keywords — The Francis Files" },
       { property: "og:description", content: "Topical tags used across the letter collection." },
     ],
   }),

@@ -18,13 +18,13 @@ export const Route = createFileRoute("/categories")({
   component: CategoriesPage,
   head: () => ({
     meta: [
-      { title: "Category Management — Harrington Letter Archive" },
+      { title: "Category Management — The Francis Files" },
       {
         name: "description",
         content:
-          "Rename or remove the record types and subtypes you have added to the Harrington family archive.",
+          "Rename or remove the record types and subtypes you have added to The Francis Files.",
       },
-      { property: "og:title", content: "Category Management — Harrington Letter Archive" },
+      { property: "og:title", content: "Category Management — The Francis Files" },
       {
         property: "og:description",
         content: "Manage custom record types and subtypes in the family archive.",

@@ -80,17 +80,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Harrington Letter Archive" },
+      { title: "The Francis Files" },
       {
         name: "description",
         content:
-          "Private workspace for cataloging, scanning, transcribing and researching the Harrington family letter collection.",
+          "Private workspace for cataloging, scanning, transcribing and researching The Francis Files collection.",
       },
       { name: "robots", content: "noindex, nofollow" },
-      { property: "og:title", content: "Harrington Letter Archive" },
+      { property: "og:title", content: "The Francis Files" },
       {
         property: "og:description",
-        content: "Private archival workspace for the Harrington family letter collection.",
+        content: "Private archival workspace for The Francis Files collection.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

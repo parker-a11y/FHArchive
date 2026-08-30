@@ -20,13 +20,13 @@ import {
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "Search — Harrington Letter Archive" },
+      { title: "Search — The Francis Files" },
       {
         name: "description",
         content:
           "Search letter metadata, transcriptions, keywords, people, places, summaries and research notes.",
       },
-      { property: "og:title", content: "Search — Harrington Letter Archive" },
+      { property: "og:title", content: "Search — The Francis Files" },
       {
         property: "og:description",
         content: "Full-collection search across metadata, transcriptions and research notes.",

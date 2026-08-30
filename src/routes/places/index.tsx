@@ -10,13 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/places/")({
   head: () => ({
     meta: [
-      { title: "Places — Harrington Letter Archive" },
+      { title: "Places — The Francis Files" },
       {
         name: "description",
         content:
           "Reusable place records with coordinates, ready for mapping Francis Harrington's movements.",
       },
-      { property: "og:title", content: "Places — Harrington Letter Archive" },
+      { property: "og:title", content: "Places — The Francis Files" },
       {
         property: "og:description",
         content: "Geographic records tied to the family letter collection.",

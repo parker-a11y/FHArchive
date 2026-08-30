@@ -8,9 +8,9 @@ import { displayDate } from "@/lib/archive";
 export const Route = createFileRoute("/keywords/$keywordId")({
   head: () => ({
     meta: [
-      { title: "Keyword — Harrington Letter Archive" },
+      { title: "Keyword — The Francis Files" },
       { name: "description", content: "Every letter tagged with this keyword." },
-      { property: "og:title", content: "Keyword — Harrington Letter Archive" },
+      { property: "og:title", content: "Keyword — The Francis Files" },
       { property: "og:description", content: "Every letter tagged with this keyword." },
     ],
   }),

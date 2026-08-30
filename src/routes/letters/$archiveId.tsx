@@ -75,12 +75,12 @@ import {
 export const Route = createFileRoute("/letters/$archiveId")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.archiveId} — Harrington Letter Archive` },
+      { title: `${params.archiveId} — The Francis Files` },
       {
         name: "description",
         content: `Archival record ${params.archiveId}: catalog metadata, scans, transcription, keywords and research notes.`,
       },
-      { property: "og:title", content: `${params.archiveId} — Harrington Letter Archive` },
+      { property: "og:title", content: `${params.archiveId} — The Francis Files` },
       {
         property: "og:description",
         content: `Archival record ${params.archiveId} with scans, transcription and research notes.`,

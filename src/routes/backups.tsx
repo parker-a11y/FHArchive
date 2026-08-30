@@ -12,13 +12,13 @@ import { triggerBackup } from "@/lib/backup.functions";
 export const Route = createFileRoute("/backups")({
   head: () => ({
     meta: [
-      { title: "Backups — Harrington Family Archive" },
+      { title: "Backups — The Francis Files" },
       {
         name: "description",
         content:
           "Nightly off-site backups of every archive record, scan and uploaded file to Google Drive.",
       },
-      { property: "og:title", content: "Backups — Harrington Family Archive" },
+      { property: "og:title", content: "Backups — The Francis Files" },
       {
         property: "og:description",
         content: "Monitor nightly Google Drive backups of the family archive.",
@@ -134,7 +134,7 @@ function Backups() {
           <StatCard
             icon={<CloudUpload className="size-5" />}
             label="Destination folder"
-            value="Harrington Family Archive Backups"
+            value="The Francis Files Backups"
           />
         </div>
 

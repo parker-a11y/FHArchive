@@ -50,15 +50,15 @@ import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 export const Route = createFileRoute("/sources/$dsId")({
   head: () => ({
     meta: [
-      { title: "Digital Source — Harrington Family Archive" },
+      { title: "Digital Source — The Francis Files" },
       {
         name: "description",
-        content: "Digital source record in the Harrington family archive.",
+        content: "Digital source record in The Francis Files.",
       },
-      { property: "og:title", content: "Digital Source — Harrington Family Archive" },
+      { property: "og:title", content: "Digital Source — The Francis Files" },
       {
         property: "og:description",
-        content: "Digital source record in the Harrington family archive.",
+        content: "Digital source record in The Francis Files.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

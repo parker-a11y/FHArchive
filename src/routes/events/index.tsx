@@ -11,13 +11,13 @@ import { EVENT_TYPES, labelOf } from "@/lib/archive";
 export const Route = createFileRoute("/events/")({
   head: () => ({
     meta: [
-      { title: "Events — Harrington Family Archive" },
+      { title: "Events — The Francis Files" },
       {
         name: "description",
         content:
-          "Reusable event records — marriages, births, wartime service and trips — linked to items in the Harrington family archive.",
+          "Reusable event records — marriages, births, wartime service and trips — linked to items in The Francis Files.",
       },
-      { property: "og:title", content: "Events — Harrington Family Archive" },
+      { property: "og:title", content: "Events — The Francis Files" },
       {
         property: "og:description",
         content: "Family and historical events linked to archive items.",

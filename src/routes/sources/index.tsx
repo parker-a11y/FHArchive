@@ -17,16 +17,16 @@ import { DS_SOURCE_TYPES, dsTypeLabel, fetchDsFileCounts, fetchSources } from "@
 export const Route = createFileRoute("/sources/")({
   head: () => ({
     meta: [
-      { title: "Digital Sources — Harrington Family Archive" },
+      { title: "Digital Sources — The Francis Files" },
       {
         name: "description",
         content:
           "Catalog of digital and external research sources — web archives, videos, books, maps, and more — linked to FH records.",
       },
-      { property: "og:title", content: "Digital Sources — Harrington Family Archive" },
+      { property: "og:title", content: "Digital Sources — The Francis Files" },
       {
         property: "og:description",
-        content: "Digital and external research sources linked to the Harrington family archive.",
+        content: "Digital and external research sources linked to The Francis Files.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

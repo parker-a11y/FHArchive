@@ -11,13 +11,13 @@ import { ORG_TYPES, labelOf } from "@/lib/archive";
 export const Route = createFileRoute("/organizations/")({
   head: () => ({
     meta: [
-      { title: "Organizations & Ships — Harrington Family Archive" },
+      { title: "Organizations & Ships — The Francis Files" },
       {
         name: "description",
         content:
-          "Reusable records for ships, military units, employers, schools and other organizations in the Harrington family archive.",
+          "Reusable records for ships, military units, employers, schools and other organizations in The Francis Files.",
       },
-      { property: "og:title", content: "Organizations & Ships — Harrington Family Archive" },
+      { property: "og:title", content: "Organizations & Ships — The Francis Files" },
       {
         property: "og:description",
         content: "Ships, units, employers and institutions linked to archive items.",

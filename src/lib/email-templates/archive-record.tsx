@@ -35,7 +35,7 @@ export interface ArchiveRecordEmailProps {
 }
 
 const ArchiveRecordEmail = ({
-  headerTitle = 'From the Harrington Family Archive',
+  headerTitle = 'From The Francis Files',
   headerSubtitle,
   message,
   records = [],
@@ -47,7 +47,7 @@ const ArchiveRecordEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
-          <Text style={eyebrow}>Harrington Family Archive</Text>
+          <Text style={eyebrow}>The Francis Files</Text>
           <Heading style={h1}>{headerTitle}</Heading>
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}
         </Section>
@@ -90,9 +90,9 @@ const ArchiveRecordEmail = ({
 
         <Hr style={hr} />
         <Text style={footer}>
-          {senderName && senderName !== 'Harrington Family Archive'
-            ? `Sent by ${senderName} from the Harrington Family Archive. `
-            : 'Sent by the Harrington Family Archive. '}
+          {senderName && senderName !== 'The Francis Files'
+            ? `Sent by ${senderName} from The Francis Files. `
+            : 'Sent by The Francis Files. '}
           Links open private, unlisted archive pages and can be revoked at any time.
         </Text>
         {records[0]?.url ? (
@@ -110,13 +110,13 @@ const ArchiveRecordEmail = ({
 export const template = {
   component: ArchiveRecordEmail,
   subject: (data: Record<string, any>) =>
-    (data['subject'] as string) || 'From the Harrington Family Archive',
+    (data['subject'] as string) || 'From The Francis Files',
   displayName: 'Archive record share',
   previewData: {
     headerTitle: 'A letter from Francis, March 1944',
-    headerSubtitle: 'From the Harrington Family Archive',
+    headerSubtitle: 'From The Francis Files',
     message: 'Thought you would enjoy this one — his description of Borneo is remarkable.',
-    senderName: 'Harrington Family Archive',
+    senderName: 'The Francis Files',
     records: [
       {
         identifier: 'FH0002',

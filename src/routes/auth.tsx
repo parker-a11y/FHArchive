@@ -11,15 +11,15 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign In — Harrington Letter Archive" },
+      { title: "Sign In — The Francis Files" },
       {
         name: "description",
-        content: "Private sign-in for the Harrington Letter Archive cataloging workspace.",
+        content: "Private sign-in for the The Francis Files cataloging workspace.",
       },
-      { property: "og:title", content: "Sign In — Harrington Letter Archive" },
+      { property: "og:title", content: "Sign In — The Francis Files" },
       {
         property: "og:description",
-        content: "Private sign-in for the Harrington Letter Archive cataloging workspace.",
+        content: "Private sign-in for the The Francis Files cataloging workspace.",
       },
     ],
   }),
@@ -72,7 +72,7 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-2xl font-semibold">Harrington Letter Archive</h1>
+        <h1 className="font-display text-2xl font-semibold">The Francis Files</h1>
         <p className="mt-1 mb-6 text-sm text-muted-foreground">
           Private archival workspace. Sign in to continue.
         </p>

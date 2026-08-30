@@ -37,13 +37,13 @@ import {
 export const Route = createFileRoute("/catalog")({
   head: () => ({
     meta: [
-      { title: "Quick Entry — Harrington Family Archive" },
+      { title: "Quick Entry — The Francis Files" },
       {
         name: "description",
         content:
           "Rapid keyboard-first intake screen that assigns the next sequential FH archive number to any item.",
       },
-      { property: "og:title", content: "Quick Entry — Harrington Family Archive" },
+      { property: "og:title", content: "Quick Entry — The Francis Files" },
       {
         property: "og:description",
         content: "Fast intake of letters, photographs, military and family records with FH numbering.",

@@ -21,7 +21,7 @@ import { fetchLetters } from "@/lib/queries";
 export const Route = createFileRoute("/containers/$boxId")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.boxId} — Source Container — Harrington Family Archive` },
+      { title: `${params.boxId} — Source Container — The Francis Files` },
       {
         name: "description",
         content: `Provenance record for source container ${params.boxId}: description, condition, inscriptions, documentation photographs, and the FH records that came out of it.`,
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/containers/$boxId")({
       { property: "og:title", content: `${params.boxId} — Source Container` },
       {
         property: "og:description",
-        content: `Original source container ${params.boxId} in the Harrington family archive.`,
+        content: `Original source container ${params.boxId} in The Francis Files.`,
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },

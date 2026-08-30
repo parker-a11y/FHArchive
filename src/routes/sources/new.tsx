@@ -21,12 +21,12 @@ import { DATE_PRECISION } from "@/lib/archive";
 export const Route = createFileRoute("/sources/new")({
   head: () => ({
     meta: [
-      { title: "Add Digital Source — Harrington Family Archive" },
+      { title: "Add Digital Source — The Francis Files" },
       {
         name: "description",
         content: "Catalog a new digital or external research source with a permanent DS number.",
       },
-      { property: "og:title", content: "Add Digital Source — Harrington Family Archive" },
+      { property: "og:title", content: "Add Digital Source — The Francis Files" },
       {
         property: "og:description",
         content: "Catalog a new digital or external research source with a permanent DS number.",
