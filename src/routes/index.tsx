@@ -1,3 +1,4 @@
+import logoMark from "@/assets/francis-files-logo.png";
 import { useMemo } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -281,7 +282,18 @@ function Dashboard() {
   return (
     <>
       <PageHeader
-        title="Archive Dashboard"
+        title={
+          <span className="flex items-center gap-3">
+            <img
+              src={logoMark}
+              alt=""
+              width={1024}
+              height={1024}
+              className="size-9 shrink-0 object-contain"
+            />
+            Archive Dashboard
+          </span>
+        }
         description="The Francis Files letters — cataloging status."
         actions={
           <Button
