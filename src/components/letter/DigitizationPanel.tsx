@@ -39,6 +39,7 @@ import {
   formatSeq,
   normalizeFh,
   parseScanFilename,
+  sortByFilename,
   suggestedLabels,
   usesPhotoSides,
 } from "@/lib/digitization";
