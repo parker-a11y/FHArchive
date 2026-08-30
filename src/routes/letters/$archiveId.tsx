@@ -106,14 +106,10 @@ const TEXT_FIELDS = [
   { key: "origin", label: "Origin / location", letterOnly: false },
   { key: "destination", label: "Destination", letterOnly: true },
   { key: "primary_person", label: "Primary person", letterOnly: false },
-  { key: "physical_condition", label: "Physical condition", letterOnly: false },
 ];
 
 const STORAGE_FIELDS = [
-  
   { key: "storage_folder", label: "Folder / jacket", placeholder: "FH-0268" },
-  { key: "storage_notes", label: "Location notes", placeholder: "" },
-  { key: "storage_location", label: "Legacy storage note", placeholder: "" },
 ];
 
 
@@ -149,12 +145,8 @@ function LetterPage() {
       date_end: letter.date_end ?? "",
       primary_person: letter.primary_person ?? "",
       physical_description: letter.physical_description ?? "",
-      original_copy: letter.original_copy ?? "unknown",
-      storage_location: letter.storage_location ?? "",
       storage_type: letter.storage_type ?? "",
-      
       storage_folder: letter.storage_folder ?? "",
-      storage_notes: letter.storage_notes ?? "",
       identification_status: letter.identification_status ?? "",
       provenance: letter.provenance ?? "",
       source_container_id: letter.source_container_id ?? "",
