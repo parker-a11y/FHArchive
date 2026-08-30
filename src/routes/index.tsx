@@ -175,7 +175,7 @@ function Dashboard() {
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
-    { label: "FH records", value: letters.length, tone: "blue", icon: Hash },
+    { label: "FH records", value: letters.length, tone: "blue", icon: Hash, to: "/letters" },
     {
       label: "Digital sources",
       value: sources.length,
@@ -191,62 +191,71 @@ function Dashboard() {
       to: "/sources",
     },
 
-    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "emerald", icon: Layers },
+    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {
       label: "Records scanned",
       value: itemCounts?.itemsScanned ?? 0,
       tone: "teal",
       icon: ScanLine,
+      to: "/letters?scan=has",
     },
     {
       label: "Cataloged",
       value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
       tone: "amber",
       icon: PenLine,
+      to: "/letters?cataloged=1",
     },
     {
       label: "Records with scans",
       value: c((l) => l.image_count > 0),
       tone: "teal",
       icon: FileCheck2,
+      to: "/letters?scan=has",
     },
     {
       label: "Transcribed",
       value: c((l) => l.transcription_status === "human_verified"),
       tone: "emerald",
       icon: FileCheck2,
+      to: "/letters?tstatus=human_verified",
     },
     {
       label: "Needing transcription",
       value: c((l) => l.transcription_status !== "human_verified"),
       tone: "rose",
       icon: FileQuestion,
+      to: "/letters?tstatus=!human_verified",
     },
     {
       label: "Reviewed",
       value: c((l) => l.review_status === "reviewed"),
       tone: "indigo",
       icon: Eye,
+      to: "/letters?review=reviewed",
     },
     {
       label: "Uncertain dates",
       value: c((l) => l.date_certainty !== "confirmed" || l.date_precision !== "exact"),
       tone: "ochre",
       icon: CalendarClock,
+      to: "/letters?uncertain=1",
     },
     {
       label: "Records missing scans",
       value: c((l) => l.image_count === 0),
       tone: "rose",
       icon: ImageOff,
+      to: "/letters?scan=none",
     },
-    { label: "Prewar", value: c((l) => l.period === "prewar"), tone: "plum", icon: Hourglass },
-    { label: "Wartime", value: c((l) => l.period === "wartime"), tone: "rose", icon: Shield },
+    { label: "Prewar", value: c((l) => l.period === "prewar"), tone: "plum", icon: Hourglass, to: "/letters?period=prewar" },
+    { label: "Wartime", value: c((l) => l.period === "wartime"), tone: "rose", icon: Shield, to: "/letters?period=wartime" },
     {
       label: "Postwar",
       value: c((l) => l.period === "postwar"),
       tone: "indigo",
       icon: CalendarDays,
+      to: "/letters?period=postwar",
     },
   ];
 

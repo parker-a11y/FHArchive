@@ -2,7 +2,7 @@ import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Eye } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -40,6 +40,12 @@ import { toast } from "sonner";
 
 const searchSchema = z.object({
   type: z.string().optional(),
+  period: z.string().optional(),
+  tstatus: z.string().optional(),
+  review: z.string().optional(),
+  scan: z.string().optional(), // "has" | "none"
+  cataloged: z.string().optional(), // "1"
+  uncertain: z.string().optional(), // "1"
 });
 
 export const Route = createFileRoute("/letters/")({
@@ -138,9 +144,24 @@ function LettersTable() {
 
   const search = Route.useSearch();
   const [q, setQ] = useState("");
-  const [period, setPeriod] = useState("");
-  const [tStatus, setTStatus] = useState("");
+  const [period, setPeriod] = useState(search.period ?? "");
+  const [tStatus, setTStatus] = useState(search.tstatus ?? "");
   const [rType, setRType] = useState(search.type ?? "");
+  const [review, setReview] = useState(search.review ?? "");
+  const [scanF, setScanF] = useState(search.scan ?? "");
+  const [catalogedOnly, setCatalogedOnly] = useState(search.cataloged === "1");
+  const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
+
+  // Keep filters in sync when arriving from a dashboard stat link.
+  useEffect(() => {
+    setRType(search.type ?? "");
+    setPeriod(search.period ?? "");
+    setTStatus(search.tstatus ?? "");
+    setReview(search.review ?? "");
+    setScanF(search.scan ?? "");
+    setCatalogedOnly(search.cataloged === "1");
+    setUncertainOnly(search.uncertain === "1");
+  }, [search]);
   const recordTypeOptions = useRecordTypeOptions();
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
@@ -160,8 +181,18 @@ function LettersTable() {
       if (view === "undated" && !needsDating(l)) return false;
       if (view === "unidphoto" && !isUnidentifiedPhoto(l)) return false;
       if (period && l.period !== period) return false;
-      if (tStatus && l.transcription_status !== tStatus) return false;
+      if (tStatus) {
+        if (tStatus.startsWith("!")) {
+          if (l.transcription_status === tStatus.slice(1)) return false;
+        } else if (l.transcription_status !== tStatus) return false;
+      }
       if (rType && (l.record_type ?? "letter") !== rType) return false;
+      if (review && l.review_status !== review) return false;
+      if (scanF === "has" && l.image_count === 0) return false;
+      if (scanF === "none" && l.image_count > 0) return false;
+      if (catalogedOnly && !(l.author || l.recipient || l.normalized_date)) return false;
+      if (uncertainOnly && l.date_certainty === "confirmed" && l.date_precision === "exact")
+        return false;
       if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
       if (dStatus && l.date_precision !== dStatus) return false;
       if (digStatus && (l.digitization_status ?? "not_scanned") !== digStatus) return false;
@@ -203,7 +234,7 @@ function LettersTable() {
       return (av > bv ? 1 : -1) * sort.dir;
     });
     return r;
-  }, [letters, q, period, tStatus, rType, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
+  }, [letters, q, period, tStatus, rType, review, scanF, catalogedOnly, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
 
 
   function exportRows() {
