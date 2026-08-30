@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { PRIMARY_PERSONS, comparePeopleNames } from "@/lib/archive";
+import { comparePeopleNames } from "@/lib/archive";
 import { cn } from "@/lib/utils";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 
@@ -47,8 +47,9 @@ export function PersonCombobox({
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
 
   const options = useMemo(() => {
-    const seeded = PRIMARY_PERSONS.map((p) => p.value).filter(Boolean);
-    const names = new Set<string>(seeded);
+    // Only canonical People records are offered, so nicknames such as "Jaq"
+    // can never be stored on a record again.
+    const names = new Set<string>();
     for (const p of people) if (p.name) names.add(p.name);
     if (value) names.add(value);
     return Array.from(names).sort(comparePeopleNames);
