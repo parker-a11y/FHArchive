@@ -19,6 +19,7 @@ import {
   type ScanTranscription,
 } from "@/lib/transcription";
 import { transcribeRecord, transcribeScans } from "@/lib/transcription.functions";
+import { HighlightedText, countMatches } from "@/lib/highlight";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
   return (
