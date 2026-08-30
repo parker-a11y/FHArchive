@@ -334,10 +334,6 @@ function Dashboard() {
               <Stat
                 label="New today"
                 value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
-                sub={`FH records + digital sources · ${new Date().toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}`}
                 tone="blue"
                 icon={Sparkles}
                 onClick={() => setDailyOpen((v) => !v)}
