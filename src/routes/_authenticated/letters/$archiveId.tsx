@@ -252,6 +252,18 @@ function LetterPage() {
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
     await logEdits(letter.id, letter as unknown as Record<string, unknown>, payload);
+
+    if (isLetterType(form.record_type as string) && authorRecipientDirty) {
+      const { data: auth } = await supabase.auth.getUser();
+      const ownerId = auth.user?.id;
+      if (ownerId) {
+        await setLetterPersonRole(letter.id, "author", authorPerson?.id ?? null, ownerId);
+        await setLetterPersonRole(letter.id, "recipient", recipientPerson?.id ?? null, ownerId);
+      }
+      qc.invalidateQueries({ queryKey: ["links", letter.id] });
+      setAuthorRecipientDirty(false);
+    }
+
     qc.invalidateQueries({ queryKey: ["letter", archiveId] });
     qc.invalidateQueries({ queryKey: ["letters"] });
     qc.invalidateQueries({ queryKey: ["history", letter.id] });
