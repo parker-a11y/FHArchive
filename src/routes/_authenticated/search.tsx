@@ -17,6 +17,7 @@ import {
   labelOf,
 } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
+import { HighlightedText, buildSnippets, countMatches, type Snippet } from "@/lib/highlight";
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
@@ -39,6 +40,109 @@ export const Route = createFileRoute("/_authenticated/search")({
 });
 
 const SEARCH_LIMIT = 200;
+const SNIPPETS_SHOWN = 3;
+
+/** One search result: header, hit count, highlighted snippets, jump-to-match links. */
+function ResultCard({
+  letter,
+  term,
+  snippets,
+  tags,
+  hits,
+  meta,
+}: {
+  letter: Letter;
+  term: string;
+  snippets: Snippet[];
+  tags: string[];
+  hits: number;
+  meta: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const shown = showAll ? snippets : snippets.slice(0, SNIPPETS_SHOWN);
+  const jump = {
+    to: "/letters/$archiveId" as const,
+    params: { archiveId: letter.archive_id },
+    search: term ? { hl: term, tab: "transcription" } : {},
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-baseline gap-2">
+          <Link {...jump} className="archive-id text-primary hover:underline">
+            {letter.archive_id}
+          </Link>
+          {hits > 0 && (
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+              {hits} match{hits === 1 ? "" : "es"}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-muted-foreground">{meta}</span>
+      </div>
+      <p className="mt-1 text-sm font-medium">
+        {[letter.author, letter.recipient].filter(Boolean).join(" → ") || letter.title || "Untitled"}
+      </p>
+
+      {tags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {tags.map((t) => (
+            <span key={t} className="rounded border border-border px-1.5 py-0.5 text-[11px]">
+              <HighlightedText text={t} term={term} />
+            </span>
+          ))}
+        </div>
+      )}
+
+      {shown.length > 0 && (
+        <div className="mt-2 space-y-1.5">
+          {shown.map((s, i) => (
+            <Link
+              key={`${s.label}-${i}`}
+              {...jump}
+              className="block rounded border border-transparent bg-muted/40 p-2 text-sm hover:border-border"
+            >
+              <span className="mr-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+                {s.label}
+              </span>
+              <span className="text-muted-foreground">
+                <HighlightedText text={expanded ? s.full : s.text} term={term} />
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {(snippets.length > 0 || snippets.length > SNIPPETS_SHOWN) && (
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+          {snippets.length > SNIPPETS_SHOWN && (
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => setShowAll((v) => !v)}
+            >
+              {showAll ? "Show fewer matches" : `+${snippets.length - SNIPPETS_SHOWN} more matches`}
+            </button>
+          )}
+          {snippets.length > 0 && (
+            <button
+              type="button"
+              className="text-primary hover:underline"
+              onClick={() => setExpanded((v) => !v)}
+            >
+              {expanded ? "Hide full context" : "Show full context"}
+            </button>
+          )}
+          <Link {...jump} className="text-primary hover:underline">
+            Open at match →
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** Debounce the main text box so typing doesn't fire a query per keystroke. */
 function useDebounced<T>(value: T, ms = 400): T {
@@ -141,14 +245,97 @@ function SearchPage() {
   });
   const results: Letter[] = page?.rows ?? [];
   const totalMatches = page?.total ?? 0;
+  const resultIds = results.map((l) => l.id);
 
-  function snippet(l: Letter): string {
-    const text = (l.transcription_verified ?? "").replace(/\s+/g, " ");
-    if (!debouncedQ) return text.slice(0, 140);
-    const i = text.toLowerCase().indexOf(debouncedQ.toLowerCase());
-    if (i < 0) return (l.summary_short ?? text).slice(0, 140);
-    return "…" + text.slice(Math.max(0, i - 40), i + 100) + "…";
+  // Page-level scan transcriptions + linked entity names for the visible results,
+  // so a hit can be labelled with its page number or the keyword/person/place it came from.
+  const { data: context } = useQuery({
+    queryKey: ["search_context", debouncedQ, resultIds],
+    enabled: Boolean(debouncedQ) && resultIds.length > 0,
+    queryFn: async () => {
+      const like = `%${debouncedQ}%`;
+      const [pages, kw, ppl, plc] = await Promise.all([
+        supabase
+          .from("scan_transcriptions")
+          .select("letter_id,page_label,page_index,ai_text,verified_text")
+          .in("letter_id", resultIds)
+          .or(`verified_text.ilike.${like},ai_text.ilike.${like}`),
+        supabase
+          .from("letter_keywords")
+          .select("letter_id,keywords(name)")
+          .in("letter_id", resultIds),
+        supabase.from("letter_people").select("letter_id,people(name)").in("letter_id", resultIds),
+        supabase
+          .from("letter_places")
+          .select("letter_id,places(canonical_name)")
+          .in("letter_id", resultIds),
+      ]);
+      const byId = new Map<string, { snippets: Snippet[]; tags: string[] }>();
+      const bucket = (id: string) => {
+        let b = byId.get(id);
+        if (!b) {
+          b = { snippets: [], tags: [] };
+          byId.set(id, b);
+        }
+        return b;
+      };
+      for (const p of pages.data ?? []) {
+        const label = p.page_label || `Page ${(p.page_index ?? 0) + 1}`;
+        const text = p.verified_text || p.ai_text;
+        bucket(p.letter_id).snippets.push(...buildSnippets(label, text, debouncedQ, 2));
+      }
+      const term = debouncedQ.toLowerCase();
+      const addTag = (id: string, kind: string, name?: string | null) => {
+        if (name && name.toLowerCase().includes(term)) bucket(id).tags.push(`${kind}: ${name}`);
+      };
+      for (const r of kw.data ?? [])
+        addTag(r.letter_id, "Keyword", (r as { keywords: { name: string } | null }).keywords?.name);
+      for (const r of ppl.data ?? [])
+        addTag(r.letter_id, "Person", (r as { people: { name: string } | null }).people?.name);
+      for (const r of plc.data ?? [])
+        addTag(
+          r.letter_id,
+          "Place",
+          (r as { places: { canonical_name: string } | null }).places?.canonical_name,
+        );
+      return byId;
+    },
+  });
+
+  function matchesFor(l: Letter): { snippets: Snippet[]; tags: string[] } {
+    if (!debouncedQ) {
+      const text = (l.transcription_verified ?? l.summary_short ?? "").replace(/\s+/g, " ");
+      return text
+        ? { snippets: [{ label: "Summary", text: text.slice(0, 160), full: text.slice(0, 900) }], tags: [] }
+        : { snippets: [], tags: [] };
+    }
+    const extra = context?.get(l.id);
+    const snippets = [
+      ...buildSnippets("Verified transcription", l.transcription_verified, debouncedQ),
+      ...(extra?.snippets ?? []),
+      ...buildSnippets("AI transcription", l.transcription_raw_ai, debouncedQ),
+      ...buildSnippets("Summary", l.summary_short, debouncedQ, 1),
+      ...buildSnippets("Summary", l.summary_long, debouncedQ, 1),
+      ...buildSnippets("Notes", l.notes, debouncedQ, 2),
+      ...buildSnippets("Research notes", l.research_notes, debouncedQ, 1),
+      ...buildSnippets("Historical notes", l.historical_notes, debouncedQ, 1),
+      ...buildSnippets("Title", l.title, debouncedQ, 1),
+    ];
+    return { snippets, tags: extra?.tags ?? [] };
   }
+
+  function hitCount(l: Letter): number {
+    if (!debouncedQ) return 0;
+    return (
+      countMatches(l.transcription_verified, debouncedQ) +
+      countMatches(l.transcription_raw_ai, debouncedQ) +
+      countMatches(l.notes, debouncedQ) +
+      countMatches(l.summary_short, debouncedQ) +
+      countMatches(l.summary_long, debouncedQ) +
+      countMatches(l.title, debouncedQ)
+    );
+  }
+
 
   const sel =
     "h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring";
@@ -264,28 +451,20 @@ function SearchPage() {
               {totalMatches} match{totalMatches === 1 ? "" : "es"}
               {totalMatches > results.length ? ` — showing first ${results.length}` : ""}
             </p>
-            {results.map((l) => (
-              <div key={l.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="flex items-baseline justify-between gap-4">
-                  <Link
-                    to="/letters/$archiveId"
-                    params={{ archiveId: l.archive_id }}
-                    className="archive-id text-primary hover:underline"
-                  >
-                    {l.archive_id}
-                  </Link>
-                  <span className="text-xs text-muted-foreground">
-                    {displayDate(l)} · {labelOf(PERIODS, l.period)} · {labelOf(recordTypeOptions, l.record_type)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm font-medium">
-                  {[l.author, l.recipient].filter(Boolean).join(" → ") || l.title || "Untitled"}
-                </p>
-                {snippet(l) && (
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{snippet(l)}</p>
-                )}
-              </div>
-            ))}
+            {results.map((l) => {
+              const { snippets, tags } = matchesFor(l);
+              return (
+                <ResultCard
+                  key={l.id}
+                  letter={l}
+                  term={debouncedQ}
+                  snippets={snippets}
+                  tags={tags}
+                  hits={hitCount(l)}
+                  meta={`${displayDate(l)} · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                />
+              );
+            })}
           </>
         )}
       </div>

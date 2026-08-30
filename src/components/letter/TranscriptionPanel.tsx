@@ -19,6 +19,7 @@ import {
   type ScanTranscription,
 } from "@/lib/transcription";
 import { transcribeRecord, transcribeScans } from "@/lib/transcription.functions";
+import { HighlightedText, countMatches } from "@/lib/highlight";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
   return (
@@ -30,35 +31,6 @@ function StatusPill({ status }: { status: string | null | undefined }) {
   );
 }
 
-function escapeRegExp(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function countMatches(text: string | null | undefined, term: string | undefined): number {
-  if (!text || !term) return 0;
-  const m = text.match(new RegExp(escapeRegExp(term), "gi"));
-  return m?.length ?? 0;
-}
-
-/** Render text with every case-insensitive occurrence of `term` highlighted. */
-function HighlightedText({ text, term }: { text: string; term?: string }) {
-  if (!term) return <>{text}</>;
-  const re = new RegExp(`(${escapeRegExp(term)})`, "gi");
-  const parts = text.split(re);
-  return (
-    <>
-      {parts.map((p, i) =>
-        i % 2 === 1 ? (
-          <mark key={i} className="rounded bg-yellow-200 px-0.5 text-foreground">
-            {p}
-          </mark>
-        ) : (
-          <span key={i}>{p}</span>
-        ),
-      )}
-    </>
-  );
-}
 
 /** One scan: original image on the left, editable transcription on the right. */
 function PageEditor({
