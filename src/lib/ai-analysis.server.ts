@@ -91,7 +91,7 @@ export async function buildAnalysisContext(
   return { letterId, header: headerLines.join("\n"), transcript };
 }
 
-const SYSTEM_PROMPT = `You are an archival research assistant working on a private family history archive (the Harrington collection, mid-20th-century American family and wartime material).
+const SYSTEM_PROMPT = `You are an archival research assistant working on a private family history archive (The Francis Files collection, mid-20th-century American family and wartime material).
 
 Analyse the supplied record and return suggestions for a human archivist to review. You are not writing the catalog: every suggestion is reviewed before it is kept.
 
