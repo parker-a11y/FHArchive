@@ -642,6 +642,13 @@ function LettersTable() {
           <tbody>
             {rows.map((l) => (
               <tr key={l.id} className="border-b border-border hover:bg-muted/50">
+                <td className="px-2 py-1.5 align-top">
+                  <Checkbox
+                    aria-label={`Select ${l.archive_id}`}
+                    checked={selected.has(l.id)}
+                    onCheckedChange={(v) => toggleSelected(l.id, Boolean(v))}
+                  />
+                </td>
                 {cols.map((c) => {
                   const isEditing = editing?.id === l.id && editing.key === c.key;
                   return (
