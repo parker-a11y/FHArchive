@@ -6,6 +6,9 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { Merge, Trash2 } from "lucide-react";
+import { DeletePlaceButton } from "@/components/places/DeletePlaceButton";
+import { MergePlaceButton } from "@/components/places/MergePlaceButton";
 
 export const Route = createFileRoute("/places/")({
   head: () => ({
