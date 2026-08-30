@@ -12,12 +12,12 @@ export const Route = createFileRoute("/forgot-password")({
       { title: "Reset Password — The Francis Files" },
       {
         name: "description",
-        content: "Request a password reset for the The Francis Files.",
+        content: "Request a password reset for The Francis Files.",
       },
       { property: "og:title", content: "Reset Password — The Francis Files" },
       {
         property: "og:description",
-        content: "Request a password reset for the The Francis Files.",
+        content: "Request a password reset for The Francis Files.",
       },
     ],
   }),

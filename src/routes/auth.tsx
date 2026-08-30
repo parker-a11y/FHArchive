@@ -14,12 +14,12 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign In — The Francis Files" },
       {
         name: "description",
-        content: "Private sign-in for the The Francis Files cataloging workspace.",
+        content: "Private sign-in for The Francis Files cataloging workspace.",
       },
       { property: "og:title", content: "Sign In — The Francis Files" },
       {
         property: "og:description",
-        content: "Private sign-in for the The Francis Files cataloging workspace.",
+        content: "Private sign-in for The Francis Files cataloging workspace.",
       },
     ],
   }),
