@@ -37,6 +37,7 @@ import { fetchDashboardStats, type Letter } from "@/lib/queries";
 import { fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
+import { ArchiveNotes } from "@/components/ArchiveNotes";
 
 /** Tone/icon per built-in record type; anything else falls back to Box/indigo. */
 const CATEGORY_STYLES: Record<string, { tone: Tone; icon: LucideIcon }> = {
@@ -226,6 +227,7 @@ function Dashboard() {
     queryFn: fetchSources,
   });
   const [dailyOpen, setDailyOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { data: daily } = useQuery({
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
