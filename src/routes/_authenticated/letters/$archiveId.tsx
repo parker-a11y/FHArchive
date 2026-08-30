@@ -320,6 +320,14 @@ function LetterPage() {
           <div className="flex shrink-0 items-center gap-2">
             <ShareStatusBadge letter={letter} />
             <LabelDialog letter={letter} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTranscription((v) => !v)}
+            >
+              <FileText className="mr-1.5 size-4" />
+              {showTranscription ? "Hide transcription" : "Show transcription"}
+            </Button>
             {!isGuestViewer && (
               <>
                 <ShareDialog letter={letter} />
