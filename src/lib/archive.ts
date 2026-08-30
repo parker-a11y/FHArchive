@@ -204,7 +204,7 @@ export function personPinRank(name: string): number {
   if (!n) return Number.POSITIVE_INFINITY;
   let best = Number.POSITIVE_INFINITY;
   PINNED_PERSON_NAMES.forEach((pin, i) => {
-    if (n === pin || n.startsWith(`${pin} `) || n.startsWith(`${pin} `.replace(" ", " "))) {
+    if (n === pin || n.startsWith(`${pin} `) || n.startsWith(`${pin},`) || n.startsWith(`${pin} &`)) {
       best = Math.min(best, i);
     }
   });
