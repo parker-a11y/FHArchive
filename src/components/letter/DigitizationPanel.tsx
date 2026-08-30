@@ -701,9 +701,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
             : "border-border bg-muted/40"
         }`}
       >
-        <UploadCloud className="mx-auto mb-2 size-7 text-primary" />
+        <UploadCloud className="mx-auto mb-3 size-8 text-primary" />
         <p className="text-sm">
-          <label className="cursor-pointer font-medium text-primary underline-offset-2 hover:underline">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+            <UploadCloud className="size-4" />
             Upload Scans / Digital Files
             <input
               type="file"
@@ -712,8 +713,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
               className="hidden"
               onChange={(e) => e.target.files && uploadFiles(e.target.files)}
             />
-          </label>{" "}
-          — or drop a whole batch here (e.g. {letter.archive_id}_001.tif …_010.tif)
+          </label>
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Or drop a whole batch here (e.g. {letter.archive_id}_001.tif …_010.tif)
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Dropped batches are automatically sorted by filename so pages import in order. The TIFF you
