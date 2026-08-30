@@ -19,7 +19,6 @@ import {
   PenLine,
   FileCheck2,
   FileQuestion,
-  Eye,
   CalendarClock,
   Hourglass,
   Shield,
@@ -256,13 +255,6 @@ function Dashboard() {
       tone: "rose",
       icon: FileQuestion,
       to: "/letters?tstatus=!human_verified",
-    },
-    {
-      label: "Reviewed",
-      value: c((l) => l.review_status === "reviewed"),
-      tone: "indigo",
-      icon: Eye,
-      to: "/letters?review=reviewed",
     },
     {
       label: "Uncertain dates",
