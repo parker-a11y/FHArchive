@@ -617,6 +617,26 @@ function LetterPage() {
                     value={(form[f.key] as string) ?? ""}
                     onChange={(v) => set(f.key, v)}
                   />
+                ) : f.key === "author" ? (
+                  <PersonRoleInput
+                    value={authorPerson}
+                    onChange={(person, name) => {
+                      setAuthorPerson(person);
+                      set("author", name);
+                      setAuthorRecipientDirty(true);
+                    }}
+                    placeholder="Select or add sender…"
+                  />
+                ) : f.key === "recipient" ? (
+                  <PersonRoleInput
+                    value={recipientPerson}
+                    onChange={(person, name) => {
+                      setRecipientPerson(person);
+                      set("recipient", name);
+                      setAuthorRecipientDirty(true);
+                    }}
+                    placeholder="Select or add recipient…"
+                  />
                 ) : (
                   <Input
                     value={(form[f.key] as string) ?? ""}
