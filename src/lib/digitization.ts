@@ -161,3 +161,9 @@ export function digitizationHint(recordType: string | null | undefined): string 
 export function usesPhotoSides(recordType: string | null | undefined) {
   return (recordType ?? "") === "photograph";
 }
+
+/** Stable, human-friendly filename sort so dropped batches import in page order. */
+export function sortByFilename<T extends { name: string }>(items: T[]): T[] {
+  const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  return [...items].sort((a, b) => collator.compare(a.name, b.name));
+}
