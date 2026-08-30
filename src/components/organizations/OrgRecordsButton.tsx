@@ -90,7 +90,7 @@ export function OrgRecordsButton({ orgId, name, children }: Props) {
                 <Link
                   key={l.id}
                   to="/letters/$archiveId"
-                  params={{ archiveId: l.id }}
+                  params={{ archiveId: l.archive_id }}
                   className="flex items-baseline gap-3 px-3 py-2 text-sm hover:bg-muted/60"
                   onClick={() => setOpen(false)}
                 >
@@ -113,7 +113,7 @@ export function OrgRecordsButton({ orgId, name, children }: Props) {
                 <Link
                   key={s.id}
                   to="/sources/$dsId"
-                  params={{ dsId: s.id }}
+                  params={{ dsId: s.ds_id }}
                   className="flex items-baseline gap-3 px-3 py-2 text-sm hover:bg-muted/60"
                   onClick={() => setOpen(false)}
                 >

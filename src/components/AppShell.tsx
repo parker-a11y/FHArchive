@@ -36,7 +36,7 @@ const NAV = [
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks },
   { to: "/people", label: "People", icon: Users },
-  { to: "/organizations", label: "Orgs & Ships", icon: Ship },
+  { to: "/organizations", label: "Organizations", icon: Ship },
   { to: "/events", label: "Events", icon: CalendarDays },
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
