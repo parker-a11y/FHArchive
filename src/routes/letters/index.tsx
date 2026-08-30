@@ -1,9 +1,9 @@
 import { useRecordTypeOptions } from "@/lib/categories";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, RotateCcw } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -120,6 +120,7 @@ function storageText(l: Letter) {
 }
 
 function LettersTable() {
+  const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
   const { data: letters = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
   const { data: tags = [] } = useQuery({
@@ -297,6 +298,40 @@ function LettersTable() {
     await logEdits(letter.id, { [key]: letter[key as keyof Letter] }, { [key]: value });
     qc.invalidateQueries({ queryKey: ["letters"] });
   }
+
+  function resetFilters() {
+    setQ("");
+    setPeriod("");
+    setTStatus("");
+    setRType("");
+    setReview("");
+    setScanF("");
+    setCatalogedOnly(false);
+    setUncertainOnly(false);
+    setIdStatus("");
+    setDStatus("");
+    setDigStatus("");
+    setTones([]);
+    setView("");
+    setSort({ key: "archive_id", dir: 1 });
+    navigate({ to: "/letters", search: () => ({}) });
+  }
+
+  const activeFilterCount = [
+    q,
+    period,
+    tStatus,
+    rType,
+    review,
+    scanF,
+    idStatus,
+    dStatus,
+    digStatus,
+    view,
+    catalogedOnly ? "cataloged" : "",
+    uncertainOnly ? "uncertain" : "",
+    ...tones,
+  ].filter(Boolean).length;
 
   function cellValue(l: Letter, key: string) {
     switch (key) {
@@ -484,6 +519,22 @@ function LettersTable() {
         </div>
 
 
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={resetFilters}
+          disabled={activeFilterCount === 0}
+        >
+          <RotateCcw className="size-4" />
+          Reset filters
+          {activeFilterCount > 0 && (
+            <span className="ml-1 rounded-full bg-primary px-1.5 py-0 text-[10px] text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
 
         <div className="ml-auto flex items-center gap-2">
           <span className="field-label">Views</span>
