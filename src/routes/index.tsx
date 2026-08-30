@@ -237,7 +237,6 @@ function Dashboard() {
     {
       label: "Digital sources",
       value: sources.length,
-      sub: `${Object.keys(dsFileCounts).length} with file copies`,
       tone: "teal",
       icon: Globe,
       to: "/sources",
