@@ -73,20 +73,12 @@ import {
 } from "@/components/letter/ResearchPanels";
 
 export const Route = createFileRoute("/letters/$archiveId")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.archiveId} — The Francis Files` },
-      {
-        name: "description",
-        content: `Archival record ${params.archiveId}: catalog metadata, scans, transcription, keywords and research notes.`,
-      },
-      { property: "og:title", content: `${params.archiveId} — The Francis Files` },
-      {
-        property: "og:description",
-        content: `Archival record ${params.archiveId} with scans, transcription and research notes.`,
-      },
-    ],
+  validateSearch: (search: Record<string, unknown>) => ({
+    hl: typeof search.hl === "string" && search.hl.trim() ? search.hl : undefined,
+    tab: typeof search.tab === "string" ? search.tab : undefined,
   }),
+  head: ({ params }) => ({
+...
   component: () => (
     <AppShell>
       <LetterPage />

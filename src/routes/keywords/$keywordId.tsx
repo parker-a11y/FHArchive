@@ -60,6 +60,7 @@ function KeywordPage() {
                 key={l.id}
                 to="/letters/$archiveId"
                 params={{ archiveId: l.archive_id }}
+                search={{ hl: (keyword?.name as string) ?? undefined, tab: "transcription" }}
                 className="flex items-baseline gap-4 px-4 py-2 text-sm hover:bg-muted/60"
               >
                 <span className="archive-id text-primary">{l.archive_id}</span>
