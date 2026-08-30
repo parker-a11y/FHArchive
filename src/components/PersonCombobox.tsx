@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { PRIMARY_PERSONS } from "@/lib/archive";
 import { cn } from "@/lib/utils";
+import { usePersonMatcher } from "@/components/MatchPersonDialog";
 
 export function usePeopleNames() {
   return useQuery({
@@ -43,6 +44,7 @@ export function PersonCombobox({
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const { data: people = [] } = usePeopleNames();
+  const { resolvePerson, dialog: personDialog } = usePersonMatcher();
 
   const options = useMemo(() => {
     const seeded = PRIMARY_PERSONS.map((p) => p.value).filter(Boolean);
@@ -57,17 +59,30 @@ export function PersonCombobox({
 
   async function createPerson(name: string) {
     setCreating(true);
-    const { error } = await supabase.from("people").insert({ name });
-    setCreating(false);
-    if (error) return toast.error(error.message);
-    await qc.invalidateQueries({ queryKey: ["people"] });
-    toast.success(`Added ${name} to People`);
-    onChange(name);
-    setSearch("");
-    setOpen(false);
+    try {
+      // Near-duplicate names prompt a match dialog instead of silently
+      // creating a second record for the same person.
+      const person = await resolvePerson(name);
+      if (!person) return;
+      await qc.invalidateQueries({ queryKey: ["people"] });
+      toast.success(
+        person.name.toLowerCase() === name.trim().toLowerCase()
+          ? `Added ${person.name} to People`
+          : `Matched to ${person.name}`,
+      );
+      onChange(person.name);
+      setSearch("");
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the person");
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
+    <>
+      {personDialog}
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
@@ -139,5 +154,6 @@ export function PersonCombobox({
         </Command>
       </PopoverContent>
     </Popover>
+    </>
   );
 }

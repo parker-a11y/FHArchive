@@ -45,11 +45,19 @@ async function link(table: string, row: Record<string, unknown>) {
 
 export type ApplyResult = { applied: boolean; note: string };
 
+/**
+ * Resolves a proposed person name to an archive person. Supplied by the UI so
+ * near-duplicate names can be confirmed against existing records; returning
+ * null skips linking that name.
+ */
+export type PersonResolver = (name: string) => Promise<{ id: string; name: string } | null>;
+
 export async function applySuggestion(
   letterId: string,
   fieldKey: string,
   content: string,
   letterBefore: Record<string, unknown>,
+  resolvePerson?: PersonResolver,
 ): Promise<ApplyResult> {
   const text = content.trim();
   if (!text) return { applied: false, note: "Nothing to apply" };
@@ -81,17 +89,28 @@ export async function applySuggestion(
       return { applied: true, note: `${names.length} keyword(s) linked` };
     }
     case "people": {
+      let linked = 0;
+      let skipped = 0;
       for (const name of names) {
-        const id = await findOrCreate("people", "name", name);
-        if (id)
-          await link("letter_people", {
-            letter_id: letterId,
-            person_id: id,
-            role: "mentioned",
-            source: "ai",
-          });
+        const person = resolvePerson
+          ? await resolvePerson(name)
+          : { id: (await findOrCreate("people", "name", name)) ?? "", name };
+        if (!person?.id) {
+          skipped++;
+          continue;
+        }
+        await link("letter_people", {
+          letter_id: letterId,
+          person_id: person.id,
+          role: "mentioned",
+          source: "ai",
+        });
+        linked++;
       }
-      return { applied: true, note: `${names.length} person/people linked` };
+      return {
+        applied: linked > 0,
+        note: `${linked} person/people linked${skipped ? `, ${skipped} skipped` : ""}`,
+      };
     }
     case "places": {
       for (const name of names) {

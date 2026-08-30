@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { AliasManager } from "@/components/people/AliasManager";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
@@ -137,6 +138,7 @@ function PersonPage() {
               </div>
             ),
           )}
+          <AliasManager personId={person.id} />
         </div>
         <div>
           <List title="Letters written by" rows={written} />
