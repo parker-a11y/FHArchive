@@ -257,6 +257,18 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
           Transcribe Selected ({selected.length})
         </Button>
         <Button
+          variant="outline"
+          disabled={verifyAllBusy || unverifiedCount === 0}
+          onClick={verifyAll}
+        >
+          {verifyAllBusy ? (
+            <Loader2 className="mr-1 size-3.5 animate-spin" />
+          ) : (
+            <BadgeCheck className="mr-1 size-3.5" />
+          )}
+          Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
+        </Button>
+        <Button
           variant="ghost"
           size="sm"
           onClick={() => setSelected(selected.length ? [] : files.map((f) => f.id))}
