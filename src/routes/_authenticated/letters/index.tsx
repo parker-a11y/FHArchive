@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Eye, Mail, RotateCcw, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Eye, Mail, RotateCcw } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -43,6 +43,7 @@ import {
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 
 import { StarToggle } from "@/components/StarToggle";
+import { FffBadge } from "@/components/FffBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -112,7 +113,7 @@ const COLUMNS: Col[] = [
   { key: "digitization_status", label: "Digitization", width: 160 },
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
-  { key: "starred", label: "Of extreme interest", width: 150 },
+  { key: "starred", label: "FFF", width: 90 },
   { key: "tones", label: "Tone / sentiment", width: 200 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
@@ -566,8 +567,8 @@ function LettersTable() {
           aria-pressed={starredOnly}
           onClick={() => setStarredOnly((v) => !v)}
         >
-          <Star className={starredOnly ? "size-4 fill-current" : "size-4"} />
-          Starred only
+          <FffBadge size={16} muted={!starredOnly} />
+          FFF only
         </Button>
 
         <Button

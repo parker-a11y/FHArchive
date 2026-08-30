@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
+  Sparkles,
   LayoutDashboard,
   Files,
   PlusSquare,
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare, adminOnly: true },
   { to: "/letters", label: "All Records", icon: Files },
+  { to: "/fff", label: "FFF — Finds", icon: Sparkles },
   { to: "/sources", label: "Digital Sources", icon: Globe },
   { to: "/containers", label: "Source Containers", icon: Box },
   { to: "/timeline", label: "Timeline", icon: Clock },

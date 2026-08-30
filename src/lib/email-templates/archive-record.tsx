@@ -24,6 +24,8 @@ export interface EmailRecord {
   transcription?: string | null
   url?: string | null
   images?: string[]
+  /** Marked as a Francis File Find (FFF) — shows the badge on the card. */
+  fff?: boolean
 }
 
 export interface ArchiveRecordEmailProps {
@@ -71,6 +73,18 @@ const ArchiveRecordEmail = ({
 
         {records.map((r, i) => (
           <Section key={i} style={card}>
+            {r.fff ? (
+              <Section style={fffRow}>
+                <Img
+                  src="https://fharchive.com/fff-badge.png"
+                  width="22"
+                  height="22"
+                  alt="FFF"
+                  style={fffBadgeImg}
+                />
+                <Text style={fffLabel}>FFF — Francis File Find</Text>
+              </Section>
+            ) : null}
             <Text style={idLine}>{r.identifier}</Text>
             {r.title ? <Heading as="h2" style={h2}>{r.title}</Heading> : null}
             {r.date ? <Text style={meta}>{r.date}</Text> : null}
@@ -139,6 +153,19 @@ export const template = {
 const main = { backgroundColor: '#ffffff', fontFamily: 'Georgia, "Times New Roman", serif' }
 const container = { padding: '24px 24px 40px', maxWidth: '640px' }
 const header = { borderBottom: '2px solid #cbd5c0', paddingBottom: '16px', marginBottom: '20px' }
+const fffRow = { margin: '0 0 6px' }
+const fffBadgeImg = { display: 'inline-block', verticalAlign: 'middle' }
+const fffLabel = {
+  display: 'inline-block',
+  verticalAlign: 'middle',
+  margin: '0 0 0 8px',
+  fontSize: '12px',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase' as const,
+  color: '#b4832c',
+  fontWeight: 700,
+}
+
 const logoImg = { margin: '0 auto 12px', borderRadius: '50%' }
 const eyebrow = {
   margin: '0 0 6px',

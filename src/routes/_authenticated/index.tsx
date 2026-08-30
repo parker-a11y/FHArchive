@@ -272,11 +272,11 @@ function Dashboard() {
     },
 
     {
-      label: "Of extreme interest",
+      label: "FFF — Francis File Finds",
       value: (stats0?.starred_records ?? 0) + (stats0?.starred_sources ?? 0),
       tone: "amber",
       icon: Star,
-      to: "/letters?starred=1",
+      to: "/fff",
     },
     { label: "Total scans", value: stats0?.total_scans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {

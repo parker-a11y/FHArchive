@@ -18,6 +18,7 @@ import { Route as AuthenticatedBackupsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
 import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
+import { Route as AuthenticatedFffRouteImport } from './routes/_authenticated/fff'
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
@@ -85,6 +86,11 @@ const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
 const AuthenticatedEmailsRoute = AuthenticatedEmailsRouteImport.update({
   id: '/emails',
   path: '/emails',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFffRoute = AuthenticatedFffRouteImport.update({
+  id: '/fff',
+  path: '/fff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQueuesRoute = AuthenticatedQueuesRouteImport.update({
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
   '/emails': typeof AuthenticatedEmailsRoute
+  '/fff': typeof AuthenticatedFffRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/search': typeof AuthenticatedSearchRoute
   '/timeline': typeof AuthenticatedTimelineRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
   '/emails': typeof AuthenticatedEmailsRoute
+  '/fff': typeof AuthenticatedFffRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/search': typeof AuthenticatedSearchRoute
   '/timeline': typeof AuthenticatedTimelineRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
   '/_authenticated/emails': typeof AuthenticatedEmailsRoute
+  '/_authenticated/fff': typeof AuthenticatedFffRoute
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/categories'
     | '/emails'
+    | '/fff'
     | '/queues'
     | '/search'
     | '/timeline'
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/categories'
     | '/emails'
+    | '/fff'
     | '/queues'
     | '/search'
     | '/timeline'
@@ -406,6 +417,7 @@ export interface FileRouteTypes {
     | '/_authenticated/catalog'
     | '/_authenticated/categories'
     | '/_authenticated/emails'
+    | '/_authenticated/fff'
     | '/_authenticated/queues'
     | '/_authenticated/search'
     | '/_authenticated/timeline'
@@ -508,6 +520,13 @@ declare module '@tanstack/react-router' {
       path: '/emails'
       fullPath: '/emails'
       preLoaderRoute: typeof AuthenticatedEmailsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fff': {
+      id: '/_authenticated/fff'
+      path: '/fff'
+      fullPath: '/fff'
+      preLoaderRoute: typeof AuthenticatedFffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/queues': {
@@ -686,6 +705,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
   AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
+  AuthenticatedFffRoute: typeof AuthenticatedFffRoute
   AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
@@ -713,6 +733,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
   AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
+  AuthenticatedFffRoute: AuthenticatedFffRoute,
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
