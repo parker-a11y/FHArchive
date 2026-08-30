@@ -792,17 +792,25 @@ function LetterPage() {
           <TranscriptionPanel letter={letter} highlight={hl} />
         </TabsContent>
         <TabsContent value="links" className="mt-6">
-          <LinksPanel letter={letter} />
+          <fieldset disabled={isGuestViewer} className="contents">
+            <LinksPanel letter={letter} />
+          </fieldset>
         </TabsContent>
         <TabsContent value="references" className="mt-6">
-          <ReferencesPanel letter={letter} />
+          <fieldset disabled={isGuestViewer} className="contents">
+            <ReferencesPanel letter={letter} />
+          </fieldset>
         </TabsContent>
         <TabsContent value="related" className="mt-6 space-y-10">
-          <RelationsPanel letter={letter} />
-          <LetterSourcesPanel letter={letter} />
+          <fieldset disabled={isGuestViewer} className="contents">
+            <RelationsPanel letter={letter} />
+            <LetterSourcesPanel letter={letter} />
+          </fieldset>
         </TabsContent>
         <TabsContent value="ai" className="mt-6">
-          <AiPanel letter={letter} />
+          <fieldset disabled={isGuestViewer} className="contents">
+            <AiPanel letter={letter} />
+          </fieldset>
         </TabsContent>
         <TabsContent value="history" className="mt-6">
           <HistoryPanel letter={letter} />
