@@ -183,7 +183,7 @@ function PageEditor({
   );
 }
 
-export function TranscriptionPanel({ letter }: { letter: Letter }) {
+export function TranscriptionPanel({ letter, highlight }: { letter: Letter; highlight?: string }) {
   const qc = useQueryClient();
   const [verified, setVerified] = useState(letter.transcription_verified ?? "");
   const [status, setStatus] = useState(letter.transcription_status);
@@ -310,6 +310,12 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
 
   return (
     <div className="space-y-6">
+      {highlight && (
+        <div className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm dark:bg-yellow-950/30">
+          Highlighting <strong>“{highlight}”</strong> in transcriptions below — opened from the
+          Keywords page.
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 rounded border border-border bg-muted/30 p-3">
         <Button onClick={() => runRecord(false)} disabled={recordBusy || files.length === 0}>
           {recordBusy ? (
@@ -372,6 +378,7 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
             onTranscribe={() => runScans([f.id])}
             busy={busyIds.includes(f.id)}
             onSaved={() => refetch()}
+            highlight={highlight}
           />
         ))}
       </div>
@@ -396,7 +403,9 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
           <div>
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
-              {letter.transcription_raw_ai || (
+              {letter.transcription_raw_ai ? (
+                <HighlightedText text={letter.transcription_raw_ai} term={highlight} />
+              ) : (
                 <span className="text-muted-foreground">
                   None yet. “Transcribe Entire Record” assembles the letter pages here in scan
                   order; envelope pages are excluded.
