@@ -176,6 +176,7 @@ function LettersTable() {
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [editing, setEditing] = useState<{ id: string; key: string } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
 
