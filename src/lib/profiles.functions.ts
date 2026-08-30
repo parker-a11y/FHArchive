@@ -4,24 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const ensurePendingGuestProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
       .select("id, status")
       .eq("id", userId)
       .maybeSingle();
 
     if (!existingProfile) {
-      const { error: profileError } = await supabase.from("profiles").insert({
+      const { error: profileError } = await supabaseAdmin.from("profiles").insert({
         id: userId,
-        email: context.claims?.email ?? "",
+        email: (context.claims?.email as string) ?? "",
         status: "pending",
       });
       if (profileError) throw profileError;
     }
 
-    const { data: existingRole } = await supabase
+    const { data: existingRole } = await supabaseAdmin
       .from("user_roles")
       .select("id")
       .eq("user_id", userId)
@@ -29,7 +30,7 @@ export const ensurePendingGuestProfile = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (!existingRole) {
-      const { error: roleError } = await supabase.from("user_roles").insert({
+      const { error: roleError } = await supabaseAdmin.from("user_roles").insert({
         user_id: userId,
         role: "guest",
       });
