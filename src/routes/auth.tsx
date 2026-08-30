@@ -34,6 +34,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [signUpMessage, setSignUpMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (session) navigate({ to: "/" });
@@ -42,18 +43,24 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const fn =
-      mode === "in"
-        ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({
-            email,
-            password,
-            options: { emailRedirectTo: window.location.origin },
-          });
-    const { error } = await fn;
+    setSignUpMessage(null);
+    if (mode === "in") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setBusy(false);
+      if (error) return toast.error(error.message);
+      toast.success("Signed in");
+      return;
+    }
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(mode === "in" ? "Signed in" : "Account created");
+    setSignUpMessage(
+      "Account request received. Please confirm your email if required, then wait for an administrator to approve guest access."
+    );
   }
 
   async function signInWithGoogle() {
@@ -110,8 +117,13 @@ function AuthPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            {mode === "in" ? "Sign in" : "Create account"}
+            {mode === "in" ? "Sign in" : "Request account"}
           </Button>
+          {signUpMessage && (
+            <p className="rounded bg-muted p-2 text-center text-xs text-muted-foreground">
+              {signUpMessage}
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
             <span className="text-xs text-muted-foreground">or</span>

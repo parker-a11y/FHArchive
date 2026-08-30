@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Mail,
   Menu,
+  UserCog,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +48,7 @@ const NAV = [
 
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,6 +64,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   if (!session) return null;
+
+  const navItems = isAdmin
+    ? [...NAV, { to: "/admin/users", label: "Users", icon: UserCog }]
+    : NAV;
 
   const nav = (onNavigate?: () => void) => (
     <>
@@ -80,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto p-3">
-        {NAV.map((item) => {
+        {navItems.map((item) => {
           const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
           return (
             <Link
