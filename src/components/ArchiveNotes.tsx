@@ -54,17 +54,13 @@ export function ArchiveNotes() {
   const [body, setBody] = useState("");
 
   const create = useMutation({
-    mutationFn: async () => {
-      const text = body.trim();
-      if (!text) throw new Error("Note cannot be empty.");
-      const { error } = await supabase.from("archive_notes").insert({
-        title: title.trim() || null,
-        body: text,
-        author_name: user?.email ?? null,
-        author_id: user?.id,
-      });
-      if (error) throw error;
-    },
+    mutationFn: async () =>
+      postArchiveNote({
+        title,
+        body,
+        authorId: user?.id,
+        authorName: user?.email ?? null,
+      }),
     onSuccess: () => {
       setTitle("");
       setBody("");
