@@ -232,20 +232,14 @@ function Dashboard() {
   }, [letters, typeOptions]);
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
-  const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
+  const stats: { label: string; value: number; sub?: string; tone: Tone; icon: LucideIcon; to?: string }[] = [
     { label: "FH records", value: letters.length, tone: "blue", icon: Hash, to: "/letters" },
     {
       label: "Digital sources",
       value: sources.length,
+      sub: `${Object.keys(dsFileCounts).length} with file copies`,
       tone: "teal",
       icon: Globe,
-      to: "/sources",
-    },
-    {
-      label: "Sources with file copies",
-      value: Object.keys(dsFileCounts).length,
-      tone: "teal",
-      icon: Paperclip,
       to: "/sources",
     },
 
