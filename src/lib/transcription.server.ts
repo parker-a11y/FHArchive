@@ -92,26 +92,22 @@ export async function toDataUrl(supabase: SupabaseClient, path: string, mime: st
   return `data:${mime};base64,${btoa(binary)}`;
 }
 
-/** Calls the gateway and returns transcription text, or throws a readable error. */
-export async function transcribeImage(dataUrl: string, pageNote: string) {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("AI is not configured on the server");
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string | Array<Record<string, unknown>>;
+};
 
+async function callGateway(apiKey: string, messages: ChatMessage[]) {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: TRANSCRIPTION_MODEL,
-      max_completion_tokens: 6000,
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `${TRANSCRIPTION_PROMPT}\n\n(${pageNote})` },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
-        },
-      ],
+      // Reasoning tokens are billed against this budget, so keep it generous:
+      // a tight budget silently truncates long handwritten pages mid-sentence.
+      max_completion_tokens: 32000,
+      reasoning_effort: "low",
+      messages,
     }),
   });
 
@@ -123,11 +119,48 @@ export async function transcribeImage(dataUrl: string, pageNote: string) {
   }
 
   const json = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: { message?: { content?: string }; finish_reason?: string }[];
   };
-  const text = json.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!text) throw new Error("The AI returned no transcription text");
-  return text;
+  return {
+    text: json.choices?.[0]?.message?.content ?? "",
+    truncated: json.choices?.[0]?.finish_reason === "length",
+  };
+}
+
+/** Calls the gateway and returns transcription text, or throws a readable error. */
+export async function transcribeImage(dataUrl: string, pageNote: string) {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) throw new Error("AI is not configured on the server");
+
+  const messages: ChatMessage[] = [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: `${TRANSCRIPTION_PROMPT}\n\n(${pageNote})` },
+        { type: "image_url", image_url: { url: dataUrl } },
+      ],
+    },
+  ];
+
+  let { text, truncated } = await callGateway(apiKey, messages);
+
+  // If the model ran out of budget mid-page, ask it to continue where it stopped.
+  for (let attempt = 0; attempt < 3 && truncated && text.trim(); attempt += 1) {
+    messages.push({ role: "assistant", content: text });
+    messages.push({
+      role: "user",
+      content:
+        "Continue the transcription from exactly where you stopped. Do not repeat any text already transcribed, do not add commentary. Return transcription text only.",
+    });
+    const next = await callGateway(apiKey, messages);
+    if (!next.text.trim()) break;
+    text = `${text.replace(/\s+$/, "")}\n${next.text.replace(/^\s+/, "")}`;
+    truncated = next.truncated;
+  }
+
+  const finalText = text.trim();
+  if (!finalText) throw new Error("The AI returned no transcription text");
+  return finalText;
 }
 
 export function isEnvelope(label: string | null) {
