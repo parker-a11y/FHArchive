@@ -157,9 +157,9 @@ function Stat({
   icon?: LucideIcon;
 }) {
   const body = (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
       <div className={`absolute top-0 left-0 h-full w-1.5 ${TONE_BAR[tone]}`} />
-      <div className="mb-3 flex items-center gap-2.5">
+      <div className="mb-3 flex items-start gap-2.5">
         {Icon && (
           <div
             className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TONE_CHIP[tone]}`}
@@ -167,14 +167,16 @@ function Stat({
             <Icon className="size-4" />
           </div>
         )}
-        <span className="field-label">{label}</span>
+        <span className="field-label line-clamp-2 h-10 leading-5">{label}</span>
       </div>
       <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
-      {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+      {sub && (
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{sub}</p>
+      )}
     </div>
   );
   return to ? (
-    <Link to={to} className="block">
+    <Link to={to} className="block h-full">
       {body}
     </Link>
   ) : (
