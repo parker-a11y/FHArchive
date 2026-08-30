@@ -2,12 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Merge, Trash2 } from "lucide-react";
+import { Merge, Trash2, UserPlus } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";
 import { DeletePersonButton } from "@/components/people/DeletePersonButton";
 import { MergePersonButton } from "@/components/people/MergePersonButton";
