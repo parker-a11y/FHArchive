@@ -486,13 +486,24 @@ function QuickEntry() {
               <>
                 <div className="space-y-1.5">
                   <Label className="field-label">From (sender)</Label>
-                  <Input value={form.author} onChange={(e) => set("author", e.target.value)} />
+                  <PersonRoleInput
+                    value={authorPerson}
+                    onChange={(person, name) => {
+                      setAuthorPerson(person);
+                      set("author", name);
+                    }}
+                    placeholder="Select or add sender…"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="field-label">To (recipient)</Label>
-                  <Input
-                    value={form.recipient}
-                    onChange={(e) => set("recipient", e.target.value)}
+                  <PersonRoleInput
+                    value={recipientPerson}
+                    onChange={(person, name) => {
+                      setRecipientPerson(person);
+                      set("recipient", name);
+                    }}
+                    placeholder="Select or add recipient…"
                   />
                 </div>
                 <div className="space-y-1.5">
