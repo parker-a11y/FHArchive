@@ -42,6 +42,7 @@ export const Route = createFileRoute("/_authenticated/containers/")({
 });
 
 function ContainersList() {
+  const { isGuestViewer } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [q, setQ] = useState("");

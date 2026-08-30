@@ -7,6 +7,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { ORG_TYPES, labelOf } from "@/lib/archive";
 import { DeleteOrgButton } from "@/components/organizations/DeleteOrgButton";
 import { OrgRecordsButton } from "@/components/organizations/OrgRecordsButton";
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/organizations/")({
 });
 
 function Organizations() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [orgType, setOrgType] = useState("ship");

@@ -7,6 +7,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";

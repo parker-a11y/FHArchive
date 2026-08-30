@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { EVENT_TYPES, labelOf } from "@/lib/archive";
 
 export const Route = createFileRoute("/_authenticated/events/")({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/events/")({
 });
 
 function Events() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [eventType, setEventType] = useState("family");

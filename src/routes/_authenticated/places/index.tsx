@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Merge, Trash2 } from "lucide-react";
 import { DeletePlaceButton } from "@/components/places/DeletePlaceButton";
 import { MergePlaceButton } from "@/components/places/MergePlaceButton";
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/places/")({
 });
 
 function Places() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const { data: places = [] } = useQuery({
