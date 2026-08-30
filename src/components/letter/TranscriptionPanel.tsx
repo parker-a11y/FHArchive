@@ -330,43 +330,47 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         </div>
       )}
       <div className="flex flex-wrap items-center gap-3 rounded border border-border bg-muted/30 p-3">
-        <Button onClick={() => runRecord(false)} disabled={recordBusy || files.length === 0}>
-          {recordBusy ? (
-            <Loader2 className="mr-1.5 size-4 animate-spin" />
-          ) : (
-            <Sparkles className="mr-1.5 size-4" />
-          )}
-          Transcribe Entire Record
-        </Button>
-        <Button variant="outline" onClick={() => runRecord(true)} disabled={recordBusy || !files.length}>
-          Re-transcribe all pages
-        </Button>
-        <Button
-          variant="outline"
-          disabled={!selected.length || recordBusy}
-          onClick={() => runScans(selected)}
-        >
-          Transcribe Selected ({selected.length})
-        </Button>
-        <Button
-          variant="outline"
-          disabled={verifyAllBusy || unverifiedCount === 0}
-          onClick={verifyAll}
-        >
-          {verifyAllBusy ? (
-            <Loader2 className="mr-1 size-3.5 animate-spin" />
-          ) : (
-            <BadgeCheck className="mr-1 size-3.5" />
-          )}
-          Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSelected(selected.length ? [] : files.map((f) => f.id))}
-        >
-          {selected.length ? "Clear selection" : "Select all pages"}
-        </Button>
+        {!isGuestViewer && (
+          <>
+            <Button onClick={() => runRecord(false)} disabled={recordBusy || files.length === 0}>
+              {recordBusy ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1.5 size-4" />
+              )}
+              Transcribe Entire Record
+            </Button>
+            <Button variant="outline" onClick={() => runRecord(true)} disabled={recordBusy || !files.length}>
+              Re-transcribe all pages
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!selected.length || recordBusy}
+              onClick={() => runScans(selected)}
+            >
+              Transcribe Selected ({selected.length})
+            </Button>
+            <Button
+              variant="outline"
+              disabled={verifyAllBusy || unverifiedCount === 0}
+              onClick={verifyAll}
+            >
+              {verifyAllBusy ? (
+                <Loader2 className="mr-1 size-3.5 animate-spin" />
+              ) : (
+                <BadgeCheck className="mr-1 size-3.5" />
+              )}
+              Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelected(selected.length ? [] : files.map((f) => f.id))}
+            >
+              {selected.length ? "Clear selection" : "Select all pages"}
+            </Button>
+          </>
+        )}
         <span className="ml-auto text-xs text-muted-foreground">
           {pageCoverage} of {files.length} scans transcribed · masters are never altered
         </span>
@@ -392,6 +396,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             busy={busyIds.includes(f.id)}
             onSaved={() => refetch()}
             highlight={highlight}
+            readOnly={isGuestViewer}
           />
         ))}
       </div>
