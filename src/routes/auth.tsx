@@ -147,7 +147,7 @@ function AuthPage() {
             className="w-full text-xs text-muted-foreground underline-offset-2 hover:underline"
             onClick={() => setMode(mode === "in" ? "up" : "in")}
           >
-            {mode === "in" ? "Create the archive account" : "I already have an account"}
+            {mode === "in" ? "Request New Account" : "I already have an account"}
           </button>
         </form>
       </div>
