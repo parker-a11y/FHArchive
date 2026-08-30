@@ -117,8 +117,13 @@ function AuthPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={busy}>
-            {mode === "in" ? "Sign in" : "Create account"}
+            {mode === "in" ? "Sign in" : "Request account"}
           </Button>
+          {signUpMessage && (
+            <p className="rounded bg-muted p-2 text-center text-xs text-muted-foreground">
+              {signUpMessage}
+            </p>
+          )}
           <div className="flex items-center gap-3">
             <span className="h-px flex-1 bg-border" />
             <span className="text-xs text-muted-foreground">or</span>
