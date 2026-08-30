@@ -523,14 +523,6 @@ function QuickEntry() {
                   options={STORAGE_TYPES}
                 />
                 <div className="space-y-1.5">
-                  <Label className="field-label">Container / box</Label>
-                  <Input
-                    value={form.storage_container}
-                    onChange={(e) => set("storage_container", e.target.value)}
-                    placeholder="Artifact Box 01"
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <Label className="field-label">Folder / jacket</Label>
                   <Input
                     value={form.storage_folder}
