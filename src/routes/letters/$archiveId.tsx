@@ -56,7 +56,7 @@ import {
 } from "@/lib/archive";
 
 import { PersonCombobox } from "@/components/PersonCombobox";
-import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
+import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
