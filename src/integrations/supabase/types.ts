@@ -2270,6 +2270,14 @@ export type Database = {
           id: string
         }[]
       }
+      dashboard_stats: { Args: never; Returns: Json }
+      ds_file_counts: {
+        Args: never
+        Returns: {
+          files: number
+          source_id: string
+        }[]
+      }
       find_person_matches: {
         Args: { _limit?: number; _name: string }
         Returns: {
@@ -2288,6 +2296,13 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_approved_guest: { Args: { _user_id: string }; Returns: boolean }
+      keyword_usage_counts: {
+        Args: never
+        Returns: {
+          keyword_id: string
+          uses: number
+        }[]
+      }
       merge_people: {
         Args: { _source_ids: string[]; _target_id: string }
         Returns: undefined
@@ -2318,6 +2333,40 @@ export type Database = {
         }[]
       }
       require_admin: { Args: never; Returns: undefined }
+      search_letters: {
+        Args: {
+          p_author?: string
+          p_date_from?: string
+          p_date_precision?: string
+          p_date_to?: string
+          p_dig_status?: string
+          p_dir?: string
+          p_event?: string
+          p_id_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_org?: string
+          p_period?: string
+          p_person?: string
+          p_place?: string
+          p_q?: string
+          p_recipient?: string
+          p_research?: string
+          p_review?: string
+          p_scan?: string
+          p_sort?: string
+          p_subtype?: string
+          p_tones?: string[]
+          p_tstatus?: string
+          p_type?: string
+          p_uncertain?: boolean
+          p_view?: string
+        }
+        Returns: {
+          letter: Database["public"]["Tables"]["letters"]["Row"]
+          total_count: number
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

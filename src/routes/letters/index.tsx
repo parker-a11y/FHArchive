@@ -1,9 +1,9 @@
 import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, Mail, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Eye, Mail, RotateCcw } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -17,7 +17,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { fetchLetters, logEdits, type Letter } from "@/lib/queries";
+import {
+  fetchAllMatchingLetters,
+  logEdits,
+  searchLetters,
+  type Letter,
+  type LetterSearchParams,
+} from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DATE_PRECISION,
@@ -30,9 +36,7 @@ import {
   TRANSCRIPTION_STATUS,
   displayDate,
   download,
-  isUnidentifiedPhoto,
   labelOf,
-  needsDating,
   toCsv,
   toExcelXml,
 } from "@/lib/archive";
@@ -46,7 +50,7 @@ const searchSchema = z.object({
   tstatus: z.string().optional(),
   review: z.string().optional(),
   scan: z.string().optional(), // "has" | "none"
-  
+
   uncertain: z.coerce.string().optional(), // "1"
 });
 
@@ -110,6 +114,18 @@ const COLUMNS: Col[] = [
   { key: "notes", label: "Notes", width: 220, editable: true },
 ];
 
+const PAGE_SIZE = 100;
+
+/** Debounce a value so filtering doesn't fire a query on every keystroke. */
+function useDebounced<T>(value: T, ms = 300): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return v;
+}
+
 /** Human-readable one-line physical location. */
 function storageText(l: Letter) {
   const parts = [labelOf(STORAGE_TYPES, l.storage_type), l.storage_folder].filter(
@@ -118,32 +134,39 @@ function storageText(l: Letter) {
   return parts.join(" · ") || (l.storage_location ?? "");
 }
 
+type KeywordRow = { letter_id: string; keywords: { name: string } | null };
+
+function groupKeywords(tags: KeywordRow[]) {
+  const m: Record<string, string[]> = {};
+  for (const t of tags) {
+    if (!t.keywords) continue;
+    (m[t.letter_id] ??= []).push(t.keywords.name);
+  }
+  return m;
+}
+
+/** Keyword names for a set of letter ids, fetched in PostgREST-safe chunks. */
+async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, string[]>> {
+  const all: KeywordRow[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await supabase
+      .from("letter_keywords")
+      .select("letter_id, keywords(name)")
+      .in("letter_id", ids.slice(i, i + 200));
+    if (error) throw error;
+    all.push(...((data ?? []) as unknown as KeywordRow[]));
+  }
+  return groupKeywords(all);
+}
+
 function LettersTable() {
   const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
-  const { data: letters = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
-  const { data: tags = [] } = useQuery({
-    queryKey: ["letter_keywords_all"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("letter_keywords")
-        .select("letter_id, keywords(name)");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const keywordsByLetter = useMemo(() => {
-    const m: Record<string, string[]> = {};
-    for (const t of tags as { letter_id: string; keywords: { name: string } | null }[]) {
-      if (!t.keywords) continue;
-      (m[t.letter_id] ??= []).push(t.keywords.name);
-    }
-    return m;
-  }, [tags]);
-
   const search = Route.useSearch();
+  const recordTypeOptions = useRecordTypeOptions();
+
   const [q, setQ] = useState("");
+  const debouncedQ = useDebounced(q);
   const [period, setPeriod] = useState(search.period ?? "");
   const [tStatus, setTStatus] = useState(search.tstatus ?? "");
   const [rType, setRType] = useState(search.type ?? "");
@@ -160,7 +183,7 @@ function LettersTable() {
     setScanF(search.scan ?? "");
     setUncertainOnly(search.uncertain === "1");
   }, [search]);
-  const recordTypeOptions = useRecordTypeOptions();
+
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
   const [digStatus, setDigStatus] = useState("");
@@ -168,92 +191,70 @@ function LettersTable() {
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
+  const [page, setPage] = useState(0);
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [editing, setEditing] = useState<{ id: string; key: string } | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Map<string, SelectedRecord>>(new Map());
+  const [exporting, setExporting] = useState(false);
+
+  // Any filter change goes back to page 1.
+  useEffect(() => {
+    setPage(0);
+  }, [debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort]);
+
+  const params: LetterSearchParams = {
+    q: debouncedQ,
+    type: rType,
+    period,
+    tstatus: tStatus,
+    review,
+    scan: scanF as "" | "has" | "none",
+    uncertain: uncertainOnly,
+    idStatus,
+    datePrecision: dStatus,
+    digStatus,
+    tones,
+    view,
+    sort: sort.key,
+    dir: sort.dir === 1 ? "asc" : "desc",
+  };
+
+  const { data: pageData, isLoading } = useQuery({
+    queryKey: ["letters-page", { ...params, page }],
+    queryFn: () => searchLetters({ ...params, limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+    placeholderData: keepPreviousData,
+  });
+  const rows = pageData?.rows ?? [];
+  const total = pageData?.total ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Keyword names only for the records on this page.
+  const pageIds = rows.map((l) => l.id);
+  const { data: keywordsByLetter = {} } = useQuery({
+    queryKey: ["letters-page-keywords", pageIds],
+    enabled: pageIds.length > 0,
+    queryFn: () => fetchKeywordsForLetters(pageIds),
+  });
 
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
 
-  const rows = useMemo(() => {
-    let r = letters.filter((l) => {
-      if (view === "undated" && !needsDating(l)) return false;
-      if (view === "unidphoto" && !isUnidentifiedPhoto(l)) return false;
-      if (period && l.period !== period) return false;
-      if (tStatus) {
-        if (tStatus.startsWith("!")) {
-          if (l.transcription_status === tStatus.slice(1)) return false;
-        } else if (l.transcription_status !== tStatus) return false;
-      }
-      if (rType && (l.record_type ?? "letter") !== rType) return false;
-      if (review && l.review_status !== review) return false;
-      if (scanF === "has" && l.image_count === 0) return false;
-      if (scanF === "none" && l.image_count > 0) return false;
-      if (uncertainOnly && l.date_certainty === "confirmed" && l.date_precision === "exact")
-        return false;
-      if (idStatus && (l.identification_status ?? "unidentified") !== idStatus) return false;
-      if (dStatus && l.date_precision !== dStatus) return false;
-      if (digStatus && (l.digitization_status ?? "not_scanned") !== digStatus) return false;
-      if (tones.length && !tones.every((t) => (l.tones ?? []).includes(t))) return false;
-
-      if (!q) return true;
-      const hay = [
-        l.archive_id,
-        l.title,
-        l.author,
-        l.recipient,
-        l.origin,
-        l.notes,
-        storageText(l),
-        ...(l.tones ?? []),
-        ...(keywordsByLetter[l.id] ?? []),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q.toLowerCase());
-    });
-    r = [...r].sort((a, b) => {
-      const pick = (l: Letter) => {
-        switch (sort.key) {
-          case "date":
-            return l.sort_date ?? l.normalized_date ?? "";
-          case "storage":
-            return storageText(l);
-          default:
-            return l[sort.key as keyof Letter];
-        }
-      };
-      const av = String(pick(a) ?? "");
-      const bv = String(pick(b) ?? "");
-      if (av === bv) return (a.fh_seq - b.fh_seq) * sort.dir;
-      // Blank values always sort last, so undated records never crowd the top.
-      if (!av) return 1;
-      if (!bv) return -1;
-      return (av > bv ? 1 : -1) * sort.dir;
-    });
-    return r;
-  }, [letters, q, period, tStatus, rType, review, scanF, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
-
-  const selectedRecords = useMemo(
-    () =>
-      rows
-        .filter((l) => selected.has(l.id))
-        .map((l) => ({ kind: "letter" as const, id: l.id, identifier: l.archive_id, title: l.title })),
-    [rows, selected],
-  );
-  const toggleSelected = (id: string, on: boolean) =>
+  type SelectedRecord = { kind: "letter"; id: string; identifier: string; title: string | null };
+  const selectedRecords = [...selected.values()];
+  const toggleSelected = (l: Letter, on: boolean) =>
     setSelected((s) => {
-      const next = new Set(s);
-      if (on) next.add(id);
-      else next.delete(id);
+      const next = new Map(s);
+      if (on) next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title });
+      else next.delete(l.id);
       return next;
     });
   const allSelected = rows.length > 0 && rows.every((l) => selected.has(l.id));
 
-
-
-  function exportRows() {
-    return rows.map((l) => ({
+  /** Export every record matching the current filters (all pages). */
+  async function buildExportRows() {
+    const all = await fetchAllMatchingLetters(params);
+    const kw = await fetchKeywordsForLetters(all.map((l) => l.id));
+    return all.map((l) => ({
       fh_id: l.archive_id,
       record_type: labelOf(recordTypeOptions, l.record_type),
       subtype: l.subtype ?? "",
@@ -279,7 +280,7 @@ function LettersTable() {
       original_copy: l.original_copy ?? "",
       identification_status: labelOf(IDENTIFICATION_STATUS, l.identification_status),
       storage_type: labelOf(STORAGE_TYPES, l.storage_type),
-      
+
       storage_folder: l.storage_folder ?? "",
       storage_notes: l.storage_notes ?? "",
       storage_location: l.storage_location ?? "",
@@ -291,7 +292,7 @@ function LettersTable() {
       transcription_status: l.transcription_status,
       review_status: l.review_status,
       publication_status: l.publication_status,
-      keywords: (keywordsByLetter[l.id] ?? []).join("; "),
+      keywords: (kw[l.id] ?? []).join("; "),
       tones: (l.tones ?? []).join("; "),
       summary_short: l.summary_short ?? "",
       notes: l.notes ?? "",
@@ -300,7 +301,21 @@ function LettersTable() {
       updated_at: l.updated_at,
     }));
   }
-  const EXPORT_COLS = Object.keys(exportRows()[0] ?? { fh_id: "" });
+
+  async function runExport(kind: "csv" | "excel") {
+    setExporting(true);
+    try {
+      const data = await buildExportRows();
+      const cols = Object.keys(data[0] ?? { fh_id: "" });
+      if (kind === "csv") download("francis-files.csv", toCsv(data, cols), "text/csv");
+      else download("francis-files.xls", toExcelXml(data, cols), "application/vnd.ms-excel");
+      toast.success(`Exported ${data.length} records`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function saveCell(letter: Letter, key: string, raw: string) {
     setEditing(null);
@@ -309,7 +324,7 @@ function LettersTable() {
     const { error } = await supabase.from("letters").update({ [key]: value } as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
     await logEdits(letter.id, { [key]: letter[key as keyof Letter] }, { [key]: value });
-    qc.invalidateQueries({ queryKey: ["letters"] });
+    qc.invalidateQueries({ queryKey: ["letters-page"] });
   }
 
   function resetFilters() {
@@ -326,6 +341,7 @@ function LettersTable() {
     setTones([]);
     setView("");
     setSort({ key: "archive_id", dir: 1 });
+    setPage(0);
     navigate({ to: "/letters", search: () => ({}) });
   }
 
@@ -389,7 +405,7 @@ function LettersTable() {
     <>
       <PageHeader
         title="All Records"
-        description={`${rows.length} of ${letters.length} records`}
+        description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
             {selectedRecords.length > 0 && (
@@ -406,9 +422,8 @@ function LettersTable() {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() =>
-                download("harrington-archive.csv", toCsv(exportRows(), EXPORT_COLS), "text/csv")
-              }
+              disabled={exporting}
+              onClick={() => runExport("csv")}
             >
               <Download className="size-4" /> CSV
             </Button>
@@ -416,13 +431,8 @@ function LettersTable() {
               variant="outline"
               size="sm"
               className="gap-2"
-              onClick={() =>
-                download(
-                  "harrington-archive.xls",
-                  toExcelXml(exportRows(), EXPORT_COLS),
-                  "application/vnd.ms-excel",
-                )
-              }
+              disabled={exporting}
+              onClick={() => runExport("excel")}
             >
               <Download className="size-4" /> Excel
             </Button>
@@ -576,6 +586,33 @@ function LettersTable() {
         </div>
       </div>
 
+      <div className="flex items-center gap-3 border-b border-border px-4 sm:px-8 py-2 text-sm">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page === 0}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+        >
+          <ChevronLeft className="size-4" /> Prev
+        </Button>
+        <span className="tabular-nums text-muted-foreground">
+          Page {page + 1} of {pageCount}
+          {total > 0 && (
+            <>
+              {" "}· {page * PAGE_SIZE + 1}–{Math.min(total, (page + 1) * PAGE_SIZE)} of {total}
+            </>
+          )}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page + 1 >= pageCount}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next <ChevronRight className="size-4" />
+        </Button>
+        {isLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
@@ -586,7 +623,12 @@ function LettersTable() {
                   aria-label="Select all records"
                   checked={allSelected}
                   onCheckedChange={(v) =>
-                    setSelected(v ? new Set(rows.map((l) => l.id)) : new Set())
+                    setSelected((s) => {
+                      const next = new Map(s);
+                      if (v) rows.forEach((l) => next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title }));
+                      else rows.forEach((l) => next.delete(l.id));
+                      return next;
+                    })
                   }
                 />
               </th>
@@ -637,7 +679,7 @@ function LettersTable() {
                   <Checkbox
                     aria-label={`Select ${l.archive_id}`}
                     checked={selected.has(l.id)}
-                    onCheckedChange={(v) => toggleSelected(l.id, Boolean(v))}
+                    onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
                   />
                 </td>
                 {cols.map((c) => {
@@ -702,7 +744,7 @@ function LettersTable() {
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && (
+        {rows.length === 0 && !isLoading && (
           <p className="px-4 sm:px-8 py-6 sm:py-8 text-sm text-muted-foreground">No matching records.</p>
         )}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 sm:px-8 pt-3 text-xs text-muted-foreground">

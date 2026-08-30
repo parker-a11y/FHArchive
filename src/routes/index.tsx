@@ -30,8 +30,8 @@ import {
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
-import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
+import { fetchDashboardStats, type Letter } from "@/lib/queries";
+import { fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 
@@ -183,56 +183,60 @@ function Stat({
 
 function Dashboard() {
   const navigate = useNavigate();
-  const { data: letters = [], isLoading } = useQuery({
-    queryKey: ["letters"],
-    queryFn: fetchLetters,
+  // All aggregate counts come from one database-side call — no table downloads.
+  const { data: stats0, isLoading } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: fetchDashboardStats,
   });
-  const { data: itemCounts } = useQuery({
-    queryKey: ["item-counts"],
-    queryFn: fetchItemCounts,
+  // Only the 8 newest records are fetched for the recent list.
+  const { data: recent = [] } = useQuery({
+    queryKey: ["dashboard-recent"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("letters")
+        .select(
+          "id, archive_id, title, author, recipient, origin, normalized_date, date_precision, date_as_written, date_certainty",
+        )
+        .order("fh_seq", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return (data ?? []) as unknown as Letter[];
+    },
   });
   const { data: sources = [] } = useQuery({
     queryKey: ["sources"],
     queryFn: fetchSources,
-  });
-  const { data: dsFileCounts = {} } = useQuery({
-    queryKey: ["ds-file-counts"],
-    queryFn: fetchDsFileCounts,
   });
   const { data: daily } = useQuery({
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
   });
 
+  const byType = stats0?.by_type ?? {};
+  const byPeriod = stats0?.by_period ?? {};
   const typeOptions = useRecordTypeOptions();
   const categoryTiles = useMemo(() => {
     const known = new Set(typeOptions.map((o) => o.value));
-    const counts = new Map<string, number>();
-    for (const l of letters) {
-      const raw = (l.record_type as string) || "letter";
-      counts.set(raw, (counts.get(raw) ?? 0) + 1);
-    }
     const style = (v: string): { tone: Tone; icon: LucideIcon } =>
       CATEGORY_STYLES[v] ?? { tone: "indigo", icon: Box };
     const tiles = typeOptions.map((o) => ({
       value: o.value,
       label: CATEGORY_LABELS[o.value] ?? o.label,
-      count: counts.get(o.value) ?? 0,
+      count: byType[o.value] ?? 0,
       ...style(o.value),
     }));
     // Record types present in data but not in the options list get their own
     // tile instead of being lumped into "Other".
-    for (const [value, count] of counts) {
+    for (const [value, count] of Object.entries(byType)) {
       if (!known.has(value)) {
         tiles.push({ value, label: value.replace(/_/g, " "), count, ...style(value) });
       }
     }
     return tiles;
-  }, [letters, typeOptions]);
+  }, [byType, typeOptions]);
 
-  const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats: { label: string; value: number; sub?: string; tone: Tone; icon: LucideIcon; to?: string }[] = [
-    { label: "FH records", value: letters.length, tone: "blue", icon: Hash, to: "/letters" },
+    { label: "FH records", value: stats0?.total_records ?? 0, tone: "blue", icon: Hash, to: "/letters" },
     {
       label: "Digital sources",
       value: sources.length,
@@ -241,40 +245,38 @@ function Dashboard() {
       to: "/sources",
     },
 
-    { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
+    { label: "Total scans", value: stats0?.total_scans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {
       label: "Transcribed",
-      value: c((l) => l.transcription_status === "human_verified"),
+      value: stats0?.transcribed ?? 0,
       tone: "emerald",
       icon: FileCheck2,
       to: "/letters?tstatus=human_verified",
     },
     {
       label: "Needing transcription",
-      value: c((l) => l.transcription_status !== "human_verified"),
+      value: stats0?.needs_transcription ?? 0,
       tone: "rose",
       icon: FileQuestion,
       to: "/letters?tstatus=!human_verified",
     },
     {
       label: "Uncertain dates",
-      value: c((l) => l.date_certainty !== "confirmed" || l.date_precision !== "exact"),
+      value: stats0?.uncertain_dates ?? 0,
       tone: "ochre",
       icon: CalendarClock,
       to: "/letters?uncertain=1",
     },
-    { label: "Prewar", value: c((l) => l.period === "prewar"), tone: "plum", icon: Hourglass, to: "/letters?period=prewar" },
-    { label: "Wartime", value: c((l) => l.period === "wartime"), tone: "rose", icon: Shield, to: "/letters?period=wartime" },
+    { label: "Prewar", value: byPeriod["prewar"] ?? 0, tone: "plum", icon: Hourglass, to: "/letters?period=prewar" },
+    { label: "Wartime", value: byPeriod["wartime"] ?? 0, tone: "rose", icon: Shield, to: "/letters?period=wartime" },
     {
       label: "Postwar",
-      value: c((l) => l.period === "postwar"),
+      value: byPeriod["postwar"] ?? 0,
       tone: "indigo",
       icon: CalendarDays,
       to: "/letters?period=postwar",
     },
   ];
-
-  const recent = [...letters].sort((a, b) => b.fh_seq - a.fh_seq).slice(0, 8);
 
   return (
     <>

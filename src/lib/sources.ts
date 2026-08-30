@@ -116,10 +116,12 @@ export async function fetchDsFiles(sourceId: string): Promise<DsFile[]> {
 
 /** Map of source_id -> number of preservation copies, for list badges. */
 export async function fetchDsFileCounts(): Promise<Record<string, number>> {
-  const { data, error } = await supabase.from("ds_files").select("source_id");
+  const { data, error } = await supabase.rpc("ds_file_counts");
   if (error) throw error;
   const map: Record<string, number> = {};
-  for (const row of data ?? []) map[row.source_id] = (map[row.source_id] ?? 0) + 1;
+  for (const r of data ?? []) {
+    map[r.source_id] = Number(r.files);
+  }
   return map;
 }
 

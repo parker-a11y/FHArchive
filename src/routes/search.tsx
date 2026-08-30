@@ -1,21 +1,22 @@
-import { useRecordTypeOptions, useSubtypeOptions } from "@/lib/categories";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Search as SearchIcon } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
-import { Input } from "@/components/ui/input";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
-import { fetchLetters } from "@/lib/queries";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { searchLetters, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import {
   PERIODS,
   RECORD_RESEARCH_STATUS,
   REVIEW_STATUS,
-  SCAN_STATUS,
   TRANSCRIPTION_STATUS,
   displayDate,
+  labelOf,
 } from "@/lib/archive";
-
+import { useRecordTypeOptions } from "@/lib/categories";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -24,13 +25,10 @@ export const Route = createFileRoute("/search")({
       {
         name: "description",
         content:
-          "Search letter metadata, transcriptions, keywords, people, places, summaries and research notes.",
+          "Full-text search across letter metadata, transcriptions, people, places, keywords and historical references.",
       },
       { property: "og:title", content: "Search — The Francis Files" },
-      {
-        property: "og:description",
-        content: "Full-collection search across metadata, transcriptions and research notes.",
-      },
+      { property: "og:description", content: "Search every letter and reference in the archive." },
     ],
   }),
   component: () => (
@@ -40,340 +38,285 @@ export const Route = createFileRoute("/search")({
   ),
 });
 
+const SEARCH_LIMIT = 200;
+
+/** Debounce the main text box so typing doesn't fire a query per keystroke. */
+function useDebounced<T>(value: T, ms = 400): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms);
+    return () => clearTimeout(t);
+  }, [value, ms]);
+  return v;
+}
+
 function SearchPage() {
-  const { data: letters = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
-  const { data: index } = useQuery({
-    queryKey: ["search_index"],
-    queryFn: async () => {
-      const [k, p, pl, refs, o, ev] = await Promise.all([
-        supabase.from("letter_keywords").select("letter_id, keywords(name)"),
-        supabase.from("letter_people").select("letter_id, people(name)"),
-        supabase.from("letter_places").select("letter_id, places(canonical_name)"),
-        supabase.from("historical_references").select("letter_id, reference, notes, description"),
-        supabase.from("letter_organizations").select("letter_id, organizations(name)"),
-        supabase.from("letter_events").select("letter_id, events(name)"),
-      ]);
-      // Transcription text participates in archive-wide search.
-      const tr = await supabase
-        .from("scan_transcriptions")
-        .select("letter_id, ai_text, verified_text");
-      const map: Record<string, string[]> = {};
-      const push = (id: string, v?: string | null) => v && (map[id] ??= []).push(v);
-      (k.data ?? []).forEach((r) => push(r.letter_id, r.keywords?.name));
-      (p.data ?? []).forEach((r) => push(r.letter_id, r.people?.name));
-      (pl.data ?? []).forEach((r) => push(r.letter_id, r.places?.canonical_name));
-      (o.data ?? []).forEach((r) => push(r.letter_id, r.organizations?.name));
-      (ev.data ?? []).forEach((r) => push(r.letter_id, r.events?.name));
-      (refs.data ?? []).forEach((r) => {
-        push(r.letter_id, r.reference);
-        push(r.letter_id, r.notes);
-        push(r.letter_id, r.description);
-      });
-      (tr.data ?? []).forEach((r) => {
-        push(r.letter_id, r.verified_text);
-        push(r.letter_id, r.ai_text);
-      });
-      return map;
-    },
-  });
+  const recordTypeOptions = useRecordTypeOptions();
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebounced(q);
+  const [author, setAuthor] = useState("");
+  const [recipient, setRecipient] = useState("");
+  const [place, setPlace] = useState("");
+  const [tones, setTones] = useState<string[]>([]);
+  const [rType, setRType] = useState("");
+  const [subtype, setSubtype] = useState("");
+  const [person, setPerson] = useState("");
+  const [org, setOrg] = useState("");
+  const [event, setEvent] = useState("");
+  const [research, setResearch] = useState("");
+  const [tStatus, setTStatus] = useState("");
+  const [scanStatus, setScanStatus] = useState("");
+  const [rStatus, setRStatus] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const { data: linkSets } = useQuery({
-    queryKey: ["search_link_sets"],
-    queryFn: async () => {
-      const [p, o, ev] = await Promise.all([
-        supabase.from("letter_people").select("letter_id, person_id"),
-        supabase.from("letter_organizations").select("letter_id, organization_id"),
-        supabase.from("letter_events").select("letter_id, event_id"),
-      ]);
-      return {
-        people: p.data ?? [],
-        orgs: o.data ?? [],
-        events: ev.data ?? [],
-      };
-    },
-  });
+  const hasAny = Boolean(
+    debouncedQ ||
+      author ||
+      recipient ||
+      place ||
+      tones.length ||
+      rType ||
+      subtype ||
+      person ||
+      org ||
+      event ||
+      research ||
+      tStatus ||
+      scanStatus ||
+      rStatus ||
+      dateFrom ||
+      dateTo,
+  );
 
+  // Small dropdown datasets only — the matching itself runs in the database.
   const { data: entities } = useQuery({
-    queryKey: ["entities"],
+    queryKey: ["search_entities"],
     queryFn: async () => {
-      const [p, pl, k, o, ev] = await Promise.all([
+      const [p, o, e] = await Promise.all([
         supabase.from("people").select("id,name").order("name"),
-        supabase.from("places").select("id,canonical_name").order("canonical_name"),
-        supabase.from("keywords").select("id,name").order("name"),
         supabase.from("organizations").select("id,name").order("name"),
         supabase.from("events").select("id,name").order("name"),
       ]);
       return {
         people: p.data ?? [],
-        places: pl.data ?? [],
-        keywords: k.data ?? [],
-        organizations: o.data ?? [],
-        events: ev.data ?? [],
+        orgs: o.data ?? [],
+        events: e.data ?? [],
       };
     },
   });
 
-  const [q, setQ] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [author, setAuthor] = useState("");
-  const [recipient, setRecipient] = useState("");
-  const [period, setPeriod] = useState("");
-  const [place, setPlace] = useState("");
-  const [tstat, setTstat] = useState("");
-  const [sstat, setSstat] = useState("");
-  const [rstat, setRstat] = useState("");
-  const [rtype, setRtype] = useState("");
-  const recordTypeOptions = useRecordTypeOptions();
-  const searchSubtypes = useSubtypeOptions(rtype);
-  const [subtype, setSubtype] = useState("");
-  const [research, setResearch] = useState("");
-  const [personId, setPersonId] = useState("");
-  const [orgId, setOrgId] = useState("");
-  const [eventId, setEventId] = useState("");
-  const [tones, setTones] = useState<string[]>([]);
+  const { data: page, isFetching } = useQuery({
+    queryKey: [
+      "search",
+      {
+        q: debouncedQ, author, recipient, place, tones, rType, subtype,
+        person, org, event, research, tStatus, scanStatus, rStatus, dateFrom, dateTo,
+      },
+    ],
+    enabled: hasAny,
+    placeholderData: keepPreviousData,
+    queryFn: () =>
+      searchLetters({
+        q: debouncedQ,
+        type: rType,
+        subtype,
+        tstatus: tStatus,
+        review: rStatus,
+        scan: scanStatus as "" | "has" | "none",
+        tones,
+        research,
+        personId: person || undefined,
+        orgId: org || undefined,
+        eventId: event || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        author,
+        recipient,
+        place,
+        sort: "fh_seq",
+        dir: "asc",
+        limit: SEARCH_LIMIT,
+      }),
+  });
+  const results: Letter[] = page?.rows ?? [];
+  const totalMatches = page?.total ?? 0;
 
-
-  const results = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return letters.filter((l) => {
-      if (from && (!l.normalized_date || l.normalized_date < from)) return false;
-      if (to && (!l.normalized_date || l.normalized_date > to)) return false;
-      if (author && !(l.author ?? "").toLowerCase().includes(author.toLowerCase())) return false;
-      if (recipient && !(l.recipient ?? "").toLowerCase().includes(recipient.toLowerCase()))
-        return false;
-      if (period && l.period !== period) return false;
-      if (place && !`${l.origin ?? ""} ${l.destination ?? ""}`.toLowerCase().includes(place.toLowerCase()))
-        return false;
-      if (tstat && l.transcription_status !== tstat) return false;
-      if (sstat && l.scan_status !== sstat) return false;
-      if (rstat && l.review_status !== rstat) return false;
-      if (rtype && (l.record_type ?? "letter") !== rtype) return false;
-      if (subtype && (l.subtype ?? "") !== subtype) return false;
-      if (research && (l.research_status ?? "unreviewed") !== research) return false;
-      if (tones.length && !tones.every((t) => (l.tones ?? []).includes(t))) return false;
-      if (
-        personId &&
-        !(linkSets?.people ?? []).some((r) => r.letter_id === l.id && r.person_id === personId)
-      )
-        return false;
-      if (
-        orgId &&
-        !(linkSets?.orgs ?? []).some((r) => r.letter_id === l.id && r.organization_id === orgId)
-      )
-        return false;
-      if (
-        eventId &&
-        !(linkSets?.events ?? []).some((r) => r.letter_id === l.id && r.event_id === eventId)
-      )
-        return false;
-      if (!term) return true;
-      const hay = [
-        l.archive_id,
-        l.title,
-        l.subtype,
-        l.primary_person,
-        l.author,
-        l.recipient,
-        l.origin,
-        l.destination,
-        l.date_as_written,
-        l.notes,
-        l.summary_short,
-        l.summary_long,
-        l.transcription_verified,
-        l.transcription_raw_ai,
-        l.physical_condition,
-        l.physical_description,
-        l.historical_notes,
-        l.research_notes,
-        l.ocr_text,
-        ...(l.tones ?? []),
-        ...((index ?? {})[l.id] ?? []),
-      ]
-        .join(" \n ")
-        .toLowerCase();
-      return hay.includes(term);
-    });
-  }, [
-    letters,
-    q,
-    from,
-    to,
-    author,
-    recipient,
-    period,
-    place,
-    tstat,
-    sstat,
-    rstat,
-    rtype,
-    subtype,
-    research,
-    personId,
-    orgId,
-    eventId,
-    tones,
-    linkSets,
-    index,
-  ]);
-
-
-  function snippet(text: string | null) {
-    if (!text || !q) return null;
-    const i = text.toLowerCase().indexOf(q.toLowerCase());
-    if (i < 0) return null;
-    return "…" + text.slice(Math.max(0, i - 60), i + 100).trim() + "…";
+  function snippet(l: Letter): string {
+    const text = (l.transcription_verified ?? "").replace(/\s+/g, " ");
+    if (!debouncedQ) return text.slice(0, 140);
+    const i = text.toLowerCase().indexOf(debouncedQ.toLowerCase());
+    if (i < 0) return (l.summary_short ?? text).slice(0, 140);
+    return "…" + text.slice(Math.max(0, i - 40), i + 100) + "…";
   }
+
+  const sel =
+    "h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring";
 
   return (
     <>
-      <PageHeader title="Search" description={`${results.length} matching letters`} />
-      <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-8 p-4 sm:p-8">
-        <aside className="space-y-3">
-          <div>
-            <label className="field-label">Date from</label>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-8" />
-          </div>
-          <div>
-            <label className="field-label">Date to</label>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-8" />
-          </div>
-          <div>
-            <label className="field-label">Author</label>
-            <Input value={author} onChange={(e) => setAuthor(e.target.value)} className="h-8" />
-          </div>
-          <div>
-            <label className="field-label">Recipient</label>
-            <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} className="h-8" />
-          </div>
-          <div>
-            <label className="field-label">Location</label>
-            <Input value={place} onChange={(e) => setPlace(e.target.value)} className="h-8" />
-          </div>
-          <div>
-            <label className="field-label">Tone / sentiment</label>
-            <ToneMultiSelect
-              value={tones}
-              onChange={setTones}
-              placeholder="Any tone"
-            />
-          </div>
-          <div>
-            <label className="field-label">Record type</label>
-            <select
-              className="h-8 w-full rounded border border-input bg-background px-2 text-sm"
-              value={rtype}
-              onChange={(e) => {
-                setRtype(e.target.value);
-                setSubtype("");
-              }}
-            >
-              <option value="">Any</option>
-              {recordTypeOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          {rtype && (
-            <div>
-              <label className="field-label">Subtype</label>
-              <select
-                className="h-8 w-full rounded border border-input bg-background px-2 text-sm"
-                value={subtype}
-                onChange={(e) => setSubtype(e.target.value)}
-              >
-                <option value="">Any</option>
-                {searchSubtypes.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          {[
-            { label: "Person", v: personId, set: setPersonId, opts: (entities?.people ?? []).map((p) => ({ value: p.id, label: p.name })) },
-            {
-              label: "Organization / ship",
-              v: orgId,
-              set: setOrgId,
-              opts: (entities?.organizations ?? []).map((o) => ({ value: o.id, label: o.name })),
-            },
-            {
-              label: "Event",
-              v: eventId,
-              set: setEventId,
-              opts: (entities?.events ?? []).map((e) => ({ value: e.id, label: e.name })),
-            },
-            { label: "Research status", v: research, set: setResearch, opts: RECORD_RESEARCH_STATUS },
-            { label: "Period", v: period, set: setPeriod, opts: PERIODS },
-            { label: "Transcription", v: tstat, set: setTstat, opts: TRANSCRIPTION_STATUS },
-            { label: "Scan status", v: sstat, set: setSstat, opts: SCAN_STATUS },
-            { label: "Review status", v: rstat, set: setRstat, opts: REVIEW_STATUS },
-
-          ].map((f) => (
-            <div key={f.label}>
-              <label className="field-label">{f.label}</label>
-              <select
-                className="h-8 w-full rounded border border-input bg-background px-2 text-sm"
-                value={f.v}
-                onChange={(e) => f.set(e.target.value)}
-              >
-                <option value="">Any</option>
-                {f.opts.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </aside>
-
-        <div>
+      <PageHeader
+        title="Search"
+        description="Search across metadata, transcriptions, people, places, keywords and historical references."
+      />
+      <div className="border-b border-border px-4 sm:px-8 py-5 space-y-3">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
-            autoFocus
-            className="h-11 text-base"
-            placeholder='Search everything — e.g. "London"'
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            placeholder="Text, names, places, references…"
+            className="pl-9"
+            autoFocus
           />
-          <div className="mt-4 divide-y divide-border rounded border border-border bg-card">
-            {results.map((l) => (
-              <Link
-                key={l.id}
-                to="/letters/$archiveId"
-                params={{ archiveId: l.archive_id }}
-                className="block px-4 py-3 hover:bg-muted/60"
-              >
-                <div className="flex items-baseline gap-4 text-sm">
-                  <span className="archive-id text-primary">{l.archive_id}</span>
-                  <span>{displayDate(l)}</span>
-                  <span className="text-muted-foreground">
-                    {l.author || "—"} → {l.recipient || "—"}
-                  </span>
-                  <span className="ml-auto text-muted-foreground">{l.origin}</span>
-                </div>
-                {(snippet(l.transcription_verified) ||
-                  snippet(l.summary_short) ||
-                  snippet(l.notes)) && (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {snippet(l.transcription_verified) ||
-                      snippet(l.summary_short) ||
-                      snippet(l.notes)}
-                  </p>
-                )}
-              </Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <Input placeholder="From (author)" value={author} onChange={(e) => setAuthor(e.target.value)} />
+          <Input placeholder="To (recipient)" value={recipient} onChange={(e) => setRecipient(e.target.value)} />
+          <Input placeholder="Place (origin/destination)" value={place} onChange={(e) => setPlace(e.target.value)} />
+          <ToneMultiSelect value={tones} onChange={setTones} placeholder="Tone / sentiment" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <select className={sel} value={rType} onChange={(e) => setRType(e.target.value)}>
+            <option value="">All record types</option>
+            {recordTypeOptions.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
             ))}
-            {results.length === 0 && (
-              <p className="px-4 py-6 text-sm text-muted-foreground">No matches.</p>
-            )}
-          </div>
+          </select>
+          <Input placeholder="Subtype" value={subtype} onChange={(e) => setSubtype(e.target.value)} />
+          <select className={sel} value={person} onChange={(e) => setPerson(e.target.value)}>
+            <option value="">Any person</option>
+            {(entities?.people ?? []).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <select className={sel} value={org} onChange={(e) => setOrg(e.target.value)}>
+            <option value="">Any organization</option>
+            {(entities?.orgs ?? []).map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+          <select className={sel} value={event} onChange={(e) => setEvent(e.target.value)}>
+            <option value="">Any event</option>
+            {(entities?.events ?? []).map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+          <select className={sel} value={research} onChange={(e) => setResearch(e.target.value)}>
+            <option value="">Any research status</option>
+            {RECORD_RESEARCH_STATUS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <select className={sel} value={tStatus} onChange={(e) => setTStatus(e.target.value)}>
+            <option value="">Any transcription status</option>
+            {TRANSCRIPTION_STATUS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <select className={sel} value={scanStatus} onChange={(e) => setScanStatus(e.target.value)}>
+            <option value="">Any scan status</option>
+            <option value="has">Has scans</option>
+            <option value="none">No scans</option>
+          </select>
+          <select className={sel} value={rStatus} onChange={(e) => setRStatus(e.target.value)}>
+            <option value="">Any review status</option>
+            {REVIEW_STATUS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
         </div>
       </div>
+
+      <div className="px-4 sm:px-8 py-5 space-y-3">
+        {!hasAny && (
+          <p className="text-sm text-muted-foreground">
+            Enter a query or set a filter to search the archive.
+          </p>
+        )}
+        {hasAny && isFetching && results.length === 0 && (
+          <p className="text-sm text-muted-foreground">Searching…</p>
+        )}
+        {hasAny && !isFetching && results.length === 0 && (
+          <p className="text-sm text-muted-foreground">No matching records.</p>
+        )}
+        {results.length > 0 && (
+          <>
+            <p className="text-xs text-muted-foreground">
+              {totalMatches} match{totalMatches === 1 ? "" : "es"}
+              {totalMatches > results.length ? ` — showing first ${results.length}` : ""}
+            </p>
+            {results.map((l) => (
+              <div key={l.id} className="rounded-lg border border-border bg-card p-4">
+                <div className="flex items-baseline justify-between gap-4">
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: l.archive_id }}
+                    className="archive-id text-primary hover:underline"
+                  >
+                    {l.archive_id}
+                  </Link>
+                  <span className="text-xs text-muted-foreground">
+                    {displayDate(l)} · {labelOf(PERIODS, l.period)} · {labelOf(recordTypeOptions, l.record_type)}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm font-medium">
+                  {[l.author, l.recipient].filter(Boolean).join(" → ") || l.title || "Untitled"}
+                </p>
+                {snippet(l) && (
+                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{snippet(l)}</p>
+                )}
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+      {hasAny && results.length > 0 && (
+        <div className="px-4 sm:px-8 pb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setQ("");
+              setAuthor("");
+              setRecipient("");
+              setPlace("");
+              setTones([]);
+              setRType("");
+              setSubtype("");
+              setPerson("");
+              setOrg("");
+              setEvent("");
+              setResearch("");
+              setTStatus("");
+              setScanStatus("");
+              setRStatus("");
+              setDateFrom("");
+              setDateTo("");
+            }}
+          >
+            Clear search
+          </Button>
+        </div>
+      )}
     </>
   );
 }
