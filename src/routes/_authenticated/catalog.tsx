@@ -123,6 +123,8 @@ function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
   const [mentions, setMentions] = useState<PersonRef[]>([]);
+  const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
+  const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
   const [starNoteFor, setStarNoteFor] = useState<string | null>(null);
