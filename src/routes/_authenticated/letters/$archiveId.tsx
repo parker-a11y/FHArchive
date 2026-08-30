@@ -143,6 +143,9 @@ function LetterPage() {
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showTranscription, setShowTranscription] = useState(false);
+  const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
+  const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
+  const [authorRecipientDirty, setAuthorRecipientDirty] = useState(false);
 
 
   useEffect(() => {
