@@ -235,6 +235,33 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
 
   const pageCoverage = files.filter((f) => bestText(byFile[f.id] ?? { ai_text: "", verified_text: "" })).length;
 
+  const [verifyAllBusy, setVerifyAllBusy] = useState(false);
+  const unverified = transcripts.filter(
+    (t) => t.status !== "human_verified" && bestText(t)?.trim(),
+  );
+  const unverifiedCount = unverified.length;
+
+  async function verifyAll() {
+    if (!unverified.length) return;
+    if (!confirm(`Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified using their current text?`)) return;
+    setVerifyAllBusy(true);
+    let ok = 0;
+    let failed = 0;
+    for (const t of unverified) {
+      try {
+        await saveCorrections(t.id, bestText(t) ?? "", true);
+        ok++;
+      } catch {
+        failed++;
+      }
+    }
+    setVerifyAllBusy(false);
+    if (ok) toast.success(`${ok} page${ok === 1 ? "" : "s"} marked human verified`);
+    if (failed) toast.error(`${failed} page${failed === 1 ? "" : "s"} failed to verify`);
+    refetch();
+    refreshLetter();
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3 rounded border border-border bg-muted/30 p-3">
@@ -255,6 +282,18 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
           onClick={() => runScans(selected)}
         >
           Transcribe Selected ({selected.length})
+        </Button>
+        <Button
+          variant="outline"
+          disabled={verifyAllBusy || unverifiedCount === 0}
+          onClick={verifyAll}
+        >
+          {verifyAllBusy ? (
+            <Loader2 className="mr-1 size-3.5 animate-spin" />
+          ) : (
+            <BadgeCheck className="mr-1 size-3.5" />
+          )}
+          Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
         </Button>
         <Button
           variant="ghost"
