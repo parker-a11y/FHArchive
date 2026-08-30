@@ -94,7 +94,7 @@ function recordHealth(l: Letter): { color: string; label: string } {
 }
 
 const COLUMNS: Col[] = [
-  { key: "archive_id", label: "FH ID", width: 130 },
+  { key: "archive_id", label: "FH ID", width: 160, minWidth: 150 },
   { key: "record_type", label: "Type", width: 150 },
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
