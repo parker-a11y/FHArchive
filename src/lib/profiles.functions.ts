@@ -13,14 +13,46 @@ export const ensurePendingGuestProfile = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
 
+    const guestEmail = (context.claims?.['email'] as string) ?? "";
+
     if (!existingProfile) {
       const { error: profileError } = await supabaseAdmin.from("profiles").insert({
         id: userId,
-        email: (context.claims?.email as string) ?? "",
+        email: guestEmail,
         status: "pending",
       });
       if (profileError) throw profileError;
+
+      // Notify admins that a new guest account is awaiting approval.
+      try {
+        const { data: adminRoles } = await supabaseAdmin
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "admin");
+        const adminIds = (adminRoles ?? []).map((r) => r.user_id);
+        if (adminIds.length) {
+          const { data: adminProfiles } = await supabaseAdmin
+            .from("profiles")
+            .select("email")
+            .in("id", adminIds);
+          const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+          for (const admin of adminProfiles ?? []) {
+            if (!admin.email) continue;
+            await sendTemplateEmail("guest-request", admin.email, {
+              idempotencyKey: `guest-request-${userId}`,
+              templateData: {
+                guestEmail,
+                requestedAt: new Date().toUTCString(),
+                approveUrl: "https://fharchive.com/admin/users",
+              },
+            });
+          }
+        }
+      } catch (notifyError) {
+        console.error("Failed to notify admins of guest request:", notifyError);
+      }
     }
+
 
     const { data: existingRole } = await supabaseAdmin
       .from("user_roles")
