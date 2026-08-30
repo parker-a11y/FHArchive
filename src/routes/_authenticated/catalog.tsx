@@ -251,6 +251,9 @@ function QuickEntry() {
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
     setMentions([]);
+    // Preserve author/recipient people links for batch entry of similar records.
+    setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
+    setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
     loadNext();
   }
 
