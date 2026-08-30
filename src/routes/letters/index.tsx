@@ -314,7 +314,7 @@ function LettersTable() {
     setTones([]);
     setView("");
     setSort({ key: "archive_id", dir: 1 });
-    navigate({ to: "/letters/", search: () => ({}) });
+    navigate({ to: "/letters", search: () => ({}) });
   }
 
   const activeFilterCount = [
