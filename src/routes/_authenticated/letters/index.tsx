@@ -686,10 +686,11 @@ function LettersTable() {
                     onMouseDown={(e) => {
                       const startX = e.clientX;
                       const startW = widths[c.key] ?? c.width;
+                      const minW = c.minWidth ?? 60;
                       const move = (ev: MouseEvent) =>
                         setWidths((w) => ({
                           ...w,
-                          [c.key]: Math.max(60, startW + ev.clientX - startX),
+                          [c.key]: Math.max(minW, startW + ev.clientX - startX),
                         }));
                        const up = () => {
                          window.removeEventListener("mousemove", move);
