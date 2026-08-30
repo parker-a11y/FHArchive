@@ -153,7 +153,6 @@ function LetterPage() {
       storage_type: letter.storage_type ?? "",
       storage_container: letter.storage_container ?? "",
       storage_folder: letter.storage_folder ?? "",
-      storage_position: letter.storage_position ?? "",
       storage_notes: letter.storage_notes ?? "",
       identification_status: letter.identification_status ?? "",
       provenance: letter.provenance ?? "",
