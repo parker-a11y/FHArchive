@@ -45,11 +45,17 @@ export function StarToggle({
   const [noteBody, setNoteBody] = useState("");
 
   const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ["letters"] });
-    qc.invalidateQueries({ queryKey: ["letter"] });
-    qc.invalidateQueries({ queryKey: ["digital-sources"] });
-    qc.invalidateQueries({ queryKey: ["digital-source"] });
-    qc.invalidateQueries({ queryKey: ["dashboard-stats"] });
+    for (const key of [
+      "letters",
+      "letters-page",
+      "letter",
+      "sources",
+      "source",
+      "dashboard-stats",
+      "dashboard-recent",
+    ]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
   };
 
   const toggle = useMutation({
