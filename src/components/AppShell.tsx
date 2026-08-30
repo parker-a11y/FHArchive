@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Mail,
   Menu,
+  UserCog,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
