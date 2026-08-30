@@ -1,43 +1,39 @@
-# Tighten data entry and upload
+# Guest account request flow
 
-Goal: fewer fields on screen, fewer clicks per record, nothing lost. Nothing is deleted from the database — fields that leave the form keep their stored values and stay visible on the record detail page.
+## Goal
+Make the "Request New Account" path create a pending guest account. New users can sign in, but they cannot view or edit archive data until an admin approves them.
 
-## What the data says (all 6 records today)
+## Current state
+- `profiles` and `user_roles` tables already exist with `pending`/`approved` status and `admin`/`guest` roles.
+- RLS already restricts archive reads to admins or approved guests, and writes to admins.
+- The sign-up flow in `src/routes/auth.tsx` currently creates only a Supabase auth user; it does not insert a profile or role, so a new user has no archive access.
+- There is no authenticated route layout and no admin UI to approve guests.
 
-- Never used: legacy storage note (0), location notes (0), physical condition (0), notes (0), enclosures (0), envelope (0), end date (1).
-- Always the same value: original / copy = "original" (6/6), storage type = "file jacket" (6/6), period = "wartime" (6/6).
-- Barely used: date as written (4), destination (1), sheets (2), tone (1), original order notes (2).
-- Date status and Certainty overlap: the Year-only / Month-year checkboxes already set date status, so the separate "Date status" select is a duplicate control.
+## Plan
 
-## Quick Entry: proposed layout
+1. Gate workspace routes
+   - Create `src/routes/_authenticated/route.tsx` with `ssr: false` and a `beforeLoad` check that redirects to `/auth` when there is no session.
+   - Move protected workspace routes under `src/routes/_authenticated/` so they keep their current URLs but are behind the gate. Public routes (`/auth`, `/forgot-password`, `/reset-password`, public share links, API) stay at the top level.
+   - Replace `src/routes/index.tsx` with `src/routes/_authenticated/index.tsx` so the dashboard is the signed-in home.
 
-Visible by default (the fast path):
-- Record type, Subtype, Title / short description
-- Date (with the Year-only / Month-year checkboxes)
-- From / To (letters only), Origin
-- Primary person, Mentions
-- Folder / jacket (already auto-filled with the FH number)
+2. Auto-create pending guest on first sign-in
+   - Add a `createPendingGuestProfile` server function (authenticated, SECURITY DEFINER) that inserts a `profiles` row with `status = 'pending'` and a `user_roles` row with `role = 'guest'` for `auth.uid()`, but only if neither exists.
+   - Update `src/hooks/useAuth.tsx` so that on `SIGNED_IN` it calls this function once. This covers both email/password and Google OAuth sign-ups.
 
-Moved into a collapsed "More details" section, remembered open/closed between entries:
-- Certainty, Period, Identification status, Original / copy, Storage type, Location notes, Legacy storage note, End date, Date as written, Destination, Pages / sheets, Tone, Envelope / Enclosures, Source container + original order notes, Notes
+3. Enforce approval before archive access
+   - Extend the auth context to expose `isAdmin`, `isApprovedGuest`, and `isPendingGuest`.
+   - In the authenticated layout component, after confirming a session exists, render a "Request pending" screen for pending guests with a sign-out option. Approved guests and admins see the normal `<Outlet />`.
 
-Removed from the form:
-- "Date status" select (the checkboxes drive it)
-- Helper paragraphs under Primary person, Mentions and Date — keep only the short "blank = undated" hint
+4. Admin approval UI
+   - Create `src/routes/_authenticated/admin/users.tsx` (URL `/admin/users`) listing all users from `profiles` joined with `user_roles`.
+   - Admins can approve a pending guest (set `status = 'approved'`, `approved_at = now()`), revoke approval, or delete a guest's profile/role rows.
+   - Show the admin link in the navigation only when the current user is an admin.
 
-Also:
-- Sticky defaults: record type, subtype, period, storage type, original/copy, source container and primary person carry over from the last saved record in the session, so a run of similar items is type-once.
-- Keyboard: Cmd/Ctrl+Enter = Save & create next; focus returns to Title after each save.
+5. Sign-up messaging
+   - Update `src/routes/auth.tsx` so after email sign-up it shows: "Check your email to confirm. Once confirmed, your account will be pending admin approval."
+   - Keep the "Request New Account" / "I already have an account" toggle.
 
-## Upload: proposed changes
-
-- After files are dropped, derivative generation starts automatically instead of waiting for "Confirm Upload Complete". The button stays only as a retry when something failed or new masters were added.
-- Collapse the five stat boxes (Processing status, Masters, Expected, Viewing JPGs, Thumbnails) into one line: "8 masters · 8 JPGs · 8 thumbnails" and only expand into detail when something is off.
-- Drop the digitization status dropdown from the header; the status is derived from the files (none / in progress / complete), with a single "Mark complete anyway" action for the override case.
-- Keep untouched: archival masters are never altered, filename mismatch warnings, expected-count warning, per-scan rename/transcribe/download/delete.
-
-## Technical notes
-
-- Files touched: `src/routes/catalog.tsx` (layout, collapsed section, sticky defaults, shortcut), `src/components/letter/DigitizationPanel.tsx` (auto-generate, condensed summary, derived status).
-- No schema migration. `date_precision`, `storage_container`, `physical_condition` etc. stay in the database and on the record detail page.
-- Sticky defaults live in component state plus `localStorage`, so they survive a page refresh but never overwrite a saved record.
+6. Security
+   - No new tables are required.
+   - The pending-profile creation runs through a server function so `user_roles` does not need a broad INSERT policy for authenticated users.
+   - Existing RLS policies continue to enforce the admin/approved-guest split on archive data.
