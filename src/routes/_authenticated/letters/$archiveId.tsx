@@ -10,7 +10,7 @@ import {
 } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Trash2 } from "lucide-react";
 import { StarToggle } from "@/components/StarToggle";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -136,6 +136,7 @@ function LetterPage() {
   const [tones, setTones] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
 
 
   useEffect(() => {
@@ -319,6 +320,14 @@ function LetterPage() {
           <div className="flex shrink-0 items-center gap-2">
             <ShareStatusBadge letter={letter} />
             <LabelDialog letter={letter} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTranscription((v) => !v)}
+            >
+              <FileText className="mr-1.5 size-4" />
+              {showTranscription ? "Hide transcription" : "Show transcription"}
+            </Button>
             {!isGuestViewer && (
               <>
                 <ShareDialog letter={letter} />
@@ -400,6 +409,30 @@ function LetterPage() {
           </div>
         </div>
       </header>
+
+      {showTranscription && (
+        <section className="mx-4 mt-4 rounded border border-border bg-card p-4 sm:mx-8">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Transcription</h3>
+            <span className="text-xs text-muted-foreground">
+              {letter.transcription_verified?.trim()
+                ? "Human verified"
+                : letter.transcription_raw_ai?.trim()
+                  ? "AI transcription"
+                  : "No transcription"}
+            </span>
+          </div>
+          <div className="max-h-96 overflow-auto whitespace-pre-wrap text-sm leading-relaxed">
+            {letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim() ? (
+              letter.transcription_verified?.trim() || letter.transcription_raw_ai
+            ) : (
+              <span className="text-muted-foreground">
+                No transcription available yet. Open the Transcription tab to generate one.
+              </span>
+            )}
+          </div>
+        </section>
+      )}
 
       <Tabs key={tab ?? "catalog"} defaultValue={tab === "transcription" ? "transcription" : "catalog"} className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
