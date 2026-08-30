@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
-import { PRIMARY_PERSONS, comparePeopleNames } from "@/lib/archive";
+import { comparePeopleNames } from "@/lib/archive";
 import { cn } from "@/lib/utils";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 
