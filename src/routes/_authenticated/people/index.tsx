@@ -2,20 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Merge, Trash2, UserPlus } from "lucide-react";
+import { Merge, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { usePersonMatcher } from "@/components/MatchPersonDialog";
 import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";
 import { DeletePersonButton } from "@/components/people/DeletePersonButton";
 import { MergePersonButton } from "@/components/people/MergePersonButton";
@@ -46,9 +39,8 @@ export const Route = createFileRoute("/_authenticated/people/")({
 function People() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingName, setPendingName] = useState("");
   const [saving, setSaving] = useState(false);
+  const { resolvePerson, dialog: personDialog } = usePersonMatcher();
   const { data: people = [] } = useQuery({
     queryKey: ["people"],
     queryFn: async () => {
@@ -58,33 +50,32 @@ function People() {
     },
   });
 
-  function promptAdd() {
+  /**
+   * Search existing people first: an exact/alias hit or a close match opens the
+   * match dialog (merge into the existing person or confirm a new record),
+   * so near-duplicates never silently become a second person.
+   */
+  async function promptAdd() {
     const trimmed = name.trim();
-    if (!trimmed) return;
-    setPendingName(trimmed);
-    setConfirmOpen(true);
-  }
-
-  async function confirmAdd() {
-    if (!pendingName) return;
+    if (!trimmed || saving) return;
     setSaving(true);
-    const { error } = await supabase.from("people").insert({ name: pendingName });
-    setSaving(false);
-    if (error) {
-      setConfirmOpen(false);
-      return toast.error(error.message);
+    try {
+      const person = await resolvePerson(trimmed);
+      if (!person) return;
+      setName("");
+      await qc.invalidateQueries({ queryKey: ["people"] });
+      toast.success(
+        person.name.toLowerCase() === trimmed.toLowerCase()
+          ? `Created person: ${person.name}`
+          : `Matched to existing person: ${person.name}`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the person");
+    } finally {
+      setSaving(false);
     }
-    setName("");
-    setPendingName("");
-    setConfirmOpen(false);
-    qc.invalidateQueries({ queryKey: ["people"] });
-    toast.success(`Created person: ${pendingName}`);
   }
 
-  function cancelAdd() {
-    setConfirmOpen(false);
-    setPendingName("");
-  }
 
   return (
     <>
@@ -149,34 +140,8 @@ function People() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="max-w-xl sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-2xl">
-              <UserPlus className="h-6 w-6" />
-              Confirm new person record
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              You are about to create a new person record in the database.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-lg border bg-muted/50 p-8 text-center">
-            <p className="text-sm text-muted-foreground">New person name</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight break-words">
-              {pendingName}
-            </p>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={cancelAdd} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={confirmAdd} disabled={saving}>
-              {saving ? "Creating…" : "Create person record"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {personDialog}
     </>
+
   );
 }
