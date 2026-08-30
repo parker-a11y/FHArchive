@@ -244,13 +244,6 @@ function Dashboard() {
 
     { label: "Total scans", value: itemCounts?.totalScans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {
-      label: "Records scanned",
-      value: itemCounts?.itemsScanned ?? 0,
-      tone: "teal",
-      icon: ScanLine,
-      to: "/letters?scan=has",
-    },
-    {
       label: "Transcribed",
       value: c((l) => l.transcription_status === "human_verified"),
       tone: "emerald",
@@ -277,13 +270,6 @@ function Dashboard() {
       tone: "ochre",
       icon: CalendarClock,
       to: "/letters?uncertain=1",
-    },
-    {
-      label: "Records missing scans",
-      value: c((l) => l.image_count === 0),
-      tone: "rose",
-      icon: ImageOff,
-      to: "/letters?scan=none",
     },
     { label: "Prewar", value: c((l) => l.period === "prewar"), tone: "plum", icon: Hourglass, to: "/letters?period=prewar" },
     { label: "Wartime", value: c((l) => l.period === "wartime"), tone: "rose", icon: Shield, to: "/letters?period=wartime" },
