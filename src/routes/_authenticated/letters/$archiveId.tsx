@@ -57,6 +57,12 @@ import {
 
 import { useAuth } from "@/hooks/useAuth";
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
+import {
+  fetchLetterPersonByRole,
+  setLetterPersonRole,
+  type LetterPersonLink,
+} from "@/lib/letter-people";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
@@ -137,6 +143,9 @@ function LetterPage() {
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showTranscription, setShowTranscription] = useState(false);
+  const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
+  const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
+  const [authorRecipientDirty, setAuthorRecipientDirty] = useState(false);
 
 
   useEffect(() => {
@@ -184,6 +193,24 @@ function LetterPage() {
     setDirty(false);
   }, [letter]);
 
+  useEffect(() => {
+    if (!letter) return;
+    let cancelled = false;
+    (async () => {
+      const [author, recipient] = await Promise.all([
+        fetchLetterPersonByRole(letter.id, "author"),
+        fetchLetterPersonByRole(letter.id, "recipient"),
+      ]);
+      if (cancelled) return;
+      setAuthorPerson(author ? { id: author.person_id, name: author.name } : null);
+      setRecipientPerson(recipient ? { id: recipient.person_id, name: recipient.name } : null);
+      setAuthorRecipientDirty(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [letter?.id]);
+
   if (isLoading) return <div className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</div>;
   if (!letter)
     return (
@@ -225,6 +252,18 @@ function LetterPage() {
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
     if (error) return toast.error(error.message);
     await logEdits(letter.id, letter as unknown as Record<string, unknown>, payload);
+
+    if (isLetterType(form.record_type as string) && authorRecipientDirty) {
+      const { data: auth } = await supabase.auth.getUser();
+      const ownerId = auth.user?.id;
+      if (ownerId) {
+        await setLetterPersonRole(letter.id, "author", authorPerson?.id ?? null, ownerId);
+        await setLetterPersonRole(letter.id, "recipient", recipientPerson?.id ?? null, ownerId);
+      }
+      qc.invalidateQueries({ queryKey: ["links", letter.id] });
+      setAuthorRecipientDirty(false);
+    }
+
     qc.invalidateQueries({ queryKey: ["letter", archiveId] });
     qc.invalidateQueries({ queryKey: ["letters"] });
     qc.invalidateQueries({ queryKey: ["history", letter.id] });
@@ -288,11 +327,31 @@ function LetterPage() {
               </span>
               <span>
                 <span className="field-label mr-2">From</span>
-                {letter.author || "—"}
+                {authorPerson?.id ? (
+                  <Link
+                    to="/people/$personId"
+                    params={{ personId: authorPerson.id }}
+                    className="text-primary hover:underline"
+                  >
+                    {letter.author}
+                  </Link>
+                ) : (
+                  letter.author || "—"
+                )}
               </span>
               <span>
                 <span className="field-label mr-2">To</span>
-                {letter.recipient || "—"}
+                {recipientPerson?.id ? (
+                  <Link
+                    to="/people/$personId"
+                    params={{ personId: recipientPerson.id }}
+                    className="text-primary hover:underline"
+                  >
+                    {letter.recipient}
+                  </Link>
+                ) : (
+                  letter.recipient || "—"
+                )}
               </span>
               <span>
                 <span className="field-label mr-2">Origin</span>
@@ -381,8 +440,8 @@ function LetterPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Button onClick={save} disabled={!dirty}>
-                  {dirty ? "Save changes" : "Saved"}
+                <Button onClick={save} disabled={!dirty && !authorRecipientDirty}>
+                  {dirty || authorRecipientDirty ? "Save changes" : "Saved"}
                 </Button>
               </>
             )}
@@ -577,6 +636,26 @@ function LetterPage() {
                   <PersonCombobox
                     value={(form[f.key] as string) ?? ""}
                     onChange={(v) => set(f.key, v)}
+                  />
+                ) : f.key === "author" ? (
+                  <PersonRoleInput
+                    value={authorPerson}
+                    onChange={(person, name) => {
+                      setAuthorPerson(person);
+                      set("author", name);
+                      setAuthorRecipientDirty(true);
+                    }}
+                    placeholder="Select or add sender…"
+                  />
+                ) : f.key === "recipient" ? (
+                  <PersonRoleInput
+                    value={recipientPerson}
+                    onChange={(person, name) => {
+                      setRecipientPerson(person);
+                      set("recipient", name);
+                      setAuthorRecipientDirty(true);
+                    }}
+                    placeholder="Select or add recipient…"
                   />
                 ) : (
                   <Input

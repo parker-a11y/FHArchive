@@ -25,6 +25,8 @@ import {
 import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
 import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
+import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
+import { linkLetterPeople } from "@/lib/letter-people";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
@@ -121,6 +123,8 @@ function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
   const [mentions, setMentions] = useState<PersonRef[]>([]);
+  const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
+  const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
   const [starNoteFor, setStarNoteFor] = useState<string | null>(null);
@@ -195,19 +199,17 @@ function QuickEntry() {
         starred: form.starred,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
-      if (mentions.length) {
-        const { data: auth } = await supabase.auth.getUser();
-        const ownerId = auth.user?.id;
-        if (ownerId) {
-          await supabase.from("letter_people").insert(
-            mentions.map((p) => ({
-              owner_id: ownerId,
-              letter_id: created.id,
-              person_id: p.id,
-              role: "mentioned",
-              source: "manual",
-            })),
-          );
+      const { data: auth } = await supabase.auth.getUser();
+      const ownerId = auth.user?.id;
+      if (ownerId) {
+        const roleLinks: { personId: string; role: "author" | "recipient" | "mentioned" }[] = [];
+        if (isLetter && authorPerson?.id) roleLinks.push({ personId: authorPerson.id, role: "author" });
+        if (isLetter && recipientPerson?.id) roleLinks.push({ personId: recipientPerson.id, role: "recipient" });
+        if (mentions.length) {
+          for (const p of mentions) roleLinks.push({ personId: p.id, role: "mentioned" });
+        }
+        if (roleLinks.length) {
+          await linkLetterPeople(created.id, roleLinks, ownerId);
         }
       }
     } catch (e) {
@@ -249,6 +251,9 @@ function QuickEntry() {
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
     setMentions([]);
+    // Preserve author/recipient people links for batch entry of similar records.
+    setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
+    setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
     loadNext();
   }
 
@@ -481,13 +486,24 @@ function QuickEntry() {
               <>
                 <div className="space-y-1.5">
                   <Label className="field-label">From (sender)</Label>
-                  <Input value={form.author} onChange={(e) => set("author", e.target.value)} />
+                  <PersonRoleInput
+                    value={authorPerson}
+                    onChange={(person, name) => {
+                      setAuthorPerson(person);
+                      set("author", name);
+                    }}
+                    placeholder="Select or add sender…"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="field-label">To (recipient)</Label>
-                  <Input
-                    value={form.recipient}
-                    onChange={(e) => set("recipient", e.target.value)}
+                  <PersonRoleInput
+                    value={recipientPerson}
+                    onChange={(person, name) => {
+                      setRecipientPerson(person);
+                      set("recipient", name);
+                    }}
+                    placeholder="Select or add recipient…"
                   />
                 </div>
                 <div className="space-y-1.5">
