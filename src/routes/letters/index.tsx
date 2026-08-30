@@ -520,6 +520,22 @@ function LettersTable() {
 
 
 
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={resetFilters}
+          disabled={activeFilterCount === 0}
+        >
+          <RotateCcw className="size-4" />
+          Reset filters
+          {activeFilterCount > 0 && (
+            <span className="ml-1 rounded-full bg-primary px-1.5 py-0 text-[10px] text-primary-foreground">
+              {activeFilterCount}
+            </span>
+          )}
+        </Button>
+
         <div className="ml-auto flex items-center gap-2">
           <span className="field-label">Views</span>
           {[
