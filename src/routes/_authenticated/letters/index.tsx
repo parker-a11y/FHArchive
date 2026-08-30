@@ -750,9 +750,9 @@ function LettersTable() {
                                   type="button"
                                   title={`Email ${l.archive_id}`}
                                   aria-label={`Email ${l.archive_id}`}
-                                  className="text-muted-foreground hover:text-primary"
+                                  className="inline-flex size-6 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
                                 >
-                                  <Mail className="size-3.5" />
+                                  <Mail className="size-3" strokeWidth={2.25} />
                                 </button>
                               }
                             />
