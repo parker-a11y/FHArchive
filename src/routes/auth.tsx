@@ -71,19 +71,21 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 px-6 py-10 lg:flex-row lg:gap-16">
+      <div className="flex max-w-md flex-col items-center text-center lg:max-w-lg lg:items-start lg:text-left">
         <img
           src={logoMark}
           alt="The Francis Files"
           width={1024}
           height={1024}
-          className="mx-auto mb-4 size-24 object-contain"
+          className="size-48 object-contain lg:size-80"
         />
-        <h1 className="font-display text-center text-2xl font-semibold">The Francis Files</h1>
-        <p className="mt-1 mb-6 text-center text-sm text-muted-foreground">
-          Private archival workspace. Sign in to continue.
+        <h1 className="font-display mt-4 text-3xl font-semibold lg:text-4xl">The Francis Files</h1>
+        <p className="mt-2 max-w-sm text-base text-muted-foreground lg:text-lg">
+          Private archival workspace for cataloging, digitizing, and researching the Francis Harrington collection.
         </p>
+      </div>
+      <div className="w-full max-w-sm">
         <form onSubmit={submit} className="space-y-4 rounded border border-border bg-card p-5">
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
