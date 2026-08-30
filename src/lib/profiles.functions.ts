@@ -101,6 +101,7 @@ export const updateProfileStatus = createServerFn({ method: "POST" })
 
     const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
     if (!isAdmin) throw new Error("Forbidden");
+    if (data.userId === userId) throw new Error("You cannot change your own status");
 
     const { error } = await supabase
       .from("profiles")
@@ -122,6 +123,7 @@ export const deleteGuestAccount = createServerFn({ method: "POST" })
 
     const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
     if (!isAdmin) throw new Error("Forbidden");
+    if (data.userId === userId) throw new Error("You cannot delete your own account");
 
     const { error: rolesError } = await supabase
       .from("user_roles")
