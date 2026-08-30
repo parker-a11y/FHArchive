@@ -23,6 +23,7 @@ import {
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
