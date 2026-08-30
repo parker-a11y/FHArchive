@@ -105,6 +105,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
               transcription: r.transcription,
               url: r.url,
               images: r.images,
+              fff: r.fff,
             })),
           },
         });

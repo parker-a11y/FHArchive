@@ -16,6 +16,7 @@ export type BuiltRecord = {
   transcription: string | null;
   url: string;
   images: string[];
+  fff: boolean;
 };
 
 type DB = SupabaseClient<any, "public", any>;
@@ -165,6 +166,7 @@ export async function buildRecords(
           ? (str(row['transcription_verified']) ?? str(row['transcription_raw_ai']))?.slice(0, 8000) ??
             null
           : null,
+        fff: Boolean(row['starred']),
         url: `${PUBLIC_SITE_URL}/s/${t}`,
         images: await letterImages(db, ref.id, imageLimit),
       });
@@ -189,6 +191,7 @@ export async function buildRecords(
         transcription: opts.includeTranscription
           ? (str(row['transcript']) ?? null)?.slice(0, 8000) ?? null
           : null,
+        fff: Boolean(row['starred']),
         url: `${PUBLIC_SITE_URL}/d/${t}`,
         images: await sourceImages(db, ref.id, imageLimit),
       });
