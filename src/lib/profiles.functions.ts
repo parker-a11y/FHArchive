@@ -144,6 +144,31 @@ export const updateProfileStatus = createServerFn({ method: "POST" })
       .eq("id", data.userId);
 
     if (error) throw error;
+
+    // Notify the guest when their account is approved.
+    if (data.status === "approved") {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: approvedProfile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", data.userId)
+          .maybeSingle();
+        if (approvedProfile?.email) {
+          const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+          await sendTemplateEmail("guest-approved", approvedProfile.email, {
+            idempotencyKey: `guest-approved-${data.userId}`,
+            templateData: {
+              guestName: approvedProfile.full_name,
+              archiveUrl: "https://fharchive.com",
+            },
+          });
+        }
+      } catch (notifyError) {
+        console.error("Failed to notify guest of approval:", notifyError);
+      }
+    }
+
     return { ok: true };
   });
 
