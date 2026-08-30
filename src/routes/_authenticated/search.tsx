@@ -18,7 +18,7 @@ import {
 } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 
-export const Route = createFileRoute("/search")({
+export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
     meta: [
       { title: "Search — The Francis Files" },

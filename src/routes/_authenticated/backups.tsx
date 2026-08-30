@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerBackup } from "@/lib/backup.functions";
 
-export const Route = createFileRoute("/backups")({
+export const Route = createFileRoute("/_authenticated/backups")({
   head: () => ({
     meta: [
       { title: "Backups — The Francis Files" },

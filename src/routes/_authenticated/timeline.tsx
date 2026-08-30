@@ -7,7 +7,7 @@ import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
 
-export const Route = createFileRoute("/timeline")({
+export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
     meta: [
       { title: "Timeline — The Francis Files" },

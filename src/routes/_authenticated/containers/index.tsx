@@ -16,7 +16,7 @@ import {
   fetchContainers,
 } from "@/lib/containers";
 
-export const Route = createFileRoute("/containers/")({
+export const Route = createFileRoute("/_authenticated/containers/")({
   head: () => ({
     meta: [
       { title: "Source Containers — The Francis Files" },

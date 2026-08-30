@@ -14,7 +14,7 @@ import {
   type Category,
 } from "@/lib/categories";
 
-export const Route = createFileRoute("/categories")({
+export const Route = createFileRoute("/_authenticated/categories")({
   component: CategoriesPage,
   head: () => ({
     meta: [

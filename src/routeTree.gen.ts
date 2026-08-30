@@ -9,18 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BackupsRouteImport } from './routes/backups'
-import { Route as CatalogRouteImport } from './routes/catalog'
-import { Route as CategoriesRouteImport } from './routes/categories'
-import { Route as EmailsRouteImport } from './routes/emails'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as QueuesRouteImport } from './routes/queues'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as SearchRouteImport } from './routes/search'
-import { Route as TimelineRouteImport } from './routes/timeline'
-import { Route as ContainersIndexRouteImport } from './routes/containers/index'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedBackupsRouteImport } from './routes/_authenticated/backups'
+import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
+import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
+import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
+import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as ContainersBoxIdRouteImport } from './routes/containers/$boxId'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
@@ -37,37 +36,13 @@ import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as SourcesIndexRouteImport } from './routes/sources/index'
 import { Route as SourcesDsIdRouteImport } from './routes/sources/$dsId'
 import { Route as SourcesNewRouteImport } from './routes/sources/new'
+import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BackupsRoute = BackupsRouteImport.update({
-  id: '/backups',
-  path: '/backups',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CatalogRoute = CatalogRouteImport.update({
-  id: '/catalog',
-  path: '/catalog',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CategoriesRoute = CategoriesRouteImport.update({
-  id: '/categories',
-  path: '/categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailsRoute = EmailsRouteImport.update({
-  id: '/emails',
-  path: '/emails',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -75,29 +50,49 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QueuesRoute = QueuesRouteImport.update({
-  id: '/queues',
-  path: '/queues',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBackupsRoute = AuthenticatedBackupsRouteImport.update({
+  id: '/_authenticated/backups',
+  path: '/backups',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
+  id: '/_authenticated/catalog',
+  path: '/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
+  id: '/_authenticated/categories',
+  path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedEmailsRoute = AuthenticatedEmailsRouteImport.update({
+  id: '/_authenticated/emails',
+  path: '/emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedQueuesRoute = AuthenticatedQueuesRouteImport.update({
+  id: '/_authenticated/queues',
+  path: '/queues',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/_authenticated/search',
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TimelineRoute = TimelineRouteImport.update({
-  id: '/timeline',
+const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
+  id: '/_authenticated/timeline',
   path: '/timeline',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContainersIndexRoute = ContainersIndexRouteImport.update({
-  id: '/containers/',
-  path: '/containers/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContainersBoxIdRoute = ContainersBoxIdRouteImport.update({
@@ -180,6 +175,12 @@ const SourcesNewRoute = SourcesNewRouteImport.update({
   path: '/sources/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedContainersIndexRoute =
+  AuthenticatedContainersIndexRouteImport.update({
+    id: '/_authenticated/containers/',
+    path: '/containers/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   id: '/api/public/backup',
   path: '/api/public/backup',
@@ -193,17 +194,16 @@ const LovableEmailTransactionalPreviewRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/backups': typeof BackupsRoute
-  '/catalog': typeof CatalogRoute
-  '/categories': typeof CategoriesRoute
-  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/search': typeof SearchRoute
-  '/timeline': typeof TimelineRoute
+  '/backups': typeof AuthenticatedBackupsRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
+  '/categories': typeof AuthenticatedCategoriesRoute
+  '/emails': typeof AuthenticatedEmailsRoute
+  '/queues': typeof AuthenticatedQueuesRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/timeline': typeof AuthenticatedTimelineRoute
   '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
@@ -213,7 +213,7 @@ export interface FileRoutesByFullPath {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
-  '/containers/': typeof ContainersIndexRoute
+  '/': typeof AuthenticatedIndexRoute
   '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
@@ -222,20 +222,20 @@ export interface FileRoutesByFullPath {
   '/places/': typeof PlacesIndexRoute
   '/sources/': typeof SourcesIndexRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/containers/': typeof AuthenticatedContainersIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/backups': typeof BackupsRoute
-  '/catalog': typeof CatalogRoute
-  '/categories': typeof CategoriesRoute
-  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/search': typeof SearchRoute
-  '/timeline': typeof TimelineRoute
+  '/backups': typeof AuthenticatedBackupsRoute
+  '/catalog': typeof AuthenticatedCatalogRoute
+  '/categories': typeof AuthenticatedCategoriesRoute
+  '/emails': typeof AuthenticatedEmailsRoute
+  '/queues': typeof AuthenticatedQueuesRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/timeline': typeof AuthenticatedTimelineRoute
   '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
@@ -245,7 +245,7 @@ export interface FileRoutesByTo {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
-  '/containers': typeof ContainersIndexRoute
+  '/': typeof AuthenticatedIndexRoute
   '/events': typeof EventsIndexRoute
   '/keywords': typeof KeywordsIndexRoute
   '/letters': typeof LettersIndexRoute
@@ -254,21 +254,21 @@ export interface FileRoutesByTo {
   '/places': typeof PlacesIndexRoute
   '/sources': typeof SourcesIndexRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/containers': typeof AuthenticatedContainersIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/backups': typeof BackupsRoute
-  '/catalog': typeof CatalogRoute
-  '/categories': typeof CategoriesRoute
-  '/emails': typeof EmailsRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/queues': typeof QueuesRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/search': typeof SearchRoute
-  '/timeline': typeof TimelineRoute
+  '/_authenticated/backups': typeof AuthenticatedBackupsRoute
+  '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
+  '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
+  '/_authenticated/emails': typeof AuthenticatedEmailsRoute
+  '/_authenticated/queues': typeof AuthenticatedQueuesRoute
+  '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
   '/containers/$boxId': typeof ContainersBoxIdRoute
   '/d/$token': typeof DTokenRoute
   '/keywords/$keywordId': typeof KeywordsKeywordIdRoute
@@ -278,7 +278,7 @@ export interface FileRoutesById {
   '/s/$token': typeof STokenRoute
   '/sources/$dsId': typeof SourcesDsIdRoute
   '/sources/new': typeof SourcesNewRoute
-  '/containers/': typeof ContainersIndexRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/events/': typeof EventsIndexRoute
   '/keywords/': typeof KeywordsIndexRoute
   '/letters/': typeof LettersIndexRoute
@@ -287,20 +287,20 @@ export interface FileRoutesById {
   '/places/': typeof PlacesIndexRoute
   '/sources/': typeof SourcesIndexRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/auth'
+    | '/forgot-password'
+    | '/reset-password'
     | '/backups'
     | '/catalog'
     | '/categories'
     | '/emails'
-    | '/forgot-password'
     | '/queues'
-    | '/reset-password'
     | '/search'
     | '/timeline'
     | '/containers/$boxId'
@@ -312,7 +312,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
-    | '/containers/'
+    | '/'
     | '/events/'
     | '/keywords/'
     | '/letters/'
@@ -321,18 +321,18 @@ export interface FileRouteTypes {
     | '/places/'
     | '/sources/'
     | '/api/public/backup'
+    | '/containers/'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/auth'
+    | '/forgot-password'
+    | '/reset-password'
     | '/backups'
     | '/catalog'
     | '/categories'
     | '/emails'
-    | '/forgot-password'
     | '/queues'
-    | '/reset-password'
     | '/search'
     | '/timeline'
     | '/containers/$boxId'
@@ -344,7 +344,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
-    | '/containers'
+    | '/'
     | '/events'
     | '/keywords'
     | '/letters'
@@ -353,20 +353,20 @@ export interface FileRouteTypes {
     | '/places'
     | '/sources'
     | '/api/public/backup'
+    | '/containers'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
-    | '/'
     | '/auth'
-    | '/backups'
-    | '/catalog'
-    | '/categories'
-    | '/emails'
     | '/forgot-password'
-    | '/queues'
     | '/reset-password'
-    | '/search'
-    | '/timeline'
+    | '/_authenticated/backups'
+    | '/_authenticated/catalog'
+    | '/_authenticated/categories'
+    | '/_authenticated/emails'
+    | '/_authenticated/queues'
+    | '/_authenticated/search'
+    | '/_authenticated/timeline'
     | '/containers/$boxId'
     | '/d/$token'
     | '/keywords/$keywordId'
@@ -376,7 +376,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/sources/$dsId'
     | '/sources/new'
-    | '/containers/'
+    | '/_authenticated/'
     | '/events/'
     | '/keywords/'
     | '/letters/'
@@ -385,21 +385,21 @@ export interface FileRouteTypes {
     | '/places/'
     | '/sources/'
     | '/api/public/backup'
+    | '/_authenticated/containers/'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
-  BackupsRoute: typeof BackupsRoute
-  CatalogRoute: typeof CatalogRoute
-  CategoriesRoute: typeof CategoriesRoute
-  EmailsRoute: typeof EmailsRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
-  QueuesRoute: typeof QueuesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  SearchRoute: typeof SearchRoute
-  TimelineRoute: typeof TimelineRoute
+  AuthenticatedBackupsRoute: typeof AuthenticatedBackupsRoute
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
+  AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
+  AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
+  AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
+  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   ContainersBoxIdRoute: typeof ContainersBoxIdRoute
   DTokenRoute: typeof DTokenRoute
   KeywordsKeywordIdRoute: typeof KeywordsKeywordIdRoute
@@ -409,7 +409,7 @@ export interface RootRouteChildren {
   STokenRoute: typeof STokenRoute
   SourcesDsIdRoute: typeof SourcesDsIdRoute
   SourcesNewRoute: typeof SourcesNewRoute
-  ContainersIndexRoute: typeof ContainersIndexRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   KeywordsIndexRoute: typeof KeywordsIndexRoute
   LettersIndexRoute: typeof LettersIndexRoute
@@ -418,51 +418,17 @@ export interface RootRouteChildren {
   PlacesIndexRoute: typeof PlacesIndexRoute
   SourcesIndexRoute: typeof SourcesIndexRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  AuthenticatedContainersIndexRoute: typeof AuthenticatedContainersIndexRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/backups': {
-      id: '/backups'
-      path: '/backups'
-      fullPath: '/backups'
-      preLoaderRoute: typeof BackupsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/catalog': {
-      id: '/catalog'
-      path: '/catalog'
-      fullPath: '/catalog'
-      preLoaderRoute: typeof CatalogRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/categories': {
-      id: '/categories'
-      path: '/categories'
-      fullPath: '/categories'
-      preLoaderRoute: typeof CategoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/emails': {
-      id: '/emails'
-      path: '/emails'
-      fullPath: '/emails'
-      preLoaderRoute: typeof EmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -472,13 +438,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/queues': {
-      id: '/queues'
-      path: '/queues'
-      fullPath: '/queues'
-      preLoaderRoute: typeof QueuesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -486,25 +445,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/search': {
-      id: '/search'
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/backups': {
+      id: '/_authenticated/backups'
+      path: '/backups'
+      fullPath: '/backups'
+      preLoaderRoute: typeof AuthenticatedBackupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/catalog': {
+      id: '/_authenticated/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof AuthenticatedCatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/categories': {
+      id: '/_authenticated/categories'
+      path: '/categories'
+      fullPath: '/categories'
+      preLoaderRoute: typeof AuthenticatedCategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/emails': {
+      id: '/_authenticated/emails'
+      path: '/emails'
+      fullPath: '/emails'
+      preLoaderRoute: typeof AuthenticatedEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/queues': {
+      id: '/_authenticated/queues'
+      path: '/queues'
+      fullPath: '/queues'
+      preLoaderRoute: typeof AuthenticatedQueuesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
       path: '/search'
       fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/timeline': {
-      id: '/timeline'
+    '/_authenticated/timeline': {
+      id: '/_authenticated/timeline'
       path: '/timeline'
       fullPath: '/timeline'
-      preLoaderRoute: typeof TimelineRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/containers/': {
-      id: '/containers/'
-      path: '/containers'
-      fullPath: '/containers/'
-      preLoaderRoute: typeof ContainersIndexRouteImport
+      preLoaderRoute: typeof AuthenticatedTimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/containers/$boxId': {
@@ -619,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SourcesNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/containers/': {
+      id: '/_authenticated/containers/'
+      path: '/containers'
+      fullPath: '/containers/'
+      preLoaderRoute: typeof AuthenticatedContainersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/backup': {
       id: '/api/public/backup'
       path: '/api/public/backup'
@@ -637,17 +638,16 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
-  BackupsRoute: BackupsRoute,
-  CatalogRoute: CatalogRoute,
-  CategoriesRoute: CategoriesRoute,
-  EmailsRoute: EmailsRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
-  QueuesRoute: QueuesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
-  SearchRoute: SearchRoute,
-  TimelineRoute: TimelineRoute,
+  AuthenticatedBackupsRoute: AuthenticatedBackupsRoute,
+  AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
+  AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
+  AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
+  AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
+  AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   ContainersBoxIdRoute: ContainersBoxIdRoute,
   DTokenRoute: DTokenRoute,
   KeywordsKeywordIdRoute: KeywordsKeywordIdRoute,
@@ -657,7 +657,7 @@ const rootRouteChildren: RootRouteChildren = {
   STokenRoute: STokenRoute,
   SourcesDsIdRoute: SourcesDsIdRoute,
   SourcesNewRoute: SourcesNewRoute,
-  ContainersIndexRoute: ContainersIndexRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   KeywordsIndexRoute: KeywordsIndexRoute,
   LettersIndexRoute: LettersIndexRoute,
@@ -666,6 +666,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlacesIndexRoute: PlacesIndexRoute,
   SourcesIndexRoute: SourcesIndexRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  AuthenticatedContainersIndexRoute: AuthenticatedContainersIndexRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

@@ -33,7 +33,7 @@ import {
   useSubtypeOptions,
 } from "@/lib/categories";
 
-export const Route = createFileRoute("/catalog")({
+export const Route = createFileRoute("/_authenticated/catalog")({
   head: () => ({
     meta: [
       { title: "Quick Entry — The Francis Files" },

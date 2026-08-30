@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { fetchSentEmails } from "@/lib/archive-email";
 
-export const Route = createFileRoute("/emails")({
+export const Route = createFileRoute("/_authenticated/emails")({
   component: EmailsPage,
   head: () => ({
     meta: [
