@@ -41,11 +41,13 @@ export function PersonRoleInput({
   onChange,
   placeholder = "Select or add a person…",
   className,
+  disabled,
 }: {
   value: PersonRoleValue;
   onChange: (person: PersonRoleValue, name: string) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
