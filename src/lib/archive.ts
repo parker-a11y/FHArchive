@@ -184,6 +184,43 @@ export const PRIMARY_PERSONS = [
   { value: "Other", label: "Other" },
 ] as const;
 
+/**
+ * Names that should always float to the top of any people picker, in this
+ * order. Matching is on the leading given name so "Francis A. Harrington",
+ * "Fran", "Jacqueline Harrington" and "Jaq" all pin.
+ */
+export const PINNED_PERSON_NAMES = [
+  "francis",
+  "fran",
+  "jacquelyn",
+  "jacqueline",
+  "jaquelyn",
+  "jaq",
+] as const;
+
+/** Sort rank for a person name: 0..n for pinned names, Infinity otherwise. */
+export function personPinRank(name: string): number {
+  const n = (name ?? "").trim().toLowerCase();
+  if (!n) return Number.POSITIVE_INFINITY;
+  let best = Number.POSITIVE_INFINITY;
+  PINNED_PERSON_NAMES.forEach((pin, i) => {
+    if (n === pin || n.startsWith(`${pin} `) || n.startsWith(`${pin} `.replace(" ", " "))) {
+      best = Math.min(best, i);
+    }
+  });
+  return best;
+}
+
+/** Comparator putting pinned people first, then alphabetical. */
+export function comparePeopleNames(a: string, b: string): number {
+  const ra = personPinRank(a);
+  const rb = personPinRank(b);
+  if (ra !== rb) return ra - rb;
+  return a.localeCompare(b);
+}
+
+
+
 export const ORG_TYPES = [
   { value: "ship", label: "Ship" },
   { value: "military_unit", label: "Military Unit" },
