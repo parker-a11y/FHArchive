@@ -1,4 +1,4 @@
 # Roadmap
 
-- [ ] Remove Container / Box field entirely from UI/exports (keep DB column)
-- [ ] Original order / position notes: default not selected, no helper text
+- [x] Remove Container / Box field from UI/exports (DB column kept, unused)
+- [x] Original order / position notes: empty default, helper text removed
