@@ -111,6 +111,7 @@ const COLUMNS: Col[] = [
   { key: "digitization_status", label: "Digitization", width: 160 },
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
+  { key: "starred", label: "Of extreme interest", width: 150 },
   { key: "tones", label: "Tone / sentiment", width: 200 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
@@ -365,6 +366,8 @@ function LettersTable() {
 
   function cellValue(l: Letter, key: string) {
     switch (key) {
+      case "starred":
+        return l.starred ? "Yes" : "";
       case "date":
         return displayDate(l);
       case "record_type":
