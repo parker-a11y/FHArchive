@@ -43,6 +43,7 @@ import {
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 
 import { StarToggle } from "@/components/StarToggle";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -163,6 +164,7 @@ async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, st
 }
 
 function LettersTable() {
+  const { isGuestViewer } = useAuth();
   const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
   const search = Route.useSearch();
@@ -414,7 +416,7 @@ function LettersTable() {
         description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
-            {selectedRecords.length > 0 && (
+            {!isGuestViewer && selectedRecords.length > 0 && (
               <EmailArchiveDialog
                 records={selectedRecords}
                 trigger={
@@ -731,22 +733,24 @@ function LettersTable() {
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
                             style={{ backgroundColor: recordHealth(l).color }}
                           />
-                          <EmailArchiveDialog
-                            kind="letter"
-                            id={l.id}
-                            identifier={l.archive_id}
-                            title={l.title}
-                            trigger={
-                              <button
-                                type="button"
-                                title={`Email ${l.archive_id}`}
-                                aria-label={`Email ${l.archive_id}`}
-                                className="text-muted-foreground hover:text-primary"
-                              >
-                                <Mail className="size-3.5" />
-                              </button>
-                            }
-                          />
+                          {!isGuestViewer && (
+                            <EmailArchiveDialog
+                              kind="letter"
+                              id={l.id}
+                              identifier={l.archive_id}
+                              title={l.title}
+                              trigger={
+                                <button
+                                  type="button"
+                                  title={`Email ${l.archive_id}`}
+                                  aria-label={`Email ${l.archive_id}`}
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Mail className="size-3.5" />
+                                </button>
+                              }
+                            />
+                          )}
                         </span>
                       ) : isEditing ? (
                         <input
