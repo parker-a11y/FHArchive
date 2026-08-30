@@ -152,7 +152,7 @@ function LetterPage() {
       original_copy: letter.original_copy ?? "unknown",
       storage_location: letter.storage_location ?? "",
       storage_type: letter.storage_type ?? "",
-      storage_container: letter.storage_container ?? "",
+      
       storage_folder: letter.storage_folder ?? "",
       storage_notes: letter.storage_notes ?? "",
       identification_status: letter.identification_status ?? "",
