@@ -401,6 +401,16 @@ function LettersTable() {
         description={`${rows.length} of ${letters.length} records`}
         actions={
           <>
+            {selectedRecords.length > 0 && (
+              <EmailArchiveDialog
+                records={selectedRecords}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Mail className="size-4" /> Email selected ({selectedRecords.length})
+                  </Button>
+                }
+              />
+            )}
             <Button
               variant="outline"
               size="sm"
