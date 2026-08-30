@@ -120,7 +120,7 @@ function storageText(l: Letter) {
 }
 
 function LettersTable() {
-  const navigate = useNavigate({ from: "/letters" });
+  const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
   const { data: letters = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
   const { data: tags = [] } = useQuery({
@@ -314,7 +314,7 @@ function LettersTable() {
     setTones([]);
     setView("");
     setSort({ key: "archive_id", dir: 1 });
-    navigate({ to: "/letters", search: {} });
+    navigate({ to: "/letters/", search: () => ({}) });
   }
 
   const activeFilterCount = [
