@@ -14,13 +14,13 @@ import {
   LogOut,
   Ship,
   CalendarDays,
-  BookOpen,
   Globe,
   Box,
   ShieldCheck,
   Mail,
   Menu,
 } from "lucide-react";
+import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -139,6 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </Button>
+          <img src={logoMark} alt="" width={1024} height={1024} className="size-7 object-contain" />
           <span className="font-display text-base font-semibold">The Francis Files</span>
         </div>
         <main className="min-w-0 flex-1">{children}</main>

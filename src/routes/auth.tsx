@@ -1,3 +1,4 @@
+import logoMark from "@/assets/francis-files-logo.png";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -72,8 +73,15 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-2xl font-semibold">The Francis Files</h1>
-        <p className="mt-1 mb-6 text-sm text-muted-foreground">
+        <img
+          src={logoMark}
+          alt="The Francis Files"
+          width={1024}
+          height={1024}
+          className="mx-auto mb-4 size-24 object-contain"
+        />
+        <h1 className="font-display text-center text-2xl font-semibold">The Francis Files</h1>
+        <p className="mt-1 mb-6 text-center text-sm text-muted-foreground">
           Private archival workspace. Sign in to continue.
         </p>
         <form onSubmit={submit} className="space-y-4 rounded border border-border bg-card p-5">
