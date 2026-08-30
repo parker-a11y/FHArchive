@@ -1,8 +1,8 @@
-import {
-  Sparkles, Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
+  Sparkles,
   LayoutDashboard,
   Files,
   PlusSquare,
