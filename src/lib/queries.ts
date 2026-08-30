@@ -34,6 +34,7 @@ export type Letter = {
   date_end: string | null;
   primary_person: string | null;
   tones: string[] | null;
+  starred?: boolean | null;
   physical_description: string | null;
   original_copy: string;
   storage_location: string | null;

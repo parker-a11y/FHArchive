@@ -44,6 +44,7 @@ export type DigitalSource = {
   citation: string | null;
   local_file_path: string | null;
   visibility?: string;
+  starred?: boolean | null;
   created_at: string;
   updated_at: string;
 };
