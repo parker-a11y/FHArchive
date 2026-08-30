@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { Trash2 } from "lucide-react";
 import { AliasManager } from "@/components/people/AliasManager";
+import { DeletePersonButton } from "@/components/people/DeletePersonButton";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
@@ -115,7 +117,21 @@ function PersonPage() {
 
   return (
     <>
-      <PageHeader title={name} description="Person record" actions={<Button onClick={save}>Save</Button>} />
+      <PageHeader
+        title={name}
+        description="Person record"
+        actions={
+          <div className="flex gap-2">
+            <DeletePersonButton personId={person.id} name={name} redirectAfter>
+              <Button variant="outline" className="text-destructive hover:text-destructive">
+                <Trash2 className="mr-1.5 h-4 w-4" />
+                Delete person
+              </Button>
+            </DeletePersonButton>
+            <Button onClick={save}>Save</Button>
+          </div>
+        }
+      />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
         <div className="space-y-4">
           {FIELDS.map((f) =>
