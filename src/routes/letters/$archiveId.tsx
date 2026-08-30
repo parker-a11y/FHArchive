@@ -73,6 +73,10 @@ import {
 } from "@/components/letter/ResearchPanels";
 
 export const Route = createFileRoute("/letters/$archiveId")({
+  validateSearch: (search: Record<string, unknown>): { hl?: string; tab?: string } => ({
+    hl: typeof search.hl === "string" && search.hl.trim() ? search.hl : undefined,
+    tab: typeof search.tab === "string" ? search.tab : undefined,
+  }),
   head: ({ params }) => ({
     meta: [
       { title: `${params.archiveId} — The Francis Files` },
@@ -116,6 +120,7 @@ const STORAGE_FIELDS = [
 
 function LetterPage() {
   const { archiveId } = Route.useParams();
+  const { hl, tab } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -395,7 +400,7 @@ function LetterPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="catalog" className="px-4 sm:px-8 py-6">
+      <Tabs key={tab ?? "catalog"} defaultValue={tab === "transcription" ? "transcription" : "catalog"} className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="digitization">Scans &amp; Files ({letter.image_count})</TabsTrigger>
@@ -767,7 +772,7 @@ function LetterPage() {
         </TabsContent>
 
         <TabsContent value="transcription" className="mt-6">
-          <TranscriptionPanel letter={letter} />
+          <TranscriptionPanel letter={letter} highlight={hl} />
         </TabsContent>
         <TabsContent value="links" className="mt-6">
           <LinksPanel letter={letter} />

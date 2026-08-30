@@ -29,6 +29,36 @@ function StatusPill({ status }: { status: string | null | undefined }) {
   );
 }
 
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function countMatches(text: string | null | undefined, term: string | undefined): number {
+  if (!text || !term) return 0;
+  const m = text.match(new RegExp(escapeRegExp(term), "gi"));
+  return m?.length ?? 0;
+}
+
+/** Render text with every case-insensitive occurrence of `term` highlighted. */
+function HighlightedText({ text, term }: { text: string; term?: string }) {
+  if (!term) return <>{text}</>;
+  const re = new RegExp(`(${escapeRegExp(term)})`, "gi");
+  const parts = text.split(re);
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 === 1 ? (
+          <mark key={i} className="rounded bg-yellow-200 px-0.5 text-foreground">
+            {p}
+          </mark>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
+  );
+}
+
 /** One scan: original image on the left, editable transcription on the right. */
 function PageEditor({
   file,
@@ -38,6 +68,7 @@ function PageEditor({
   onTranscribe,
   busy,
   onSaved,
+  highlight,
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
@@ -46,6 +77,7 @@ function PageEditor({
   onTranscribe: () => void;
   busy: boolean;
   onSaved: () => void;
+  highlight?: string;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -105,6 +137,20 @@ function PageEditor({
         </div>
 
         <div className="space-y-2">
+          {highlight && countMatches(text, highlight) > 0 && (
+            <details
+              open
+              className="rounded border border-yellow-300 bg-yellow-50 p-2 text-xs dark:bg-yellow-950/30"
+            >
+              <summary className="cursor-pointer font-medium">
+                “{highlight}” — {countMatches(text, highlight)} match
+                {countMatches(text, highlight) === 1 ? "" : "es"} in this page
+              </summary>
+              <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
+                <HighlightedText text={text} term={highlight} />
+              </div>
+            </details>
+          )}
           <Textarea
             rows={16}
             className="font-mono text-sm"
@@ -126,7 +172,7 @@ function PageEditor({
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Original AI transcription</summary>
                 <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded border border-archive-ai/40 bg-archive-ai-surface p-2 text-[11px]">
-                  {record.ai_text}
+                  <HighlightedText text={record.ai_text} term={highlight} />
                 </pre>
               </details>
             )}
@@ -137,7 +183,7 @@ function PageEditor({
   );
 }
 
-export function TranscriptionPanel({ letter }: { letter: Letter }) {
+export function TranscriptionPanel({ letter, highlight }: { letter: Letter; highlight?: string }) {
   const qc = useQueryClient();
   const [verified, setVerified] = useState(letter.transcription_verified ?? "");
   const [status, setStatus] = useState(letter.transcription_status);
@@ -264,6 +310,12 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
 
   return (
     <div className="space-y-6">
+      {highlight && (
+        <div className="rounded border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm dark:bg-yellow-950/30">
+          Highlighting <strong>“{highlight}”</strong> in transcriptions below — opened from the
+          Keywords page.
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 rounded border border-border bg-muted/30 p-3">
         <Button onClick={() => runRecord(false)} disabled={recordBusy || files.length === 0}>
           {recordBusy ? (
@@ -326,6 +378,7 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
             onTranscribe={() => runScans([f.id])}
             busy={busyIds.includes(f.id)}
             onSaved={() => refetch()}
+            highlight={highlight}
           />
         ))}
       </div>
@@ -350,7 +403,9 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
           <div>
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
-              {letter.transcription_raw_ai || (
+              {letter.transcription_raw_ai ? (
+                <HighlightedText text={letter.transcription_raw_ai} term={highlight} />
+              ) : (
                 <span className="text-muted-foreground">
                   None yet. “Transcribe Entire Record” assembles the letter pages here in scan
                   order; envelope pages are excluded.
@@ -360,6 +415,20 @@ export function TranscriptionPanel({ letter }: { letter: Letter }) {
           </div>
           <div>
             <span className="field-label">Verified transcription</span>
+            {highlight && countMatches(verified, highlight) > 0 && (
+              <details
+                open
+                className="mt-1.5 rounded border border-yellow-300 bg-yellow-50 p-2 text-xs dark:bg-yellow-950/30"
+              >
+                <summary className="cursor-pointer font-medium">
+                  “{highlight}” — {countMatches(verified, highlight)} match
+                  {countMatches(verified, highlight) === 1 ? "" : "es"}
+                </summary>
+                <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
+                  <HighlightedText text={verified} term={highlight} />
+                </div>
+              </details>
+            )}
             <Textarea
               rows={14}
               className="mt-1.5 font-mono text-sm"
