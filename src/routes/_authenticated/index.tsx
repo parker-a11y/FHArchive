@@ -37,6 +37,7 @@ import { fetchDashboardStats, type Letter } from "@/lib/queries";
 import { fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
+import { ArchiveNotes } from "@/components/ArchiveNotes";
 
 /** Tone/icon per built-in record type; anything else falls back to Box/indigo. */
 const CATEGORY_STYLES: Record<string, { tone: Tone; icon: LucideIcon }> = {
@@ -226,6 +227,7 @@ function Dashboard() {
     queryFn: fetchSources,
   });
   const [dailyOpen, setDailyOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { data: daily } = useQuery({
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
@@ -300,19 +302,17 @@ function Dashboard() {
   return (
     <>
       <PageHeader
-        title={
-          <span className="flex items-center gap-3">
-            <img
-              src={logoMark}
-              alt=""
-              width={1024}
-              height={1024}
-              className="size-9 shrink-0 object-contain"
-            />
-            Archive Dashboard
-          </span>
-        }
+        title="Archive Dashboard"
         description="The Francis Files letters — cataloging status."
+        center={
+          <img
+            src={logoMark}
+            alt="The Francis Files"
+            width={1024}
+            height={1024}
+            className="size-16 shrink-0 object-contain sm:size-20"
+          />
+        }
         actions={
           <Button
             size="lg"
@@ -328,7 +328,7 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid auto-rows-fr grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
               <Stat
                 label="New today"
                 value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
@@ -340,6 +340,15 @@ function Dashboard() {
                 icon={Sparkles}
                 onClick={() => setDailyOpen((v) => !v)}
                 active={dailyOpen}
+              />
+              <Stat
+                label="All categories"
+                value={categoryTiles.length}
+                sub={categoriesOpen ? "Click to collapse" : "Click for more"}
+                tone="plum"
+                icon={Layers}
+                onClick={() => setCategoriesOpen((v) => !v)}
+                active={categoriesOpen}
               />
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
@@ -358,7 +367,7 @@ function Dashboard() {
                     })}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-2 gap-4 md:grid-cols-4">
                   <Stat label="New FH records" value={daily?.records ?? 0} tone="blue" icon={Hash} />
                   <Stat label="New digital sources" value={daily?.dsRecords ?? 0} tone="teal" icon={Globe} />
                   <Stat label="Files uploaded" value={daily?.filesUploaded ?? 0} tone="amber" icon={Paperclip} />
@@ -367,19 +376,35 @@ function Dashboard() {
               </div>
             )}
 
-            <h2 className="field-label mt-10 mb-3">Record categories</h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {categoryTiles.map((cat) => (
-                <Stat
-                  key={cat.value}
-                  label={cat.label}
-                  value={cat.count}
-                  to={`/letters?type=${cat.value}`}
-                  tone={cat.tone}
-                  icon={cat.icon}
-                />
-              ))}
-            </div>
+            {categoriesOpen && (
+              <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="mb-3 flex items-baseline justify-between">
+                  <h2 className="field-label">Record categories</h2>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                    onClick={() => setCategoriesOpen(false)}
+                  >
+                    Collapse
+                  </button>
+                </div>
+                <div className="grid auto-rows-fr grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {categoryTiles.map((cat) => (
+                    <Stat
+                      key={cat.value}
+                      label={cat.label}
+                      value={cat.count}
+                      to={`/letters?type=${cat.value}`}
+                      tone={cat.tone}
+                      icon={cat.icon}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <ArchiveNotes />
+
 
             <h2 className="field-label mt-10 mb-3">Recently added</h2>
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
