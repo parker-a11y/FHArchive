@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,36 @@ function StatusPill({ status }: { status: string | null | undefined }) {
     >
       {transcriptionStatusLabel(status)}
     </span>
+  );
+}
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function countMatches(text: string | null | undefined, term: string | undefined): number {
+  if (!text || !term) return 0;
+  const m = text.match(new RegExp(escapeRegExp(term), "gi"));
+  return m?.length ?? 0;
+}
+
+/** Render text with every case-insensitive occurrence of `term` highlighted. */
+function HighlightedText({ text, term }: { text: string; term?: string }) {
+  if (!term) return <>{text}</>;
+  const re = new RegExp(`(${escapeRegExp(term)})`, "gi");
+  const parts = text.split(re);
+  return (
+    <>
+      {parts.map((p, i) =>
+        i % 2 === 1 ? (
+          <mark key={i} className="rounded bg-yellow-200 px-0.5 text-foreground">
+            {p}
+          </mark>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
   );
 }
 
