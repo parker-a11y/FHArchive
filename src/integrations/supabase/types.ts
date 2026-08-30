@@ -523,6 +523,7 @@ export type Database = {
           owner_id: string
           rights_notes: string | null
           source_type: string
+          starred: boolean
           title: string
           transcript: string | null
           updated_at: string
@@ -548,6 +549,7 @@ export type Database = {
           owner_id?: string
           rights_notes?: string | null
           source_type?: string
+          starred?: boolean
           title: string
           transcript?: string | null
           updated_at?: string
@@ -573,6 +575,7 @@ export type Database = {
           owner_id?: string
           rights_notes?: string | null
           source_type?: string
+          starred?: boolean
           title?: string
           transcript?: string | null
           updated_at?: string
@@ -1512,6 +1515,7 @@ export type Database = {
           sheets: number | null
           sort_date: string | null
           source_container_id: string | null
+          starred: boolean
           storage_container: string | null
           storage_folder: string | null
           storage_location: string | null
@@ -1579,6 +1583,7 @@ export type Database = {
           sheets?: number | null
           sort_date?: string | null
           source_container_id?: string | null
+          starred?: boolean
           storage_container?: string | null
           storage_folder?: string | null
           storage_location?: string | null
@@ -1646,6 +1651,7 @@ export type Database = {
           sheets?: number | null
           sort_date?: string | null
           source_container_id?: string | null
+          starred?: boolean
           storage_container?: string | null
           storage_folder?: string | null
           storage_location?: string | null
