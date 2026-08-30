@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -40,6 +41,10 @@ import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authentic
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -56,44 +61,44 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/_authenticated/',
+  id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBackupsRoute = AuthenticatedBackupsRouteImport.update({
-  id: '/_authenticated/backups',
+  id: '/backups',
   path: '/backups',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCatalogRoute = AuthenticatedCatalogRouteImport.update({
-  id: '/_authenticated/catalog',
+  id: '/catalog',
   path: '/catalog',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
-  id: '/_authenticated/categories',
+  id: '/categories',
   path: '/categories',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEmailsRoute = AuthenticatedEmailsRouteImport.update({
-  id: '/_authenticated/emails',
+  id: '/emails',
   path: '/emails',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQueuesRoute = AuthenticatedQueuesRouteImport.update({
-  id: '/_authenticated/queues',
+  id: '/queues',
   path: '/queues',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
-  id: '/_authenticated/search',
+  id: '/search',
   path: '/search',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
-  id: '/_authenticated/timeline',
+  id: '/timeline',
   path: '/timeline',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const DTokenRoute = DTokenRouteImport.update({
   id: '/d/$token',
@@ -107,92 +112,92 @@ const STokenRoute = STokenRouteImport.update({
 } as any)
 const AuthenticatedContainersIndexRoute =
   AuthenticatedContainersIndexRouteImport.update({
-    id: '/_authenticated/containers/',
+    id: '/containers/',
     path: '/containers/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContainersBoxIdRoute =
   AuthenticatedContainersBoxIdRouteImport.update({
-    id: '/_authenticated/containers/$boxId',
+    id: '/containers/$boxId',
     path: '/containers/$boxId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEventsIndexRoute =
   AuthenticatedEventsIndexRouteImport.update({
-    id: '/_authenticated/events/',
+    id: '/events/',
     path: '/events/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedKeywordsIndexRoute =
   AuthenticatedKeywordsIndexRouteImport.update({
-    id: '/_authenticated/keywords/',
+    id: '/keywords/',
     path: '/keywords/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedKeywordsKeywordIdRoute =
   AuthenticatedKeywordsKeywordIdRouteImport.update({
-    id: '/_authenticated/keywords/$keywordId',
+    id: '/keywords/$keywordId',
     path: '/keywords/$keywordId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedLettersIndexRoute =
   AuthenticatedLettersIndexRouteImport.update({
-    id: '/_authenticated/letters/',
+    id: '/letters/',
     path: '/letters/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedLettersArchiveIdRoute =
   AuthenticatedLettersArchiveIdRouteImport.update({
-    id: '/_authenticated/letters/$archiveId',
+    id: '/letters/$archiveId',
     path: '/letters/$archiveId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedOrganizationsIndexRoute =
   AuthenticatedOrganizationsIndexRouteImport.update({
-    id: '/_authenticated/organizations/',
+    id: '/organizations/',
     path: '/organizations/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPeopleIndexRoute =
   AuthenticatedPeopleIndexRouteImport.update({
-    id: '/_authenticated/people/',
+    id: '/people/',
     path: '/people/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPeoplePersonIdRoute =
   AuthenticatedPeoplePersonIdRouteImport.update({
-    id: '/_authenticated/people/$personId',
+    id: '/people/$personId',
     path: '/people/$personId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlacesIndexRoute =
   AuthenticatedPlacesIndexRouteImport.update({
-    id: '/_authenticated/places/',
+    id: '/places/',
     path: '/places/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPlacesPlaceIdRoute =
   AuthenticatedPlacesPlaceIdRouteImport.update({
-    id: '/_authenticated/places/$placeId',
+    id: '/places/$placeId',
     path: '/places/$placeId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSourcesIndexRoute =
   AuthenticatedSourcesIndexRouteImport.update({
-    id: '/_authenticated/sources/',
+    id: '/sources/',
     path: '/sources/',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSourcesDsIdRoute =
   AuthenticatedSourcesDsIdRouteImport.update({
-    id: '/_authenticated/sources/$dsId',
+    id: '/sources/$dsId',
     path: '/sources/$dsId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSourcesNewRoute = AuthenticatedSourcesNewRouteImport.update({
-  id: '/_authenticated/sources/new',
+  id: '/sources/new',
   path: '/sources/new',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   id: '/api/public/backup',
@@ -207,6 +212,7 @@ const LovableEmailTransactionalPreviewRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -219,7 +225,6 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof AuthenticatedTimelineRoute
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
-  '/': typeof AuthenticatedIndexRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -272,6 +277,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -306,6 +312,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/auth'
     | '/forgot-password'
     | '/reset-password'
@@ -318,7 +325,6 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/d/$token'
     | '/s/$token'
-    | '/'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -370,6 +376,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
+    | '/_authenticated'
     | '/auth'
     | '/forgot-password'
     | '/reset-password'
@@ -403,40 +410,25 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
-  AuthenticatedBackupsRoute: typeof AuthenticatedBackupsRoute
-  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
-  AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
-  AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
-  AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
-  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
-  AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   DTokenRoute: typeof DTokenRoute
   STokenRoute: typeof STokenRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
-  AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
-  AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
-  AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
-  AuthenticatedPlacesPlaceIdRoute: typeof AuthenticatedPlacesPlaceIdRoute
-  AuthenticatedSourcesDsIdRoute: typeof AuthenticatedSourcesDsIdRoute
-  AuthenticatedSourcesNewRoute: typeof AuthenticatedSourcesNewRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
-  AuthenticatedContainersIndexRoute: typeof AuthenticatedContainersIndexRoute
-  AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
-  AuthenticatedKeywordsIndexRoute: typeof AuthenticatedKeywordsIndexRoute
-  AuthenticatedLettersIndexRoute: typeof AuthenticatedLettersIndexRoute
-  AuthenticatedOrganizationsIndexRoute: typeof AuthenticatedOrganizationsIndexRoute
-  AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
-  AuthenticatedPlacesIndexRoute: typeof AuthenticatedPlacesIndexRoute
-  AuthenticatedSourcesIndexRoute: typeof AuthenticatedSourcesIndexRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -463,56 +455,56 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/backups': {
       id: '/_authenticated/backups'
       path: '/backups'
       fullPath: '/backups'
       preLoaderRoute: typeof AuthenticatedBackupsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/catalog': {
       id: '/_authenticated/catalog'
       path: '/catalog'
       fullPath: '/catalog'
       preLoaderRoute: typeof AuthenticatedCatalogRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/categories': {
       id: '/_authenticated/categories'
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof AuthenticatedCategoriesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/emails': {
       id: '/_authenticated/emails'
       path: '/emails'
       fullPath: '/emails'
       preLoaderRoute: typeof AuthenticatedEmailsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/queues': {
       id: '/_authenticated/queues'
       path: '/queues'
       fullPath: '/queues'
       preLoaderRoute: typeof AuthenticatedQueuesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/search': {
       id: '/_authenticated/search'
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof AuthenticatedSearchRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/timeline': {
       id: '/_authenticated/timeline'
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof AuthenticatedTimelineRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/d/$token': {
       id: '/d/$token'
@@ -533,105 +525,105 @@ declare module '@tanstack/react-router' {
       path: '/containers'
       fullPath: '/containers/'
       preLoaderRoute: typeof AuthenticatedContainersIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/containers/$boxId': {
       id: '/_authenticated/containers/$boxId'
       path: '/containers/$boxId'
       fullPath: '/containers/$boxId'
       preLoaderRoute: typeof AuthenticatedContainersBoxIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/events/': {
       id: '/_authenticated/events/'
       path: '/events'
       fullPath: '/events/'
       preLoaderRoute: typeof AuthenticatedEventsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/keywords/': {
       id: '/_authenticated/keywords/'
       path: '/keywords'
       fullPath: '/keywords/'
       preLoaderRoute: typeof AuthenticatedKeywordsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/keywords/$keywordId': {
       id: '/_authenticated/keywords/$keywordId'
       path: '/keywords/$keywordId'
       fullPath: '/keywords/$keywordId'
       preLoaderRoute: typeof AuthenticatedKeywordsKeywordIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/letters/': {
       id: '/_authenticated/letters/'
       path: '/letters'
       fullPath: '/letters/'
       preLoaderRoute: typeof AuthenticatedLettersIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/letters/$archiveId': {
       id: '/_authenticated/letters/$archiveId'
       path: '/letters/$archiveId'
       fullPath: '/letters/$archiveId'
       preLoaderRoute: typeof AuthenticatedLettersArchiveIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/organizations/': {
       id: '/_authenticated/organizations/'
       path: '/organizations'
       fullPath: '/organizations/'
       preLoaderRoute: typeof AuthenticatedOrganizationsIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/people/': {
       id: '/_authenticated/people/'
       path: '/people'
       fullPath: '/people/'
       preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/people/$personId': {
       id: '/_authenticated/people/$personId'
       path: '/people/$personId'
       fullPath: '/people/$personId'
       preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/places/': {
       id: '/_authenticated/places/'
       path: '/places'
       fullPath: '/places/'
       preLoaderRoute: typeof AuthenticatedPlacesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/places/$placeId': {
       id: '/_authenticated/places/$placeId'
       path: '/places/$placeId'
       fullPath: '/places/$placeId'
       preLoaderRoute: typeof AuthenticatedPlacesPlaceIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sources/': {
       id: '/_authenticated/sources/'
       path: '/sources'
       fullPath: '/sources/'
       preLoaderRoute: typeof AuthenticatedSourcesIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sources/$dsId': {
       id: '/_authenticated/sources/$dsId'
       path: '/sources/$dsId'
       fullPath: '/sources/$dsId'
       preLoaderRoute: typeof AuthenticatedSourcesDsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/sources/new': {
       id: '/_authenticated/sources/new'
       path: '/sources/new'
       fullPath: '/sources/new'
       preLoaderRoute: typeof AuthenticatedSourcesNewRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/backup': {
       id: '/api/public/backup'
@@ -650,10 +642,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  AuthRoute: AuthRoute,
-  ForgotPasswordRoute: ForgotPasswordRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBackupsRoute: typeof AuthenticatedBackupsRoute
+  AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
+  AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
+  AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
+  AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
+  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
+  AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
+  AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
+  AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
+  AuthenticatedPlacesPlaceIdRoute: typeof AuthenticatedPlacesPlaceIdRoute
+  AuthenticatedSourcesDsIdRoute: typeof AuthenticatedSourcesDsIdRoute
+  AuthenticatedSourcesNewRoute: typeof AuthenticatedSourcesNewRoute
+  AuthenticatedContainersIndexRoute: typeof AuthenticatedContainersIndexRoute
+  AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
+  AuthenticatedKeywordsIndexRoute: typeof AuthenticatedKeywordsIndexRoute
+  AuthenticatedLettersIndexRoute: typeof AuthenticatedLettersIndexRoute
+  AuthenticatedOrganizationsIndexRoute: typeof AuthenticatedOrganizationsIndexRoute
+  AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
+  AuthenticatedPlacesIndexRoute: typeof AuthenticatedPlacesIndexRoute
+  AuthenticatedSourcesIndexRoute: typeof AuthenticatedSourcesIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBackupsRoute: AuthenticatedBackupsRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
@@ -661,8 +676,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
-  DTokenRoute: DTokenRoute,
-  STokenRoute: STokenRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,
   AuthenticatedKeywordsKeywordIdRoute: AuthenticatedKeywordsKeywordIdRoute,
@@ -671,7 +684,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedPlacesPlaceIdRoute: AuthenticatedPlacesPlaceIdRoute,
   AuthenticatedSourcesDsIdRoute: AuthenticatedSourcesDsIdRoute,
   AuthenticatedSourcesNewRoute: AuthenticatedSourcesNewRoute,
-  ApiPublicBackupRoute: ApiPublicBackupRoute,
   AuthenticatedContainersIndexRoute: AuthenticatedContainersIndexRoute,
   AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,
   AuthenticatedKeywordsIndexRoute: AuthenticatedKeywordsIndexRoute,
@@ -680,6 +692,19 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
   AuthenticatedPlacesIndexRoute: AuthenticatedPlacesIndexRoute,
   AuthenticatedSourcesIndexRoute: AuthenticatedSourcesIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  DTokenRoute: DTokenRoute,
+  STokenRoute: STokenRoute,
+  ApiPublicBackupRoute: ApiPublicBackupRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
