@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -415,6 +415,20 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
           </div>
           <div>
             <span className="field-label">Verified transcription</span>
+            {highlight && countMatches(verified, highlight) > 0 && (
+              <details
+                open
+                className="mt-1.5 rounded border border-yellow-300 bg-yellow-50 p-2 text-xs dark:bg-yellow-950/30"
+              >
+                <summary className="cursor-pointer font-medium">
+                  “{highlight}” — {countMatches(verified, highlight)} match
+                  {countMatches(verified, highlight) === 1 ? "" : "es"}
+                </summary>
+                <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
+                  <HighlightedText text={verified} term={highlight} />
+                </div>
+              </details>
+            )}
             <Textarea
               rows={14}
               className="mt-1.5 font-mono text-sm"
