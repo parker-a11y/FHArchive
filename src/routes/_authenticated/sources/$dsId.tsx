@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, ExternalLink, Globe, Trash2 } from "lucide-react";
 import { StarToggle } from "@/components/StarToggle";
 import { AppShell } from "@/components/AppShell";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,6 +86,7 @@ function SourcePage() {
   const { dsId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { isGuestViewer } = useAuth();
   const { data: source, isLoading } = useQuery({
     queryKey: ["source", dsId],
     queryFn: () => fetchSourceByDsId(dsId),
@@ -161,13 +163,17 @@ function SourcePage() {
           <Button variant="outline" size="icon" onClick={() => navigate({ to: "/sources/$dsId", params: { dsId: nextId } })}>
             <ChevronRight className="size-4" />
           </Button>
-          <ShareSourceDialog source={source} />
-          <EmailArchiveDialog
-            kind="source"
-            id={source.id}
-            identifier={source.ds_id}
-            title={source.title}
-          />
+          {!isGuestViewer && (
+            <>
+              <ShareSourceDialog source={source} />
+              <EmailArchiveDialog
+                kind="source"
+                id={source.id}
+                identifier={source.ds_id}
+                title={source.title}
+              />
+            </>
+          )}
 
           {source.url && (
             <Button variant="outline" className="gap-2" asChild>
@@ -176,26 +182,28 @@ function SourcePage() {
               </a>
             </Button>
           )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete {source.ds_id}?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This permanently removes the source, its segments, and all links to FH records.
-                  The DS number is not reused.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={remove}>Delete</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {!isGuestViewer && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete {source.ds_id}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently removes the source, its segments, and all links to FH records.
+                    The DS number is not reused.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={remove}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
@@ -211,6 +219,7 @@ function SourcePage() {
           </TabsList>
 
           <TabsContent value="details" className="mt-6">
+            <fieldset disabled={isGuestViewer} className="contents">
             <div className="max-w-3xl space-y-5">
               <Field label="Title">
                 <Input value={v("title")} onChange={(e) => set("title", e.target.value)} />
@@ -282,24 +291,35 @@ function SourcePage() {
               <Field label="Notes">
                 <Textarea rows={2} value={v("notes")} onChange={(e) => set("notes", e.target.value)} />
               </Field>
-              <Button size="lg" disabled={!draft || saving} onClick={save}>
-                {saving ? "Saving…" : "Save changes"}
-              </Button>
+              {!isGuestViewer && (
+                <Button size="lg" disabled={!draft || saving} onClick={save}>
+                  {saving ? "Saving…" : "Save changes"}
+                </Button>
+              )}
             </div>
+            </fieldset>
           </TabsContent>
 
           <TabsContent value="files" className="mt-6">
-            <DsFilesPanel source={source} />
+            <fieldset disabled={isGuestViewer} className="contents">
+              <DsFilesPanel source={source} />
+            </fieldset>
           </TabsContent>
           <TabsContent value="segments" className="mt-6">
-            <SegmentsPanel source={source} />
+            <fieldset disabled={isGuestViewer} className="contents">
+              <SegmentsPanel source={source} />
+            </fieldset>
           </TabsContent>
 
           <TabsContent value="records" className="mt-6">
-            <SourceLettersPanel source={source} />
+            <fieldset disabled={isGuestViewer} className="contents">
+              <SourceLettersPanel source={source} />
+            </fieldset>
           </TabsContent>
           <TabsContent value="connections" className="mt-6">
-            <SourceConnectionsPanel source={source} />
+            <fieldset disabled={isGuestViewer} className="contents">
+              <SourceConnectionsPanel source={source} />
+            </fieldset>
           </TabsContent>
         </Tabs>
       </div>
