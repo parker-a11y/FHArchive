@@ -23,6 +23,7 @@ import {
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
@@ -119,6 +120,7 @@ function Select_({
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
+  const [mentions, setMentions] = useState<PersonRef[]>([]);
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
   const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; title: string; lines: string[] } | null>(
@@ -193,6 +195,21 @@ function QuickEntry() {
         tones: form.tones,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
+      if (mentions.length) {
+        const { data: auth } = await supabase.auth.getUser();
+        const ownerId = auth.user?.id;
+        if (ownerId) {
+          await supabase.from("letter_people").insert(
+            mentions.map((p) => ({
+              owner_id: ownerId,
+              letter_id: created.id,
+              person_id: p.id,
+              role: "mentioned",
+              source: "manual",
+            })),
+          );
+        }
+      }
     } catch (e) {
       setBusy(false);
       return toast.error((e as Error).message);
@@ -224,12 +241,13 @@ function QuickEntry() {
       primary_person: f.primary_person,
       storage_location: f.storage_location,
       storage_type: f.storage_type,
-      storage_container: f.storage_container,
+      
       storage_folder: f.storage_folder,
       original_copy: f.original_copy,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
+    setMentions([]);
     loadNext();
   }
 
@@ -296,6 +314,17 @@ function QuickEntry() {
               />
               <p className="text-xs text-muted-foreground">
                 The single main subject of this record — add everyone else under People with roles.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="field-label">Mentions</Label>
+              <PersonMultiSelect
+                value={mentions}
+                onAdd={(p) => setMentions((m) => (m.some((x) => x.id === p.id) ? m : [...m, p]))}
+                onRemove={(p) => setMentions((m) => m.filter((x) => x.id !== p.id))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Other people named in this record — linked as “mentioned”.
               </p>
             </div>
             <div className="space-y-1.5">

@@ -10,3 +10,5 @@
 - [x] Add "Publication / Printed Material" record type with printed-material subtypes
 - [x] AI panel: Accept All button honoring edits and rejections
 - [x] Dashboard: Daily Summary Report (new records, files uploaded, transcriptions generated)
+- [x] Mentions field (multi-select people, inline add) on Quick Entry + record detail
+- [x] Container / box defaults to not selected in Quick Entry (no carry-forward)

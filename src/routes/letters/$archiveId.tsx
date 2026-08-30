@@ -56,6 +56,7 @@ import {
 } from "@/lib/archive";
 
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
@@ -535,8 +536,18 @@ function LetterPage() {
                     onChange={(e) => set(f.key, e.target.value)}
                   />
                 )}
+                {f.key === "primary_person" && (
+                  <div className="mt-3">
+                    <label className="field-label">Mentions</label>
+                    <MentionsField letterId={letter.id} />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Other people named in this record — saved immediately as “mentioned”.
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
+
 
             {[
               { key: "date_precision", label: "Date status / precision", opts: DATE_PRECISION },
