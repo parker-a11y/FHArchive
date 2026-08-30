@@ -638,6 +638,7 @@ function LettersTable() {
           <thead className="sticky top-0 bg-secondary">
             <tr>
               <th className="w-8 border-b border-border px-2 py-2">
+                {!isGuestViewer && (
                 <Checkbox
                   aria-label="Select all records"
                   checked={allSelected}
@@ -695,11 +696,13 @@ function LettersTable() {
             {rows.map((l) => (
               <tr key={l.id} className="border-b border-border hover:bg-muted/50">
                 <td className="px-2 py-1.5 align-top">
-                  <Checkbox
-                    aria-label={`Select ${l.archive_id}`}
-                    checked={selected.has(l.id)}
-                    onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
-                  />
+                  {!isGuestViewer && (
+                    <Checkbox
+                      aria-label={`Select ${l.archive_id}`}
+                      checked={selected.has(l.id)}
+                      onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
+                    />
+                  )}
                 </td>
                 {cols.map((c) => {
                   const isEditing = editing?.id === l.id && editing.key === c.key;
@@ -708,7 +711,9 @@ function LettersTable() {
                       key={c.key}
                       className="truncate px-3 py-1.5 align-top"
                       style={{ maxWidth: widths[c.key] ?? c.width }}
-                      onDoubleClick={() => c.editable && setEditing({ id: l.id, key: c.key })}
+                      onDoubleClick={() =>
+                        c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
+                      }
                     >
                       {c.key === "archive_id" ? (
                         <span className="inline-flex items-center gap-1.5">
