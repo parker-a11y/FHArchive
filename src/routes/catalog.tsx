@@ -78,7 +78,7 @@ const blank = {
   has_enclosures: false,
   storage_location: "",
   storage_type: "",
-  storage_container: "",
+  
   storage_folder: "",
   storage_notes: "",
   source_container_id: "",
@@ -187,7 +187,7 @@ function QuickEntry() {
       const extras = {
         identification_status: form.identification_status,
         storage_type: form.storage_type || null,
-        storage_container: form.storage_container || null,
+        
         storage_folder: form.storage_folder || null,
         storage_notes: form.storage_notes || null,
         source_container_id: form.source_container_id || null,
