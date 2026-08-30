@@ -23,6 +23,7 @@ import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
 import { Route as AuthenticatedContainersBoxIdRouteImport } from './routes/_authenticated/containers/$boxId'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
@@ -109,6 +110,11 @@ const STokenRoute = STokenRouteImport.update({
   id: '/s/$token',
   path: '/s/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedContainersIndexRoute =
   AuthenticatedContainersIndexRouteImport.update({
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof AuthenticatedTimelineRoute
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/_authenticated/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/d/$token'
     | '/s/$token'
+    | '/admin/users'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/s/$token'
     | '/'
+    | '/admin/users'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/s/$token'
     | '/_authenticated/'
+    | '/_authenticated/admin/users'
     | '/_authenticated/containers/$boxId'
     | '/_authenticated/keywords/$keywordId'
     | '/_authenticated/letters/$archiveId'
@@ -519,6 +531,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/s/$token'
       preLoaderRoute: typeof STokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/containers/': {
       id: '/_authenticated/containers/'
@@ -651,6 +670,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
   AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
@@ -677,6 +697,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,
   AuthenticatedKeywordsKeywordIdRoute: AuthenticatedKeywordsKeywordIdRoute,
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,

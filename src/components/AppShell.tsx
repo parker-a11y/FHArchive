@@ -47,7 +47,7 @@ const NAV = [
 
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,6 +63,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     );
   if (!session) return null;
+
+  const navItems = isAdmin
+    ? [...NAV, { to: "/admin/users", label: "Users", icon: UserCog }]
+    : NAV;
 
   const nav = (onNavigate?: () => void) => (
     <>
