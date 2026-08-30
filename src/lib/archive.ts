@@ -176,13 +176,6 @@ export const RECORD_RESEARCH_STATUS = [
   { value: "verified", label: "Verified" },
 ] as const;
 
-export const PRIMARY_PERSONS = [
-  { value: "", label: "—" },
-  { value: "Francis A. Harrington", label: "Francis" },
-  { value: "Jacqueline Harrington", label: "Jacqueline" },
-  { value: "Francis & Jacqueline", label: "Francis & Jacqueline" },
-  { value: "Other", label: "Other" },
-] as const;
 
 /**
  * Names that should always float to the top of any people picker, in this
