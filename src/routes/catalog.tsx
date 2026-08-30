@@ -179,16 +179,14 @@ function QuickEntry() {
         p_sheets: form.sheets ? Number(form.sheets) : null,
         p_has_envelope: isLetter ? form.has_envelope : false,
         p_has_enclosures: form.has_enclosures,
-        p_storage_location: form.storage_location,
-        p_original_copy: form.original_copy,
+        p_storage_location: null,
+        p_original_copy: "original",
         p_notes: form.notes,
       });
       const extras = {
         identification_status: form.identification_status,
         storage_type: form.storage_type || null,
-        
         storage_folder: form.storage_folder || null,
-        storage_notes: form.storage_notes || null,
         source_container_id: form.source_container_id || null,
         original_order_notes: form.original_order_notes || null,
         tones: form.tones,
