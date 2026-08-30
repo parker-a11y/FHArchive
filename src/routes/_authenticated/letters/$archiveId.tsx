@@ -420,8 +420,8 @@ function LetterPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Button onClick={save} disabled={!dirty}>
-                  {dirty ? "Save changes" : "Saved"}
+                <Button onClick={save} disabled={!dirty && !authorRecipientDirty}>
+                  {dirty || authorRecipientDirty ? "Save changes" : "Saved"}
                 </Button>
               </>
             )}
