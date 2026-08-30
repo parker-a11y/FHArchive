@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ExternalLink, Globe, Paperclip, Plus, Search } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { StarToggle } from "@/components/StarToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -128,6 +129,14 @@ function SourcesList() {
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-teal-soft text-tone-teal">
                     <Globe className="size-4" />
                   </div>
+                  <StarToggle
+                    table="digital_sources"
+                    id={s.id}
+                    starred={Boolean(s.starred)}
+                    label={`${s.ds_id} — ${s.title}`}
+                    size="sm"
+                    className="size-6 shrink-0"
+                  />
                   <span className="archive-id w-20 text-base">{s.ds_id}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{s.title}</span>

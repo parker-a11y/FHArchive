@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { StarToggle } from "@/components/StarToggle";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import {
@@ -258,7 +259,16 @@ function LetterPage() {
       <header className="no-print border-b border-border px-4 sm:px-8 py-5">
         <div className="flex items-start justify-between gap-6">
           <div>
-            <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
+            <div className="flex items-center gap-3">
+              <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
+              <StarToggle
+                table="letters"
+                id={letter.id}
+                starred={Boolean(letter.starred)}
+                label={`${letter.archive_id}${letter.title ? ` — ${letter.title}` : ""}`}
+                showLabel
+              />
+            </div>
             <div className="mt-2 text-sm">
               <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
                 {recordTypeOptions.find((o) => o.value === letter.record_type)?.label ??

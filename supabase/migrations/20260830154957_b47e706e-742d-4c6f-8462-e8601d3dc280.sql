@@ -1,0 +1,2 @@
+REVOKE EXECUTE ON FUNCTION public.search_letters(text, text, text, text, text, text, text, boolean, text, text, text, text[], text, text, uuid, uuid, uuid, date, date, text, text, text, text, text, integer, integer, boolean) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.search_letters(text, text, text, text, text, text, text, boolean, text, text, text, text[], text, text, uuid, uuid, uuid, date, date, text, text, text, text, text, integer, integer, boolean) TO authenticated, service_role;

@@ -34,6 +34,7 @@ export type Letter = {
   date_end: string | null;
   primary_person: string | null;
   tones: string[] | null;
+  starred?: boolean | null;
   physical_description: string | null;
   original_copy: string;
   storage_location: string | null;
@@ -126,7 +127,7 @@ export async function createRecord(
  * that made whole-table fetches multi-megabyte at scale.
  */
 const LETTER_LIST_COLS =
-  "id, fh_seq, archive_id, date_as_written, normalized_date, date_end, date_precision, date_certainty, author, recipient, origin, destination, period, sheets, image_count, has_envelope, has_enclosures, physical_condition, notes, transcription_status, scan_status, review_status, research_needed, summary_short, publication_status, record_type, subtype, title, primary_person, tones, physical_description, original_copy, storage_location, storage_type, storage_folder, storage_position, storage_notes, identification_status, sort_date, digitization_status, expected_scan_count, completeness_check, scan_both_sides, photo_front_scanned, photo_back_scanned, digitization_override, digitization_completed_at, provenance, source_container_id, original_order_notes, digitization_notes, research_status, citations, visibility, created_at, updated_at";
+  "id, fh_seq, archive_id, date_as_written, normalized_date, date_end, date_precision, date_certainty, author, recipient, origin, destination, period, sheets, image_count, has_envelope, has_enclosures, physical_condition, notes, transcription_status, scan_status, review_status, research_needed, summary_short, publication_status, record_type, subtype, title, primary_person, tones, physical_description, original_copy, storage_location, storage_type, storage_folder, storage_position, storage_notes, identification_status, sort_date, digitization_status, expected_scan_count, completeness_check, scan_both_sides, photo_front_scanned, photo_back_scanned, digitization_override, digitization_completed_at, provenance, source_container_id, original_order_notes, digitization_notes, research_status, citations, visibility, starred, created_at, updated_at";
 
 /** Slim whole-list fetch for pickers/navigation. Prefer searchLetters for tables. */
 export async function fetchLetters(): Promise<Letter[]> {
@@ -162,6 +163,7 @@ export type LetterSearchParams = {
   author?: string;
   recipient?: string;
   place?: string;
+  starred?: boolean;
   sort?: string;
   dir?: "asc" | "desc";
   limit?: number;
@@ -195,6 +197,7 @@ export async function searchLetters(p: LetterSearchParams): Promise<LetterPage> 
     p_author: p.author || null,
     p_recipient: p.recipient || null,
     p_place: p.place || null,
+    p_starred: p.starred ?? false,
     p_sort: p.sort ?? "fh_seq",
     p_dir: p.dir ?? "asc",
     p_limit: p.limit ?? 100,
@@ -225,6 +228,8 @@ export type DashboardStats = {
   uncertain_dates: number;
   total_scans: number;
   letters_with_files: number;
+  starred_records: number;
+  starred_sources: number;
 };
 
 /** All dashboard counts in one database call. */

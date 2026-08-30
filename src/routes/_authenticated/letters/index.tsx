@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Eye, Mail, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Eye, Mail, RotateCcw, Star } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -42,6 +42,7 @@ import {
 } from "@/lib/archive";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 
+import { StarToggle } from "@/components/StarToggle";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -52,6 +53,7 @@ const searchSchema = z.object({
   scan: z.string().optional(), // "has" | "none"
 
   uncertain: z.coerce.string().optional(), // "1"
+  starred: z.coerce.string().optional(), // "1"
 });
 
 export const Route = createFileRoute("/_authenticated/letters/")({
@@ -109,6 +111,7 @@ const COLUMNS: Col[] = [
   { key: "digitization_status", label: "Digitization", width: 160 },
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
+  { key: "starred", label: "Of extreme interest", width: 150 },
   { key: "tones", label: "Tone / sentiment", width: 200 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
@@ -173,6 +176,7 @@ function LettersTable() {
   const [review, setReview] = useState(search.review ?? "");
   const [scanF, setScanF] = useState(search.scan ?? "");
   const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
+  const [starredOnly, setStarredOnly] = useState(search.starred === "1");
 
   // Keep filters in sync when arriving from a dashboard stat link.
   useEffect(() => {
@@ -182,6 +186,7 @@ function LettersTable() {
     setReview(search.review ?? "");
     setScanF(search.scan ?? "");
     setUncertainOnly(search.uncertain === "1");
+    setStarredOnly(search.starred === "1");
   }, [search]);
 
   const [idStatus, setIdStatus] = useState("");
@@ -201,7 +206,7 @@ function LettersTable() {
   // Any filter change goes back to page 1.
   useEffect(() => {
     setPage(0);
-  }, [debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort]);
+  }, [debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort]);
 
   const params: LetterSearchParams = {
     q: debouncedQ,
@@ -211,6 +216,7 @@ function LettersTable() {
     review,
     scan: scanF as "" | "has" | "none",
     uncertain: uncertainOnly,
+    starred: starredOnly,
     idStatus,
     datePrecision: dStatus,
     digStatus,
@@ -337,6 +343,7 @@ function LettersTable() {
     setTones([]);
     setView("");
     setSort({ key: "archive_id", dir: 1 });
+    setStarredOnly(false);
     setPage(0);
     navigate({ to: "/letters", search: () => ({}) });
   }
@@ -353,11 +360,14 @@ function LettersTable() {
     digStatus,
     view,
     uncertainOnly ? "uncertain" : "",
+    starredOnly ? "starred" : "",
     ...tones,
   ].filter(Boolean).length;
 
   function cellValue(l: Letter, key: string) {
     switch (key) {
+      case "starred":
+        return l.starred ? "Yes" : "";
       case "date":
         return displayDate(l);
       case "record_type":
@@ -548,6 +558,17 @@ function LettersTable() {
 
 
         <Button
+          variant={starredOnly ? "default" : "outline"}
+          size="sm"
+          className="gap-2"
+          aria-pressed={starredOnly}
+          onClick={() => setStarredOnly((v) => !v)}
+        >
+          <Star className={starredOnly ? "size-4 fill-current" : "size-4"} />
+          Starred only
+        </Button>
+
+        <Button
           variant="outline"
           size="sm"
           className="gap-2"
@@ -689,6 +710,14 @@ function LettersTable() {
                     >
                       {c.key === "archive_id" ? (
                         <span className="inline-flex items-center gap-1.5">
+                          <StarToggle
+                            table="letters"
+                            id={l.id}
+                            starred={Boolean(l.starred)}
+                            label={`${l.archive_id}${l.title ? ` — ${l.title}` : ""}`}
+                            size="sm"
+                            className="size-6"
+                          />
                           <Link
                             to="/letters/$archiveId"
                             params={{ archiveId: l.archive_id }}
