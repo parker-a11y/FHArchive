@@ -42,7 +42,6 @@ import {
   DATE_CERTAINTY,
   DATE_PRECISION,
   IDENTIFICATION_STATUS,
-  ORIGINAL_COPY,
   PERIODS,
   PUBLICATION_STATUS,
   RECORD_RESEARCH_STATUS,
@@ -106,14 +105,10 @@ const TEXT_FIELDS = [
   { key: "origin", label: "Origin / location", letterOnly: false },
   { key: "destination", label: "Destination", letterOnly: true },
   { key: "primary_person", label: "Primary person", letterOnly: false },
-  { key: "physical_condition", label: "Physical condition", letterOnly: false },
 ];
 
 const STORAGE_FIELDS = [
-  
   { key: "storage_folder", label: "Folder / jacket", placeholder: "FH-0268" },
-  { key: "storage_notes", label: "Location notes", placeholder: "" },
-  { key: "storage_location", label: "Legacy storage note", placeholder: "" },
 ];
 
 
@@ -149,12 +144,8 @@ function LetterPage() {
       date_end: letter.date_end ?? "",
       primary_person: letter.primary_person ?? "",
       physical_description: letter.physical_description ?? "",
-      original_copy: letter.original_copy ?? "unknown",
-      storage_location: letter.storage_location ?? "",
       storage_type: letter.storage_type ?? "",
-      
       storage_folder: letter.storage_folder ?? "",
-      storage_notes: letter.storage_notes ?? "",
       identification_status: letter.identification_status ?? "",
       provenance: letter.provenance ?? "",
       source_container_id: letter.source_container_id ?? "",
@@ -177,7 +168,6 @@ function LetterPage() {
       sheets: letter.sheets === null ? "" : String(letter.sheets),
       has_envelope: letter.has_envelope,
       has_enclosures: letter.has_enclosures,
-      physical_condition: letter.physical_condition ?? "",
       notes: letter.notes ?? "",
       summary_short: letter.summary_short ?? "",
       summary_long: letter.summary_long ?? "",
@@ -223,7 +213,6 @@ function LetterPage() {
     payload.scan_status = form.scan_status;
     payload.publication_status = form.publication_status;
     payload.record_type = form.record_type || "letter";
-    payload.original_copy = form.original_copy || "unknown";
     payload.research_status = form.research_status || "unreviewed";
     payload.identification_status = form.identification_status || "unidentified";
     payload.tones = tones;
@@ -560,7 +549,6 @@ function LetterPage() {
               { key: "scan_status", label: "Scan status", opts: SCAN_STATUS },
               { key: "review_status", label: "Review status", opts: REVIEW_STATUS },
               { key: "publication_status", label: "Publication status", opts: PUBLICATION_STATUS },
-              { key: "original_copy", label: "Original / copy", opts: ORIGINAL_COPY },
               { key: "research_status", label: "Research status", opts: RECORD_RESEARCH_STATUS },
             ].map((f) => (
 

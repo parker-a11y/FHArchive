@@ -131,7 +131,7 @@ function storageText(l: Letter) {
   const parts = [labelOf(STORAGE_TYPES, l.storage_type), l.storage_folder].filter(
     (v) => v && v !== "—",
   );
-  return parts.join(" · ") || (l.storage_location ?? "");
+  return parts.join(" · ");
 }
 
 type KeywordRow = { letter_id: string; keywords: { name: string } | null };
@@ -275,15 +275,11 @@ function LettersTable() {
       images: l.image_count,
       envelope: l.has_envelope ? "Yes" : "No",
       enclosures: l.has_enclosures ? "Yes" : "No",
-      condition: l.physical_condition ?? "",
       physical_description: l.physical_description ?? "",
-      original_copy: l.original_copy ?? "",
       identification_status: labelOf(IDENTIFICATION_STATUS, l.identification_status),
       storage_type: labelOf(STORAGE_TYPES, l.storage_type),
 
       storage_folder: l.storage_folder ?? "",
-      storage_notes: l.storage_notes ?? "",
-      storage_location: l.storage_location ?? "",
       research_status: l.research_status ?? "",
 
       digitization_status: labelOf(DIGITIZATION_STATUS, l.digitization_status ?? "not_scanned"),

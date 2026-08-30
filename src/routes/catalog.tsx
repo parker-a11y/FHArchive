@@ -15,7 +15,6 @@ import {
   DATE_CERTAINTY,
   DATE_PRECISION,
   IDENTIFICATION_STATUS,
-  ORIGINAL_COPY,
   PERIODS,
   STORAGE_TYPES,
   isLetterType,
@@ -76,15 +75,11 @@ const blank = {
   sheets: "",
   has_envelope: false,
   has_enclosures: false,
-  storage_location: "",
   storage_type: "",
-  
   storage_folder: "",
-  storage_notes: "",
   source_container_id: "",
   original_order_notes: "",
   identification_status: "",
-  original_copy: "original",
   notes: "",
 };
 
@@ -180,16 +175,14 @@ function QuickEntry() {
         p_sheets: form.sheets ? Number(form.sheets) : null,
         p_has_envelope: isLetter ? form.has_envelope : false,
         p_has_enclosures: form.has_enclosures,
-        p_storage_location: form.storage_location,
-        p_original_copy: form.original_copy,
+        p_storage_location: null,
+        p_original_copy: "original",
         p_notes: form.notes,
       });
       const extras = {
         identification_status: form.identification_status,
         storage_type: form.storage_type || null,
-        
         storage_folder: form.storage_folder || null,
-        storage_notes: form.storage_notes || null,
         source_container_id: form.source_container_id || null,
         original_order_notes: form.original_order_notes || null,
         tones: form.tones,
@@ -239,11 +232,9 @@ function QuickEntry() {
       subtype: f.subtype,
       period: f.period,
       primary_person: f.primary_person,
-      storage_location: f.storage_location,
       storage_type: f.storage_type,
-      
       storage_folder: f.storage_folder,
-      original_copy: f.original_copy,
+      source_container_id: f.source_container_id,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
@@ -500,19 +491,6 @@ function QuickEntry() {
                 onChange={(e) => set("sheets", e.target.value)}
               />
             </div>
-            <Select_
-              label="Original / copy"
-              value={form.original_copy}
-              onChange={(v) => set("original_copy", v)}
-              options={ORIGINAL_COPY}
-            />
-            <div className="space-y-1.5">
-              <Label className="field-label">Legacy storage note</Label>
-              <Input
-                value={form.storage_location}
-                onChange={(e) => set("storage_location", e.target.value)}
-              />
-            </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -528,13 +506,6 @@ function QuickEntry() {
                     value={form.storage_folder}
                     onChange={(e) => set("storage_folder", e.target.value)}
                     placeholder="FH-0268"
-                  />
-                </div>
-                <div className="col-span-full space-y-1.5">
-                  <Label className="field-label">Location notes</Label>
-                  <Input
-                    value={form.storage_notes}
-                    onChange={(e) => set("storage_notes", e.target.value)}
                   />
                 </div>
               </div>
