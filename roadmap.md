@@ -7,3 +7,5 @@
 - [x] Sign-in page: large logo on left, sign-in tools on right
 - [x] Drag-and-drop bulk scan uploads with automatic page ordering
 - [x] Dashboard: Daily Summary is one top-section "New today" tile (FH + digital sources); click expands breakdown
+- [x] Dashboard: larger Francis Files logo in header
+- [x] Dashboard: move All categories tile to last; improve tile text spacing on small screens
