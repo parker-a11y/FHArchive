@@ -247,6 +247,7 @@ function QuickEntry() {
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
+    setMentions([]);
     loadNext();
   }
 
