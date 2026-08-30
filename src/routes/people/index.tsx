@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { Merge, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";
 import { DeletePersonButton } from "@/components/people/DeletePersonButton";
+import { MergePersonButton } from "@/components/people/MergePersonButton";
 
 export const Route = createFileRoute("/people/")({
   head: () => ({
@@ -84,6 +85,17 @@ function People() {
                     <span className="font-medium">{p.name}</span>
                     <span className="text-muted-foreground">{p.relationship}</span>
                   </Link>
+                  <MergePersonButton personId={p.id} name={p.name}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      aria-label={`Merge ${p.name} with other people`}
+                      title="Merge duplicates"
+                    >
+                      <Merge className="h-4 w-4" />
+                    </Button>
+                  </MergePersonButton>
                   <DeletePersonButton personId={p.id} name={p.name}>
                     <Button
                       variant="ghost"
