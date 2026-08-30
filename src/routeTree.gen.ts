@@ -21,6 +21,7 @@ import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
+import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
@@ -100,6 +101,11 @@ const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiSendSampleEmailRoute = ApiSendSampleEmailRouteImport.update({
+  id: '/api/send-sample-email',
+  path: '/api/send-sample-email',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DTokenRoute = DTokenRouteImport.update({
   id: '/d/$token',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/queues': typeof AuthenticatedQueuesRoute
   '/search': typeof AuthenticatedSearchRoute
   '/timeline': typeof AuthenticatedTimelineRoute
+  '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/queues': typeof AuthenticatedQueuesRoute
   '/search': typeof AuthenticatedSearchRoute
   '/timeline': typeof AuthenticatedTimelineRoute
+  '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
+  '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/api/send-sample-email'
     | '/d/$token'
     | '/s/$token'
     | '/admin/users'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/queues'
     | '/search'
     | '/timeline'
+    | '/api/send-sample-email'
     | '/d/$token'
     | '/s/$token'
     | '/'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/_authenticated/queues'
     | '/_authenticated/search'
     | '/_authenticated/timeline'
+    | '/api/send-sample-email'
     | '/d/$token'
     | '/s/$token'
     | '/_authenticated/'
@@ -426,6 +438,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiSendSampleEmailRoute: typeof ApiSendSampleEmailRoute
   DTokenRoute: typeof DTokenRoute
   STokenRoute: typeof STokenRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
@@ -517,6 +530,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/timeline'
       preLoaderRoute: typeof AuthenticatedTimelineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/send-sample-email': {
+      id: '/api/send-sample-email'
+      path: '/api/send-sample-email'
+      fullPath: '/api/send-sample-email'
+      preLoaderRoute: typeof ApiSendSampleEmailRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/d/$token': {
       id: '/d/$token'
@@ -723,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiSendSampleEmailRoute: ApiSendSampleEmailRoute,
   DTokenRoute: DTokenRoute,
   STokenRoute: STokenRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
