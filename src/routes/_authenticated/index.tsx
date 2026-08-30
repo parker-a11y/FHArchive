@@ -179,10 +179,10 @@ function Stat({
         <span className="field-label whitespace-normal leading-5">{label}</span>
       </div>
       <div className="mt-auto flex flex-col gap-2">
-        <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
         {sub && (
-          <p className="whitespace-normal text-xs leading-relaxed text-muted-foreground">{sub}</p>
+          <p className="whitespace-normal text-center text-xs leading-relaxed text-muted-foreground">{sub}</p>
         )}
+        <div className="font-display text-center text-3xl font-bold tabular-nums">{value}</div>
       </div>
     </div>
   );
@@ -334,10 +334,6 @@ function Dashboard() {
               <Stat
                 label="New today"
                 value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
-                sub={`FH records + digital sources · ${new Date().toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}`}
                 tone="blue"
                 icon={Sparkles}
                 onClick={() => setDailyOpen((v) => !v)}
