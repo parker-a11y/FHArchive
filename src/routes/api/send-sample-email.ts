@@ -39,7 +39,7 @@ export const Route = createFileRoute('/api/send-sample-email')({
             headerTitle: 'From The Francis Files',
             headerSubtitle: 'A sample shared record',
             message:
-              'This is a sample email from The Francis Files showing how a shared record looks. Links open private, unlisted archive pages and can be revoked at any time.',
+              'This is a sample email from The Francis Files showing how a shared record looks.',
             senderName: 'The Francis Files',
             records: [
               {
