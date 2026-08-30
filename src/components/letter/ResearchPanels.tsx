@@ -6,8 +6,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
-import { applySuggestion } from "@/lib/ai-analysis";
+import { applySuggestion, suggestionEntities } from "@/lib/ai-analysis";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
+import {
+  useEntityConfirmer,
+  entityKey,
+  type EntityKind,
+} from "@/components/ai/ConfirmEntitiesDialog";
+import type { EntityKindKey } from "@/lib/ai-analysis";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -546,6 +552,7 @@ export function RelationsPanel({ letter }: { letter: Letter }) {
 export function AiPanel({ letter }: { letter: Letter }) {
   const qc = useQueryClient();
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
+  const { confirmEntities, dialog: entityDialog } = useEntityConfirmer();
   const runAnalysis = useServerFn(analyzeRecord);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -591,13 +598,18 @@ export function AiPanel({ letter }: { letter: Letter }) {
       .eq("id", id);
 
     if (status === "accepted" && row) {
+      const text = content ?? row.content ?? "";
+      const allowedKeys = await confirmEntities(suggestionEntities(row.field_key, text));
+      const gate = (kind: EntityKindKey, name: string) =>
+        allowedKeys.has(entityKey(kind as EntityKind, name));
       try {
         const result = await applySuggestion(
           letter.id,
           row.field_key,
-          content ?? row.content ?? "",
+          text,
           letter as unknown as Record<string, unknown>,
           resolvePerson,
+          gate,
         );
         toast.success(result.note);
       } catch (e) {
@@ -623,6 +635,13 @@ export function AiPanel({ letter }: { letter: Letter }) {
     let ok = 0;
     let failed = 0;
     try {
+      const allowedKeys = await confirmEntities(
+        acceptable.flatMap((row) =>
+          suggestionEntities(row.field_key, editing[row.id] ?? row.content ?? ""),
+        ),
+      );
+      const gate = (kind: EntityKindKey, name: string) =>
+        allowedKeys.has(entityKey(kind as EntityKind, name));
       for (const row of acceptable) {
         const content = editing[row.id] ?? row.content ?? "";
         await supabase.from("ai_suggestions").update({ status: "accepted", content }).eq("id", row.id);
@@ -633,6 +652,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
             content,
             letter as unknown as Record<string, unknown>,
             resolvePerson,
+            gate,
           );
           ok++;
         } catch {
@@ -655,6 +675,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
   return (
     <div className="max-w-4xl space-y-4">
       {personDialog}
+      {entityDialog}
       <div className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-archive-ai">

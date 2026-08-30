@@ -52,12 +52,37 @@ export type ApplyResult = { applied: boolean; note: string };
  */
 export type PersonResolver = (name: string) => Promise<{ id: string; name: string } | null>;
 
+export type EntityKindKey = "person" | "place" | "organization" | "event";
+
+/** Returns true when a brand-new entity of this name may be created/linked. */
+export type EntityGate = (kind: EntityKindKey, name: string) => boolean;
+
+const FIELD_KIND: Record<string, EntityKindKey> = {
+  people: "person",
+  places: "place",
+  ships: "organization",
+  units: "organization",
+  organizations: "organization",
+  events: "event",
+};
+
+/** Entity names a suggestion would create/link, for pre-accept confirmation. */
+export function suggestionEntities(
+  fieldKey: string,
+  content: string,
+): { kind: EntityKindKey; name: string }[] {
+  const kind = FIELD_KIND[fieldKey];
+  if (!kind) return [];
+  return splitList(content.trim()).map((name) => ({ kind, name }));
+}
+
 export async function applySuggestion(
   letterId: string,
   fieldKey: string,
   content: string,
   letterBefore: Record<string, unknown>,
   resolvePerson?: PersonResolver,
+  allowEntity?: EntityGate,
 ): Promise<ApplyResult> {
   const text = content.trim();
   if (!text) return { applied: false, note: "Nothing to apply" };
@@ -71,7 +96,9 @@ export async function applySuggestion(
     return { applied: true, note: "Summary saved to the record" };
   }
 
-  const names = splitList(text);
+  let names = splitList(text);
+  const kind = FIELD_KIND[fieldKey];
+  if (kind && allowEntity) names = names.filter((n) => allowEntity(kind, n));
   if (!names.length) return { applied: false, note: "Kept as a reviewed note" };
 
   switch (fieldKey) {

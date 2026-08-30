@@ -1931,6 +1931,33 @@ export type Database = {
           },
         ]
       }
+      rejected_entities: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          name_norm: string | null
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          name: string
+          name_norm?: string | null
+          owner_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          name_norm?: string | null
+          owner_id?: string
+        }
+        Relationships: []
+      }
       scan_transcriptions: {
         Row: {
           ai_generated_at: string | null
