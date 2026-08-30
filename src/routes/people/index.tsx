@@ -101,9 +101,9 @@ function People() {
                 placeholder="New person name…"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && add()}
+                onKeyDown={(e) => e.key === "Enter" && promptAdd()}
               />
-              <Button onClick={add}>Add person</Button>
+              <Button onClick={promptAdd}>Add person</Button>
             </div>
             <div className="divide-y divide-border rounded border border-border bg-card">
               {people.map((p) => (
