@@ -7,6 +7,7 @@ import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 import { applySuggestion } from "@/lib/ai-analysis";
+import { usePersonMatcher } from "@/components/MatchPersonDialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -595,6 +596,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
           row.field_key,
           content ?? row.content ?? "",
           letter as unknown as Record<string, unknown>,
+          resolvePerson,
         );
         toast.success(result.note);
       } catch (e) {
@@ -629,6 +631,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
             row.field_key,
             content,
             letter as unknown as Record<string, unknown>,
+            resolvePerson,
           );
           ok++;
         } catch {
@@ -650,6 +653,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
 
   return (
     <div className="max-w-4xl space-y-4">
+      {personDialog}
       <div className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-archive-ai">
