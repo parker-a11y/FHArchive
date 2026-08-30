@@ -2265,6 +2265,10 @@ export type Database = {
         Args: { _source_ids: string[]; _target_id: string }
         Returns: undefined
       }
+      merge_places: {
+        Args: { _source_ids: string[]; _target_id: string }
+        Returns: undefined
+      }
       next_archive_id: {
         Args: never
         Returns: {
