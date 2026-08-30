@@ -1,5 +1,5 @@
 import logoMark from "@/assets/francis-files-logo.png";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -146,6 +146,8 @@ function Stat({
   to,
   tone = "amber",
   icon: Icon,
+  onClick,
+  active,
 }: {
   label: string;
   value: number;
@@ -153,9 +155,15 @@ function Stat({
   to?: string;
   tone?: Tone;
   icon?: LucideIcon;
+  onClick?: () => void;
+  active?: boolean;
 }) {
   const body = (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
+    <div
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg ${
+        active ? "border-archive-gold/60 ring-1 ring-archive-gold/40" : "border-border"
+      }`}
+    >
       <div className={`absolute top-0 left-0 h-full w-1.5 ${TONE_BAR[tone]}`} />
       <div className="mb-3 flex items-start gap-2.5">
         {Icon && (
