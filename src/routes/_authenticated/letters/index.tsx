@@ -202,6 +202,16 @@ function LettersTable() {
   const [page, setPage] = useState(0);
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
+
+  // Persist column widths so resizes survive reloads and navigation.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("letters_col_widths");
+      if (raw) setWidths(JSON.parse(raw) as Record<string, number>);
+    } catch {
+      /* ignore corrupt saved widths */
+    }
+  }, []);
   const [editing, setEditing] = useState<{ id: string; key: string } | null>(null);
   const [selected, setSelected] = useState<Map<string, SelectedRecord>>(new Map());
   const [exporting, setExporting] = useState(false);
