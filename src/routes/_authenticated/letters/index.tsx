@@ -82,7 +82,7 @@ export const Route = createFileRoute("/_authenticated/letters/")({
   ),
 });
 
-type Col = { key: string; label: string; width: number; editable?: boolean };
+type Col = { key: string; label: string; width: number; minWidth?: number; editable?: boolean };
 
 /** macOS-style traffic-light dot summarizing scan/transcription state. */
 function recordHealth(l: Letter): { color: string; label: string } {
