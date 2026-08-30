@@ -120,6 +120,7 @@ function storageText(l: Letter) {
 }
 
 function LettersTable() {
+  const navigate = useNavigate({ from: "/letters" });
   const qc = useQueryClient();
   const { data: letters = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
   const { data: tags = [] } = useQuery({
