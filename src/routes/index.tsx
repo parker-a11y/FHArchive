@@ -306,22 +306,11 @@ function Dashboard() {
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {[
-                { value: "letter", label: "Letters", tone: "blue" as Tone, icon: Mail },
-                { value: "photograph", label: "Photographs", tone: "emerald" as Tone, icon: Camera },
-                { value: "military", label: "Military", tone: "rose" as Tone, icon: Medal },
-                { value: "government", label: "Government", tone: "indigo" as Tone, icon: Landmark },
-                { value: "family", label: "Personal / Family", tone: "amber" as Tone, icon: Home },
-                { value: "newspaper", label: "Newspaper", tone: "teal" as Tone, icon: Newspaper },
-                { value: "financial", label: "Financial", tone: "ochre" as Tone, icon: Coins },
-                { value: "program", label: "Programs", tone: "plum" as Tone, icon: CalendarDays },
-                { value: "artifact", label: "Artifacts", tone: "rose" as Tone, icon: Gem },
-                { value: "other", label: "Other", tone: "indigo" as Tone, icon: Box },
-              ].map((cat) => (
+              {categoryTiles.map((cat) => (
                 <Stat
                   key={cat.value}
                   label={cat.label}
-                  value={letters.filter((l) => (l.record_type ?? "letter") === cat.value).length}
+                  value={cat.count}
                   to={`/letters?type=${cat.value}`}
                   tone={cat.tone}
                   icon={cat.icon}
