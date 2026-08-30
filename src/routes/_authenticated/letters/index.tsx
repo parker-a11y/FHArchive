@@ -647,11 +647,12 @@ function LettersTable() {
                       const next = new Map(s);
                       if (v) rows.forEach((l) => next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title }));
                       else rows.forEach((l) => next.delete(l.id));
-                      return next;
-                    })
-                  }
-                />
-              </th>
+                       return next;
+                     })
+                   }
+                 />
+                )}
+               </th>
               {cols.map((c) => (
                 <th
                   key={c.key}
