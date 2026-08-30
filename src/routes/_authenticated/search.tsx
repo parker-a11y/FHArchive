@@ -17,6 +17,7 @@ import {
   labelOf,
 } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
+import { HighlightedText, buildSnippets, countMatches, type Snippet } from "@/lib/highlight";
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
