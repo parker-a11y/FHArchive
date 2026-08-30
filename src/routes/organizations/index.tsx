@@ -68,10 +68,7 @@ function Organizations() {
 
   return (
     <>
-      <PageHeader
-        title="Organizations, Ships & Units"
-        description={`${orgs.length} organization records`}
-      />
+      <PageHeader title="Organizations" description={`${orgs.length} organization records`} />
       <div className="max-w-4xl p-4 sm:p-8">
         <div className="mb-6 flex gap-2">
           <Input
