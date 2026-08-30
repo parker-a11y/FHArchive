@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Mail, Plus, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -62,6 +63,35 @@ export function EmailArchiveDialog({
     queryFn: fetchContacts,
     enabled: open,
   });
+
+  // Prefill the message with the record's short AI summary / description.
+  useEffect(() => {
+    if (!open || message || !single) return;
+    (async () => {
+      try {
+        if (single.kind === "letter") {
+          const { data } = await supabase
+            .from("letters")
+            .select("summary_short, summary_long")
+            .eq("id", single.id)
+            .maybeSingle();
+          const s = (data?.summary_short as string) || (data?.summary_long as string) || "";
+          if (s) setMessage(s);
+        } else {
+          const { data } = await supabase
+            .from("digital_sources")
+            .select("description")
+            .eq("id", single.id)
+            .maybeSingle();
+          const s = (data?.description as string) || "";
+          if (s) setMessage(s);
+        }
+      } catch {
+        // Prefill is a convenience — never block the dialog.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, single?.id]);
 
   const addRecipient = (email: string, name?: string | null) => {
     const value = email.trim().toLowerCase();
