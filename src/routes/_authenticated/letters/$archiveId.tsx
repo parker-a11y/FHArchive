@@ -10,7 +10,7 @@ import {
 } from "@/lib/categories";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Trash2 } from "lucide-react";
 import { StarToggle } from "@/components/StarToggle";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
