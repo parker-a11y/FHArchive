@@ -6,6 +6,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Section,
   Text,
@@ -31,6 +32,13 @@ const GuestRequestEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section>
+          <Img
+            src="https://fharchive.com/email-logo.png"
+            width="72"
+            height="72"
+            alt="The Francis Files logo"
+            style={logoImg}
+          />
           <Text style={eyebrow}>The Francis Files</Text>
           <Heading style={h1}>New guest account request</Heading>
         </Section>
@@ -64,6 +72,7 @@ const container: React.CSSProperties = {
   padding: '28px 24px',
   maxWidth: '560px',
 }
+const logoImg: React.CSSProperties = { margin: '0 auto 12px', borderRadius: '50%' }
 const eyebrow: React.CSSProperties = {
   fontSize: '11px',
   letterSpacing: '0.12em',

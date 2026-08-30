@@ -47,6 +47,13 @@ const ArchiveRecordEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
+          <Img
+            src="https://fharchive.com/email-logo.png"
+            width="72"
+            height="72"
+            alt="The Francis Files logo"
+            style={logoImg}
+          />
           <Text style={eyebrow}>The Francis Files</Text>
           <Heading style={h1}>{headerTitle}</Heading>
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}
@@ -133,6 +140,7 @@ export const template = {
 const main = { backgroundColor: '#ffffff', fontFamily: 'Georgia, "Times New Roman", serif' }
 const container = { padding: '24px 24px 40px', maxWidth: '640px' }
 const header = { borderBottom: '2px solid #cbd5c0', paddingBottom: '16px', marginBottom: '20px' }
+const logoImg = { margin: '0 auto 12px', borderRadius: '50%' }
 const eyebrow = {
   margin: '0 0 6px',
   fontSize: '11px',

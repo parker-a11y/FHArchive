@@ -1,5 +1,5 @@
 import logoMark from "@/assets/francis-files-logo.png";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,6 +25,8 @@ import {
   Shield,
   Globe,
   Paperclip,
+  Sparkles,
+
 
   type LucideIcon,
 } from "lucide-react";
@@ -146,6 +148,8 @@ function Stat({
   to,
   tone = "amber",
   icon: Icon,
+  onClick,
+  active,
 }: {
   label: string;
   value: number;
@@ -153,9 +157,15 @@ function Stat({
   to?: string;
   tone?: Tone;
   icon?: LucideIcon;
+  onClick?: () => void;
+  active?: boolean;
 }) {
   const body = (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
+    <div
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg ${
+        active ? "border-archive-gold/60 ring-1 ring-archive-gold/40" : "border-border"
+      }`}
+    >
       <div className={`absolute top-0 left-0 h-full w-1.5 ${TONE_BAR[tone]}`} />
       <div className="mb-3 flex items-start gap-2.5">
         {Icon && (
@@ -173,6 +183,13 @@ function Stat({
       )}
     </div>
   );
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block h-full text-left">
+        {body}
+      </button>
+    );
+  }
   return to ? (
     <Link to={to} className="block h-full">
       {body}
@@ -208,6 +225,7 @@ function Dashboard() {
     queryKey: ["sources"],
     queryFn: fetchSources,
   });
+  const [dailyOpen, setDailyOpen] = useState(false);
   const { data: daily } = useQuery({
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
@@ -311,27 +329,43 @@ function Dashboard() {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+              <Stat
+                label="New today"
+                value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
+                sub={`FH records + digital sources · ${new Date().toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}`}
+                tone="blue"
+                icon={Sparkles}
+                onClick={() => setDailyOpen((v) => !v)}
+                active={dailyOpen}
+              />
               {stats.map((s) => (
                 <Stat key={s.label} {...s} />
               ))}
             </div>
 
-            <div className="mt-10 mb-3 flex items-baseline justify-between">
-              <h2 className="field-label">Daily summary — today</h2>
-              <span className="text-xs text-muted-foreground">
-                {new Date().toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <Stat label="New FH records" value={daily?.records ?? 0} tone="blue" icon={Hash} />
-              <Stat label="New digital sources" value={daily?.dsRecords ?? 0} tone="teal" icon={Globe} />
-              <Stat label="Files uploaded" value={daily?.filesUploaded ?? 0} tone="amber" icon={Paperclip} />
-              <Stat label="Transcriptions generated" value={daily?.transcriptions ?? 0} tone="emerald" icon={PenLine} />
-            </div>
+            {dailyOpen && (
+              <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+                <div className="mb-3 flex items-baseline justify-between">
+                  <h2 className="field-label">Daily summary — today</h2>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date().toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <Stat label="New FH records" value={daily?.records ?? 0} tone="blue" icon={Hash} />
+                  <Stat label="New digital sources" value={daily?.dsRecords ?? 0} tone="teal" icon={Globe} />
+                  <Stat label="Files uploaded" value={daily?.filesUploaded ?? 0} tone="amber" icon={Paperclip} />
+                  <Stat label="Transcriptions generated" value={daily?.transcriptions ?? 0} tone="emerald" icon={PenLine} />
+                </div>
+              </div>
+            )}
 
             <h2 className="field-label mt-10 mb-3">Record categories</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
