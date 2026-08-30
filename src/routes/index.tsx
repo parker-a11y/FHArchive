@@ -65,9 +65,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   artifact: "Artifacts",
 };
 
-/** Always shown, even at zero. */
-const CORE_CATEGORIES = new Set(Object.keys(CATEGORY_STYLES));
-
 async function fetchDailySummary() {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -147,12 +144,14 @@ const TONE_CHIP: Record<Tone, string> = {
 function Stat({
   label,
   value,
+  sub,
   to,
   tone = "amber",
   icon: Icon,
 }: {
   label: string;
   value: number;
+  sub?: string;
   to?: string;
   tone?: Tone;
   icon?: LucideIcon;
@@ -171,6 +170,7 @@ function Stat({
         <span className="field-label">{label}</span>
       </div>
       <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
+      {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
   return to ? (
@@ -211,36 +211,35 @@ function Dashboard() {
     const counts = new Map<string, number>();
     for (const l of letters) {
       const raw = (l.record_type as string) || "letter";
-      const key = known.has(raw) ? raw : "other";
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+      counts.set(raw, (counts.get(raw) ?? 0) + 1);
     }
     const style = (v: string): { tone: Tone; icon: LucideIcon } =>
       CATEGORY_STYLES[v] ?? { tone: "indigo", icon: Box };
-    return typeOptions
-      .filter((o) => (counts.get(o.value) ?? 0) > 0 || CORE_CATEGORIES.has(o.value))
-      .map((o) => ({
-        value: o.value,
-        label: CATEGORY_LABELS[o.value] ?? o.label,
-        count: counts.get(o.value) ?? 0,
-        ...style(o.value),
-      }));
+    const tiles = typeOptions.map((o) => ({
+      value: o.value,
+      label: CATEGORY_LABELS[o.value] ?? o.label,
+      count: counts.get(o.value) ?? 0,
+      ...style(o.value),
+    }));
+    // Record types present in data but not in the options list get their own
+    // tile instead of being lumped into "Other".
+    for (const [value, count] of counts) {
+      if (!known.has(value)) {
+        tiles.push({ value, label: value.replace(/_/g, " "), count, ...style(value) });
+      }
+    }
+    return tiles;
   }, [letters, typeOptions]);
 
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
-  const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
+  const stats: { label: string; value: number; sub?: string; tone: Tone; icon: LucideIcon; to?: string }[] = [
     { label: "FH records", value: letters.length, tone: "blue", icon: Hash, to: "/letters" },
     {
       label: "Digital sources",
       value: sources.length,
+      sub: `${Object.keys(dsFileCounts).length} with file copies`,
       tone: "teal",
       icon: Globe,
-      to: "/sources",
-    },
-    {
-      label: "Sources with file copies",
-      value: Object.keys(dsFileCounts).length,
-      tone: "teal",
-      icon: Paperclip,
       to: "/sources",
     },
 
@@ -255,6 +254,7 @@ function Dashboard() {
     {
       label: "Cataloged",
       value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
+      sub: "Author, recipient, or date filled in",
       tone: "amber",
       icon: PenLine,
       to: "/letters?cataloged=1",
