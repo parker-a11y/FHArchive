@@ -199,19 +199,17 @@ function QuickEntry() {
         starred: form.starred,
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
-      if (mentions.length) {
-        const { data: auth } = await supabase.auth.getUser();
-        const ownerId = auth.user?.id;
-        if (ownerId) {
-          await supabase.from("letter_people").insert(
-            mentions.map((p) => ({
-              owner_id: ownerId,
-              letter_id: created.id,
-              person_id: p.id,
-              role: "mentioned",
-              source: "manual",
-            })),
-          );
+      const { data: auth } = await supabase.auth.getUser();
+      const ownerId = auth.user?.id;
+      if (ownerId) {
+        const roleLinks: { personId: string; role: "author" | "recipient" | "mentioned" }[] = [];
+        if (authorPerson?.id) roleLinks.push({ personId: authorPerson.id, role: "author" });
+        if (recipientPerson?.id) roleLinks.push({ personId: recipientPerson.id, role: "recipient" });
+        if (mentions.length) {
+          for (const p of mentions) roleLinks.push({ personId: p.id, role: "mentioned" });
+        }
+        if (roleLinks.length) {
+          await linkLetterPeople(created.id, roleLinks, ownerId);
         }
       }
     } catch (e) {
