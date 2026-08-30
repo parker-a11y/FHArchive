@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Trash2 } from "lucide-react";
 import { AliasManager } from "@/components/people/AliasManager";
 import { DeletePersonButton } from "@/components/people/DeletePersonButton";
