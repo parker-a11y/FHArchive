@@ -173,6 +173,27 @@ function Dashboard() {
     queryFn: fetchDailySummary,
   });
 
+  const typeOptions = useRecordTypeOptions();
+  const categoryTiles = useMemo(() => {
+    const known = new Set(typeOptions.map((o) => o.value));
+    const counts = new Map<string, number>();
+    for (const l of letters) {
+      const raw = (l.record_type as string) || "letter";
+      const key = known.has(raw) ? raw : "other";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const style = (v: string): { tone: Tone; icon: LucideIcon } =>
+      CATEGORY_STYLES[v] ?? { tone: "indigo", icon: Box };
+    return typeOptions
+      .filter((o) => (counts.get(o.value) ?? 0) > 0 || CORE_CATEGORIES.has(o.value))
+      .map((o) => ({
+        value: o.value,
+        label: CATEGORY_LABELS[o.value] ?? o.label,
+        count: counts.get(o.value) ?? 0,
+        ...style(o.value),
+      }));
+  }, [letters, typeOptions]);
+
   const c = (fn: (l: Letter) => boolean) => letters.filter(fn).length;
   const stats: { label: string; value: number; tone: Tone; icon: LucideIcon; to?: string }[] = [
     { label: "FH records", value: letters.length, tone: "blue", icon: Hash, to: "/letters" },
