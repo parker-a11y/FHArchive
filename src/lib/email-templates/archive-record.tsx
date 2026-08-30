@@ -90,9 +90,10 @@ const ArchiveRecordEmail = ({
 
         <Hr style={hr} />
         <Text style={footer}>
-          {senderName ? `Sent by ${senderName} from the ` : 'Sent from the '}
-          Harrington Family Archive. Links open a private, unlisted archive page and can be
-          switched off at any time.
+          {senderName && senderName !== 'Harrington Family Archive'
+            ? `Sent by ${senderName} from the Harrington Family Archive. `
+            : 'Sent by the Harrington Family Archive. '}
+          Links open private, unlisted archive pages and can be revoked at any time.
         </Text>
         {records[0]?.url ? (
           <Text style={footer}>
