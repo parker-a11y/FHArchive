@@ -667,7 +667,7 @@ function LettersTable() {
               {cols.map((c) => (
                 <th
                   key={c.key}
-                  style={{ width: widths[c.key] ?? c.width }}
+                  style={{ width: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
                   className="relative border-b border-border px-3 py-2 text-left font-medium select-none"
                 >
                   <button
