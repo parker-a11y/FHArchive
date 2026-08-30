@@ -109,6 +109,7 @@ export function PersonRoleInput({
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={disabled}
             className={cn("h-9 w-full justify-between font-normal", className)}
           >
             <span className={cn("truncate", !value?.name && "text-muted-foreground")}>
