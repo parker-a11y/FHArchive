@@ -318,23 +318,44 @@ function QuickEntry() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="field-label">Date (optional)</Label>
-              <Input
-                ref={dateRef}
-                type="date"
-                value={form.normalized_date}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (!value) return set("normalized_date", "");
-                  if (form.date_precision === "year") {
-                    return set("normalized_date", `${value.slice(0, 4)}-01-01`);
-                  }
-                  if (form.date_precision === "month") {
-                    return set("normalized_date", `${value.slice(0, 7)}-01`);
-                  }
-                  set("normalized_date", value);
-                }}
-              />
+              <Label className="field-label">
+                {form.date_precision === "year"
+                  ? "Year (optional)"
+                  : form.date_precision === "month"
+                    ? "Month / year (optional)"
+                    : "Date (optional)"}
+              </Label>
+              {form.date_precision === "year" ? (
+                <Input
+                  ref={dateRef}
+                  type="number"
+                  min={1700}
+                  max={2100}
+                  placeholder="e.g. 1944"
+                  value={form.normalized_date ? form.normalized_date.slice(0, 4) : ""}
+                  onChange={(e) => {
+                    const y = e.target.value.replace(/\D/g, "").slice(0, 4);
+                    set("normalized_date", y ? `${y}-01-01` : "");
+                  }}
+                />
+              ) : form.date_precision === "month" ? (
+                <Input
+                  ref={dateRef}
+                  type="month"
+                  value={form.normalized_date ? form.normalized_date.slice(0, 7) : ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    set("normalized_date", v ? `${v}-01` : "");
+                  }}
+                />
+              ) : (
+                <Input
+                  ref={dateRef}
+                  type="date"
+                  value={form.normalized_date}
+                  onChange={(e) => set("normalized_date", e.target.value)}
+                />
+              )}
               <div className="flex gap-3 pt-1">
                 <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <input
