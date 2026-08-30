@@ -52,7 +52,10 @@ export function MentionsField({ letterId }: { letterId: string }) {
       .eq("letter_id", letterId)
       .eq("person_id", person.id)
       .eq("role", "mentioned");
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await refresh();
   }
 
