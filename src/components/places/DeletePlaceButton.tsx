@@ -27,6 +27,7 @@ type Props = {
 
 /** Confirms and deletes a place record; all record links go with it. */
 export function DeletePlaceButton({ placeId, name, children, redirectAfter }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);

@@ -34,6 +34,7 @@ export async function mergePlaces(targetId: string, sourceIds: string[]) {
 
 /** Merge duplicate place records into one main record. */
 export function MergePlaceButton({ placeId, name, children }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");

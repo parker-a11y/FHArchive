@@ -27,6 +27,7 @@ type Person = { id: string; name: string; relationship: string | null };
 
 /** Merge duplicate person records into one main record. */
 export function MergePersonButton({ personId, name, children }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
