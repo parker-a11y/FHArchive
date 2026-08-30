@@ -57,6 +57,12 @@ import {
 
 import { useAuth } from "@/hooks/useAuth";
 import { PersonCombobox } from "@/components/PersonCombobox";
+import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
+import {
+  fetchLetterPersonByRole,
+  setLetterPersonRole,
+  type LetterPersonLink,
+} from "@/lib/letter-people";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
