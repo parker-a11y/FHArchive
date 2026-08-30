@@ -299,6 +299,17 @@ function QuickEntry() {
               </p>
             </div>
             <div className="space-y-1.5">
+              <Label className="field-label">Mentions</Label>
+              <PersonMultiSelect
+                value={mentions}
+                onAdd={(p) => setMentions((m) => (m.some((x) => x.id === p.id) ? m : [...m, p]))}
+                onRemove={(p) => setMentions((m) => m.filter((x) => x.id !== p.id))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Other people named in this record — linked as “mentioned”.
+              </p>
+            </div>
+            <div className="space-y-1.5">
               <Label className="field-label">Tone / sentiment (optional)</Label>
               <ToneMultiSelect value={form.tones} onChange={(v) => set("tones", v)} />
             </div>
