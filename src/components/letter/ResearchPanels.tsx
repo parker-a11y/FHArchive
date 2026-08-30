@@ -545,6 +545,7 @@ export function RelationsPanel({ letter }: { letter: Letter }) {
 
 export function AiPanel({ letter }: { letter: Letter }) {
   const qc = useQueryClient();
+  const { resolvePerson, dialog: personDialog } = usePersonMatcher();
   const runAnalysis = useServerFn(analyzeRecord);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
