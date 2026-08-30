@@ -137,6 +137,7 @@ export function DuplicatesPanel() {
                   {p.id !== chosen && (
                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Checkbox
+                        disabled={isGuestViewer}
                         checked={!excluded[p.id]}
                         onCheckedChange={(v) =>
                           setExcluded((e) => ({ ...e, [p.id]: v !== true }))
