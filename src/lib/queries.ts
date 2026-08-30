@@ -120,13 +120,118 @@ export async function createRecord(
 }
 
 
+/**
+ * List-page column set: every field used by tables, pickers and navigation,
+ * excluding heavy text blobs (full transcriptions, OCR text, long summaries)
+ * that made whole-table fetches multi-megabyte at scale.
+ */
+const LETTER_LIST_COLS =
+  "id, fh_seq, archive_id, date_as_written, normalized_date, date_end, date_precision, date_certainty, author, recipient, origin, destination, period, sheets, image_count, has_envelope, has_enclosures, physical_condition, notes, transcription_status, scan_status, review_status, research_needed, summary_short, publication_status, record_type, subtype, title, primary_person, tones, physical_description, original_copy, storage_location, storage_type, storage_folder, storage_position, storage_notes, identification_status, sort_date, digitization_status, expected_scan_count, completeness_check, scan_both_sides, photo_front_scanned, photo_back_scanned, digitization_override, digitization_completed_at, provenance, source_container_id, original_order_notes, digitization_notes, research_status, citations, visibility, created_at, updated_at";
+
+/** Slim whole-list fetch for pickers/navigation. Prefer searchLetters for tables. */
 export async function fetchLetters(): Promise<Letter[]> {
   const { data, error } = await supabase
     .from("letters")
-    .select("*")
-    .order("fh_seq", { ascending: true });
+    .select(LETTER_LIST_COLS)
+    .order("fh_seq", { ascending: true })
+    .limit(100000);
   if (error) throw error;
-  return (data ?? []) as Letter[];
+  return (data ?? []) as unknown as Letter[];
+}
+
+export type LetterSearchParams = {
+  q?: string;
+  type?: string;
+  subtype?: string;
+  period?: string;
+  tstatus?: string; // supports "!value" negation
+  review?: string;
+  scan?: "" | "has" | "none";
+  uncertain?: boolean;
+  idStatus?: string;
+  datePrecision?: string;
+  digStatus?: string;
+  tones?: string[];
+  view?: "" | "undated" | "unidphoto";
+  research?: string;
+  personId?: string;
+  orgId?: string;
+  eventId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  author?: string;
+  recipient?: string;
+  place?: string;
+  sort?: string;
+  dir?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+};
+
+export type LetterPage = { rows: Letter[]; total: number };
+
+/** Server-side filtered/sorted/paginated record search (see search_letters RPC). */
+export async function searchLetters(p: LetterSearchParams): Promise<LetterPage> {
+  const { data, error } = await supabase.rpc("search_letters", {
+    p_q: p.q || null,
+    p_type: p.type || null,
+    p_subtype: p.subtype || null,
+    p_period: p.period || null,
+    p_tstatus: p.tstatus || null,
+    p_review: p.review || null,
+    p_scan: p.scan || null,
+    p_uncertain: p.uncertain ?? false,
+    p_id_status: p.idStatus || null,
+    p_date_precision: p.datePrecision || null,
+    p_dig_status: p.digStatus || null,
+    p_tones: p.tones?.length ? p.tones : null,
+    p_view: p.view || null,
+    p_research: p.research || null,
+    p_person: p.personId || null,
+    p_org: p.orgId || null,
+    p_event: p.eventId || null,
+    p_date_from: p.dateFrom || null,
+    p_date_to: p.dateTo || null,
+    p_author: p.author || null,
+    p_recipient: p.recipient || null,
+    p_place: p.place || null,
+    p_sort: p.sort ?? "fh_seq",
+    p_dir: p.dir ?? "asc",
+    p_limit: p.limit ?? 100,
+    p_offset: p.offset ?? 0,
+  } as never);
+  if (error) throw error;
+  const rows = (data ?? []) as unknown as { total_count: number; letter: Letter }[];
+  return { rows: rows.map((r) => r.letter), total: Number(rows[0]?.total_count ?? 0) };
+}
+
+/** Every record matching the given filters (for CSV/Excel export), paged 500 at a time. */
+export async function fetchAllMatchingLetters(p: LetterSearchParams): Promise<Letter[]> {
+  const out: Letter[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const page = await searchLetters({ ...p, limit: 500, offset, sort: p.sort ?? "fh_seq" });
+    out.push(...page.rows);
+    if (out.length >= page.total || page.rows.length === 0) break;
+  }
+  return out;
+}
+
+export type DashboardStats = {
+  total_records: number;
+  by_type: Record<string, number>;
+  by_period: Record<string, number>;
+  transcribed: number;
+  needs_transcription: number;
+  uncertain_dates: number;
+  total_scans: number;
+  letters_with_files: number;
+};
+
+/** All dashboard counts in one database call. */
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const { data, error } = await supabase.rpc("dashboard_stats");
+  if (error) throw error;
+  return data as unknown as DashboardStats;
 }
 
 export type ArchiveItemCounts = {
@@ -137,13 +242,11 @@ export type ArchiveItemCounts = {
 
 /** Aggregate counts across digitized files (whole archive). */
 export async function fetchItemCounts(): Promise<ArchiveItemCounts> {
-  const { data, error } = await supabase.from("digital_files").select("id,letter_id");
-  if (error) throw error;
-  const files = (data ?? []) as { id: string; letter_id: string }[];
+  const stats = await fetchDashboardStats();
   return {
-    totalItems: files.length,
-    itemsScanned: new Set(files.map((f) => f.letter_id)).size,
-    totalScans: files.length,
+    totalItems: stats.total_scans,
+    itemsScanned: stats.letters_with_files,
+    totalScans: stats.total_scans,
   };
 }
 
