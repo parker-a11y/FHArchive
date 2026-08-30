@@ -40,9 +40,12 @@ function Keywords() {
   const { data: counts = {} } = useQuery({
     queryKey: ["keyword_counts"],
     queryFn: async () => {
-      const { data } = await supabase.from("letter_keywords").select("keyword_id");
+      const { data, error } = await supabase.rpc("keyword_usage_counts");
+      if (error) throw error;
       const m: Record<string, number> = {};
-      (data ?? []).forEach((r) => (m[r.keyword_id as string] = (m[r.keyword_id as string] ?? 0) + 1));
+      for (const r of (data ?? []) as { keyword_id: string; usage_count: number }[]) {
+        m[r.keyword_id] = Number(r.usage_count);
+      }
       return m;
     },
   });
