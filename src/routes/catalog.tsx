@@ -294,6 +294,9 @@ function QuickEntry() {
                 value={form.primary_person}
                 onChange={(v) => set("primary_person", v)}
               />
+              <p className="text-xs text-muted-foreground">
+                The single main subject of this record — add everyone else under People with roles.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label className="field-label">Tone / sentiment (optional)</Label>
