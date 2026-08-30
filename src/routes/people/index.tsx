@@ -46,6 +46,9 @@ export const Route = createFileRoute("/people/")({
 function People() {
   const qc = useQueryClient();
   const [name, setName] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingName, setPendingName] = useState("");
+  const [saving, setSaving] = useState(false);
   const { data: people = [] } = useQuery({
     queryKey: ["people"],
     queryFn: async () => {
@@ -55,12 +58,32 @@ function People() {
     },
   });
 
-  async function add() {
-    if (!name.trim()) return;
-    const { error } = await supabase.from("people").insert({ name: name.trim() });
-    if (error) return toast.error(error.message);
+  function promptAdd() {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setPendingName(trimmed);
+    setConfirmOpen(true);
+  }
+
+  async function confirmAdd() {
+    if (!pendingName) return;
+    setSaving(true);
+    const { error } = await supabase.from("people").insert({ name: pendingName });
+    setSaving(false);
+    if (error) {
+      setConfirmOpen(false);
+      return toast.error(error.message);
+    }
     setName("");
+    setPendingName("");
+    setConfirmOpen(false);
     qc.invalidateQueries({ queryKey: ["people"] });
+    toast.success(`Created person: ${pendingName}`);
+  }
+
+  function cancelAdd() {
+    setConfirmOpen(false);
+    setPendingName("");
   }
 
   return (
