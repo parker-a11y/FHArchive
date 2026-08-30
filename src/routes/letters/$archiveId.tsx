@@ -628,11 +628,7 @@ function LetterPage() {
             </div>
 
             <div className="col-span-full rounded border border-border bg-card p-4">
-              <div className="field-label mb-1">Original source container (provenance)</div>
-              <p className="mb-3 text-xs text-muted-foreground">
-                Permanent record of where this item was found — separate from its current storage
-                location above.
-              </p>
+              <div className="field-label mb-3">Original source container (provenance)</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <ContainerSelect
@@ -655,7 +651,6 @@ function LetterPage() {
                 <div>
                   <label className="field-label">Original order / position notes</label>
                   <Input
-                    placeholder="Third bundle from top, tied with blue ribbon"
                     value={(form.original_order_notes as string) ?? ""}
                     onChange={(e) => set("original_order_notes", e.target.value)}
                   />
