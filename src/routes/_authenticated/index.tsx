@@ -181,6 +181,13 @@ function Stat({
       )}
     </div>
   );
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block h-full text-left">
+        {body}
+      </button>
+    );
+  }
   return to ? (
     <Link to={to} className="block h-full">
       {body}
