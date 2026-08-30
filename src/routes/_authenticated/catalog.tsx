@@ -203,8 +203,8 @@ function QuickEntry() {
       const ownerId = auth.user?.id;
       if (ownerId) {
         const roleLinks: { personId: string; role: "author" | "recipient" | "mentioned" }[] = [];
-        if (authorPerson?.id) roleLinks.push({ personId: authorPerson.id, role: "author" });
-        if (recipientPerson?.id) roleLinks.push({ personId: recipientPerson.id, role: "recipient" });
+        if (isLetter && authorPerson?.id) roleLinks.push({ personId: authorPerson.id, role: "author" });
+        if (isLetter && recipientPerson?.id) roleLinks.push({ personId: recipientPerson.id, role: "recipient" });
         if (mentions.length) {
           for (const p of mentions) roleLinks.push({ personId: p.id, role: "mentioned" });
         }
