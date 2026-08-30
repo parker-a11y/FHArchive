@@ -89,15 +89,17 @@ function People() {
             <TabsTrigger value="dupes">Duplicates</TabsTrigger>
           </TabsList>
           <TabsContent value="all">
-            <div className="mb-6 flex gap-2">
-              <Input
-                placeholder="New person name…"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && promptAdd()}
-              />
-              <Button onClick={promptAdd}>Add person</Button>
-            </div>
+            {!isGuestViewer && (
+              <div className="mb-6 flex gap-2">
+                <Input
+                  placeholder="New person name…"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && promptAdd()}
+                />
+                <Button onClick={promptAdd}>Add person</Button>
+              </div>
+            )}
             <div className="divide-y divide-border rounded border border-border bg-card">
               {people.map((p) => (
                 <div key={p.id} className="flex items-center gap-2 pr-2 hover:bg-muted/60">
