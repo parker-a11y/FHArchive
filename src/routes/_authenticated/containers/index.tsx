@@ -95,6 +95,7 @@ function ContainersList() {
         description={`${containers.length} original containers documented`}
       />
 
+      {!isGuestViewer && (
       <div className="mb-6 flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-border bg-muted/40 p-4">
         <div className="min-w-56 flex-1">
           <label className="field-label">New container title</label>
@@ -123,6 +124,7 @@ function ContainersList() {
           <Plus className="size-4" /> ADD CONTAINER
         </Button>
       </div>
+      )}
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative min-w-56 flex-1">

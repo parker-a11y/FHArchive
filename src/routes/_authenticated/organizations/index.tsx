@@ -72,6 +72,7 @@ function Organizations() {
     <>
       <PageHeader title="Organizations" description={`${orgs.length} organization records`} />
       <div className="max-w-4xl p-4 sm:p-8">
+        {!isGuestViewer && (
         <div className="mb-6 flex gap-2">
           <Input
             placeholder="e.g. USS Doyle C. Barnes (DE-353)"
@@ -92,6 +93,7 @@ function Organizations() {
           </select>
           <Button onClick={add}>Add</Button>
         </div>
+        )}
 
         <div className="divide-y divide-border rounded border border-border bg-card">
           {orgs.map((o) => (
