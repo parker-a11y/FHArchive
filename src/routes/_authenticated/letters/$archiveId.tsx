@@ -136,6 +136,7 @@ function LetterPage() {
   const [tones, setTones] = useState<string[]>([]);
   const [dirty, setDirty] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
 
 
   useEffect(() => {
