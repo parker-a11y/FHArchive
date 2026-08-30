@@ -98,7 +98,25 @@ function PlacePage() {
 
   return (
     <>
-      <PageHeader title={name} description="Place record" actions={<Button onClick={save}>Save</Button>} />
+      <PageHeader
+        title={name}
+        description="Place record"
+        actions={
+          <div className="flex items-center gap-2">
+            <MergePlaceButton placeId={placeId} name={name}>
+              <Button variant="outline" size="sm">
+                <Merge className="mr-1.5 h-4 w-4" /> Merge
+              </Button>
+            </MergePlaceButton>
+            <DeletePlaceButton placeId={placeId} name={name} redirectAfter>
+              <Button variant="outline" size="sm">
+                <Trash2 className="mr-1.5 h-4 w-4" /> Delete
+              </Button>
+            </DeletePlaceButton>
+            <Button onClick={save}>Save</Button>
+          </div>
+        }
+      />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FIELDS.map((f) => (
