@@ -18,7 +18,7 @@ import { DS_SOURCE_TYPES, createDigitalSource, previewNextDsId } from "@/lib/sou
 import { DATE_PRECISION } from "@/lib/archive";
 
 
-export const Route = createFileRoute("/sources/new")({
+export const Route = createFileRoute("/_authenticated/sources/new")({
   head: () => ({
     meta: [
       { title: "Add Digital Source — The Francis Files" },

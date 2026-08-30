@@ -20,7 +20,7 @@ import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";
 import { DeletePersonButton } from "@/components/people/DeletePersonButton";
 import { MergePersonButton } from "@/components/people/MergePersonButton";
 
-export const Route = createFileRoute("/people/")({
+export const Route = createFileRoute("/_authenticated/people/")({
   head: () => ({
     meta: [
       { title: "People — The Francis Files" },

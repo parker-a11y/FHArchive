@@ -10,7 +10,7 @@ import { Merge, Trash2 } from "lucide-react";
 import { DeletePlaceButton } from "@/components/places/DeletePlaceButton";
 import { MergePlaceButton } from "@/components/places/MergePlaceButton";
 
-export const Route = createFileRoute("/places/")({
+export const Route = createFileRoute("/_authenticated/places/")({
   head: () => ({
     meta: [
       { title: "Places — The Francis Files" },

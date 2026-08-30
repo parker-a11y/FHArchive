@@ -18,7 +18,7 @@ import {
 } from "@/lib/containers";
 import { fetchLetters } from "@/lib/queries";
 
-export const Route = createFileRoute("/containers/$boxId")({
+export const Route = createFileRoute("/_authenticated/containers/$boxId")({
   head: ({ params }) => ({
     meta: [
       { title: `${params.boxId} — Source Container — The Francis Files` },

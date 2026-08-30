@@ -72,7 +72,7 @@ import {
   RelationsPanel,
 } from "@/components/letter/ResearchPanels";
 
-export const Route = createFileRoute("/letters/$archiveId")({
+export const Route = createFileRoute("/_authenticated/letters/$archiveId")({
   validateSearch: (search: Record<string, unknown>): { hl?: string; tab?: string } => ({
     hl: typeof search.hl === "string" && search.hl.trim() ? search.hl : undefined,
     tab: typeof search.tab === "string" ? search.tab : undefined,

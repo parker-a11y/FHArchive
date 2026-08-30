@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
-export const Route = createFileRoute("/keywords/$keywordId")({
+export const Route = createFileRoute("/_authenticated/keywords/$keywordId")({
   head: () => ({
     meta: [
       { title: "Keyword — The Francis Files" },

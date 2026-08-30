@@ -11,7 +11,7 @@ import { ORG_TYPES, labelOf } from "@/lib/archive";
 import { DeleteOrgButton } from "@/components/organizations/DeleteOrgButton";
 import { OrgRecordsButton } from "@/components/organizations/OrgRecordsButton";
 
-export const Route = createFileRoute("/organizations/")({
+export const Route = createFileRoute("/_authenticated/organizations/")({
   head: () => ({
     meta: [
       { title: "Organizations — The Francis Files" },

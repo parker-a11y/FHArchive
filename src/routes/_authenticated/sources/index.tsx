@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { DS_SOURCE_TYPES, dsTypeLabel, fetchDsFileCounts, fetchSources } from "@/lib/sources";
 
-export const Route = createFileRoute("/sources/")({
+export const Route = createFileRoute("/_authenticated/sources/")({
   head: () => ({
     meta: [
       { title: "Digital Sources — The Francis Files" },

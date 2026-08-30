@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
-export const Route = createFileRoute("/places/$placeId")({
+export const Route = createFileRoute("/_authenticated/places/$placeId")({
   head: () => ({
     meta: [
       { title: "Place Record — The Francis Files" },

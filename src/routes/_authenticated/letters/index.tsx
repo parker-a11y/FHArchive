@@ -54,7 +54,7 @@ const searchSchema = z.object({
   uncertain: z.coerce.string().optional(), // "1"
 });
 
-export const Route = createFileRoute("/letters/")({
+export const Route = createFileRoute("/_authenticated/letters/")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [

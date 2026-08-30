@@ -13,7 +13,7 @@ import { DeletePersonButton } from "@/components/people/DeletePersonButton";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
-export const Route = createFileRoute("/people/$personId")({
+export const Route = createFileRoute("/_authenticated/people/$personId")({
   head: () => ({
     meta: [
       { title: "Person Record — The Francis Files" },

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { EVENT_TYPES, labelOf } from "@/lib/archive";
 
-export const Route = createFileRoute("/events/")({
+export const Route = createFileRoute("/_authenticated/events/")({
   head: () => ({
     meta: [
       { title: "Events — The Francis Files" },

@@ -47,7 +47,7 @@ import {
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 
 
-export const Route = createFileRoute("/sources/$dsId")({
+export const Route = createFileRoute("/_authenticated/sources/$dsId")({
   head: () => ({
     meta: [
       { title: "Digital Source — The Francis Files" },
