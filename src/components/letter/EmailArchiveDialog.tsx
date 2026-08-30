@@ -85,7 +85,7 @@ export function EmailArchiveDialog({
           headerTitle: subject,
           headerSubtitle,
           message,
-          records: [{ kind, id }],
+          records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
           includeTranscription,
           includeImages,
         },
