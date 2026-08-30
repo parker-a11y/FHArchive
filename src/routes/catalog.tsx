@@ -84,7 +84,7 @@ const blank = {
   storage_notes: "",
   source_container_id: "",
   original_order_notes: "",
-  identification_status: "unidentified",
+  identification_status: "",
   original_copy: "original",
   notes: "",
 };

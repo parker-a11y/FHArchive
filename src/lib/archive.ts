@@ -226,6 +226,7 @@ export const DATE_PRECISION = [
 ] as const;
 
 export const IDENTIFICATION_STATUS = [
+  { value: "", label: "—" },
   { value: "identified", label: "Identified" },
   { value: "partial", label: "Partially Identified" },
   { value: "probable", label: "Probable" },

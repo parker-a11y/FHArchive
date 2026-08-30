@@ -156,7 +156,7 @@ function LetterPage() {
       storage_folder: letter.storage_folder ?? "",
       storage_position: letter.storage_position ?? "",
       storage_notes: letter.storage_notes ?? "",
-      identification_status: letter.identification_status ?? "unidentified",
+      identification_status: letter.identification_status ?? "",
       provenance: letter.provenance ?? "",
       source_container_id: letter.source_container_id ?? "",
       original_order_notes: letter.original_order_notes ?? "",
