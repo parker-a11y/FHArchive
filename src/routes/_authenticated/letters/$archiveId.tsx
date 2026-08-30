@@ -327,11 +327,31 @@ function LetterPage() {
               </span>
               <span>
                 <span className="field-label mr-2">From</span>
-                {letter.author || "—"}
+                {authorPerson?.id ? (
+                  <Link
+                    to="/people/$personId"
+                    params={{ personId: authorPerson.id }}
+                    className="text-primary hover:underline"
+                  >
+                    {letter.author}
+                  </Link>
+                ) : (
+                  letter.author || "—"
+                )}
               </span>
               <span>
                 <span className="field-label mr-2">To</span>
-                {letter.recipient || "—"}
+                {recipientPerson?.id ? (
+                  <Link
+                    to="/people/$personId"
+                    params={{ personId: recipientPerson.id }}
+                    className="text-primary hover:underline"
+                  >
+                    {letter.recipient}
+                  </Link>
+                ) : (
+                  letter.recipient || "—"
+                )}
               </span>
               <span>
                 <span className="field-label mr-2">Origin</span>
