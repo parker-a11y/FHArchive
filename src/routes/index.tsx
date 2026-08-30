@@ -254,6 +254,7 @@ function Dashboard() {
     {
       label: "Cataloged",
       value: c((l) => !!(l.author || l.recipient || l.normalized_date)),
+      sub: "Author, recipient, or date filled in",
       tone: "amber",
       icon: PenLine,
       to: "/letters?cataloged=1",
