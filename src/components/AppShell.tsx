@@ -165,7 +165,7 @@ export function PageHeader({
   center?: ReactNode;
 }) {
   return (
-    <div className="no-print flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:px-8 sm:py-5">
+    <div className="no-print flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-5">
       <div className="min-w-0">
         <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
