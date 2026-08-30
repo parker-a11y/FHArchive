@@ -15,7 +15,6 @@ import {
   DATE_CERTAINTY,
   DATE_PRECISION,
   IDENTIFICATION_STATUS,
-  ORIGINAL_COPY,
   PERIODS,
   STORAGE_TYPES,
   isLetterType,
@@ -495,19 +494,6 @@ function QuickEntry() {
                 onChange={(e) => set("sheets", e.target.value)}
               />
             </div>
-            <Select_
-              label="Original / copy"
-              value={form.original_copy}
-              onChange={(v) => set("original_copy", v)}
-              options={ORIGINAL_COPY}
-            />
-            <div className="space-y-1.5">
-              <Label className="field-label">Legacy storage note</Label>
-              <Input
-                value={form.storage_location}
-                onChange={(e) => set("storage_location", e.target.value)}
-              />
-            </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Physical storage location</div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -523,13 +509,6 @@ function QuickEntry() {
                     value={form.storage_folder}
                     onChange={(e) => set("storage_folder", e.target.value)}
                     placeholder="FH-0268"
-                  />
-                </div>
-                <div className="col-span-full space-y-1.5">
-                  <Label className="field-label">Location notes</Label>
-                  <Input
-                    value={form.storage_notes}
-                    onChange={(e) => set("storage_notes", e.target.value)}
                   />
                 </div>
               </div>
