@@ -178,10 +178,12 @@ function Stat({
         )}
         <span className="field-label whitespace-normal leading-5">{label}</span>
       </div>
-      <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
-      {sub && (
-        <p className="mt-1 whitespace-normal text-xs text-muted-foreground">{sub}</p>
-      )}
+      <div className="mt-auto flex flex-col gap-2">
+        <div className="font-display text-3xl font-bold tabular-nums">{value}</div>
+        {sub && (
+          <p className="whitespace-normal text-xs leading-relaxed text-muted-foreground">{sub}</p>
+        )}
+      </div>
     </div>
   );
   if (onClick) {
@@ -310,7 +312,7 @@ function Dashboard() {
             alt="The Francis Files"
             width={1024}
             height={1024}
-            className="size-16 shrink-0 object-contain sm:size-20"
+            className="size-32 shrink-0 object-contain sm:size-40"
           />
         }
         actions={
@@ -341,6 +343,9 @@ function Dashboard() {
                 onClick={() => setDailyOpen((v) => !v)}
                 active={dailyOpen}
               />
+              {stats.map((s) => (
+                <Stat key={s.label} {...s} />
+              ))}
               <Stat
                 label="All categories"
                 value={categoryTiles.length}
@@ -350,9 +355,6 @@ function Dashboard() {
                 onClick={() => setCategoriesOpen((v) => !v)}
                 active={categoriesOpen}
               />
-              {stats.map((s) => (
-                <Stat key={s.label} {...s} />
-              ))}
             </div>
 
             {dailyOpen && (
