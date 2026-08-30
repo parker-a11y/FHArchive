@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { StarNoteDialog } from "@/components/StarToggle";
+import { supabase } from "@/integrations/supabase/client";
 import { Globe } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -54,6 +56,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function NewSource() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [starred, setStarred] = useState(false);
+  const [starNoteFor, setStarNoteFor] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     source_type: "website",
@@ -82,7 +86,11 @@ function NewSource() {
         ...form,
         title: form.title.trim(),
       });
+      if (starred) {
+        await supabase.from("digital_sources").update({ starred: true }).eq("id", created.id);
+      }
       toast.success(`Saved ${created.ds_id}`);
+      if (starred && !openRecord) setStarNoteFor(`${created.ds_id} — ${form.title.trim()}`);
       if (openRecord) {
         navigate({ to: "/sources/$dsId", params: { dsId: created.ds_id } });
       } else {
@@ -192,6 +200,17 @@ function NewSource() {
         <Field label="Notes">
           <Textarea rows={2} value={form.notes} onChange={set("notes")} />
         </Field>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={starred}
+            onChange={(e) => setStarred(e.target.checked)}
+          />
+          <Star
+            className={starred ? "size-4 fill-tone-amber text-tone-amber" : "size-4 text-muted-foreground"}
+          />
+          Of extreme interest
+        </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button size="lg" disabled={saving} onClick={() => save(true)}>
             Save &amp; open record
@@ -201,6 +220,14 @@ function NewSource() {
           </Button>
         </div>
       </div>
+
+      <StarNoteDialog
+        open={starNoteFor !== null}
+        onOpenChange={(v) => {
+          if (!v) setStarNoteFor(null);
+        }}
+        label={starNoteFor ?? ""}
+      />
     </>
   );
 }

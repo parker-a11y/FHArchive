@@ -121,6 +121,7 @@ function QuickEntry() {
   const [mentions, setMentions] = useState<PersonRef[]>([]);
   const [busy, setBusy] = useState(false);
   const [session, setSession] = useState<string[]>([]);
+  const [starNoteFor, setStarNoteFor] = useState<string | null>(null);
   const [labelFor, setLabelFor] = useState<{ archiveId: string; date: string; title: string; lines: string[] } | null>(
     null,
   );
@@ -631,6 +632,14 @@ function QuickEntry() {
         defaultDate={labelFor?.date ?? ""}
         defaultTitle={labelFor?.title ?? ""}
         lines={labelFor?.lines ?? []}
+      />
+
+      <StarNoteDialog
+        open={starNoteFor !== null}
+        onOpenChange={(v) => {
+          if (!v) setStarNoteFor(null);
+        }}
+        label={starNoteFor ?? ""}
       />
     </>
   );
