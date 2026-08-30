@@ -55,7 +55,7 @@ export function EmailArchiveDialog({
   );
   const [headerSubtitle, setHeaderSubtitle] = useState("From The Francis Files");
   const [message, setMessage] = useState("");
-  const [includeTranscription, setIncludeTranscription] = useState(false);
+  const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
 
   const { data: contacts = [] } = useQuery({
