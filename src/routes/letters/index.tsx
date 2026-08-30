@@ -590,6 +590,15 @@ function LettersTable() {
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 bg-secondary">
             <tr>
+              <th className="w-8 border-b border-border px-2 py-2">
+                <Checkbox
+                  aria-label="Select all records"
+                  checked={allSelected}
+                  onCheckedChange={(v) =>
+                    setSelected(v ? new Set(rows.map((l) => l.id)) : new Set())
+                  }
+                />
+              </th>
               {cols.map((c) => (
                 <th
                   key={c.key}
