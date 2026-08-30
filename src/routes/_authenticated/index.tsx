@@ -28,7 +28,9 @@ import {
   Sparkles,
 
 
-  type LucideIcon,, Star } from "lucide-react";
+  type LucideIcon,
+  Star,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
