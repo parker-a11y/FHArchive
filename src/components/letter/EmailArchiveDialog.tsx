@@ -21,24 +21,36 @@ import { sendArchiveEmail } from "@/lib/archive-email.functions";
 
 type Recipient = { email: string; name?: string | null };
 
+type RecordRef = { kind: "letter" | "source"; id: string; identifier: string; title?: string | null };
+
 export function EmailArchiveDialog({
   kind,
   id,
   identifier,
   title,
+  records,
+  trigger,
 }: {
-  kind: "letter" | "source";
-  id: string;
-  identifier: string;
+  kind?: "letter" | "source";
+  id?: string;
+  identifier?: string;
   title?: string | null;
+  records?: RecordRef[];
+  trigger?: React.ReactNode;
 }) {
+  const recordList: RecordRef[] =
+    records ?? [{ kind: kind!, id: id!, identifier: identifier!, title }];
+  const identifiers = recordList.map((r) => r.identifier).join(", ");
+  const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [entry, setEntry] = useState("");
   const [subject, setSubject] = useState(
-    title ? `${identifier} — ${title}` : `${identifier} from the Harrington Family Archive`,
+    single?.title
+      ? `${single.identifier} — ${single.title}`
+      : `${identifiers} from the Harrington Family Archive`,
   );
   const [headerSubtitle, setHeaderSubtitle] = useState("From the Harrington Family Archive");
   const [message, setMessage] = useState("");
