@@ -30,8 +30,8 @@ import {
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchLetters, fetchItemCounts, type Letter } from "@/lib/queries";
-import { fetchDsFileCounts, fetchSources } from "@/lib/sources";
+import { fetchDashboardStats, type Letter } from "@/lib/queries";
+import { fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 
