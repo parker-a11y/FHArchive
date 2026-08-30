@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { mergePeople } from "@/lib/person-match";
 
 type Props = {
@@ -26,6 +27,7 @@ type Person = { id: string; name: string; relationship: string | null };
 
 /** Merge duplicate person records into one main record. */
 export function MergePersonButton({ personId, name, children }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -102,7 +104,7 @@ export function MergePersonButton({ personId, name, children }: Props) {
         }
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {!isGuestViewer && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Merge “{name}” with other people</DialogTitle>

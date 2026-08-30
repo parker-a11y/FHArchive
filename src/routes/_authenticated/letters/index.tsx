@@ -43,6 +43,7 @@ import {
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 
 import { StarToggle } from "@/components/StarToggle";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -163,6 +164,7 @@ async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, st
 }
 
 function LettersTable() {
+  const { isGuestViewer } = useAuth();
   const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
   const search = Route.useSearch();
@@ -414,7 +416,7 @@ function LettersTable() {
         description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
-            {selectedRecords.length > 0 && (
+            {!isGuestViewer && selectedRecords.length > 0 && (
               <EmailArchiveDialog
                 records={selectedRecords}
                 trigger={
@@ -636,6 +638,7 @@ function LettersTable() {
           <thead className="sticky top-0 bg-secondary">
             <tr>
               <th className="w-8 border-b border-border px-2 py-2">
+                {!isGuestViewer && (
                 <Checkbox
                   aria-label="Select all records"
                   checked={allSelected}
@@ -644,11 +647,12 @@ function LettersTable() {
                       const next = new Map(s);
                       if (v) rows.forEach((l) => next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title }));
                       else rows.forEach((l) => next.delete(l.id));
-                      return next;
-                    })
-                  }
-                />
-              </th>
+                       return next;
+                     })
+                   }
+                 />
+                )}
+               </th>
               {cols.map((c) => (
                 <th
                   key={c.key}
@@ -693,11 +697,13 @@ function LettersTable() {
             {rows.map((l) => (
               <tr key={l.id} className="border-b border-border hover:bg-muted/50">
                 <td className="px-2 py-1.5 align-top">
-                  <Checkbox
-                    aria-label={`Select ${l.archive_id}`}
-                    checked={selected.has(l.id)}
-                    onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
-                  />
+                  {!isGuestViewer && (
+                    <Checkbox
+                      aria-label={`Select ${l.archive_id}`}
+                      checked={selected.has(l.id)}
+                      onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
+                    />
+                  )}
                 </td>
                 {cols.map((c) => {
                   const isEditing = editing?.id === l.id && editing.key === c.key;
@@ -706,7 +712,9 @@ function LettersTable() {
                       key={c.key}
                       className="truncate px-3 py-1.5 align-top"
                       style={{ maxWidth: widths[c.key] ?? c.width }}
-                      onDoubleClick={() => c.editable && setEditing({ id: l.id, key: c.key })}
+                      onDoubleClick={() =>
+                        c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
+                      }
                     >
                       {c.key === "archive_id" ? (
                         <span className="inline-flex items-center gap-1.5">
@@ -731,22 +739,24 @@ function LettersTable() {
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
                             style={{ backgroundColor: recordHealth(l).color }}
                           />
-                          <EmailArchiveDialog
-                            kind="letter"
-                            id={l.id}
-                            identifier={l.archive_id}
-                            title={l.title}
-                            trigger={
-                              <button
-                                type="button"
-                                title={`Email ${l.archive_id}`}
-                                aria-label={`Email ${l.archive_id}`}
-                                className="text-muted-foreground hover:text-primary"
-                              >
-                                <Mail className="size-3.5" />
-                              </button>
-                            }
-                          />
+                          {!isGuestViewer && (
+                            <EmailArchiveDialog
+                              kind="letter"
+                              id={l.id}
+                              identifier={l.archive_id}
+                              title={l.title}
+                              trigger={
+                                <button
+                                  type="button"
+                                  title={`Email ${l.archive_id}`}
+                                  aria-label={`Email ${l.archive_id}`}
+                                  className="text-muted-foreground hover:text-primary"
+                                >
+                                  <Mail className="size-3.5" />
+                                </button>
+                              }
+                            />
+                          )}
                         </span>
                       ) : isEditing ? (
                         <input

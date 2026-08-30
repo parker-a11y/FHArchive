@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { EVENT_TYPES, labelOf } from "@/lib/archive";
 
 export const Route = createFileRoute("/_authenticated/events/")({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/events/")({
 });
 
 function Events() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [eventType, setEventType] = useState("family");
@@ -67,6 +69,7 @@ function Events() {
     <>
       <PageHeader title="Events" description={`${events.length} event records — never required`} />
       <div className="max-w-4xl p-4 sm:p-8">
+        {!isGuestViewer && (
         <div className="mb-6 grid grid-cols-1 lg:grid-cols-[1fr_10rem_9rem_9rem_auto] gap-2">
           <Input
             placeholder="e.g. Marriage of Francis & Jacqueline"
@@ -89,6 +92,7 @@ function Events() {
           <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
           <Button onClick={add}>Add</Button>
         </div>
+        )}
 
         <div className="divide-y divide-border rounded border border-border bg-card">
           {events.map((ev) => (

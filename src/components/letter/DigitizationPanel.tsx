@@ -16,6 +16,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
@@ -88,6 +89,7 @@ function Stat({
 
 export function DigitizationPanel({ letter }: { letter: Letter }) {
   const qc = useQueryClient();
+  const { isGuestViewer } = useAuth();
   const key = ["digital-files", letter.id];
   const [progress, setProgress] = useState<Progress>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -472,8 +474,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           <Stat label="Thumbnails" value={`${thumbCount} of ${masters}`} />
         </div>
 
-        {/* Confirm upload complete → derivative generation */}
-        {masters > 0 && (
+        {/* Confirm upload complete → derivative generation (admin action) */}
+        {masters > 0 && !isGuestViewer && (
           <div className="mt-3 rounded border border-border bg-card p-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="text-sm">
@@ -567,6 +569,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       </div>
 
       {/* Record-type helper */}
+      <fieldset disabled={isGuestViewer} className="contents">
       <div className="rounded border border-border p-4">
         <h4 className="field-label mb-2 flex items-center gap-2">
           <Layers className="size-4" /> Completeness helper
@@ -675,8 +678,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           </p>
         )}
       </div>
+      </fieldset>
 
-      {/* Uploader */}
+      {/* Uploader — hidden for view-only guests */}
+      {!isGuestViewer && (
       <div
         onDragEnter={(e) => {
           e.preventDefault();
@@ -742,6 +747,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Gallery */}
       <div>
@@ -763,7 +769,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 <div
                   key={f.id}
                   id={`scan-${f.id}`}
-                  draggable
+                  draggable={!isGuestViewer}
                   onDragStart={() => setDragId(f.id)}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
@@ -839,7 +845,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     )}
                   </div>
 
-                  {/* One-click identification — renames master + derivatives */}
+                  {/* One-click identification — renames master + derivatives (admin) */}
+                  {!isGuestViewer && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     {renamingId === f.id ? (
                       <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -875,11 +882,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                         >
                           + Custom
                         </button>
-                      </>
-                    )}
-                  </div>
+                       </>
+                     )}
+                   </div>
+                  )}
 
-                  <div className="mt-1 flex items-center justify-between">
+                   <div className="mt-1 flex items-center justify-between">
                     <Button
                       size="icon"
                       variant="ghost"
@@ -889,29 +897,33 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     >
                       <Download className="size-3.5" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-1.5 text-[11px]"
-                      title="Transcribe this scan with ChatGPT (the master is never altered)"
-                      disabled={transcribing.includes(f.id)}
-                      onClick={() => transcribeOne(f.id)}
-                    >
-                      {transcribing.includes(f.id) ? (
-                        <Loader2 className="mr-1 size-3.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="mr-1 size-3.5" />
-                      )}
-                      Transcribe
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="size-7 text-destructive"
-                      onClick={() => remove(f)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    {!isGuestViewer && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-1.5 text-[11px]"
+                          title="Transcribe this scan with ChatGPT (the master is never altered)"
+                          disabled={transcribing.includes(f.id)}
+                          onClick={() => transcribeOne(f.id)}
+                        >
+                          {transcribing.includes(f.id) ? (
+                            <Loader2 className="mr-1 size-3.5 animate-spin" />
+                          ) : (
+                            <Sparkles className="mr-1 size-3.5" />
+                          )}
+                          Transcribe
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-7 text-destructive"
+                          onClick={() => remove(f)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </>
+                    )}
                   </div>
 
                   <span className="sr-only">{i}</span>

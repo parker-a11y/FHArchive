@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type Props = {
   personId: string;
@@ -26,6 +27,7 @@ type Props = {
 
 /** Confirms and deletes a person record; all record links and aliases go with it. */
 export function DeletePersonButton({ personId, name, children, redirectAfter }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -48,7 +50,7 @@ export function DeletePersonButton({ personId, name, children, redirectAfter }: 
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      {!isGuestViewer && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>

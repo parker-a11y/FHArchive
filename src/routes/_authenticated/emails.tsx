@@ -1,10 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { fetchSentEmails } from "@/lib/archive-email";
 
 export const Route = createFileRoute("/_authenticated/emails")({
-  component: EmailsPage,
+  component: () => (
+    <AdminOnly>
+      <EmailsPage />
+    </AdminOnly>
+  ),
   head: () => ({
     meta: [
       { title: "Sent Email · The Francis Files" },

@@ -7,6 +7,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { ORG_TYPES, labelOf } from "@/lib/archive";
 import { DeleteOrgButton } from "@/components/organizations/DeleteOrgButton";
 import { OrgRecordsButton } from "@/components/organizations/OrgRecordsButton";
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/organizations/")({
 });
 
 function Organizations() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [orgType, setOrgType] = useState("ship");
@@ -70,6 +72,7 @@ function Organizations() {
     <>
       <PageHeader title="Organizations" description={`${orgs.length} organization records`} />
       <div className="max-w-4xl p-4 sm:p-8">
+        {!isGuestViewer && (
         <div className="mb-6 flex gap-2">
           <Input
             placeholder="e.g. USS Doyle C. Barnes (DE-353)"
@@ -90,6 +93,7 @@ function Organizations() {
           </select>
           <Button onClick={add}>Add</Button>
         </div>
+        )}
 
         <div className="divide-y divide-border rounded border border-border bg-card">
           {orgs.map((o) => (
@@ -128,6 +132,7 @@ function Organizations() {
                 placeholder="Description / notes…"
                 defaultValue={o.description ?? ""}
                 onBlur={(e) => update(o.id, { description: e.target.value })}
+                disabled={isGuestViewer}
               />
             </div>
           ))}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
@@ -48,6 +49,7 @@ const FIELDS: { key: string; label: string; area?: boolean }[] = [
 ];
 
 function PlacePage() {
+  const { isGuestViewer } = useAuth();
   const { placeId } = Route.useParams();
   const qc = useQueryClient();
   const { data: place } = useQuery({
@@ -116,12 +118,12 @@ function PlacePage() {
                 <Trash2 className="mr-1.5 h-4 w-4" /> Delete
               </Button>
             </DeletePlaceButton>
-            <Button onClick={save}>Save</Button>
+            {!isGuestViewer && <Button onClick={save}>Save</Button>}
           </div>
         }
       />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_22rem] gap-8 p-4 sm:p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <fieldset disabled={isGuestViewer} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {FIELDS.map((f) => (
             <div key={f.key} className={f.area ? "col-span-full" : ""}>
               <label className="field-label">{f.label}</label>
@@ -139,7 +141,7 @@ function PlacePage() {
               )}
             </div>
           ))}
-        </div>
+        </fieldset>
         <div>
           <h3 className="field-label mb-2">Associated letters — {related.length}</h3>
           <div className="divide-y divide-border rounded border border-border bg-card">

@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type Props = {
   orgId: string;
@@ -23,6 +24,7 @@ type Props = {
 
 /** Confirms and deletes an organization record; all record links go with it. */
 export function DeleteOrgButton({ orgId, name, children }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
 
@@ -43,7 +45,7 @@ export function DeleteOrgButton({ orgId, name, children }: Props) {
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      {!isGuestViewer && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>

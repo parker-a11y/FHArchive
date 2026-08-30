@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Merge, Trash2 } from "lucide-react";
 import { DeletePlaceButton } from "@/components/places/DeletePlaceButton";
 import { MergePlaceButton } from "@/components/places/MergePlaceButton";
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/places/")({
 });
 
 function Places() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const { data: places = [] } = useQuery({
@@ -57,15 +59,17 @@ function Places() {
     <>
       <PageHeader title="Places" description={`${places.length} place records`} />
       <div className="max-w-3xl p-4 sm:p-8">
-        <div className="mb-6 flex gap-2">
-          <Input
-            placeholder="New place, e.g. Fort Benning, Georgia"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && add()}
-          />
-          <Button onClick={add}>Add place</Button>
-        </div>
+        {!isGuestViewer && (
+          <div className="mb-6 flex gap-2">
+            <Input
+              placeholder="New place, e.g. Fort Benning, Georgia"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && add()}
+            />
+            <Button onClick={add}>Add place</Button>
+          </div>
+        )}
         <div className="divide-y divide-border rounded border border-border bg-card">
           {places.map((p) => (
             <div key={p.id} className="flex items-center gap-2 px-4 py-1.5 hover:bg-muted/60">

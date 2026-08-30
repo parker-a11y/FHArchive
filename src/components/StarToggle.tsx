@@ -105,7 +105,7 @@ export function StarToggle({
   showLabel?: boolean;
   className?: string;
 }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [noteOpen, setNoteOpen] = useState(false);
 
@@ -140,6 +140,23 @@ export function StarToggle({
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  if (isGuestViewer) {
+    // Guests can't update records (RLS) — show the flag as a read-only marker.
+    if (!starred) return null;
+    return (
+      <span
+        className={cn("inline-flex items-center gap-2", className)}
+        title="Of extreme interest"
+        aria-label="Of extreme interest"
+      >
+        <Star
+          className={cn(size === "sm" ? "size-3.5" : "size-4", "fill-tone-amber text-tone-amber")}
+        />
+        {showLabel && <span className="text-sm">Of extreme interest</span>}
+      </span>
+    );
+  }
 
   return (
     <>

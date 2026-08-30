@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Globe, Star } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,9 +37,11 @@ export const Route = createFileRoute("/_authenticated/sources/new")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <NewSource />
-    </AppShell>
+    <AdminOnly>
+      <AppShell>
+        <NewSource />
+      </AppShell>
+    </AdminOnly>
   ),
 });
 

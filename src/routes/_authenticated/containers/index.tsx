@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Box, Plus, Search } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/containers/")({
 });
 
 function ContainersList() {
+  const { isGuestViewer } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
@@ -93,6 +95,7 @@ function ContainersList() {
         description={`${containers.length} original containers documented`}
       />
 
+      {!isGuestViewer && (
       <div className="mb-6 flex flex-wrap items-end gap-2 rounded-xl border border-dashed border-border bg-muted/40 p-4">
         <div className="min-w-56 flex-1">
           <label className="field-label">New container title</label>
@@ -121,6 +124,7 @@ function ContainersList() {
           <Plus className="size-4" /> ADD CONTAINER
         </Button>
       </div>
+      )}
 
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative min-w-56 flex-1">

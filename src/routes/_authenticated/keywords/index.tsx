@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/keywords/")({
   head: () => ({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/keywords/")({
 });
 
 function Keywords() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const { data: keywords = [] } = useQuery({
@@ -62,15 +64,17 @@ function Keywords() {
     <>
       <PageHeader title="Keywords" description={`${keywords.length} tags`} />
       <div className="max-w-3xl p-4 sm:p-8">
-        <div className="mb-6 flex gap-2">
-          <Input
-            placeholder="New keyword, e.g. Officer Candidate School"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && add()}
-          />
-          <Button onClick={add}>Add keyword</Button>
-        </div>
+        {!isGuestViewer && (
+          <div className="mb-6 flex gap-2">
+            <Input
+              placeholder="New keyword, e.g. Officer Candidate School"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && add()}
+            />
+            <Button onClick={add}>Add keyword</Button>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
           {keywords.map((k) => (
             <Link

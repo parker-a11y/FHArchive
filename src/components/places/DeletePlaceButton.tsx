@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type Props = {
   placeId: string;
@@ -26,6 +27,7 @@ type Props = {
 
 /** Confirms and deletes a place record; all record links go with it. */
 export function DeletePlaceButton({ placeId, name, children, redirectAfter }: Props) {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -48,7 +50,7 @@ export function DeletePlaceButton({ placeId, name, children, redirectAfter }: Pr
 
   return (
     <AlertDialog>
-      <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+      {!isGuestViewer && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>

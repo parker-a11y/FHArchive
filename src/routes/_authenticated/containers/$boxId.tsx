@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export const Route = createFileRoute("/_authenticated/containers/$boxId")({
 });
 
 function ContainerPage() {
+  const { isGuestViewer } = useAuth();
   const { boxId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -139,17 +141,21 @@ function ContainerPage() {
             <Button variant="outline" className="gap-2" onClick={() => navigate({ to: "/containers" })}>
               <ArrowLeft className="size-4" /> All containers
             </Button>
-            <Button className="gap-2" disabled={!dirty} onClick={save}>
-              <Save className="size-4" /> Save
-            </Button>
-            <Button variant="ghost" size="icon" onClick={remove}>
-              <Trash2 className="size-4 text-destructive" />
-            </Button>
+            {!isGuestViewer && (
+              <>
+                <Button className="gap-2" disabled={!dirty} onClick={save}>
+                  <Save className="size-4" /> Save
+                </Button>
+                <Button variant="ghost" size="icon" onClick={remove}>
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </>
+            )}
           </div>
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <fieldset disabled={isGuestViewer} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label className="field-label">Title</label>
           <Input value={form.title ?? ""} onChange={(e) => set("title", e.target.value)} />
@@ -236,10 +242,12 @@ function ContainerPage() {
             <Textarea rows={3} value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
           </div>
         </div>
-      </div>
+      </fieldset>
 
       <div className="mt-8 border-t border-border pt-6">
-        <ContainerPhotosPanel container={container} />
+        <fieldset disabled={isGuestViewer} className="contents">
+          <ContainerPhotosPanel container={container} />
+        </fieldset>
       </div>
 
       <div className="mt-8 border-t border-border pt-6">

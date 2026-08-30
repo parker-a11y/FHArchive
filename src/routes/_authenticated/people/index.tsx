@@ -7,6 +7,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 import { DuplicatesPanel } from "@/components/people/DuplicatesPanel";
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/people/")({
 });
 
 function People() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -87,15 +89,17 @@ function People() {
             <TabsTrigger value="dupes">Duplicates</TabsTrigger>
           </TabsList>
           <TabsContent value="all">
-            <div className="mb-6 flex gap-2">
-              <Input
-                placeholder="New person name…"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && promptAdd()}
-              />
-              <Button onClick={promptAdd}>Add person</Button>
-            </div>
+            {!isGuestViewer && (
+              <div className="mb-6 flex gap-2">
+                <Input
+                  placeholder="New person name…"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && promptAdd()}
+                />
+                <Button onClick={promptAdd}>Add person</Button>
+              </div>
+            )}
             <div className="divide-y divide-border rounded border border-border bg-card">
               {people.map((p) => (
                 <div key={p.id} className="flex items-center gap-2 pr-2 hover:bg-muted/60">

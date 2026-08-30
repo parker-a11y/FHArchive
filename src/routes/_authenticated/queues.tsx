@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { transcribeRecord } from "@/lib/transcription.functions";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { fetchLetters, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { displayDate, isUnidentifiedPhoto, needsDating } from "@/lib/archive";
@@ -27,9 +27,11 @@ export const Route = createFileRoute("/_authenticated/queues")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <Queues />
-    </AppShell>
+    <AdminOnly>
+      <AppShell>
+        <Queues />
+      </AppShell>
+    </AdminOnly>
   ),
 });
 
