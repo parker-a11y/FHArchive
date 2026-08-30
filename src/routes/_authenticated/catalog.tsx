@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
 import { StarNoteDialog } from "@/components/StarToggle";
+import { FffBadge } from "@/components/FffBadge";
 import { Star } from "lucide-react";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import {
@@ -573,12 +574,8 @@ function QuickEntry() {
                   checked={form.starred}
                   onChange={(e) => set("starred", e.target.checked)}
                 />
-                <Star
-                  className={
-                    form.starred ? "size-4 fill-tone-amber text-tone-amber" : "size-4 text-muted-foreground"
-                  }
-                />
-                Of extreme interest
+                <FffBadge size={18} muted={!form.starred} />
+                FFF — Francis File Find
               </label>
             </div>
           </div>

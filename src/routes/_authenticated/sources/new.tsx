@@ -205,10 +205,8 @@ function NewSource() {
             checked={starred}
             onChange={(e) => setStarred(e.target.checked)}
           />
-          <Star
-            className={starred ? "size-4 fill-tone-amber text-tone-amber" : "size-4 text-muted-foreground"}
-          />
-          Of extreme interest
+          <FffBadge size={18} muted={!starred} />
+          FFF — Francis File Find
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button size="lg" disabled={saving} onClick={() => save(true)}>
