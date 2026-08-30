@@ -75,15 +75,26 @@ function People() {
             </div>
             <div className="divide-y divide-border rounded border border-border bg-card">
               {people.map((p) => (
-                <Link
-                  key={p.id}
-                  to="/people/$personId"
-                  params={{ personId: p.id }}
-                  className="flex items-baseline gap-4 px-4 py-2.5 text-sm hover:bg-muted/60"
-                >
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-muted-foreground">{p.relationship}</span>
-                </Link>
+                <div key={p.id} className="flex items-center gap-2 pr-2 hover:bg-muted/60">
+                  <Link
+                    to="/people/$personId"
+                    params={{ personId: p.id }}
+                    className="flex flex-1 items-baseline gap-4 px-4 py-2.5 text-sm"
+                  >
+                    <span className="font-medium">{p.name}</span>
+                    <span className="text-muted-foreground">{p.relationship}</span>
+                  </Link>
+                  <DeletePersonButton personId={p.id} name={p.name}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      aria-label={`Delete ${p.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </DeletePersonButton>
+                </div>
               ))}
               {people.length === 0 && (
                 <p className="px-4 py-6 text-sm text-muted-foreground">No people yet.</p>
