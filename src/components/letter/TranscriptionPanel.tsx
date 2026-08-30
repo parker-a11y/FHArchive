@@ -406,15 +406,17 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h4 className="text-sm font-semibold">Combined record transcription</h4>
           <StatusPill status={letter.transcription_status} />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="ml-auto"
-            disabled={!letter.transcription_raw_ai}
-            onClick={copyAiIntoVerified}
-          >
-            Copy AI text into verified
-          </Button>
+          {!isGuestViewer && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto"
+              disabled={!letter.transcription_raw_ai}
+              onClick={copyAiIntoVerified}
+            >
+              Copy AI text into verified
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -451,22 +453,25 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
               rows={14}
               className="mt-1.5 font-mono text-sm"
               value={verified}
+              readOnly={isGuestViewer}
               onChange={(e) => setVerified(e.target.value)}
             />
-            <div className="mt-3 flex items-center gap-3">
-              <select
-                className="h-9 rounded border border-input bg-background px-2 text-sm"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                {TRANSCRIPTION_STATUS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <Button onClick={saveCombined}>Save transcription</Button>
-            </div>
+            {!isGuestViewer && (
+              <div className="mt-3 flex items-center gap-3">
+                <select
+                  className="h-9 rounded border border-input bg-background px-2 text-sm"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  {TRANSCRIPTION_STATUS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <Button onClick={saveCombined}>Save transcription</Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
