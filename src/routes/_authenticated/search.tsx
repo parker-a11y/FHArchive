@@ -347,28 +347,20 @@ function SearchPage() {
               {totalMatches} match{totalMatches === 1 ? "" : "es"}
               {totalMatches > results.length ? ` — showing first ${results.length}` : ""}
             </p>
-            {results.map((l) => (
-              <div key={l.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="flex items-baseline justify-between gap-4">
-                  <Link
-                    to="/letters/$archiveId"
-                    params={{ archiveId: l.archive_id }}
-                    className="archive-id text-primary hover:underline"
-                  >
-                    {l.archive_id}
-                  </Link>
-                  <span className="text-xs text-muted-foreground">
-                    {displayDate(l)} · {labelOf(PERIODS, l.period)} · {labelOf(recordTypeOptions, l.record_type)}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm font-medium">
-                  {[l.author, l.recipient].filter(Boolean).join(" → ") || l.title || "Untitled"}
-                </p>
-                {snippet(l) && (
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{snippet(l)}</p>
-                )}
-              </div>
-            ))}
+            {results.map((l) => {
+              const { snippets, tags } = matchesFor(l);
+              return (
+                <ResultCard
+                  key={l.id}
+                  letter={l}
+                  term={debouncedQ}
+                  snippets={snippets}
+                  tags={tags}
+                  hits={hitCount(l)}
+                  meta={`${displayDate(l)} · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                />
+              );
+            })}
           </>
         )}
       </div>
