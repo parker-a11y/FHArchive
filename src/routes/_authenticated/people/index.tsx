@@ -147,34 +147,8 @@ function People() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="max-w-xl sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-2xl">
-              <UserPlus className="h-6 w-6" />
-              Confirm new person record
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              You are about to create a new person record in the database.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-lg border bg-muted/50 p-8 text-center">
-            <p className="text-sm text-muted-foreground">New person name</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight break-words">
-              {pendingName}
-            </p>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={cancelAdd} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={confirmAdd} disabled={saving}>
-              {saving ? "Creating…" : "Create person record"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {personDialog}
     </>
+
   );
 }
