@@ -236,11 +236,9 @@ function QuickEntry() {
       subtype: f.subtype,
       period: f.period,
       primary_person: f.primary_person,
-      storage_location: f.storage_location,
       storage_type: f.storage_type,
-      
       storage_folder: f.storage_folder,
-      original_copy: f.original_copy,
+      source_container_id: f.source_container_id,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
