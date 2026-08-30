@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { mergePeople, normalizeName } from "@/lib/person-match";
 
@@ -66,6 +67,7 @@ function groupDuplicates(people: Person[]): Person[][] {
 }
 
 export function DuplicatesPanel() {
+  const { isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [target, setTarget] = useState<Record<number, string>>({});
