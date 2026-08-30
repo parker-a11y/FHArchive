@@ -78,7 +78,7 @@ const blank = {
   has_enclosures: false,
   storage_location: "",
   storage_type: "",
-  storage_container: "",
+  
   storage_folder: "",
   storage_notes: "",
   source_container_id: "",
@@ -187,7 +187,7 @@ function QuickEntry() {
       const extras = {
         identification_status: form.identification_status,
         storage_type: form.storage_type || null,
-        storage_container: form.storage_container || null,
+        
         storage_folder: form.storage_folder || null,
         storage_notes: form.storage_notes || null,
         source_container_id: form.source_container_id || null,
@@ -523,14 +523,6 @@ function QuickEntry() {
                   options={STORAGE_TYPES}
                 />
                 <div className="space-y-1.5">
-                  <Label className="field-label">Container / box</Label>
-                  <Input
-                    value={form.storage_container}
-                    onChange={(e) => set("storage_container", e.target.value)}
-                    placeholder="Artifact Box 01"
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <Label className="field-label">Folder / jacket</Label>
                   <Input
                     value={form.storage_folder}
@@ -548,11 +540,7 @@ function QuickEntry() {
               </div>
             </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
-              <div className="field-label mb-1">Original source container (provenance)</div>
-              <p className="mb-3 text-xs text-muted-foreground">
-                Where this item was found — separate from current physical storage above. Defaults
-                to not selected.
-              </p>
+              <div className="field-label mb-3">Original source container (provenance)</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
@@ -563,7 +551,6 @@ function QuickEntry() {
                   <Input
                     value={form.original_order_notes}
                     onChange={(e) => set("original_order_notes", e.target.value)}
-                    placeholder="Third bundle from top, tied with blue ribbon"
                   />
                 </div>
               </div>

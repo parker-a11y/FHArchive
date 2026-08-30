@@ -38,7 +38,7 @@ export type Letter = {
   original_copy: string;
   storage_location: string | null;
   storage_type: string | null;
-  storage_container: string | null;
+  
   storage_folder: string | null;
   storage_position: string | null;
   storage_notes: string | null;
