@@ -49,6 +49,7 @@ const FIELDS: { key: string; label: string; area?: boolean }[] = [
 ];
 
 function PlacePage() {
+  const { isGuestViewer } = useAuth();
   const { placeId } = Route.useParams();
   const qc = useQueryClient();
   const { data: place } = useQuery({
