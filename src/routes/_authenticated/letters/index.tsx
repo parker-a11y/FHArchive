@@ -731,7 +731,7 @@ function LettersTable() {
                     <td
                       key={c.key}
                       className="truncate px-3 py-1.5 align-top"
-                      style={{ maxWidth: widths[c.key] ?? c.width }}
+                      style={{ maxWidth: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
                       onDoubleClick={() =>
                         c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
                       }
