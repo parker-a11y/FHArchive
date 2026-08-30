@@ -240,6 +240,23 @@ function LettersTable() {
     return r;
   }, [letters, q, period, tStatus, rType, review, scanF, catalogedOnly, uncertainOnly, idStatus, dStatus, digStatus, tones, view, sort, keywordsByLetter]);
 
+  const selectedRecords = useMemo(
+    () =>
+      rows
+        .filter((l) => selected.has(l.id))
+        .map((l) => ({ kind: "letter" as const, id: l.id, identifier: l.archive_id, title: l.title })),
+    [rows, selected],
+  );
+  const toggleSelected = (id: string, on: boolean) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const allSelected = rows.length > 0 && rows.every((l) => selected.has(l.id));
+
+
 
   function exportRows() {
     return rows.map((l) => ({
