@@ -65,15 +65,38 @@ function Places() {
         </div>
         <div className="divide-y divide-border rounded border border-border bg-card">
           {places.map((p) => (
-            <Link
-              key={p.id}
-              to="/places/$placeId"
-              params={{ placeId: p.id }}
-              className="flex items-baseline gap-4 px-4 py-2.5 text-sm hover:bg-muted/60"
-            >
-              <span className="font-medium">{p.canonical_name}</span>
-              <span className="text-muted-foreground">{p.country}</span>
-            </Link>
+            <div key={p.id} className="flex items-center gap-2 px-4 py-1.5 hover:bg-muted/60">
+              <Link
+                to="/places/$placeId"
+                params={{ placeId: p.id }}
+                className="flex flex-1 items-baseline gap-4 py-1 text-sm"
+              >
+                <span className="font-medium">{p.canonical_name}</span>
+                <span className="text-muted-foreground">{p.country}</span>
+              </Link>
+              <MergePlaceButton placeId={p.id} name={p.canonical_name}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                  aria-label={`Merge ${p.canonical_name}`}
+                  title="Merge with other places"
+                >
+                  <Merge className="h-4 w-4" />
+                </Button>
+              </MergePlaceButton>
+              <DeletePlaceButton placeId={p.id} name={p.canonical_name}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  aria-label={`Delete ${p.canonical_name}`}
+                  title="Delete place"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </DeletePlaceButton>
+            </div>
           ))}
           {places.length === 0 && (
             <p className="px-4 py-6 text-sm text-muted-foreground">No places yet.</p>
