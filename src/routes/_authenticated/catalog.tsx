@@ -25,6 +25,8 @@ import {
 import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
 import { PersonCombobox } from "@/components/PersonCombobox";
 import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
+import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
+import { linkLetterPeople } from "@/lib/letter-people";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
