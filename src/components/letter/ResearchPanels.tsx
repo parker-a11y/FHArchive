@@ -8,6 +8,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 import { applySuggestion, suggestionEntities } from "@/lib/ai-analysis";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
+import {
+  useEntityConfirmer,
+  entityKey,
+  type EntityKind,
+} from "@/components/ai/ConfirmEntitiesDialog";
+import type { EntityKindKey } from "@/lib/ai-analysis";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
