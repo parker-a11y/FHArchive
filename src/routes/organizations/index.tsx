@@ -99,6 +99,29 @@ function Organizations() {
                 <span className="text-xs text-muted-foreground">
                   {labelOf(ORG_TYPES, o.org_type)}
                 </span>
+                <span className="ml-auto flex items-center gap-1">
+                  <OrgRecordsButton orgId={o.id} name={o.name}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      aria-label={`View records matching ${o.name}`}
+                      title="View matching records"
+                    >
+                      <ListFilter className="h-4 w-4" />
+                    </Button>
+                  </OrgRecordsButton>
+                  <DeleteOrgButton orgId={o.id} name={o.name}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      aria-label={`Delete ${o.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </DeleteOrgButton>
+                </span>
               </div>
               <Input
                 className="mt-2 h-8"
