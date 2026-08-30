@@ -9,13 +9,13 @@ export const Route = createFileRoute("/s/$token")({
     meta: [
       {
         title: loaderData
-          ? `${loaderData.archiveId}${loaderData.title ? ` — ${loaderData.title}` : ""} — Harrington Archive`
-          : "Link unavailable — Harrington Archive",
+          ? `${loaderData.archiveId}${loaderData.title ? ` — ${loaderData.title}` : ""} — The Francis Files`
+          : "Link unavailable — The Francis Files",
       },
       {
         name: "description",
         content: loaderData
-          ? `Shared archival record ${loaderData.archiveId} from the Harrington family archive.`
+          ? `Shared archival record ${loaderData.archiveId} from The Francis Files.`
           : "This shared archive link is no longer available.",
       },
       { name: "robots", content: "noindex, nofollow, noarchive" },
@@ -59,7 +59,7 @@ function SharedRecordPage() {
       <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-6 text-center">
         <h1 className="font-display text-2xl">This link is no longer available</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          The owner of the Harrington family archive has disabled or replaced this share link.
+          The owner of The Francis Files has disabled or replaced this share link.
         </p>
       </main>
     );
@@ -175,7 +175,7 @@ function SharedRecordPage() {
       </div>
 
       <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground sm:px-8">
-        Harrington Family Archive · shared privately by link · {record.archiveId}
+        The Francis Files · shared privately by link · {record.archiveId}
       </footer>
     </main>
   );

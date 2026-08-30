@@ -10,13 +10,13 @@ import { PERIODS, displayDate } from "@/lib/archive";
 export const Route = createFileRoute("/timeline")({
   head: () => ({
     meta: [
-      { title: "Timeline — Harrington Letter Archive" },
+      { title: "Timeline — The Francis Files" },
       {
         name: "description",
         content:
-          "Chronological timeline of the Harrington letters with period, person, place and keyword filters.",
+          "Chronological timeline of The Francis Files letters with period, person, place and keyword filters.",
       },
-      { property: "og:title", content: "Timeline — Harrington Letter Archive" },
+      { property: "og:title", content: "Timeline — The Francis Files" },
       {
         property: "og:description",
         content: "Chronological view of the family letter correspondence.",

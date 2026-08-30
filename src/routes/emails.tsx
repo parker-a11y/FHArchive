@@ -7,16 +7,16 @@ export const Route = createFileRoute("/emails")({
   component: EmailsPage,
   head: () => ({
     meta: [
-      { title: "Sent Email · Harrington Family Archive" },
+      { title: "Sent Email · The Francis Files" },
       {
         name: "description",
         content:
-          "History of archive emails sent from the Harrington Family Archive, with recipients, records and delivery status.",
+          "History of archive emails sent from The Francis Files, with recipients, records and delivery status.",
       },
-      { property: "og:title", content: "Sent Email · Harrington Family Archive" },
+      { property: "og:title", content: "Sent Email · The Francis Files" },
       {
         property: "og:description",
-        content: "Delivery history for emails sent from the Harrington Family Archive.",
+        content: "Delivery history for emails sent from The Francis Files.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

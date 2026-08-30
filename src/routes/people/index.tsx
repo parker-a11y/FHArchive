@@ -10,13 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/people/")({
   head: () => ({
     meta: [
-      { title: "People — Harrington Letter Archive" },
+      { title: "People — The Francis Files" },
       {
         name: "description",
         content:
-          "Reusable person records for correspondents and people mentioned in the Harrington letters.",
+          "Reusable person records for correspondents and people mentioned in The Francis Files letters.",
       },
-      { property: "og:title", content: "People — Harrington Letter Archive" },
+      { property: "og:title", content: "People — The Francis Files" },
       {
         property: "og:description",
         content: "Correspondents and mentioned individuals across the collection.",

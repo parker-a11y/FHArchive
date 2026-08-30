@@ -72,10 +72,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className="flex min-w-0 flex-col">
           <span className="font-display text-lg leading-none font-semibold text-sidebar-accent-foreground">
-            Harrington
+            The Francis
           </span>
           <span className="mt-1 text-[10px] font-bold tracking-[0.2em] text-sidebar-foreground/60 uppercase">
-            Family Archive
+            Files
           </span>
         </div>
       </div>
@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Open menu">
             <Menu className="size-5" />
           </Button>
-          <span className="font-display text-base font-semibold">Harrington Family Archive</span>
+          <span className="font-display text-base font-semibold">The Francis Files</span>
         </div>
         <main className="min-w-0 flex-1">{children}</main>
       </div>

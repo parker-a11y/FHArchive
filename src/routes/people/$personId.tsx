@@ -13,12 +13,12 @@ import { displayDate } from "@/lib/archive";
 export const Route = createFileRoute("/people/$personId")({
   head: () => ({
     meta: [
-      { title: "Person Record — Harrington Letter Archive" },
+      { title: "Person Record — The Francis Files" },
       {
         name: "description",
         content: "Biography, research notes and every associated letter for one person.",
       },
-      { property: "og:title", content: "Person Record — Harrington Letter Archive" },
+      { property: "og:title", content: "Person Record — The Francis Files" },
       {
         property: "og:description",
         content: "Biography, research notes and associated letters for one person.",

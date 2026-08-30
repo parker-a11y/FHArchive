@@ -13,13 +13,13 @@ import { displayDate, isUnidentifiedPhoto, needsDating } from "@/lib/archive";
 export const Route = createFileRoute("/queues")({
   head: () => ({
     meta: [
-      { title: "Work Queues — Harrington Letter Archive" },
+      { title: "Work Queues — The Francis Files" },
       {
         name: "description",
         content:
           "Workflow queues showing letters that still need scanning, transcription, review or research.",
       },
-      { property: "og:title", content: "Work Queues — Harrington Letter Archive" },
+      { property: "og:title", content: "Work Queues — The Francis Files" },
       {
         property: "og:description",
         content: "See exactly what archival work remains across the collection.",

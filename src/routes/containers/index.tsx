@@ -19,16 +19,16 @@ import {
 export const Route = createFileRoute("/containers/")({
   head: () => ({
     meta: [
-      { title: "Source Containers — Harrington Family Archive" },
+      { title: "Source Containers — The Francis Files" },
       {
         name: "description",
         content:
           "Boxes, trunks, albums and bundles the collection arrived in — permanent provenance for every FH record.",
       },
-      { property: "og:title", content: "Source Containers — Harrington Family Archive" },
+      { property: "og:title", content: "Source Containers — The Francis Files" },
       {
         property: "og:description",
-        content: "Original source containers documenting the provenance of the Harrington archive.",
+        content: "Original source containers documenting the provenance of The Francis Files.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

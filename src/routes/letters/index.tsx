@@ -54,13 +54,13 @@ export const Route = createFileRoute("/letters/")({
   validateSearch: searchSchema,
   head: () => ({
     meta: [
-      { title: "Letters Table — Harrington Letter Archive" },
+      { title: "Letters Table — The Francis Files" },
       {
         name: "description",
         content:
           "Spreadsheet view of every cataloged letter with sorting, filtering, inline editing and CSV/Excel export.",
       },
-      { property: "og:title", content: "Letters Table — Harrington Letter Archive" },
+      { property: "og:title", content: "Letters Table — The Francis Files" },
       {
         property: "og:description",
         content: "Spreadsheet view of the letter catalog with filtering and export.",

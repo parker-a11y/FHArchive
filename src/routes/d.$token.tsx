@@ -9,13 +9,13 @@ export const Route = createFileRoute("/d/$token")({
     meta: [
       {
         title: loaderData
-          ? `${loaderData.dsId} — ${loaderData.title} — Harrington Archive`
-          : "Link unavailable — Harrington Archive",
+          ? `${loaderData.dsId} — ${loaderData.title} — The Francis Files`
+          : "Link unavailable — The Francis Files",
       },
       {
         name: "description",
         content: loaderData
-          ? `Shared digital source ${loaderData.dsId} from the Harrington family archive.`
+          ? `Shared digital source ${loaderData.dsId} from The Francis Files.`
           : "This shared archive link is no longer available.",
       },
       { name: "robots", content: "noindex, nofollow, noarchive" },
@@ -86,7 +86,7 @@ function SharedSourcePage() {
       <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-6 text-center">
         <h1 className="font-display text-2xl">This link is no longer available</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          The owner of the Harrington family archive has disabled or replaced this share link.
+          The owner of The Francis Files has disabled or replaced this share link.
         </p>
       </main>
     );
@@ -212,7 +212,7 @@ function SharedSourcePage() {
       </div>
 
       <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground sm:px-8">
-        Harrington Family Archive · shared privately by link · {source.dsId}
+        The Francis Files · shared privately by link · {source.dsId}
       </footer>
     </main>
   );

@@ -9,15 +9,15 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
-      { title: "Reset Password — Harrington Letter Archive" },
+      { title: "Reset Password — The Francis Files" },
       {
         name: "description",
-        content: "Request a password reset for the Harrington Letter Archive.",
+        content: "Request a password reset for The Francis Files.",
       },
-      { property: "og:title", content: "Reset Password — Harrington Letter Archive" },
+      { property: "og:title", content: "Reset Password — The Francis Files" },
       {
         property: "og:description",
-        content: "Request a password reset for the Harrington Letter Archive.",
+        content: "Request a password reset for The Francis Files.",
       },
     ],
   }),

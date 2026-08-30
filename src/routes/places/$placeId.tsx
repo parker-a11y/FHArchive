@@ -13,12 +13,12 @@ import { displayDate } from "@/lib/archive";
 export const Route = createFileRoute("/places/$placeId")({
   head: () => ({
     meta: [
-      { title: "Place Record — Harrington Letter Archive" },
+      { title: "Place Record — The Francis Files" },
       {
         name: "description",
         content: "Location details, coordinates, historical notes and associated letters.",
       },
-      { property: "og:title", content: "Place Record — Harrington Letter Archive" },
+      { property: "og:title", content: "Place Record — The Francis Files" },
       {
         property: "og:description",
         content: "Location details, coordinates and associated letters.",

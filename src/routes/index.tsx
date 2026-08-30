@@ -69,13 +69,13 @@ async function fetchDailySummary() {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Harrington Letter Archive" },
+      { title: "Dashboard — The Francis Files" },
       {
         name: "description",
         content:
-          "Cataloging status overview for the Harrington family letter collection: scanning, transcription and review progress.",
+          "Cataloging status overview for The Francis Files collection: scanning, transcription and review progress.",
       },
-      { property: "og:title", content: "Dashboard — Harrington Letter Archive" },
+      { property: "og:title", content: "Dashboard — The Francis Files" },
       {
         property: "og:description",
         content: "Cataloging, scanning and transcription progress across the letter collection.",
@@ -265,7 +265,7 @@ function Dashboard() {
     <>
       <PageHeader
         title="Archive Dashboard"
-        description="Harrington family letters — cataloging status."
+        description="The Francis Files letters — cataloging status."
         actions={
           <Button
             size="lg"
