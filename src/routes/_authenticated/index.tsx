@@ -312,7 +312,7 @@ function Dashboard() {
             alt="The Francis Files"
             width={1024}
             height={1024}
-            className="size-16 shrink-0 object-contain sm:size-20"
+            className="size-32 shrink-0 object-contain sm:size-40"
           />
         }
         actions={
