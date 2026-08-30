@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
-import { getCarriedContainer, setCarriedContainer } from "@/lib/containers";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
@@ -80,7 +79,6 @@ const blank = {
   storage_type: "",
   storage_container: "",
   storage_folder: "",
-  storage_position: "",
   storage_notes: "",
   source_container_id: "",
   original_order_notes: "",
@@ -520,16 +518,13 @@ function QuickEntry() {
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-1">Original source container (provenance)</div>
               <p className="mb-3 text-xs text-muted-foreground">
-                Where this item was found. Carried forward to the next record until you change it —
-                separate from current physical storage above.
+                Where this item was found — separate from current physical storage above. Defaults
+                to not selected.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
-                  onChange={(v) => {
-                    set("source_container_id", v);
-                    setCarriedContainer(v);
-                  }}
+                  onChange={(v) => set("source_container_id", v)}
                 />
                 <div className="space-y-1.5">
                   <Label className="field-label">Original order / position notes</Label>
