@@ -253,13 +253,6 @@ function Dashboard() {
       to: "/letters?scan=has",
     },
     {
-      label: "Records with scans",
-      value: c((l) => l.image_count > 0),
-      tone: "teal",
-      icon: FileCheck2,
-      to: "/letters?scan=has",
-    },
-    {
       label: "Transcribed",
       value: c((l) => l.transcription_status === "human_verified"),
       tone: "emerald",
