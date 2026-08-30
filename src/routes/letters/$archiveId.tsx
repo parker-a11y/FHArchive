@@ -550,7 +550,6 @@ function LetterPage() {
               { key: "scan_status", label: "Scan status", opts: SCAN_STATUS },
               { key: "review_status", label: "Review status", opts: REVIEW_STATUS },
               { key: "publication_status", label: "Publication status", opts: PUBLICATION_STATUS },
-              { key: "original_copy", label: "Original / copy", opts: ORIGINAL_COPY },
               { key: "research_status", label: "Research status", opts: RECORD_RESEARCH_STATUS },
             ].map((f) => (
 
