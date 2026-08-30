@@ -137,6 +137,7 @@ function PersonPage() {
               </div>
             ),
           )}
+          <AliasManager personId={person.id} />
         </div>
         <div>
           <List title="Letters written by" rows={written} />
