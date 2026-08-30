@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getSharedRecord } from "@/lib/shares.functions";
 import { RECORD_TYPES, labelOf } from "@/lib/archive";
 
@@ -53,6 +55,7 @@ function Tags({ label, items }: { label: string; items: string[] }) {
 function SharedRecordPage() {
   const record = Route.useLoaderData();
   const [index, setIndex] = useState(0);
+  const [showTranscription, setShowTranscription] = useState(false);
 
   if (!record) {
     return (
@@ -78,13 +81,27 @@ function SharedRecordPage() {
           <div className="archive-id font-display text-3xl leading-none sm:text-4xl">
             {record.archiveId}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
             <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
               {labelOf(RECORD_TYPES, record.recordType)}
               {record.subtype ? ` · ${record.subtype}` : ""}
             </span>
             {record.title && <span className="font-medium">{record.title}</span>}
             <span className="text-muted-foreground">{dateLine}</span>
+            {record.transcription && (
+              <Button
+                type="button"
+                size="sm"
+                variant={showTranscription ? "secondary" : "outline"}
+                className="sm:ml-auto"
+                aria-expanded={showTranscription}
+                aria-controls="shared-record-transcription"
+                onClick={() => setShowTranscription((visible) => !visible)}
+              >
+                <FileText className="size-4" />
+                {showTranscription ? "Hide transcription" : "Show transcription"}
+              </Button>
+            )}
           </div>
           {record.scope === "file" && record.itemLabel && (
             <p className="mt-2 text-xs text-muted-foreground">
@@ -145,12 +162,12 @@ function SharedRecordPage() {
             <p className="text-sm text-muted-foreground">No images are available for this record.</p>
           )}
 
-          {record.transcription && (
-            <section className="mt-8">
+          {record.transcription && showTranscription && (
+            <section id="shared-record-transcription" className="mt-8 scroll-mt-6">
               <h2 className="font-display text-lg">Transcription</h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+              <div className="mt-2 max-h-[70vh] overflow-y-auto whitespace-pre-wrap rounded border border-border bg-card p-4 text-sm leading-relaxed">
                 {record.transcription}
-              </p>
+              </div>
             </section>
           )}
         </section>
