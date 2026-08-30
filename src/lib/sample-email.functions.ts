@@ -18,14 +18,22 @@ export const sendSampleEmail = createServerFn({ method: 'POST' })
     const { sendTemplateEmail } = await import('@/lib/email-templates/send-email')
     const result = await sendTemplateEmail('archive-record', data.to, {
       templateData: {
-        archiveName: 'The Francis Files',
+        headerTitle: 'From The Francis Files',
+        headerSubtitle: 'A sample shared record',
+        message:
+          'This is a sample email from The Francis Files showing how a shared record looks. Links open private, unlisted archive pages and can be revoked at any time.',
         senderName: 'The Francis Files',
-        recordTitle: 'Sample Record — Letter from Francis to Jacquelyn',
-        recordNumber: 'FH0001',
-        recordDescription:
-          'This is a sample email from The Francis Files showing how a shared record looks. The link below opens a private, unlisted archive page.',
-        shareUrl: 'https://fharchive.com',
-        shareLabel: 'View this record',
+        records: [
+          {
+            identifier: 'FH0001',
+            title: 'Letter from Francis to Jacquelyn',
+            date: '1944-09-23',
+            details: ['Personal letter', 'World War II'],
+            summary:
+              'A wartime letter home describing life at sea aboard the USS Doyle C. Barnes.',
+            url: 'https://fharchive.com',
+          },
+        ],
       },
       idempotencyKey: `sample-${Date.now()}`,
     })
