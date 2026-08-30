@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Pencil, Trash2, Check, X } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RECORD_TYPES, subtypesFor } from "@/lib/archive";
@@ -15,7 +15,11 @@ import {
 } from "@/lib/categories";
 
 export const Route = createFileRoute("/_authenticated/categories")({
-  component: CategoriesPage,
+  component: () => (
+    <AdminOnly>
+      <CategoriesPage />
+    </AdminOnly>
+  ),
   head: () => ({
     meta: [
       { title: "Category Management — The Francis Files" },

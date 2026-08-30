@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,9 +52,11 @@ export const Route = createFileRoute("/_authenticated/catalog")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <QuickEntry />
-    </AppShell>
+    <AdminOnly>
+      <AppShell>
+        <QuickEntry />
+      </AppShell>
+    </AdminOnly>
   ),
 });
 

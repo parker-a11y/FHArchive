@@ -55,6 +55,7 @@ import {
   labelOf,
 } from "@/lib/archive";
 
+import { useAuth } from "@/hooks/useAuth";
 import { PersonCombobox } from "@/components/PersonCombobox";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -119,6 +120,7 @@ function LetterPage() {
   const { hl, tab } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { isGuestViewer } = useAuth();
 
   const { data: letter, isLoading } = useQuery({
     queryKey: ["letter", archiveId],
@@ -316,62 +318,65 @@ function LetterPage() {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <ShareStatusBadge letter={letter} />
-            <ShareDialog letter={letter} />
-            <EmailArchiveDialog
-              kind="letter"
-              id={letter.id}
-              identifier={letter.archive_id}
-              title={letter.title}
-            />
-
             <LabelDialog letter={letter} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="text-destructive hover:text-destructive">
-                  <Trash2 className="mr-1.5 size-4" />
-                  Delete record
+            {!isGuestViewer && (
+              <>
+                <ShareDialog letter={letter} />
+                <EmailArchiveDialog
+                  kind="letter"
+                  id={letter.id}
+                  identifier={letter.archive_id}
+                  title={letter.title}
+                />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="text-destructive hover:text-destructive">
+                      <Trash2 className="mr-1.5 size-4" />
+                      Delete record
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete {letter.archive_id}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This permanently removes the record, its scans, links, and edit history. If{" "}
+                        {letter.archive_id} is the most recently issued number, it will be reused
+                        for your next entry. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={deleting}
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          setDeleting(true);
+                          try {
+                            const reused = await deleteLetter(letter);
+                            await qc.invalidateQueries();
+                            toast.success(
+                              reused
+                                ? `${letter.archive_id} deleted — number will be reused`
+                                : `${letter.archive_id} deleted`,
+                            );
+                            navigate({ to: "/letters" });
+                          } catch (err) {
+                            toast.error((err as Error).message);
+                          } finally {
+                            setDeleting(false);
+                          }
+                        }}
+                      >
+                        {deleting ? "Deleting…" : "Delete permanently"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <Button onClick={save} disabled={!dirty}>
+                  {dirty ? "Save changes" : "Saved"}
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete {letter.archive_id}?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This permanently removes the record, its scans, links, and edit history. If{" "}
-                    {letter.archive_id} is the most recently issued number, it will be reused for
-                    your next entry. This cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    disabled={deleting}
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      setDeleting(true);
-                      try {
-                        const reused = await deleteLetter(letter);
-                        await qc.invalidateQueries();
-                        toast.success(
-                          reused
-                            ? `${letter.archive_id} deleted — number will be reused`
-                            : `${letter.archive_id} deleted`,
-                        );
-                        navigate({ to: "/letters" });
-                      } catch (err) {
-                        toast.error((err as Error).message);
-                      } finally {
-                        setDeleting(false);
-                      }
-                    }}
-                  >
-                    {deleting ? "Deleting…" : "Delete permanently"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <Button onClick={save} disabled={!dirty}>
-              {dirty ? "Save changes" : "Saved"}
-            </Button>
+              </>
+            )}
           </div>
 
         </div>
@@ -409,6 +414,9 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
+          {/* Guests browse in read-only mode — the disabled fieldset blocks edits
+              in every input/button below without changing the layout. */}
+          <fieldset disabled={isGuestViewer} className="contents">
           <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="field-label">Record type</label>
@@ -773,7 +781,7 @@ function LetterPage() {
               </div>
             </div>
           </div>
-
+          </fieldset>
         </TabsContent>
 
         <TabsContent value="digitization" className="mt-6">

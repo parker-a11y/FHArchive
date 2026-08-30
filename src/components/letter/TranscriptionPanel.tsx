@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
@@ -69,6 +70,7 @@ function PageEditor({
   busy,
   onSaved,
   highlight,
+  readOnly,
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
@@ -78,6 +80,7 @@ function PageEditor({
   busy: boolean;
   onSaved: () => void;
   highlight?: string;
+  readOnly?: boolean;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -102,7 +105,9 @@ function PageEditor({
   return (
     <div className="rounded border border-border bg-card p-3">
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
+        {!readOnly && (
+          <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
+        )}
         <span className="text-sm font-medium">{file.label || file.original_filename}</span>
         <StatusPill status={record?.status} />
         {isEnvelopePage(file.label, file.original_filename) && (
@@ -110,14 +115,16 @@ function PageEditor({
             envelope — kept out of combined text
           </span>
         )}
-        <Button size="sm" variant="outline" className="ml-auto" onClick={onTranscribe} disabled={busy}>
-          {busy ? (
-            <Loader2 className="mr-1 size-3.5 animate-spin" />
-          ) : (
-            <Sparkles className="mr-1 size-3.5" />
-          )}
-          Transcribe with ChatGPT
-        </Button>
+        {!readOnly && (
+          <Button size="sm" variant="outline" className="ml-auto" onClick={onTranscribe} disabled={busy}>
+            {busy ? (
+              <Loader2 className="mr-1 size-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1 size-3.5" />
+            )}
+            Transcribe with ChatGPT
+          </Button>
+        )}
       </div>
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
@@ -156,18 +163,23 @@ function PageEditor({
             className="font-mono text-sm"
             placeholder="Transcription — AI output appears here and can be corrected."
             value={text}
+            readOnly={readOnly}
             onChange={(e) => {
               setText(e.target.value);
               setDirty(true);
             }}
           />
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={() => save(false)} disabled={!record}>
-              Save Corrections
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => save(true)} disabled={!record}>
-              <BadgeCheck className="mr-1 size-3.5" /> Mark Human Verified
-            </Button>
+            {!readOnly && (
+              <>
+                <Button size="sm" onClick={() => save(false)} disabled={!record}>
+                  Save Corrections
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => save(true)} disabled={!record}>
+                  <BadgeCheck className="mr-1 size-3.5" /> Mark Human Verified
+                </Button>
+              </>
+            )}
             {record?.ai_text && (
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Original AI transcription</summary>
@@ -185,6 +197,7 @@ function PageEditor({
 
 export function TranscriptionPanel({ letter, highlight }: { letter: Letter; highlight?: string }) {
   const qc = useQueryClient();
+  const { isGuestViewer } = useAuth();
   const [verified, setVerified] = useState(letter.transcription_verified ?? "");
   const [status, setStatus] = useState(letter.transcription_status);
   const [selected, setSelected] = useState<string[]>([]);

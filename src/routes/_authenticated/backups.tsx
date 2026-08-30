@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { CloudUpload, HardDrive, RefreshCw, ShieldCheck } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { triggerBackup } from "@/lib/backup.functions";
@@ -28,9 +28,11 @@ export const Route = createFileRoute("/_authenticated/backups")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <Backups />
-    </AppShell>
+    <AdminOnly>
+      <AppShell>
+        <Backups />
+      </AppShell>
+    </AdminOnly>
   ),
 });
 

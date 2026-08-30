@@ -39,6 +39,7 @@ import { fetchSources } from "@/lib/sources";
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { ArchiveNotes } from "@/components/ArchiveNotes";
+import { useAuth } from "@/hooks/useAuth";
 
 /** Tone/icon per built-in record type; anything else falls back to Box/indigo. */
 const CATEGORY_STYLES: Record<string, { tone: Tone; icon: LucideIcon }> = {
@@ -205,6 +206,7 @@ function Stat({
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { isGuestViewer } = useAuth();
   // All aggregate counts come from one database-side call — no table downloads.
   const { data: stats0, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
@@ -324,13 +326,15 @@ function Dashboard() {
           />
         }
         actions={
-          <Button
-            size="lg"
-            className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
-            onClick={() => navigate({ to: "/catalog" })}
-          >
-            <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
-          </Button>
+          isGuestViewer ? undefined : (
+            <Button
+              size="lg"
+              className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
+              onClick={() => navigate({ to: "/catalog" })}
+            >
+              <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
+            </Button>
+          )
         }
       />
       <div className="p-4 sm:p-8">

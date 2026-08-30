@@ -10,6 +10,8 @@ type AuthState = {
   isAdmin: boolean;
   isApprovedGuest: boolean;
   isPendingGuest: boolean;
+  /** Approved guest without admin rights — view-only experience. */
+  isGuestViewer: boolean;
   canReadArchive: boolean;
 };
 
@@ -20,6 +22,7 @@ const AuthContext = createContext<AuthState>({
   isAdmin: false,
   isApprovedGuest: false,
   isPendingGuest: false,
+  isGuestViewer: false,
   canReadArchive: false,
 });
 
@@ -84,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         ...access,
+        isGuestViewer: access.isApprovedGuest && !access.isAdmin,
       }}
     >
       {children}

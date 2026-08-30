@@ -29,21 +29,21 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/catalog", label: "Quick Entry", icon: PlusSquare },
+  { to: "/catalog", label: "Quick Entry", icon: PlusSquare, adminOnly: true },
   { to: "/letters", label: "All Records", icon: Files },
   { to: "/sources", label: "Digital Sources", icon: Globe },
   { to: "/containers", label: "Source Containers", icon: Box },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
-  { to: "/queues", label: "Work Queues", icon: ListChecks },
+  { to: "/queues", label: "Work Queues", icon: ListChecks, adminOnly: true },
   { to: "/people", label: "People", icon: Users },
   { to: "/organizations", label: "Organizations", icon: Ship },
   { to: "/events", label: "Events", icon: CalendarDays },
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
-  { to: "/categories", label: "Categories", icon: Tags },
-  { to: "/emails", label: "Sent Email", icon: Mail },
-  { to: "/backups", label: "Backups", icon: ShieldCheck },
+  { to: "/categories", label: "Categories", icon: Tags, adminOnly: true },
+  { to: "/emails", label: "Sent Email", icon: Mail, adminOnly: true },
+  { to: "/backups", label: "Backups", icon: ShieldCheck, adminOnly: true },
 ];
 
 
@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const navItems = isAdmin
     ? [...NAV, { to: "/admin/users", label: "Users", icon: UserCog }]
-    : NAV;
+    : NAV.filter((item) => !(item as { adminOnly?: boolean }).adminOnly);
 
   const nav = (onNavigate?: () => void) => (
     <>
@@ -151,6 +151,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Wraps admin/write pages: approved guests are view-only, so deep links to
+ * entry/management pages send them back to the dashboard instead of showing
+ * forms that would only fail on save.
+ */
+export function AdminOnly({ children }: { children: ReactNode }) {
+  const { loading, isGuestViewer } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && isGuestViewer) navigate({ to: "/", replace: true });
+  }, [loading, isGuestViewer, navigate]);
+
+  if (isGuestViewer) return null;
+  return <>{children}</>;
 }
 
 export function PageHeader({
