@@ -161,7 +161,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   /* ------------------------------- upload ------------------------------- */
 
   async function uploadFiles(list: FileList | File[]) {
-    const chosen = Array.from(list);
+    const chosen = sortByFilename(Array.from(list));
     if (!chosen.length) return;
     const startOrder = files.length;
     let added = 0;
@@ -184,13 +184,15 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
       const parsed = parseScanFilename(file.name);
       const matches = parsed.fh === null ? true : parsed.fh === normalizeFh(letter.archive_id);
+      const seq = parsed.seq ?? null;
+      const sortOrder = seq ?? startOrder + i + 1;
 
       const { data: inserted, error: insErr } = await supabase
         .from("digital_files")
         .insert({
           letter_id: letter.id,
-          seq: parsed.seq,
-          sort_order: parsed.seq ?? startOrder + i + 1,
+          seq,
+          sort_order: sortOrder,
           original_filename: file.name,
           master_path: masterPath,
           master_mime: file.type || null,
