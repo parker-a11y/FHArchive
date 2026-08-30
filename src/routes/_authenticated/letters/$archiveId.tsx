@@ -410,6 +410,30 @@ function LetterPage() {
         </div>
       </header>
 
+      {showTranscription && (
+        <section className="mx-4 mt-4 rounded border border-border bg-card p-4 sm:mx-8">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Transcription</h3>
+            <span className="text-xs text-muted-foreground">
+              {letter.transcription_verified?.trim()
+                ? "Human verified"
+                : letter.transcription_raw_ai?.trim()
+                  ? "AI transcription"
+                  : "No transcription"}
+            </span>
+          </div>
+          <div className="max-h-96 overflow-auto whitespace-pre-wrap text-sm leading-relaxed">
+            {letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim() ? (
+              letter.transcription_verified?.trim() || letter.transcription_raw_ai
+            ) : (
+              <span className="text-muted-foreground">
+                No transcription available yet. Open the Transcription tab to generate one.
+              </span>
+            )}
+          </div>
+        </section>
+      )}
+
       <Tabs key={tab ?? "catalog"} defaultValue={tab === "transcription" ? "transcription" : "catalog"} className="px-4 sm:px-8 py-6">
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
