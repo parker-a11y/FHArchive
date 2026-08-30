@@ -28,9 +28,14 @@ export const Route = createFileRoute('/api/send-sample-email')({
           return Response.json({ error: 'Valid "to" address required' }, { status: 400 })
         }
 
+        const template = body?.template === 'guest-approved' ? 'guest-approved' : 'archive-record'
+        const guestData = {
+          guestName: typeof body?.guestName === 'string' ? body.guestName : 'Parker',
+          archiveUrl: 'https://fharchive.com',
+        }
         const { sendTemplateEmail } = await import('@/lib/email-templates/send-email')
-        const result = await sendTemplateEmail('archive-record', to, {
-          templateData: {
+        const result = await sendTemplateEmail(template, to, {
+          templateData: template === 'guest-approved' ? guestData : {
             headerTitle: 'From The Francis Files',
             headerSubtitle: 'A sample shared record',
             message:
