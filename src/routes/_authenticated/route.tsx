@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,13 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-  const { loading, isPendingGuest, signOut } = useAuthWithSignOut();
+  const { loading, isPendingGuest } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   if (loading) {
     return (
@@ -42,12 +48,4 @@ function AuthenticatedLayout() {
   }
 
   return <Outlet />;
-}
-
-function useAuthWithSignOut() {
-  const auth = useAuth();
-  async function signOut() {
-    await supabase.auth.signOut();
-  }
-  return { ...auth, signOut };
 }
