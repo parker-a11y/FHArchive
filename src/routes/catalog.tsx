@@ -224,7 +224,7 @@ function QuickEntry() {
       primary_person: f.primary_person,
       storage_location: f.storage_location,
       storage_type: f.storage_type,
-      storage_container: f.storage_container,
+      
       storage_folder: f.storage_folder,
       original_copy: f.original_copy,
       author: isLetterType(f.record_type) ? f.author : "",
