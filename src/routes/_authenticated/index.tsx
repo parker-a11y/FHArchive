@@ -25,6 +25,8 @@ import {
   Shield,
   Globe,
   Paperclip,
+  Sparkles,
+
 
   type LucideIcon,
 } from "lucide-react";
