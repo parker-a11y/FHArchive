@@ -46,7 +46,7 @@ const searchSchema = z.object({
   tstatus: z.string().optional(),
   review: z.string().optional(),
   scan: z.string().optional(), // "has" | "none"
-  cataloged: z.string().optional(), // "1"
+  cataloged: z.coerce.string().optional(), // "1"
   uncertain: z.string().optional(), // "1"
 });
 
