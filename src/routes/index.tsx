@@ -65,9 +65,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   artifact: "Artifacts",
 };
 
-/** Always shown, even at zero. */
-const CORE_CATEGORIES = new Set(Object.keys(CATEGORY_STYLES));
-
 async function fetchDailySummary() {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -147,12 +144,14 @@ const TONE_CHIP: Record<Tone, string> = {
 function Stat({
   label,
   value,
+  sub,
   to,
   tone = "amber",
   icon: Icon,
 }: {
   label: string;
   value: number;
+  sub?: string;
   to?: string;
   tone?: Tone;
   icon?: LucideIcon;
