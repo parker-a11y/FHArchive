@@ -157,6 +157,10 @@ function LetterPage() {
       title: letter.title ?? "",
       date_end: letter.date_end ?? "",
       primary_person: letter.primary_person ?? "",
+      salutation_as_written: letter.salutation_as_written ?? "",
+      addressee_normalized: letter.addressee_normalized ?? "",
+      closing_as_written: letter.closing_as_written ?? "",
+      signature_as_written: letter.signature_as_written ?? "",
       physical_description: letter.physical_description ?? "",
       storage_type: letter.storage_type ?? "",
       storage_folder: letter.storage_folder ?? "",
@@ -681,6 +685,49 @@ function LetterPage() {
               </div>
             ))}
 
+
+            {isLetterType(form.record_type as string) && (
+              <div className="col-span-full rounded border border-border bg-card p-4">
+                <div className="field-label mb-1">Correspondence details (optional)</div>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Recorded exactly as written, except the normalized addressee. Leave blank when
+                  the document gives no basis — nothing here is required.
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {[
+                    {
+                      key: "salutation_as_written",
+                      label: "Salutation — as written",
+                      placeholder: "My Darling",
+                    },
+                    {
+                      key: "addressee_normalized",
+                      label: "Addressee — normalized",
+                      placeholder: "Jacqueline Harrington",
+                    },
+                    {
+                      key: "closing_as_written",
+                      label: "Closing — as written",
+                      placeholder: "Lovingly",
+                    },
+                    {
+                      key: "signature_as_written",
+                      label: "Signature — as written",
+                      placeholder: "F",
+                    },
+                  ].map((f) => (
+                    <div key={f.key}>
+                      <label className="field-label">{f.label}</label>
+                      <Input
+                        value={(form[f.key] as string) ?? ""}
+                        placeholder={f.placeholder}
+                        onChange={(e) => set(f.key, e.target.value)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {[
               { key: "date_precision", label: "Date status / precision", opts: DATE_PRECISION },
