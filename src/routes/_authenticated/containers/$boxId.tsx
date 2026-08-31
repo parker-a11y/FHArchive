@@ -147,9 +147,11 @@ function ContainerPage() {
                 <Button className="gap-2" disabled={!dirty} onClick={save}>
                   <Save className="size-4" /> Save
                 </Button>
-                <Button variant="ghost" size="icon" onClick={remove}>
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" onClick={remove}>
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                )}
               </>
             )}
           </div>
