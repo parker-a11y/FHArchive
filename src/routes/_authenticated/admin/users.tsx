@@ -303,3 +303,146 @@ function DeleteAccountDialog({
     </AlertDialog>
   );
 }
+
+function AddAccountDialog() {
+  const queryClient = useQueryClient();
+  const createAccountFn = useServerFn(createAccount);
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<"guest" | "archivist">("guest");
+  const [password, setPassword] = useState("");
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      createAccountFn({
+        data: { email, fullName, role, password: password || undefined },
+      }),
+    onSuccess: (res) => {
+      setCreated({ email: res.email, password: res.password });
+      setEmail("");
+      setFullName("");
+      setPassword("");
+      setRole("guest");
+      queryClient.invalidateQueries({ queryKey: ["admin", "profiles"] });
+      toast.success("Account created and approved");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) setCreated(null);
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <UserPlus className="mr-1 size-4" />
+          Add user
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{created ? "Account created" : "Add a new account"}</DialogTitle>
+          <DialogDescription>
+            {created
+              ? "Share these sign-in details privately. The user can change the password after signing in."
+              : "Creates an approved account immediately — no invitation or approval step needed."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {created ? (
+          <div className="space-y-3">
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <div>
+                <span className="text-muted-foreground">Email: </span>
+                {created.email}
+              </div>
+              <div className="mt-1 font-mono">
+                <span className="font-sans text-muted-foreground">Password: </span>
+                {created.password}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(
+                  `Email: ${created.email}\nPassword: ${created.password}`,
+                );
+                toast.success("Copied to clipboard");
+              }}
+            >
+              <Copy className="mr-1 size-3.5" />
+              Copy details
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-email">Email</Label>
+              <Input
+                id="new-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-name">Full name (optional)</Label>
+              <Input
+                id="new-name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Access level</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as "guest" | "archivist")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="guest">Guest — view only</SelectItem>
+                  <SelectItem value="archivist">Archivist — can edit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-password">Temporary password (optional)</Label>
+              <Input
+                id="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to generate one"
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          {created ? (
+            <Button onClick={() => setOpen(false)}>Done</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => mutation.mutate()}
+                disabled={mutation.isPending || !email.trim()}
+              >
+                {mutation.isPending ? "Creating…" : "Create account"}
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
