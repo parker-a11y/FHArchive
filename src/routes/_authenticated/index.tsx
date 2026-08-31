@@ -1,5 +1,5 @@
 import logoMark from "@/assets/francis-files-logo.png";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -233,6 +233,14 @@ function Dashboard() {
   });
   const [dailyOpen, setDailyOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const dailyRef = useRef<HTMLDivElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (dailyOpen) dailyRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [dailyOpen]);
+  useEffect(() => {
+    if (categoriesOpen) categoriesRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [categoriesOpen]);
   const { data: daily } = useQuery({
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
@@ -346,6 +354,7 @@ function Dashboard() {
               <Stat
                 label="New today"
                 value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
+                sub={dailyOpen ? "Click to collapse" : "Click for summary"}
                 tone="blue"
                 icon={Sparkles}
                 onClick={() => setDailyOpen((v) => !v)}
@@ -366,7 +375,7 @@ function Dashboard() {
             </div>
 
             {dailyOpen && (
-              <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div ref={dailyRef} className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-baseline justify-between">
                   <h2 className="field-label">Daily summary — today</h2>
                   <span className="text-xs text-muted-foreground">
@@ -387,7 +396,7 @@ function Dashboard() {
             )}
 
             {categoriesOpen && (
-              <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div ref={categoriesRef} className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-baseline justify-between">
                   <h2 className="field-label">Record categories</h2>
                   <button
