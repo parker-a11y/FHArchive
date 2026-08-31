@@ -89,7 +89,7 @@ function Stat({
 
 export function DigitizationPanel({ letter }: { letter: Letter }) {
   const qc = useQueryClient();
-  const { isGuestViewer } = useAuth();
+  const { isGuestViewer, isAdmin } = useAuth();
   const key = ["digital-files", letter.id];
   const [progress, setProgress] = useState<Progress>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -680,8 +680,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       </div>
       </fieldset>
 
-      {/* Uploader — hidden for view-only guests */}
-      {!isGuestViewer && (
+      {/* Uploader — admins only */}
+      {isAdmin && (
       <div
         onDragEnter={(e) => {
           e.preventDefault();
@@ -914,14 +914,16 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                           )}
                           Transcribe
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="size-7 text-destructive"
-                          onClick={() => remove(f)}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="size-7 text-destructive"
+                            onClick={() => remove(f)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>

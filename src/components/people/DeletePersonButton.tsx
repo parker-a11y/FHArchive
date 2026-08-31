@@ -27,7 +27,7 @@ type Props = {
 
 /** Confirms and deletes a person record; all record links and aliases go with it. */
 export function DeletePersonButton({ personId, name, children, redirectAfter }: Props) {
-  const { isGuestViewer } = useAuth();
+  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -50,7 +50,7 @@ export function DeletePersonButton({ personId, name, children, redirectAfter }: 
 
   return (
     <AlertDialog>
-      {!isGuestViewer && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
+      {isAdmin && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>
