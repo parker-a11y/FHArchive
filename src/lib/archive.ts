@@ -300,8 +300,47 @@ export const TRANSCRIPTION_STATUS = [
   { value: "ai_transcribed", label: "AI Transcribed" },
   { value: "needs_review", label: "Needs Review" },
   { value: "human_verified", label: "Human Verified" },
+  { value: "not_required", label: "Transcription Not Required" },
   { value: "failed", label: "Failed" },
 ] as const;
+
+/**
+ * Universal three-state transcription/AI status shared by physical FH records
+ * and Digital Archive records. Individual collections keep their own, more
+ * granular workflow statuses; this is the roll-up used by dashboards, queues
+ * and status indicators.
+ */
+export type TranscriptionState =
+  | "NEEDS_TRANSCRIPTION"
+  | "TRANSCRIPTION_COMPLETE"
+  | "TRANSCRIPTION_NOT_REQUIRED";
+
+export const TRANSCRIPTION_STATE_LABELS: Record<TranscriptionState, string> = {
+  NEEDS_TRANSCRIPTION: "Transcription needed",
+  TRANSCRIPTION_COMPLETE: "Transcription complete",
+  TRANSCRIPTION_NOT_REQUIRED: "Transcription not required",
+};
+
+/** Roll-up state for an FH record (letters.transcription_status). */
+export function letterTranscriptionState(status: string | null | undefined): TranscriptionState {
+  if (status === "not_required") return "TRANSCRIPTION_NOT_REQUIRED";
+  if (status === "human_verified") return "TRANSCRIPTION_COMPLETE";
+  return "NEEDS_TRANSCRIPTION";
+}
+
+/** Roll-up state for a Digital Archive record (digital_sources.transcription_status). */
+export function sourceTranscriptionState(status: string | null | undefined): TranscriptionState {
+  if (status === "not_required") return "TRANSCRIPTION_NOT_REQUIRED";
+  if (status === "complete") return "TRANSCRIPTION_COMPLETE";
+  return "NEEDS_TRANSCRIPTION";
+}
+
+export const SOURCE_TRANSCRIPTION_STATUS = [
+  { value: "needed", label: "Transcription Needed" },
+  { value: "complete", label: "Transcription Complete" },
+  { value: "not_required", label: "Transcription Not Required" },
+] as const;
+
 
 
 export const SCAN_STATUS = [
