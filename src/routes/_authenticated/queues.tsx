@@ -110,7 +110,7 @@ function Queues() {
       label: "Completed",
       fn: (l) =>
         l.image_count > 0 &&
-        l.transcription_status === "human_verified" &&
+        (l.transcription_status === "human_verified" || l.transcription_status === "not_required") &&
         l.review_status === "reviewed",
     },
   ];
