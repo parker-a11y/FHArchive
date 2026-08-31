@@ -18,7 +18,11 @@ import {
   transcriptionStatusTone,
   type ScanTranscription,
 } from "@/lib/transcription";
-import { transcribeRecord, transcribeScans } from "@/lib/transcription.functions";
+import {
+  rollupRecordTranscription,
+  transcribeRecord,
+  transcribeScans,
+} from "@/lib/transcription.functions";
 import { HighlightedText, countMatches } from "@/lib/highlight";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
@@ -175,6 +179,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   const [selected, setSelected] = useState<string[]>([]);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [recordBusy, setRecordBusy] = useState(false);
+  const [rollupConflict, setRollupConflict] = useState(false);
 
   useEffect(() => {
     setVerified(letter.transcription_verified ?? "");
@@ -201,6 +206,18 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     qc.invalidateQueries({ queryKey: ["letters"] });
   };
 
+  /** Keeps the record-level transcription in step with the page transcriptions. */
+  async function rollup(force = false) {
+    try {
+      const r = await rollupRecordTranscription({ data: { letterId: letter.id, force } });
+      setRollupConflict(Boolean(r?.conflict));
+      if (force && !r?.conflict) toast.success("Combined transcription refreshed from pages");
+    } catch {
+      /* non-fatal: page text is already saved */
+    }
+    refreshLetter();
+  }
+
   async function runScans(ids: string[]) {
     if (!ids.length) return;
     setBusyIds((b) => [...b, ...ids]);
@@ -215,6 +232,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     } finally {
       setBusyIds((b) => b.filter((id) => !ids.includes(id)));
       refetch();
+      await rollup();
     }
   }
 
@@ -290,7 +308,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     if (ok) toast.success(`${ok} page${ok === 1 ? "" : "s"} marked human verified`);
     if (failed) toast.error(`${failed} page${failed === 1 ? "" : "s"} failed to verify`);
     refetch();
-    refreshLetter();
+    await rollup();
   }
 
   return (
@@ -366,7 +384,10 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             }
             onTranscribe={() => runScans([f.id])}
             busy={busyIds.includes(f.id)}
-            onSaved={() => refetch()}
+            onSaved={() => {
+              refetch();
+              void rollup();
+            }}
             highlight={highlight}
             readOnly={isGuestViewer}
           />
@@ -390,6 +411,17 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             </Button>
           )}
         </div>
+
+        {rollupConflict && !isGuestViewer && (
+          <div className="mb-3 flex flex-wrap items-center gap-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:bg-amber-950/30">
+            <span>
+              Pages have changed since this combined transcription was edited by hand.
+            </span>
+            <Button size="sm" variant="outline" onClick={() => rollup(true)}>
+              Refresh combined transcription
+            </Button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div>

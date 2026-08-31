@@ -166,3 +166,101 @@ export async function transcribeImage(dataUrl: string, pageNote: string) {
 export function isEnvelope(label: string | null) {
   return (label ?? "").toLowerCase().includes("envelope");
 }
+
+const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
+
+export type RollupResult = {
+  updated: boolean;
+  conflict: boolean;
+  allVerified: boolean;
+  pages: number;
+};
+
+/**
+ * Rebuilds the record-level transcription from its page transcriptions so
+ * shared links and emails always reflect the latest page text. Never
+ * overwrites a hand-edited combined transcription unless `force` is set.
+ */
+export async function rebuildRecordTranscription(
+  supabase: SupabaseClient,
+  letterId: string,
+  force = false,
+): Promise<RollupResult> {
+  const [{ data: files }, { data: rows }, { data: letter }] = await Promise.all([
+    supabase
+      .from("digital_files")
+      .select("id, label, original_filename, sort_order")
+      .eq("letter_id", letterId)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("scan_transcriptions")
+      .select("file_id, ai_text, verified_text, status")
+      .eq("letter_id", letterId),
+    supabase
+      .from("letters")
+      .select("transcription_raw_ai, transcription_verified, transcription_status")
+      .eq("id", letterId)
+      .maybeSingle(),
+  ]);
+
+  const byFile = new Map((rows ?? []).map((r: any) => [r.file_id, r]));
+  const ordered = (files ?? []).filter(
+    (f: any) => !isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`),
+  );
+
+  const aiParts: string[] = [];
+  const bestParts: string[] = [];
+  let withText = 0;
+  let verifiedCount = 0;
+
+  ordered.forEach((f: any, i: number) => {
+    const r: any = byFile.get(f.id);
+    if (!r) return;
+    const head = `— Page ${i + 1}${f.label ? ` (${f.label})` : ""} —`;
+    const best = (r.verified_text?.trim() || r.ai_text?.trim() || "") as string;
+    if (!best) return;
+    withText += 1;
+    if (r.status === "human_verified") verifiedCount += 1;
+    bestParts.push(`${head}\n\n${best}`);
+    if (r.ai_text?.trim()) aiParts.push(`${head}\n\n${r.ai_text.trim()}`);
+  });
+
+  if (!withText) return { updated: false, conflict: false, allVerified: false, pages: 0 };
+
+  const combinedBest = bestParts.join("\n\n");
+  const combinedAi = aiParts.join("\n\n");
+  const allVerified = verifiedCount === withText;
+
+  const existingVerified = (letter as any)?.transcription_verified as string | null;
+  const conflict =
+    !force &&
+    Boolean(norm(existingVerified)) &&
+    norm(existingVerified) !== norm(combinedBest) &&
+    norm(existingVerified) !== norm(combinedAi);
+
+  const patch: Record<string, unknown> = {};
+  if (combinedAi) patch['transcription_raw_ai'] = combinedAi;
+
+  if (!conflict) {
+    if (allVerified) {
+      patch['transcription_verified'] = combinedBest;
+      patch['transcription_status'] = "human_verified";
+    } else {
+      patch['transcription_status'] =
+        (letter as any)?.transcription_status === "human_verified"
+          ? "needs_review"
+          : "ai_transcribed";
+      if (norm(existingVerified) && norm(existingVerified) !== norm(combinedBest)) {
+        // leave the hand-edited verified text alone
+      } else if (norm(existingVerified)) {
+        patch['transcription_verified'] = combinedBest;
+      }
+    }
+  }
+
+  if (Object.keys(patch).length) {
+    await supabase.from("letters").update(patch as never).eq("id", letterId);
+  }
+
+  return { updated: Object.keys(patch).length > 0, conflict, allVerified, pages: withText };
+}

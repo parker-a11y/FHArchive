@@ -19,9 +19,8 @@ export const transcribeScans = createServerFn({ method: "POST" })
     fileIds: (data.fileIds ?? []).slice(0, 50).map(String),
   }))
   .handler(async ({ data, context }): Promise<TranscribeResult[]> => {
-    const { resolveScanTargets, toDataUrl, transcribeImage, TRANSCRIPTION_MODEL } = await import(
-      "@/lib/transcription.server"
-    );
+    const { resolveScanTargets, toDataUrl, transcribeImage, TRANSCRIPTION_MODEL, rebuildRecordTranscription } =
+      await import("@/lib/transcription.server");
     const supabase = context.supabase;
     const targets = await resolveScanTargets(supabase, data.fileIds);
     const results: TranscribeResult[] = [];
@@ -62,6 +61,10 @@ export const transcribeScans = createServerFn({ method: "POST" })
           .eq("file_id", t.fileId);
         results.push({ fileId: t.fileId, ok: false, error: message });
       }
+    }
+
+    for (const letterId of new Set(targets.map((t) => t.letterId))) {
+      await rebuildRecordTranscription(supabase, letterId);
     }
 
     const missing = data.fileIds.filter((id) => !targets.some((t) => t.fileId === id));
@@ -171,4 +174,19 @@ export const transcribeRecord = createServerFn({ method: "POST" })
     }
 
     return { pages: pages.length, failed, error: null as string | null };
+  });
+
+/**
+ * Rebuilds one record's combined transcription from its page transcriptions.
+ * Called after page text changes so shared links and emails stay current.
+ */
+export const rollupRecordTranscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { letterId: string; force?: boolean }) => ({
+    letterId: String(data.letterId),
+    force: Boolean(data.force),
+  }))
+  .handler(async ({ data, context }) => {
+    const { rebuildRecordTranscription } = await import("@/lib/transcription.server");
+    return rebuildRecordTranscription(context.supabase, data.letterId, data.force);
   });
