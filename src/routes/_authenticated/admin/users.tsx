@@ -9,7 +9,9 @@ import {
   listProfiles,
   updateProfileStatus,
   deleteGuestAccount,
+  setAccountRole,
 } from "@/lib/profiles.functions";
+import { Switch } from "@/components/ui/switch";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,15 +37,15 @@ import {
 export const Route = createFileRoute("/_authenticated/admin/users")({
   head: () => ({
     meta: [
-      { title: "User Management — The Francis Files" },
+      { title: "Account Control — The Francis Files" },
       {
         name: "description",
-        content: "Approve or manage archive guest accounts.",
+        content: "Approve accounts and grant Archivist access to the archive.",
       },
-      { property: "og:title", content: "User Management — The Francis Files" },
+      { property: "og:title", content: "Account Control — The Francis Files" },
       {
         property: "og:description",
-        content: "Approve or manage archive guest accounts.",
+        content: "Approve accounts and grant Archivist access to the archive.",
       },
     ],
   }),
@@ -51,11 +53,12 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 });
 
 function UserManagementPage() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const listProfilesFn = useServerFn(listProfiles);
   const updateStatusFn = useServerFn(updateProfileStatus);
   const deleteAccountFn = useServerFn(deleteGuestAccount);
+  const setRoleFn = useServerFn(setAccountRole);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "profiles"],
@@ -83,6 +86,20 @@ function UserManagementPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const roleMutation = useMutation({
+    mutationFn: (vars: { userId: string; role: "guest" | "archivist" }) =>
+      setRoleFn({ data: vars }),
+    onSuccess: (_r, vars) => {
+      toast.success(
+        vars.role === "archivist"
+          ? "Archivist access granted — notification email sent"
+          : "Account returned to view-only guest",
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin", "profiles"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (userId: string) => deleteAccountFn({ data: { userId } }),
     onSuccess: () => {
@@ -105,8 +122,8 @@ function UserManagementPage() {
   return (
     <AppShell>
       <PageHeader
-        title="User management"
-        description="Review, approve, and revoke guest access to the archive."
+        title="Account Control"
+        description="Review accounts, approve guests, and grant Archivist editing access."
       />
       <div className="p-4 sm:p-8">
         {isLoading ? (
@@ -119,7 +136,8 @@ function UserManagementPage() {
                   <TableHead>Email</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Roles</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Archivist</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -147,10 +165,33 @@ function UserManagementPage() {
                         )}
                       </span>
                     </TableCell>
-                    <TableCell>{profile.roles.join(", ") || "—"}</TableCell>
+                    <TableCell className="capitalize">
+                      {profile.roles.join(", ") || "—"}
+                    </TableCell>
+                    <TableCell>
+                      {profile.roles.includes("admin") || profile.id === user?.id ? (
+                        <span className="text-xs text-muted-foreground">Owner</span>
+                      ) : (
+                        <Switch
+                          aria-label={`Archivist access for ${profile.email}`}
+                          checked={profile.roles.includes("archivist")}
+                          disabled={roleMutation.isPending || profile.status !== "approved"}
+                          onCheckedChange={(v) =>
+                            roleMutation.mutate({
+                              userId: profile.id,
+                              role: v ? "archivist" : "guest",
+                            })
+                          }
+                        />
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {profile.status !== "approved" ? (
+                        {profile.roles.includes("admin") || profile.id === user?.id ? (
+                          <span className="text-xs text-muted-foreground">
+                            Administrator
+                          </span>
+                        ) : profile.status !== "approved" ? (
                           <Button
                             size="sm"
                             onClick={() => approveMutation.mutate(profile.id)}
@@ -181,7 +222,7 @@ function UserManagementPage() {
                 ))}
                 {data?.profiles.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       No user accounts found.
                     </TableCell>
                   </TableRow>
