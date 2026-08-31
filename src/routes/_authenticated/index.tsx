@@ -354,6 +354,7 @@ function Dashboard() {
               <Stat
                 label="New today"
                 value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
+                sub={dailyOpen ? "Click to collapse" : "Click for summary"}
                 tone="blue"
                 icon={Sparkles}
                 onClick={() => setDailyOpen((v) => !v)}
@@ -374,7 +375,7 @@ function Dashboard() {
             </div>
 
             {dailyOpen && (
-              <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div ref={dailyRef} className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-baseline justify-between">
                   <h2 className="field-label">Daily summary — today</h2>
                   <span className="text-xs text-muted-foreground">
@@ -395,7 +396,7 @@ function Dashboard() {
             )}
 
             {categoriesOpen && (
-              <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+              <div ref={categoriesRef} className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
                 <div className="mb-3 flex items-baseline justify-between">
                   <h2 className="field-label">Record categories</h2>
                   <button
