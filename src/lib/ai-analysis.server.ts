@@ -14,6 +14,22 @@ export const ANALYSIS_MODEL = "google/gemini-3.7-flash";
 export const ANALYSIS_FIELDS = [
   ["summary_short", "One or two sentences summarising the record."],
   ["summary_long", "A fuller paragraph summary: content, context, tone, significance."],
+  [
+    "salutation_as_written",
+    "The salutation at the very start of the correspondence, copied EXACTLY as written (e.g. \"My Darling\", \"Dear Folks\"). Blank if there is none or the record is not correspondence.",
+  ],
+  [
+    "addressee_normalized",
+    "The standardized identity of the person or group addressed (e.g. \"Jacqueline Harrington\", \"Harrington Family\"). Only when reasonably identifiable; otherwise blank.",
+  ],
+  [
+    "closing_as_written",
+    "The closing phrase immediately before the signature, copied EXACTLY as written (e.g. \"Lovingly\", \"Yours\"). Blank if there is none.",
+  ],
+  [
+    "signature_as_written",
+    "How the writer signed, copied EXACTLY as written (e.g. \"F\", \"Fran\", \"Dad\"), separate from the closing. Blank if unsigned.",
+  ],
   ["keywords", "Comma-separated subject keywords (what the record is about)."],
   ["people", "Comma-separated names of people mentioned, as written in the document."],
   ["places", "Comma-separated place names mentioned."],
@@ -100,7 +116,8 @@ Rules:
 - Use names and spellings exactly as they appear in the document.
 - Leave a field as an empty string when the record gives no reliable basis for it.
 - Do not speculate about identities; if a reading is uncertain, say so in the "uncertain" field.
-- Keep list fields concise: comma-separated values, no numbering, no commentary.`;
+- Keep list fields concise: comma-separated values, no numbering, no commentary.
+- For salutation, closing and signature, reproduce the wording exactly as written — no normalising, expanding or tidying. Leave blank rather than guessing.`;
 
 /** Calls the gateway and returns a field-key -> suggestion map. */
 export async function analyzeRecordText(ctx: AnalysisContext): Promise<Record<string, string>> {

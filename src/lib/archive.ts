@@ -387,6 +387,10 @@ export const RELATION_TYPES = [
 export const AI_FIELDS = [
   { key: "summary_short", label: "Short summary" },
   { key: "summary_long", label: "Detailed summary" },
+  { key: "salutation_as_written", label: "Salutation — as written" },
+  { key: "addressee_normalized", label: "Addressee — normalized" },
+  { key: "closing_as_written", label: "Closing — as written" },
+  { key: "signature_as_written", label: "Signature — as written" },
   { key: "keywords", label: "Suggested keywords" },
   { key: "people", label: "People mentioned" },
   { key: "places", label: "Places mentioned" },
