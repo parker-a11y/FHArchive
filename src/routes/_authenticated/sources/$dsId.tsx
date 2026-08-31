@@ -35,7 +35,7 @@ import {
   fetchSourceByDsId,
   type DigitalSource,
 } from "@/lib/sources";
-import { DATE_PRECISION } from "@/lib/archive";
+import { DATE_PRECISION, SOURCE_TRANSCRIPTION_STATUS } from "@/lib/archive";
 import {
   SegmentsPanel,
   SourceConnectionsPanel,
