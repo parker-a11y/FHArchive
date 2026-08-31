@@ -38,6 +38,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDashboardStats, type Letter } from "@/lib/queries";
 import { fetchSources } from "@/lib/sources";
+import { fetchQuotations } from "@/lib/quotations";
+
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { ArchiveNotes } from "@/components/ArchiveNotes";
