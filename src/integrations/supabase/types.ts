@@ -1467,9 +1467,11 @@ export type Database = {
       }
       letters: {
         Row: {
+          addressee_normalized: string | null
           archive_id: string
           author: string | null
           citations: string | null
+          closing_as_written: string | null
           completeness_check: boolean
           created_at: string
           date_as_written: string | null
@@ -1510,9 +1512,11 @@ export type Database = {
           research_notes: string | null
           research_status: string
           review_status: string
+          salutation_as_written: string | null
           scan_both_sides: boolean
           scan_status: string
           sheets: number | null
+          signature_as_written: string | null
           sort_date: string | null
           source_container_id: string | null
           starred: boolean
@@ -1535,9 +1539,11 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          addressee_normalized?: string | null
           archive_id: string
           author?: string | null
           citations?: string | null
+          closing_as_written?: string | null
           completeness_check?: boolean
           created_at?: string
           date_as_written?: string | null
@@ -1578,9 +1584,11 @@ export type Database = {
           research_notes?: string | null
           research_status?: string
           review_status?: string
+          salutation_as_written?: string | null
           scan_both_sides?: boolean
           scan_status?: string
           sheets?: number | null
+          signature_as_written?: string | null
           sort_date?: string | null
           source_container_id?: string | null
           starred?: boolean
@@ -1603,9 +1611,11 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          addressee_normalized?: string | null
           archive_id?: string
           author?: string | null
           citations?: string | null
+          closing_as_written?: string | null
           completeness_check?: boolean
           created_at?: string
           date_as_written?: string | null
@@ -1646,9 +1656,11 @@ export type Database = {
           research_notes?: string | null
           research_status?: string
           review_status?: string
+          salutation_as_written?: string | null
           scan_both_sides?: boolean
           scan_status?: string
           sheets?: number | null
+          signature_as_written?: string | null
           sort_date?: string | null
           source_container_id?: string | null
           starred?: boolean
@@ -2375,7 +2387,9 @@ export type Database = {
       require_editor: { Args: never; Returns: undefined }
       search_letters: {
         Args: {
+          p_addressee?: string
           p_author?: string
+          p_closing?: string
           p_date_from?: string
           p_date_precision?: string
           p_date_to?: string
@@ -2393,7 +2407,9 @@ export type Database = {
           p_recipient?: string
           p_research?: string
           p_review?: string
+          p_salutation?: string
           p_scan?: string
+          p_signature?: string
           p_sort?: string
           p_starred?: boolean
           p_subtype?: string
