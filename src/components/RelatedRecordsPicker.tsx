@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   searchArchiveRecords,
   type ArchiveRecordRef,
+  typeLabelFor,
   type RecordKind,
 } from "@/lib/record-links";
 import { cn } from "@/lib/utils";
@@ -82,7 +83,7 @@ export function RelatedRecordsPicker({
               </div>
               <div className="text-xs text-muted-foreground">
                 {r.collection}
-                {r.type_label ? ` · ${r.type_label}` : ""}
+                {r.type_label ? ` · ${typeLabelFor(r.kind, r.type_label)}` : ""}
               </div>
             </button>
           ))}
