@@ -76,17 +76,22 @@ export const getMyArchiveAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const [{ data: isAdmin }, { data: isApprovedGuest }, { data: isArchivist }] = await Promise.all([
-      supabase.rpc("is_admin", { _user_id: userId }),
-      supabase.rpc("is_approved_guest", { _user_id: userId }),
-      supabase.rpc("is_approved_archivist", { _user_id: userId }),
+    const [{ data: roles }, { data: profile }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.from("profiles").select("status").eq("id", userId).maybeSingle(),
     ]);
 
+    const roleSet = new Set((roles ?? []).map((r: { role: string }) => r.role));
+    const approved = profile?.status === "approved";
+    const isAdmin = roleSet.has("admin");
+    const isArchivist = !isAdmin && roleSet.has("archivist") && approved;
+    const isApprovedGuest = !isAdmin && !isArchivist && roleSet.has("guest") && approved;
+
     return {
-      isAdmin: !!isAdmin,
-      isApprovedGuest: !!isApprovedGuest,
-      isArchivist: !!isArchivist,
-      canReadArchive: !!isAdmin || !!isApprovedGuest || !!isArchivist,
+      isAdmin,
+      isApprovedGuest,
+      isArchivist,
+      canReadArchive: isAdmin || isApprovedGuest || isArchivist,
     };
   });
 
