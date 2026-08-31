@@ -1,0 +1,17 @@
+REVOKE ALL ON FUNCTION public.is_approved_archivist(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.can_edit_archive(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.can_read_archive(uuid) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.require_editor() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.archive_owner_id() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.stamp_archive_owner() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.create_digital_source(text,text,text,text,text,date,text,text,text,text,date,text) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.preview_next_ds_id() FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.find_person_matches(text,integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_approved_archivist(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.can_edit_archive(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.can_read_archive(uuid) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.require_editor() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.archive_owner_id() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.create_digital_source(text,text,text,text,text,date,text,text,text,text,date,text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.preview_next_ds_id() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.find_person_matches(text,integer) TO authenticated, service_role;
