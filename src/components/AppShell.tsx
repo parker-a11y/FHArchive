@@ -68,8 +68,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!session) return null;
 
   const navItems = isAdmin
-    ? [...NAV, { to: "/admin/users", label: "Users", icon: UserCog }]
+    ? NAV
     : NAV.filter((item) => !(item as { adminOnly?: boolean }).adminOnly);
+
 
   const nav = (onNavigate?: () => void) => (
     <>
