@@ -183,11 +183,22 @@ export function PageHeader({
   actions?: ReactNode;
   center?: ReactNode;
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onDashboard = pathname === "/";
   return (
     <div className="no-print flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-5">
-      <div className="min-w-0">
-        <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+      <div className="flex min-w-0 items-center gap-3">
+        {!onDashboard && (
+          <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
+            <Link to="/" aria-label="Back to Dashboard">
+              <LayoutDashboard className="size-4" /> Dashboard
+            </Link>
+          </Button>
+        )}
+        <div className="min-w-0">
+          <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
+          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        </div>
       </div>
       {center && <div className="flex flex-1 items-center justify-center">{center}</div>}
       <div className="flex flex-wrap items-center gap-2">{actions}</div>
