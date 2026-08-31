@@ -21,6 +21,7 @@ import {
   Mail,
   Menu,
   UserCog,
+  ChevronDown,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,12 +49,14 @@ const NAV = [
   { to: "/backups", label: "Backups", icon: ShieldCheck, adminOnly: true },
 ];
 
+const ADMIN_NAV = [{ to: "/admin/users", label: "Account Control", icon: UserCog }];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { session, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(pathname.startsWith("/admin"));
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth" });
@@ -203,14 +206,27 @@ export function AppShell({ children }: { children: ReactNode }) {
  * forms that would only fail on save.
  */
 export function AdminOnly({ children }: { children: ReactNode }) {
-  const { loading, isGuestViewer } = useAuth();
+  const { loading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && isGuestViewer) navigate({ to: "/", replace: true });
-  }, [loading, isGuestViewer, navigate]);
+    if (!loading && !isAdmin) navigate({ to: "/", replace: true });
+  }, [loading, isAdmin, navigate]);
 
-  if (isGuestViewer) return null;
+  if (!isAdmin) return null;
+  return <>{children}</>;
+}
+
+/** Wraps pages archivists may use but read-only guests may not. */
+export function EditorOnly({ children }: { children: ReactNode }) {
+  const { loading, canEdit } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !canEdit) navigate({ to: "/", replace: true });
+  }, [loading, canEdit, navigate]);
+
+  if (!canEdit) return null;
   return <>{children}</>;
 }
 
