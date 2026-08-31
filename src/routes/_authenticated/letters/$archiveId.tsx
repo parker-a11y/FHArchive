@@ -127,7 +127,7 @@ function LetterPage() {
   const { hl, tab } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isGuestViewer } = useAuth();
+  const { isGuestViewer, isAdmin } = useAuth();
 
   const { data: letter, isLoading } = useQuery({
     queryKey: ["letter", archiveId],
@@ -388,7 +388,7 @@ function LetterPage() {
               <FileText className="mr-1.5 size-4" />
               {showTranscription ? "Hide transcription" : "Show transcription"}
             </Button>
-            {!isGuestViewer && (
+            {isAdmin && (
               <>
                 <ShareDialog letter={letter} />
                 <EmailArchiveDialog

@@ -24,7 +24,7 @@ type Props = {
 
 /** Confirms and deletes an organization record; all record links go with it. */
 export function DeleteOrgButton({ orgId, name, children }: Props) {
-  const { isGuestViewer } = useAuth();
+  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
 
@@ -45,7 +45,7 @@ export function DeleteOrgButton({ orgId, name, children }: Props) {
 
   return (
     <AlertDialog>
-      {!isGuestViewer && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
+      {isAdmin && <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{name}”?</AlertDialogTitle>

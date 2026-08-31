@@ -58,7 +58,6 @@ export const ensurePendingGuestProfile = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("id")
       .eq("user_id", userId)
-      .eq("role", "guest")
       .maybeSingle();
 
     if (!existingRole) {
@@ -77,15 +76,17 @@ export const getMyArchiveAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    const [{ data: isAdmin }, { data: isApprovedGuest }] = await Promise.all([
+    const [{ data: isAdmin }, { data: isApprovedGuest }, { data: isArchivist }] = await Promise.all([
       supabase.rpc("is_admin", { _user_id: userId }),
       supabase.rpc("is_approved_guest", { _user_id: userId }),
+      supabase.rpc("is_approved_archivist", { _user_id: userId }),
     ]);
 
     return {
       isAdmin: !!isAdmin,
       isApprovedGuest: !!isApprovedGuest,
-      canReadArchive: !!isAdmin || !!isApprovedGuest,
+      isArchivist: !!isArchivist,
+      canReadArchive: !!isAdmin || !!isApprovedGuest || !!isArchivist,
     };
   });
 
@@ -193,6 +194,64 @@ export const deleteGuestAccount = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.userId);
     if (profileError) throw profileError;
+
+    return { ok: true };
+  });
+
+/** Admin-only: switch an account between guest (view-only) and archivist (editor). */
+export const setAccountRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string; role: "guest" | "archivist" }) => input)
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
+    if (!isAdmin) throw new Error("Forbidden");
+    if (data.userId === userId) throw new Error("You cannot change your own role");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("id, role")
+      .eq("user_id", data.userId);
+    if ((roles ?? []).some((r) => r.role === "admin")) {
+      throw new Error("Administrator accounts cannot be changed here");
+    }
+
+    const { error: delError } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .in("role", ["guest", "archivist"]);
+    if (delError) throw delError;
+
+    const { error: insError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: data.userId, role: data.role });
+    if (insError) throw insError;
+
+    if (data.role === "archivist") {
+      try {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", data.userId)
+          .maybeSingle();
+        if (profile?.email) {
+          const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+          await sendTemplateEmail("archivist-granted", profile.email, {
+            idempotencyKey: `archivist-granted-${data.userId}-${Date.now()}`,
+            templateData: {
+              guestName: profile.full_name,
+              archiveUrl: "https://fharchive.com",
+            },
+          });
+        }
+      } catch (notifyError) {
+        console.error("Failed to notify new archivist:", notifyError);
+      }
+    }
 
     return { ok: true };
   });

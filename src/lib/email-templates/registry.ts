@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { template as archiveRecordTemplate } from './archive-record'
 import { template as guestRequestTemplate } from './guest-request'
 import { template as guestApprovedTemplate } from './guest-approved'
+import { template as archivistGrantedTemplate } from './archivist-granted'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -24,4 +25,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'archive-record': archiveRecordTemplate,
   'guest-request': guestRequestTemplate,
   'guest-approved': guestApprovedTemplate,
+  'archivist-granted': archivistGrantedTemplate,
 }

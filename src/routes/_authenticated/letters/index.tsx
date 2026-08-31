@@ -165,7 +165,7 @@ async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, st
 }
 
 function LettersTable() {
-  const { isGuestViewer } = useAuth();
+  const { isGuestViewer, isAdmin } = useAuth();
   const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
   const search = Route.useSearch();
@@ -427,7 +427,7 @@ function LettersTable() {
         description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
-            {!isGuestViewer && selectedRecords.length > 0 && (
+            {isAdmin && selectedRecords.length > 0 && (
               <EmailArchiveDialog
                 records={selectedRecords}
                 trigger={
@@ -649,7 +649,7 @@ function LettersTable() {
           <thead className="sticky top-0 bg-secondary">
             <tr>
               <th className="w-8 border-b border-border px-2 py-2">
-                {!isGuestViewer && (
+                {isAdmin && (
                 <Checkbox
                   aria-label="Select all records"
                   checked={allSelected}
@@ -717,7 +717,7 @@ function LettersTable() {
             {rows.map((l) => (
               <tr key={l.id} className="border-b border-border hover:bg-muted/50">
                 <td className="px-2 py-1.5 align-top">
-                  {!isGuestViewer && (
+                  {isAdmin && (
                     <Checkbox
                       aria-label={`Select ${l.archive_id}`}
                       checked={selected.has(l.id)}
@@ -759,7 +759,7 @@ function LettersTable() {
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
                             style={{ backgroundColor: recordHealth(l).color }}
                           />
-                          {!isGuestViewer && (
+                          {isAdmin && (
                             <EmailArchiveDialog
                               kind="letter"
                               id={l.id}

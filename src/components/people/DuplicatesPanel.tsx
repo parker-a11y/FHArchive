@@ -67,7 +67,7 @@ function groupDuplicates(people: Person[]): Person[][] {
 }
 
 export function DuplicatesPanel() {
-  const { isGuestViewer } = useAuth();
+  const { isAdmin } = useAuth();
   const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [target, setTarget] = useState<Record<number, string>>({});
@@ -137,7 +137,7 @@ export function DuplicatesPanel() {
                   {p.id !== chosen && (
                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Checkbox
-                        disabled={isGuestViewer}
+                        disabled={!isAdmin}
                         checked={!excluded[p.id]}
                         onCheckedChange={(v) =>
                           setExcluded((e) => ({ ...e, [p.id]: v !== true }))
@@ -149,7 +149,7 @@ export function DuplicatesPanel() {
                 </div>
               ))}
             </RadioGroup>
-            {!isGuestViewer && (
+            {isAdmin && (
               <div className="mt-3">
                 <Button size="sm" disabled={busy} onClick={() => merge(gi, group)}>
                   Merge group

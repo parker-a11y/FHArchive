@@ -21,6 +21,7 @@ import {
   Mail,
   Menu,
   UserCog,
+  ChevronDown,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,12 +49,14 @@ const NAV = [
   { to: "/backups", label: "Backups", icon: ShieldCheck, adminOnly: true },
 ];
 
+const ADMIN_NAV = [{ to: "/admin/users", label: "Account Control", icon: UserCog }];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { session, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(pathname.startsWith("/admin"));
 
   useEffect(() => {
     if (!loading && !session) navigate({ to: "/auth" });
@@ -68,8 +71,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!session) return null;
 
   const navItems = isAdmin
-    ? [...NAV, { to: "/admin/users", label: "Users", icon: UserCog }]
+    ? NAV
     : NAV.filter((item) => !(item as { adminOnly?: boolean }).adminOnly);
+
 
   const nav = (onNavigate?: () => void) => (
     <>
@@ -113,6 +117,46 @@ export function AppShell({ children }: { children: ReactNode }) {
         })}
       </nav>
       <div className="border-t border-sidebar-border p-3">
+        {isAdmin && (
+          <div className="mb-2">
+            <button
+              type="button"
+              onClick={() => setAdminOpen((v) => !v)}
+              aria-expanded={adminOpen}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground transition-all hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+            >
+              <ShieldCheck className="size-4 text-sidebar-foreground/50" />
+              <span className="flex-1 text-left font-medium tracking-wide uppercase">Admin</span>
+              <ChevronDown
+                className={`size-4 transition-transform ${adminOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {adminOpen && (
+              <div className="mt-1 ml-3 border-l border-sidebar-border pl-2">
+                {ADMIN_NAV.map((item) => {
+                  const active = pathname.startsWith(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={onNavigate}
+                      className={`group mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
+                        active
+                          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+                      }`}
+                    >
+                      <item.icon
+                        className={`size-4 ${active ? "text-archive-gold" : "text-sidebar-foreground/50 group-hover:text-archive-gold"}`}
+                      />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -125,6 +169,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <LogOut className="size-4" /> Sign out
         </Button>
       </div>
+
     </>
   );
 
@@ -161,14 +206,27 @@ export function AppShell({ children }: { children: ReactNode }) {
  * forms that would only fail on save.
  */
 export function AdminOnly({ children }: { children: ReactNode }) {
-  const { loading, isGuestViewer } = useAuth();
+  const { loading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && isGuestViewer) navigate({ to: "/", replace: true });
-  }, [loading, isGuestViewer, navigate]);
+    if (!loading && !isAdmin) navigate({ to: "/", replace: true });
+  }, [loading, isAdmin, navigate]);
 
-  if (isGuestViewer) return null;
+  if (!isAdmin) return null;
+  return <>{children}</>;
+}
+
+/** Wraps pages archivists may use but read-only guests may not. */
+export function EditorOnly({ children }: { children: ReactNode }) {
+  const { loading, canEdit } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !canEdit) navigate({ to: "/", replace: true });
+  }, [loading, canEdit, navigate]);
+
+  if (!canEdit) return null;
   return <>{children}</>;
 }
 

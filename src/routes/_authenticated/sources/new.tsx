@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Globe } from "lucide-react";
 import { FffBadge } from "@/components/FffBadge";
-import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
+import { EditorOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,11 +38,11 @@ export const Route = createFileRoute("/_authenticated/sources/new")({
     ],
   }),
   component: () => (
-    <AdminOnly>
+    <EditorOnly>
       <AppShell>
         <NewSource />
       </AppShell>
-    </AdminOnly>
+    </EditorOnly>
   ),
 });
 

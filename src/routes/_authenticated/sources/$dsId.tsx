@@ -86,7 +86,7 @@ function SourcePage() {
   const { dsId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isGuestViewer } = useAuth();
+  const { isGuestViewer, isAdmin } = useAuth();
   const { data: source, isLoading } = useQuery({
     queryKey: ["source", dsId],
     queryFn: () => fetchSourceByDsId(dsId),
@@ -163,7 +163,7 @@ function SourcePage() {
           <Button variant="outline" size="icon" onClick={() => navigate({ to: "/sources/$dsId", params: { dsId: nextId } })}>
             <ChevronRight className="size-4" />
           </Button>
-          {!isGuestViewer && (
+          {isAdmin && (
             <>
               <ShareSourceDialog source={source} />
               <EmailArchiveDialog
@@ -182,7 +182,7 @@ function SourcePage() {
               </a>
             </Button>
           )}
-          {!isGuestViewer && (
+          {isAdmin && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" size="icon">
