@@ -84,6 +84,7 @@ const blank = {
   has_envelope: false,
   has_enclosures: false,
   starred: false,
+  transcription_not_required: false,
   storage_type: "",
   storage_folder: "",
   source_container_id: "",
@@ -200,6 +201,7 @@ function QuickEntry() {
         original_order_notes: form.original_order_notes || null,
         tones: form.tones,
         starred: form.starred,
+        transcription_status: form.transcription_not_required ? "not_required" : "not_started",
       };
       await supabase.from("letters").update(extras as never).eq("id", created.id);
       const { data: auth } = await supabase.auth.getUser();
@@ -615,6 +617,17 @@ function QuickEntry() {
                 />
                 <FffBadge size={18} muted={!form.starred} />
                 FFF — Francis File Find
+              </label>
+              <label
+                className="flex items-center gap-2 text-sm"
+                title="Artwork, objects, currency, photographs without meaningful text — no OCR/AI transcription needed."
+              >
+                <input
+                  type="checkbox"
+                  checked={form.transcription_not_required}
+                  onChange={(e) => set("transcription_not_required", e.target.checked)}
+                />
+                Transcription / AI not required
               </label>
             </div>
           </div>

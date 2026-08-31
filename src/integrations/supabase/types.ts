@@ -526,6 +526,7 @@ export type Database = {
           starred: boolean
           title: string
           transcript: string | null
+          transcription_status: string
           updated_at: string
           url: string | null
           visibility: string
@@ -552,6 +553,7 @@ export type Database = {
           starred?: boolean
           title: string
           transcript?: string | null
+          transcription_status?: string
           updated_at?: string
           url?: string | null
           visibility?: string
@@ -578,6 +580,7 @@ export type Database = {
           starred?: boolean
           title?: string
           transcript?: string | null
+          transcription_status?: string
           updated_at?: string
           url?: string | null
           visibility?: string

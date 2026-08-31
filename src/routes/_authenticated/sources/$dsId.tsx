@@ -35,7 +35,7 @@ import {
   fetchSourceByDsId,
   type DigitalSource,
 } from "@/lib/sources";
-import { DATE_PRECISION } from "@/lib/archive";
+import { DATE_PRECISION, SOURCE_TRANSCRIPTION_STATUS } from "@/lib/archive";
 import {
   SegmentsPanel,
   SourceConnectionsPanel,
@@ -280,6 +280,23 @@ function SourcePage() {
 
               <Field label="Description">
                 <Textarea rows={3} value={v("description")} onChange={(e) => set("description", e.target.value)} />
+              </Field>
+              <Field label="Transcription / AI status">
+                <Select
+                  value={(draft?.transcription_status ?? source.transcription_status ?? "needed") as string}
+                  onValueChange={(val) => set("transcription_status", val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SOURCE_TRANSCRIPTION_STATUS.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
               <Field label="Transcript / extracted text">
                 <Textarea rows={5} value={v("transcript")} onChange={(e) => set("transcript", e.target.value)} />

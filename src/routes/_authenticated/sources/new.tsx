@@ -61,6 +61,7 @@ function NewSource() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [starred, setStarred] = useState(false);
+  const [noTranscription, setNoTranscription] = useState(false);
   const [relations, setRelations] = useState<PendingRelation[]>([]);
   const [form, setForm] = useState({
     title: "",
@@ -90,8 +91,14 @@ function NewSource() {
         ...form,
         title: form.title.trim(),
       });
-      if (starred) {
-        await supabase.from("digital_sources").update({ starred: true }).eq("id", created.id);
+      if (starred || noTranscription) {
+        await supabase
+          .from("digital_sources")
+          .update({
+            ...(starred ? { starred: true } : {}),
+            ...(noTranscription ? { transcription_status: "not_required" } : {}),
+          } as never)
+          .eq("id", created.id);
       }
       for (const r of relations) {
         try {
@@ -231,6 +238,14 @@ function NewSource() {
           />
           <FffBadge size={18} muted={!starred} />
           FFF — Francis File Find
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={noTranscription}
+            onChange={(e) => setNoTranscription(e.target.checked)}
+          />
+          Transcription / AI not required
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button size="lg" disabled={saving} onClick={() => save(true)}>

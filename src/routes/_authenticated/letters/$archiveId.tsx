@@ -194,6 +194,7 @@ function LetterPage() {
       scan_status: letter.scan_status,
       publication_status: letter.publication_status,
       research_needed: letter.research_needed,
+      transcription_status: letter.transcription_status,
     });
     setTones(letter.tones ?? []);
     setDirty(false);
@@ -252,6 +253,7 @@ function LetterPage() {
     payload.record_type = form.record_type || "letter";
     payload.research_status = form.research_status || "unreviewed";
     payload.identification_status = form.identification_status || "unidentified";
+    payload.transcription_status = form.transcription_status || "not_started";
     payload.tones = tones;
 
 
@@ -761,6 +763,34 @@ function LetterPage() {
                 </select>
               </div>
             ))}
+
+            <div className="col-span-full rounded border border-border bg-card p-4">
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={form.transcription_status === "not_required"}
+                  onChange={(e) =>
+                    set(
+                      "transcription_status",
+                      e.target.checked
+                        ? "not_required"
+                        : letter.transcription_status === "not_required"
+                          ? "not_started"
+                          : letter.transcription_status,
+                    )
+                  }
+                />
+                <span>
+                  <span className="font-medium">Transcription / AI not required</span>
+                  <span className="block text-xs text-muted-foreground">
+                    For artwork, sketches, currency, objects, decorative material and photographs
+                    with no meaningful text. The record counts as complete and never shows a
+                    pending-transcription warning.
+                  </span>
+                </span>
+              </label>
+            </div>
 
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-1">Tone / sentiment (optional)</div>

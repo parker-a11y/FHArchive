@@ -316,7 +316,7 @@ function Dashboard() {
       value: stats0?.needs_transcription ?? 0,
       tone: "rose",
       icon: FileQuestion,
-      to: "/letters?tstatus=!human_verified",
+      to: "/letters?tstatus=needs",
     },
     {
       label: "Uncertain dates",
