@@ -42,6 +42,7 @@ import { Route as AuthenticatedPlacesPlaceIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedSourcesIndexRouteImport } from './routes/_authenticated/sources/index'
 import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenticated/sources/$dsId'
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
+import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
@@ -223,6 +224,12 @@ const AuthenticatedSourcesNewRoute = AuthenticatedSourcesNewRouteImport.update({
   path: '/sources/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicArchivistDigestRoute =
+  ApiPublicArchivistDigestRouteImport.update({
+    id: '/api/public/archivist-digest',
+    path: '/api/public/archivist-digest',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   id: '/api/public/backup',
   path: '/api/public/backup',
@@ -260,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
   '/sources/new': typeof AuthenticatedSourcesNewRoute
+  '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
@@ -296,6 +304,7 @@ export interface FileRoutesByTo {
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
   '/sources/new': typeof AuthenticatedSourcesNewRoute
+  '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
@@ -334,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/_authenticated/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
+  '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
@@ -372,6 +382,7 @@ export interface FileRouteTypes {
     | '/places/$placeId'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/api/public/archivist-digest'
     | '/api/public/backup'
     | '/containers/'
     | '/events/'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/places/$placeId'
     | '/sources/$dsId'
     | '/sources/new'
+    | '/api/public/archivist-digest'
     | '/api/public/backup'
     | '/containers'
     | '/events'
@@ -445,6 +457,7 @@ export interface FileRouteTypes {
     | '/_authenticated/places/$placeId'
     | '/_authenticated/sources/$dsId'
     | '/_authenticated/sources/new'
+    | '/api/public/archivist-digest'
     | '/api/public/backup'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
@@ -465,6 +478,7 @@ export interface RootRouteChildren {
   ApiSendSampleEmailRoute: typeof ApiSendSampleEmailRoute
   DTokenRoute: typeof DTokenRoute
   STokenRoute: typeof STokenRoute
+  ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
@@ -702,6 +716,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSourcesNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/archivist-digest': {
+      id: '/api/public/archivist-digest'
+      path: '/api/public/archivist-digest'
+      fullPath: '/api/public/archivist-digest'
+      preLoaderRoute: typeof ApiPublicArchivistDigestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/backup': {
       id: '/api/public/backup'
       path: '/api/public/backup'
@@ -788,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSendSampleEmailRoute: ApiSendSampleEmailRoute,
   DTokenRoute: DTokenRoute,
   STokenRoute: STokenRoute,
+  ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }

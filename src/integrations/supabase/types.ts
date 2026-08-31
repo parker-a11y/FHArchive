@@ -920,6 +920,9 @@ export type Database = {
       }
       edit_history: {
         Row: {
+          actor_email: string | null
+          actor_id: string | null
+          actor_name: string | null
           created_at: string
           entity: string
           field_key: string
@@ -930,6 +933,9 @@ export type Database = {
           owner_id: string
         }
         Insert: {
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_name?: string | null
           created_at?: string
           entity?: string
           field_key: string
@@ -940,6 +946,9 @@ export type Database = {
           owner_id?: string
         }
         Update: {
+          actor_email?: string | null
+          actor_id?: string | null
+          actor_name?: string | null
           created_at?: string
           entity?: string
           field_key?: string

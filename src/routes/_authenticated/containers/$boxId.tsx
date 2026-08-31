@@ -44,8 +44,8 @@ export const Route = createFileRoute("/_authenticated/containers/$boxId")({
 });
 
 function ContainerPage() {
-  const { isAdmin } = useAuth();
-  const isGuestViewer = !isAdmin;
+  const { isAdmin, canEdit } = useAuth();
+  const isGuestViewer = !canEdit;
   const { boxId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -147,9 +147,11 @@ function ContainerPage() {
                 <Button className="gap-2" disabled={!dirty} onClick={save}>
                   <Save className="size-4" /> Save
                 </Button>
-                <Button variant="ghost" size="icon" onClick={remove}>
-                  <Trash2 className="size-4 text-destructive" />
-                </Button>
+                {isAdmin && (
+                  <Button variant="ghost" size="icon" onClick={remove}>
+                    <Trash2 className="size-4 text-destructive" />
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -246,7 +248,7 @@ function ContainerPage() {
       </fieldset>
 
       <div className="mt-8 border-t border-border pt-6">
-        <fieldset disabled={isGuestViewer} className="contents">
+        <fieldset disabled={!isAdmin} className="contents">
           <ContainerPhotosPanel container={container} />
         </fieldset>
       </div>
