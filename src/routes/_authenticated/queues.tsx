@@ -74,9 +74,7 @@ function Queues() {
       key: "transcribe",
       label: "Needs Transcription",
       fn: (l) =>
-        l.transcription_status === "not_started" &&
-        l.transcription_status !== "not_required" &&
-        l.image_count > 0,
+        l.transcription_status === "not_started" && l.image_count > 0,
     },
     {
       key: "review",
