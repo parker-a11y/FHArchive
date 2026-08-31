@@ -260,3 +260,92 @@ export const setAccountRole = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+/** Admin-only: create a new archive account directly from Account Control. */
+export const createAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      email: string;
+      fullName?: string;
+      role: "guest" | "archivist";
+      password?: string;
+    }) => {
+      const email = input.email?.trim().toLowerCase();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error("Enter a valid email address");
+      }
+      if (input.password && input.password.length < 8) {
+        throw new Error("Password must be at least 8 characters");
+      }
+      return {
+        email,
+        fullName: input.fullName?.trim() || null,
+        role: input.role === "archivist" ? ("archivist" as const) : ("guest" as const),
+        password: input.password || null,
+      };
+    },
+  )
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+
+    const { data: isAdmin } = await supabase.rpc("is_admin", { _user_id: userId });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const generated =
+      data.password ??
+      `FF-${Math.random().toString(36).slice(2, 8)}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const { data: created, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: generated,
+      email_confirm: true,
+      user_metadata: data.fullName ? { full_name: data.fullName } : undefined,
+    });
+
+    if (createError || !created?.user) {
+      const msg = createError?.message ?? "Could not create the account";
+      throw new Error(
+        /already/i.test(msg) ? "An account with that email already exists" : msg,
+      );
+    }
+
+    const newUserId = created.user.id;
+
+    const { error: profileError } = await supabaseAdmin.from("profiles").upsert(
+      {
+        id: newUserId,
+        email: data.email,
+        full_name: data.fullName,
+        status: "approved",
+        approved_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+    if (profileError) throw profileError;
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", newUserId);
+    const { error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: newUserId, role: data.role });
+    if (roleError) throw roleError;
+
+    if (data.role === "archivist") {
+      try {
+        const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+        await sendTemplateEmail("archivist-granted", data.email, {
+          idempotencyKey: `archivist-granted-${newUserId}`,
+          templateData: {
+            guestName: data.fullName,
+            archiveUrl: "https://fharchive.com",
+          },
+        });
+      } catch (notifyError) {
+        console.error("Failed to notify new archivist:", notifyError);
+      }
+    }
+
+    return { ok: true, userId: newUserId, email: data.email, password: generated };
+  });
