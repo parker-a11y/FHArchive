@@ -2238,6 +2238,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_owner_id: { Args: never; Returns: string }
+      can_edit_archive: { Args: { _user_id: string }; Returns: boolean }
       can_read_archive: { Args: { _user_id: string }; Returns: boolean }
       create_digital_source: {
         Args: {
@@ -2331,6 +2333,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_approved_archivist: { Args: { _user_id: string }; Returns: boolean }
       is_approved_guest: { Args: { _user_id: string }; Returns: boolean }
       keyword_usage_counts: {
         Args: never
@@ -2369,6 +2372,7 @@ export type Database = {
         }[]
       }
       require_admin: { Args: never; Returns: undefined }
+      require_editor: { Args: never; Returns: undefined }
       search_letters: {
         Args: {
           p_author?: string
