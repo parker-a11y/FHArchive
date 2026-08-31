@@ -47,10 +47,6 @@ const ArchivistGrantedEmail = ({
           AI analysis, edit record details, add keywords, people, places, organizations and events,
           and create or manage Digital Sources.
         </Text>
-        <Text style={body}>
-          Archivists cannot delete material or create new FH record numbers — those stay with the
-          archive owner.
-        </Text>
         <Section style={{ marginTop: '20px' }}>
           <Button href={archiveUrl} style={button}>
             Open The Francis Files
