@@ -9,7 +9,10 @@ type AuthState = {
   loading: boolean;
   isAdmin: boolean;
   isApprovedGuest: boolean;
+  isArchivist: boolean;
   isPendingGuest: boolean;
+  /** Admin or approved archivist — may edit archive content. */
+  canEdit: boolean;
   /** Approved guest without admin rights — view-only experience. */
   isGuestViewer: boolean;
   canReadArchive: boolean;
@@ -21,7 +24,9 @@ const AuthContext = createContext<AuthState>({
   loading: true,
   isAdmin: false,
   isApprovedGuest: false,
+  isArchivist: false,
   isPendingGuest: false,
+  canEdit: false,
   isGuestViewer: false,
   canReadArchive: false,
 });
@@ -32,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [access, setAccess] = useState({
     isAdmin: false,
     isApprovedGuest: false,
+    isArchivist: false,
     isPendingGuest: false,
     canReadArchive: false,
   });
@@ -42,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccess({
           isAdmin: false,
           isApprovedGuest: false,
+          isArchivist: false,
           isPendingGuest: false,
           canReadArchive: false,
         });
@@ -53,7 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccess({
           isAdmin: result.isAdmin,
           isApprovedGuest: result.isApprovedGuest,
-          isPendingGuest: !result.isAdmin && !result.isApprovedGuest,
+          isArchivist: result.isArchivist,
+          isPendingGuest: !result.isAdmin && !result.isApprovedGuest && !result.isArchivist,
           canReadArchive: result.canReadArchive,
         });
       } catch (error) {
@@ -61,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccess({
           isAdmin: false,
           isApprovedGuest: false,
+          isArchivist: false,
           isPendingGuest: true,
           canReadArchive: false,
         });
@@ -87,7 +96,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         ...access,
-        isGuestViewer: access.isApprovedGuest && !access.isAdmin,
+        canEdit: access.isAdmin || access.isArchivist,
+        // Read-only viewers: approved guests without editing rights.
+        isGuestViewer: access.canReadArchive && !access.isAdmin && !access.isArchivist,
       }}
     >
       {children}
