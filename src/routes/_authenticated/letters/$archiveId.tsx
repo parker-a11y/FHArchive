@@ -30,6 +30,7 @@ import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import { fetchContainers } from "@/lib/containers";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
 import { supabase } from "@/integrations/supabase/client";
 import {
   deleteLetter,
@@ -967,11 +968,13 @@ function LetterPage() {
           </fieldset>
         </TabsContent>
         <TabsContent value="related" className="mt-6 space-y-10">
+          <RelatedRecordsPanel kind="letter" id={letter.id} readOnly={isGuestViewer} />
           <fieldset disabled={isGuestViewer} className="contents">
             <RelationsPanel letter={letter} />
             <LetterSourcesPanel letter={letter} />
           </fieldset>
         </TabsContent>
+
         <TabsContent value="ai" className="mt-6">
           <fieldset disabled={isGuestViewer} className="contents">
             <AiPanel letter={letter} />

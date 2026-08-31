@@ -1916,6 +1916,42 @@ export type Database = {
         }
         Relationships: []
       }
+      record_links: {
+        Row: {
+          a_id: string
+          a_kind: string
+          b_id: string
+          b_kind: string
+          created_at: string
+          id: string
+          note: string | null
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          a_id: string
+          a_kind: string
+          b_id: string
+          b_kind: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          owner_id?: string
+          updated_at?: string
+        }
+        Update: {
+          a_id?: string
+          a_kind?: string
+          b_id?: string
+          b_kind?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       record_shares: {
         Row: {
           created_at: string
@@ -2385,6 +2421,19 @@ export type Database = {
       }
       require_admin: { Args: never; Returns: undefined }
       require_editor: { Args: never; Returns: undefined }
+      search_archive_records: {
+        Args: { p_limit?: number; p_q?: string }
+        Returns: {
+          collection: string
+          date_text: string
+          id: string
+          kind: string
+          ref: string
+          sort_date: string
+          title: string
+          type_label: string
+        }[]
+      }
       search_letters: {
         Args: {
           p_addressee?: string

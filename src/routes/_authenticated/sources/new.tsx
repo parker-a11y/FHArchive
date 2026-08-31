@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DS_SOURCE_TYPES, createDigitalSource, previewNextDsId } from "@/lib/sources";
+import { RelatedRecordsField, type PendingRelation } from "@/components/RelatedRecordsPanel";
+import { addRecordLink } from "@/lib/record-links";
 import { DATE_PRECISION } from "@/lib/archive";
 
 
@@ -59,6 +61,7 @@ function NewSource() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [starred, setStarred] = useState(false);
+  const [relations, setRelations] = useState<PendingRelation[]>([]);
   const [form, setForm] = useState({
     title: "",
     source_type: "website",
@@ -90,6 +93,18 @@ function NewSource() {
       if (starred) {
         await supabase.from("digital_sources").update({ starred: true }).eq("id", created.id);
       }
+      for (const r of relations) {
+        try {
+          await addRecordLink(
+            { kind: "source", id: created.id },
+            { kind: r.record.kind, id: r.record.id },
+            r.note,
+          );
+        } catch (err) {
+          toast.error(`Could not link ${r.record.ref}: ${(err as Error).message}`);
+        }
+      }
+      setRelations([]);
       toast.success(`Saved ${created.ds_id}`);
       if (openRecord) {
         navigate({ to: "/sources/$dsId", params: { dsId: created.ds_id } });
@@ -200,6 +215,14 @@ function NewSource() {
         <Field label="Notes">
           <Textarea rows={2} value={form.notes} onChange={set("notes")} />
         </Field>
+        <div>
+          <span className="field-label mb-1.5 block">Related records (optional)</span>
+          <RelatedRecordsField value={relations} onChange={setRelations} />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Historical connections to any other archive record — physical or digital. Links work
+            both ways and do not affect provenance or storage.
+          </p>
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"

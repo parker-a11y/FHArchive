@@ -9,3 +9,5 @@
 - [x] Dashboard: Daily Summary is one top-section "New today" tile (FH + digital sources); click expands breakdown
 - [x] Dashboard: larger Francis Files logo in header
 - [x] Dashboard: move All categories tile to last; improve tile text spacing on small screens
+
+- [x] Universal Related Records / cross-references (any record ↔ any record, bidirectional, optional note)
