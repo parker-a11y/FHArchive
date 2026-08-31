@@ -86,6 +86,8 @@ type Col = { key: string; label: string; width: number; minWidth?: number; edita
 
 /** macOS-style traffic-light dot summarizing scan/transcription state. */
 function recordHealth(l: Letter): { color: string; label: string } {
+  if (l.transcription_status === "not_required")
+    return { color: "#28C840", label: "Transcription not required for this record" };
   if (l.scan_status === "not_scanned" || l.transcription_status === "failed")
     return { color: "#FF5F57", label: "No scans or a problem detected with this record" };
   if (l.transcription_status === "human_verified")
