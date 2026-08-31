@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
+import { RelatedRecordsField, type PendingRelation } from "@/components/RelatedRecordsPanel";
+import { addRecordLink } from "@/lib/record-links";
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
@@ -123,6 +125,7 @@ function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
   const [mentions, setMentions] = useState<PersonRef[]>([]);
+  const [relations, setRelations] = useState<PendingRelation[]>([]);
   const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
   const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
   const [busy, setBusy] = useState(false);
@@ -212,6 +215,18 @@ function QuickEntry() {
           await linkLetterPeople(created.id, roleLinks, ownerId);
         }
       }
+      // Cross-references are intellectual links only — provenance untouched.
+      for (const r of relations) {
+        try {
+          await addRecordLink(
+            { kind: "letter", id: created.id },
+            { kind: r.record.kind, id: r.record.id },
+            r.note,
+          );
+        } catch (err) {
+          toast.error(`Could not link ${r.record.ref}: ${(err as Error).message}`);
+        }
+      }
     } catch (e) {
       setBusy(false);
       return toast.error((e as Error).message);
@@ -251,6 +266,7 @@ function QuickEntry() {
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
     setMentions([]);
+    setRelations([]);
     // Preserve author/recipient people links for batch entry of similar records.
     setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
     setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
@@ -331,6 +347,14 @@ function QuickEntry() {
               />
               <p className="text-xs text-muted-foreground">
                 Other people named in this record — linked as “mentioned”.
+              </p>
+            </div>
+            <div className="col-span-full space-y-1.5">
+              <Label className="field-label">Related records (optional)</Label>
+              <RelatedRecordsField value={relations} onChange={setRelations} />
+              <p className="text-xs text-muted-foreground">
+                Historical connections to any other archive record — physical or digital. Links
+                work both ways and do not affect provenance or storage.
               </p>
             </div>
             <div className="space-y-1.5">
