@@ -45,6 +45,8 @@ export type DigitalSource = {
   local_file_path: string | null;
   visibility?: string;
   starred?: boolean | null;
+  /** needed | complete | not_required */
+  transcription_status?: string;
   created_at: string;
   updated_at: string;
 };
