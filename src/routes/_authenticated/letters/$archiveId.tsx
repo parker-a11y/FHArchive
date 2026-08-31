@@ -771,7 +771,14 @@ function LetterPage() {
                   className="mt-1"
                   checked={form.transcription_status === "not_required"}
                   onChange={(e) =>
-                    set("transcription_status", e.target.checked ? "not_required" : "not_started")
+                    set(
+                      "transcription_status",
+                      e.target.checked
+                        ? "not_required"
+                        : letter.transcription_status === "not_required"
+                          ? "not_started"
+                          : letter.transcription_status,
+                    )
                   }
                 />
                 <span>
