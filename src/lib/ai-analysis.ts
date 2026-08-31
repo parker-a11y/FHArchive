@@ -87,13 +87,25 @@ export async function applySuggestion(
   const text = content.trim();
   if (!text) return { applied: false, note: "Nothing to apply" };
 
-  if (fieldKey === "summary_short" || fieldKey === "summary_long") {
-    const patch = fieldKey === "summary_short" ? { summary_short: text } : { summary_long: text };
-    const { error } = await supabase.from("letters").update(patch).eq("id", letterId);
+  const LETTER_TEXT_FIELDS = [
+    "summary_short",
+    "summary_long",
+    "salutation_as_written",
+    "addressee_normalized",
+    "closing_as_written",
+    "signature_as_written",
+  ];
+
+  if (LETTER_TEXT_FIELDS.includes(fieldKey)) {
+    const patch = { [fieldKey]: text } as Record<string, string>;
+    const { error } = await supabase
+      .from("letters")
+      .update(patch as never)
+      .eq("id", letterId);
 
     if (error) throw new Error(error.message);
     await logEdits(letterId, letterBefore, { [fieldKey]: text });
-    return { applied: true, note: "Summary saved to the record" };
+    return { applied: true, note: "Saved to the record" };
   }
 
   let names = splitList(text);

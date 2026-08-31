@@ -197,6 +197,14 @@ function LettersTable() {
   const [digStatus, setDigStatus] = useState("");
   const [tones, setTones] = useState<string[]>([]);
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
+  const [salutation, setSalutation] = useState("");
+  const [addressee, setAddressee] = useState("");
+  const [closing, setClosing] = useState("");
+  const [signature, setSignature] = useState("");
+  const debouncedSalutation = useDebounced(salutation);
+  const debouncedAddressee = useDebounced(addressee);
+  const debouncedClosing = useDebounced(closing);
+  const debouncedSignature = useDebounced(signature);
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [page, setPage] = useState(0);
@@ -219,7 +227,7 @@ function LettersTable() {
   // Any filter change goes back to page 1.
   useEffect(() => {
     setPage(0);
-  }, [debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort]);
+  }, [debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort, debouncedSalutation, debouncedAddressee, debouncedClosing, debouncedSignature]);
 
   const params: LetterSearchParams = {
     q: debouncedQ,
@@ -235,6 +243,10 @@ function LettersTable() {
     digStatus,
     tones,
     view,
+    salutation: debouncedSalutation,
+    addressee: debouncedAddressee,
+    closing: debouncedClosing,
+    signature: debouncedSignature,
     sort: sort.key,
     dir: sort.dir === 1 ? "asc" : "desc",
   };
@@ -287,6 +299,10 @@ function LettersTable() {
       date_certainty: l.date_certainty,
       from: l.author ?? "",
       to: l.recipient ?? "",
+      salutation_as_written: l.salutation_as_written ?? "",
+      addressee_normalized: l.addressee_normalized ?? "",
+      closing_as_written: l.closing_as_written ?? "",
+      signature_as_written: l.signature_as_written ?? "",
       origin: l.origin ?? "",
       destination: l.destination ?? "",
       period: l.period,
@@ -355,6 +371,10 @@ function LettersTable() {
     setDigStatus("");
     setTones([]);
     setView("");
+    setSalutation("");
+    setAddressee("");
+    setClosing("");
+    setSignature("");
     setSort({ key: "archive_id", dir: 1 });
     setStarredOnly(false);
     setPage(0);
@@ -372,6 +392,10 @@ function LettersTable() {
     dStatus,
     digStatus,
     view,
+    salutation,
+    addressee,
+    closing,
+    signature,
     uncertainOnly ? "uncertain" : "",
     starredOnly ? "starred" : "",
     ...tones,
@@ -569,6 +593,31 @@ function LettersTable() {
         </div>
 
 
+
+        <Input
+          className="h-9 w-40"
+          placeholder="Salutation…"
+          value={salutation}
+          onChange={(e) => setSalutation(e.target.value)}
+        />
+        <Input
+          className="h-9 w-40"
+          placeholder="Addressee…"
+          value={addressee}
+          onChange={(e) => setAddressee(e.target.value)}
+        />
+        <Input
+          className="h-9 w-36"
+          placeholder="Closing…"
+          value={closing}
+          onChange={(e) => setClosing(e.target.value)}
+        />
+        <Input
+          className="h-9 w-36"
+          placeholder="Signature…"
+          value={signature}
+          onChange={(e) => setSignature(e.target.value)}
+        />
 
         <Button
           variant={starredOnly ? "default" : "outline"}
