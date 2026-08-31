@@ -73,15 +73,19 @@ function Queues() {
     {
       key: "transcribe",
       label: "Needs Transcription",
-      fn: (l) => l.transcription_status === "not_started" && l.image_count > 0,
+      fn: (l) =>
+        l.transcription_status === "not_started" &&
+        l.transcription_status !== "not_required" &&
+        l.image_count > 0,
     },
     {
       key: "review",
       label: "Needs Review",
       fn: (l) =>
-        l.transcription_status === "needs_review" ||
-        l.transcription_status === "ai_transcribed" ||
-        l.review_status === "not_reviewed",
+        l.transcription_status !== "not_required" &&
+        (l.transcription_status === "needs_review" ||
+          l.transcription_status === "ai_transcribed" ||
+          l.review_status === "not_reviewed"),
     },
     {
       key: "unidentified",
