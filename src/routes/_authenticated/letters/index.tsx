@@ -554,6 +554,7 @@ function LettersTable() {
           onChange={(e) => setTStatus(e.target.value)}
         >
           <option value="">All transcription states</option>
+          <option value="needs">Needs transcription (excl. not required)</option>
           {TRANSCRIPTION_STATUS.map((p) => (
             <option key={p.value} value={p.value}>
               {p.label}
