@@ -248,7 +248,7 @@ function ContainerPage() {
       </fieldset>
 
       <div className="mt-8 border-t border-border pt-6">
-        <fieldset disabled={isGuestViewer} className="contents">
+        <fieldset disabled={!isAdmin} className="contents">
           <ContainerPhotosPanel container={container} />
         </fieldset>
       </div>
