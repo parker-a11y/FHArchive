@@ -66,6 +66,7 @@ import {
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
+import { fetchDigitalFiles } from "@/lib/digital-files";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
@@ -493,7 +494,11 @@ function LetterPage() {
         </section>
       )}
 
-      <Tabs key={tab ?? "catalog"} defaultValue={tab === "transcription" ? "transcription" : "catalog"} className="px-4 sm:px-8 py-6">
+      <Tabs
+        key={tab ?? "catalog"}
+        defaultValue={tab === "transcription" || tab === "digitization" ? tab : "catalog"}
+        className="px-4 sm:px-8 py-6"
+      >
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="digitization">Scans &amp; Files ({letter.image_count})</TabsTrigger>
@@ -506,6 +511,7 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
+          <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
           {/* Guests browse in read-only mode — the disabled fieldset blocks edits
               in every input/button below without changing the layout. */}
           <fieldset disabled={isGuestViewer} className="contents">
@@ -936,5 +942,40 @@ function LetterPage() {
         </button>
       </div>
     </>
+  );
+}
+
+/** Thumbnail strip on the Catalog tab — click any scan to open Scans & Files. */
+function CatalogThumbnails({ letterId, archiveId }: { letterId: string; archiveId: string }) {
+  const { data: files } = useQuery({
+    queryKey: ["catalog-thumbnails", letterId],
+    queryFn: () => fetchDigitalFiles(letterId),
+    staleTime: 30_000,
+  });
+  const thumbs = (files ?? []).filter((f) => f.thumbUrl);
+  if (!thumbs.length) return null;
+  return (
+    <div className="mb-6 max-w-5xl">
+      <div className="field-label mb-2">Scans ({thumbs.length}) — click to view</div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {thumbs.map((f) => (
+          <Link
+            key={f.id}
+            to="/letters/$archiveId"
+            params={{ archiveId }}
+            search={{ tab: "digitization" }}
+            title={f.label ?? f.original_filename}
+            className="shrink-0 overflow-hidden rounded-md border border-border bg-card shadow-sm transition hover:border-primary hover:shadow-md"
+          >
+            <img
+              src={f.thumbUrl}
+              alt={f.label ?? f.original_filename}
+              className="h-28 w-auto object-cover"
+              loading="lazy"
+            />
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
