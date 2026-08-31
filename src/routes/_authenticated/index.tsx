@@ -245,6 +245,11 @@ function Dashboard() {
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
   });
+  const { data: quotations = [] } = useQuery({
+    queryKey: ["quotations"],
+    queryFn: fetchQuotations,
+  });
+
 
   const byType = stats0?.by_type ?? {};
   const byPeriod = stats0?.by_period ?? {};
