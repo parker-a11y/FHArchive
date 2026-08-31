@@ -56,7 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       try {
         await ensurePendingGuestProfile();
-        const result = await getMyArchiveAccess();
+        let result = await getMyArchiveAccess();
+        if (!result.isAdmin && !result.isArchivist && !result.isApprovedGuest) {
+          // Fallback: read roles directly with the browser client (RLS-scoped).
+          const [{ data: roles }, { data: profile }] = await Promise.all([
+            supabase.from("user_roles").select("role").eq("user_id", s.user.id),
+            supabase.from("profiles").select("status").eq("id", s.user.id).maybeSingle(),
+          ]);
+          const roleSet = new Set((roles ?? []).map((r) => r.role as string));
+          const approved = profile?.status === "approved";
+          const admin = roleSet.has("admin");
+          const archivist = !admin && roleSet.has("archivist") && approved;
+          const guest = !admin && !archivist && roleSet.has("guest") && approved;
+          result = {
+            isAdmin: admin,
+            isArchivist: archivist,
+            isApprovedGuest: guest,
+            canReadArchive: admin || archivist || guest,
+          };
+        }
         setAccess({
           isAdmin: result.isAdmin,
           isApprovedGuest: result.isApprovedGuest,
