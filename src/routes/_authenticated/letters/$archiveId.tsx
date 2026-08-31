@@ -511,6 +511,7 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
+          <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
           {/* Guests browse in read-only mode — the disabled fieldset blocks edits
               in every input/button below without changing the layout. */}
           <fieldset disabled={isGuestViewer} className="contents">
