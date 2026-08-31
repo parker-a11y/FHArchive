@@ -494,7 +494,11 @@ function LetterPage() {
         </section>
       )}
 
-      <Tabs key={tab ?? "catalog"} defaultValue={tab === "transcription" ? "transcription" : "catalog"} className="px-4 sm:px-8 py-6">
+      <Tabs
+        key={tab ?? "catalog"}
+        defaultValue={tab === "transcription" || tab === "digitization" ? tab : "catalog"}
+        className="px-4 sm:px-8 py-6"
+      >
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="digitization">Scans &amp; Files ({letter.image_count})</TabsTrigger>
