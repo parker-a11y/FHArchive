@@ -196,8 +196,9 @@ export function PageHeader({
           </Button>
         )}
         <div className="min-w-0">
-        <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+          <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
+          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+        </div>
       </div>
       {center && <div className="flex flex-1 items-center justify-center">{center}</div>}
       <div className="flex flex-wrap items-center gap-2">{actions}</div>
