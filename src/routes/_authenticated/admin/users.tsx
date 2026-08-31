@@ -125,7 +125,10 @@ function UserManagementPage() {
         title="Account Control"
         description="Review accounts, approve guests, and grant Archivist editing access."
       />
-      <div className="p-4 sm:p-8">
+      <div className="space-y-4 p-4 sm:p-8">
+        <div className="flex justify-end">
+          <AddAccountDialog />
+        </div>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading users…</p>
         ) : (
