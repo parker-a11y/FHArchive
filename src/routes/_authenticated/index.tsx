@@ -1,5 +1,5 @@
 import logoMark from "@/assets/francis-files-logo.png";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -233,6 +233,14 @@ function Dashboard() {
   });
   const [dailyOpen, setDailyOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const dailyRef = useRef<HTMLDivElement>(null);
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (dailyOpen) dailyRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [dailyOpen]);
+  useEffect(() => {
+    if (categoriesOpen) categoriesRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [categoriesOpen]);
   const { data: daily } = useQuery({
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
