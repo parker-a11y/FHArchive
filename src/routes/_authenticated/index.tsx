@@ -26,6 +26,8 @@ import {
   Globe,
   Paperclip,
   Sparkles,
+  Quote,
+
 
 
   type LucideIcon,
