@@ -211,11 +211,13 @@ function UserManagementPage() {
                             Revoke
                           </Button>
                         )}
+                        {!profile.roles.includes("admin") && profile.id !== user?.id && (
                         <DeleteAccountDialog
                           profile={profile}
                           onConfirm={() => deleteMutation.mutate(profile.id)}
                           disabled={deleteMutation.isPending}
                         />
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
