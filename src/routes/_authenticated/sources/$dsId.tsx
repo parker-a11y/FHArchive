@@ -47,6 +47,7 @@ import {
   SourceShareStatusBadge,
 } from "@/components/sources/ShareSourceDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
 
 
 export const Route = createFileRoute("/_authenticated/sources/$dsId")({
@@ -214,6 +215,7 @@ function SourcePage() {
             <TabsTrigger value="files">Files</TabsTrigger>
 
             <TabsTrigger value="segments">Segments</TabsTrigger>
+            <TabsTrigger value="related">Related Records</TabsTrigger>
             <TabsTrigger value="records">Linked FH Records</TabsTrigger>
             <TabsTrigger value="connections">People · Places · More</TabsTrigger>
           </TabsList>
@@ -309,6 +311,10 @@ function SourcePage() {
             <fieldset disabled={isGuestViewer} className="contents">
               <SegmentsPanel source={source} />
             </fieldset>
+          </TabsContent>
+
+          <TabsContent value="related" className="mt-6">
+            <RelatedRecordsPanel kind="source" id={source.id} readOnly={isGuestViewer} />
           </TabsContent>
 
           <TabsContent value="records" className="mt-6">

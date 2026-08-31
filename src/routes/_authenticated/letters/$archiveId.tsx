@@ -30,6 +30,7 @@ import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import { fetchContainers } from "@/lib/containers";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
 import { supabase } from "@/integrations/supabase/client";
 import {
   deleteLetter,
