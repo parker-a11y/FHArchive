@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.stamp_edit_actor() FROM PUBLIC, anon, authenticated;
