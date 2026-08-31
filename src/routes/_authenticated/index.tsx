@@ -285,12 +285,20 @@ function Dashboard() {
     },
 
     {
+      label: "Important quotations",
+      value: quotations.filter((x) => x.status === "accepted").length,
+      tone: "plum",
+      icon: Quote,
+      to: "/quotations",
+    },
+    {
       label: "FFF — Francis File Finds",
       value: (stats0?.starred_records ?? 0) + (stats0?.starred_sources ?? 0),
       tone: "amber",
       icon: Star,
       to: "/fff",
     },
+
     { label: "Total scans", value: stats0?.total_scans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {
       label: "Transcribed",
