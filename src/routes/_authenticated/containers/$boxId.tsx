@@ -44,8 +44,8 @@ export const Route = createFileRoute("/_authenticated/containers/$boxId")({
 });
 
 function ContainerPage() {
-  const { isAdmin } = useAuth();
-  const isGuestViewer = !isAdmin;
+  const { isAdmin, canEdit } = useAuth();
+  const isGuestViewer = !canEdit;
   const { boxId } = Route.useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
