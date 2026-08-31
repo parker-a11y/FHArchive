@@ -944,3 +944,38 @@ function LetterPage() {
     </>
   );
 }
+
+/** Thumbnail strip on the Catalog tab — click any scan to open Scans & Files. */
+function CatalogThumbnails({ letterId, archiveId }: { letterId: string; archiveId: string }) {
+  const { data: files } = useQuery({
+    queryKey: ["catalog-thumbnails", letterId],
+    queryFn: () => fetchDigitalFiles(letterId),
+    staleTime: 30_000,
+  });
+  const thumbs = (files ?? []).filter((f) => f.thumbUrl);
+  if (!thumbs.length) return null;
+  return (
+    <div className="mb-6 max-w-5xl">
+      <div className="field-label mb-2">Scans ({thumbs.length}) — click to view</div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {thumbs.map((f) => (
+          <Link
+            key={f.id}
+            to="/letters/$archiveId"
+            params={{ archiveId }}
+            search={{ tab: "digitization" }}
+            title={f.label ?? f.original_filename}
+            className="shrink-0 overflow-hidden rounded-md border border-border bg-card shadow-sm transition hover:border-primary hover:shadow-md"
+          >
+            <img
+              src={f.thumbUrl}
+              alt={f.label ?? f.original_filename}
+              className="h-28 w-auto object-cover"
+              loading="lazy"
+            />
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
