@@ -26,6 +26,8 @@ import {
   Globe,
   Paperclip,
   Sparkles,
+  Quote,
+
 
 
   type LucideIcon,
@@ -36,6 +38,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDashboardStats, type Letter } from "@/lib/queries";
 import { fetchSources } from "@/lib/sources";
+import { fetchQuotations } from "@/lib/quotations";
+
 import { displayDate } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { ArchiveNotes } from "@/components/ArchiveNotes";
@@ -245,6 +249,11 @@ function Dashboard() {
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
   });
+  const { data: quotations = [] } = useQuery({
+    queryKey: ["quotations"],
+    queryFn: fetchQuotations,
+  });
+
 
   const byType = stats0?.by_type ?? {};
   const byPeriod = stats0?.by_period ?? {};
@@ -280,12 +289,20 @@ function Dashboard() {
     },
 
     {
+      label: "Important quotations",
+      value: quotations.filter((x) => x.status === "accepted").length,
+      tone: "plum",
+      icon: Quote,
+      to: "/quotations",
+    },
+    {
       label: "FFF — Francis File Finds",
       value: (stats0?.starred_records ?? 0) + (stats0?.starred_sources ?? 0),
       tone: "amber",
       icon: Star,
       to: "/fff",
     },
+
     { label: "Total scans", value: stats0?.total_scans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {
       label: "Transcribed",
