@@ -2491,6 +2491,72 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_recaps: {
+        Row: {
+          body_md: string
+          created_at: string
+          generated_at: string
+          id: string
+          image_archive_id: string | null
+          image_bucket: string | null
+          image_caption: string | null
+          image_path: string | null
+          lede: string | null
+          manually_edited: boolean
+          model: string | null
+          owner_id: string | null
+          related_ids: string[]
+          stats: Json
+          status: string
+          title: string
+          updated_at: string
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          body_md?: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          image_archive_id?: string | null
+          image_bucket?: string | null
+          image_caption?: string | null
+          image_path?: string | null
+          lede?: string | null
+          manually_edited?: boolean
+          model?: string | null
+          owner_id?: string | null
+          related_ids?: string[]
+          stats?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          body_md?: string
+          created_at?: string
+          generated_at?: string
+          id?: string
+          image_archive_id?: string | null
+          image_bucket?: string | null
+          image_caption?: string | null
+          image_path?: string | null
+          lede?: string | null
+          manually_edited?: boolean
+          model?: string | null
+          owner_id?: string | null
+          related_ids?: string[]
+          stats?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
