@@ -34,7 +34,10 @@ function Keywords() {
   const { data: keywords = [] } = useQuery({
     queryKey: ["keywords"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("keywords").select("*").order("name");
+      const { data, error } = await supabase
+        .from("keywords")
+        .select("id, name, description")
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },

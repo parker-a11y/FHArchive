@@ -44,7 +44,10 @@ function Organizations() {
   const { data: orgs = [] } = useQuery({
     queryKey: ["organizations"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("organizations").select("*").order("name");
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name, org_type, description")
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },

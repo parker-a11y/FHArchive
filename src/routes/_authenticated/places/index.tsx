@@ -41,7 +41,10 @@ function Places() {
   const { data: places = [] } = useQuery({
     queryKey: ["places"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("places").select("*").order("canonical_name");
+      const { data, error } = await supabase
+        .from("places")
+        .select("id, canonical_name, city, region, country")
+        .order("canonical_name");
       if (error) throw error;
       return data ?? [];
     },

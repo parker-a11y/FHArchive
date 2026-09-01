@@ -43,7 +43,10 @@ function Events() {
   const { data: events = [] } = useQuery({
     queryKey: ["events"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("events").select("*").order("name");
+      const { data, error } = await supabase
+        .from("events")
+        .select("id, name, event_type, start_date, end_date, description")
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
