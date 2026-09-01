@@ -543,8 +543,11 @@ function AskFrancis() {
           </div>
         </div>
 
+        {/* ---- Lens views ---- */}
+        {lens !== "answer" && <LensPanel lens={lens} />}
+
         {/* ---- Thread ---- */}
-        {busy && (
+        {lens === "answer" && busy && (
           <p className="text-sm text-muted-foreground">
             Searching the research index and reading the supporting records…
           </p>
