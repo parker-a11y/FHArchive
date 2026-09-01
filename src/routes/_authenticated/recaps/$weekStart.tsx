@@ -162,6 +162,9 @@ function RecapPage() {
                   <Button variant="outline" className="gap-2" onClick={() => setEditing(true)}>
                     <PenLine className="size-4" /> Edit
                   </Button>
+                  <Button variant="outline" className="gap-2" onClick={() => setAddOpen(true)}>
+                    <Sparkles className="size-4 text-archive-gold" /> Add with AI
+                  </Button>
                   <Button
                     variant="outline"
                     className="gap-2"
