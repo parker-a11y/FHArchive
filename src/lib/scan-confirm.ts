@@ -9,6 +9,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { canDerive, makeDerivatives } from "@/lib/derivatives";
+import { rotateBlob } from "@/lib/rotate";
 import { basenameOf, extensionOf } from "@/lib/scan-rename";
 import type { DigitalFileWithDerivatives } from "@/lib/digital-files";
 
@@ -99,7 +100,16 @@ export async function generateDerivatives(
   const source = await masterAsFile(file);
   if (!canDerive(source)) throw new Error("This file type cannot produce image derivatives");
 
-  const derived = await makeDerivatives(source);
+  const base0 = await makeDerivatives(source);
+  // Any pending display rotation is baked into the derivatives, never the master.
+  const deg = (((file.rotation ?? 0) % 360) + 360) % 360;
+  const derived = deg
+    ? {
+        ...base0,
+        view: await rotateBlob(base0.view.blob, deg),
+        thumb: await rotateBlob(base0.thumb.blob, deg),
+      }
+    : base0;
   const viewPath = `${archiveId}/derivatives/${base}.jpg`;
   const thumbPath = `${archiveId}/derivatives/${base}_thumb.jpg`;
 
@@ -145,6 +155,7 @@ export async function generateDerivatives(
     },
   ] as never);
   if (error) throw error;
+  if (deg) await supabase.from("digital_files").update({ rotation: 0 } as never).eq("id", file.id);
 }
 
 export async function recordDerivativeFailure(
