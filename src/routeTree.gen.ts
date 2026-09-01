@@ -51,6 +51,7 @@ import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authentic
 import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
+import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -281,6 +282,11 @@ const ApiPublicResearchSnapshotRoute =
     path: '/api/public/research-snapshot',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicWeeklyRecapRoute = ApiPublicWeeklyRecapRouteImport.update({
+  id: '/api/public/weekly-recap',
+  path: '/api/public/weekly-recap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
+  '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -366,6 +373,7 @@ export interface FileRoutesByTo {
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
+  '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/keywords': typeof AuthenticatedKeywordsIndexRoute
@@ -412,6 +420,7 @@ export interface FileRoutesById {
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
+  '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -458,6 +467,7 @@ export interface FileRouteTypes {
     | '/api/public/archivist-digest'
     | '/api/public/backup'
     | '/api/public/research-snapshot'
+    | '/api/public/weekly-recap'
     | '/containers/'
     | '/events/'
     | '/keywords/'
@@ -502,6 +512,7 @@ export interface FileRouteTypes {
     | '/api/public/archivist-digest'
     | '/api/public/backup'
     | '/api/public/research-snapshot'
+    | '/api/public/weekly-recap'
     | '/containers'
     | '/events'
     | '/keywords'
@@ -547,6 +558,7 @@ export interface FileRouteTypes {
     | '/api/public/archivist-digest'
     | '/api/public/backup'
     | '/api/public/research-snapshot'
+    | '/api/public/weekly-recap'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
     | '/_authenticated/keywords/'
@@ -574,6 +586,7 @@ export interface RootRouteChildren {
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
   ApiPublicResearchSnapshotRoute: typeof ApiPublicResearchSnapshotRoute
+  ApiPublicWeeklyRecapRoute: typeof ApiPublicWeeklyRecapRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -873,6 +886,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResearchSnapshotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/weekly-recap': {
+      id: '/api/public/weekly-recap'
+      path: '/api/public/weekly-recap'
+      fullPath: '/api/public/weekly-recap'
+      preLoaderRoute: typeof ApiPublicWeeklyRecapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -963,6 +983,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
   ApiPublicResearchSnapshotRoute: ApiPublicResearchSnapshotRoute,
+  ApiPublicWeeklyRecapRoute: ApiPublicWeeklyRecapRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
