@@ -23,6 +23,7 @@ import {
   UserCog,
   ChevronDown,
   FileSearch,
+  Newspaper,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare, adminOnly: true },
   { to: "/letters", label: "All Records", icon: Files },
   { to: "/ask", label: "Ask Francis", icon: FileSearch },
+  { to: "/recaps", label: "Weekly Recaps", icon: Newspaper },
   { to: "/fff", label: "FFF — Finds", icon: Sparkles },
   { to: "/sources", label: "Digital Sources", icon: Globe },
   { to: "/containers", label: "Source Containers", icon: Box },

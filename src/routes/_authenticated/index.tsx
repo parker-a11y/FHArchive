@@ -262,6 +262,16 @@ function Dashboard() {
     queryFn: fetchQuotations,
     staleTime: 5 * 60_000,
   });
+  const { data: recapCount = 0 } = useQuery({
+    queryKey: ["weekly-recap-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("weekly_recaps")
+        .select("id", { count: "exact", head: true });
+      return count ?? 0;
+    },
+    staleTime: 5 * 60_000,
+  });
 
 
   const byType = stats0?.by_type ?? {};
@@ -303,6 +313,14 @@ function Dashboard() {
       tone: "plum",
       icon: Quote,
       to: "/quotations",
+    },
+    {
+      label: "Weekly recaps",
+      value: recapCount,
+      sub: "The story so far, week by week",
+      tone: "teal",
+      icon: Newspaper,
+      to: "/recaps",
     },
     {
       label: "FFF — Francis File Finds",

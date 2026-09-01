@@ -11,3 +11,5 @@
 - [x] Dashboard: move All categories tile to last; improve tile text spacing on small screens
 
 - [x] Universal Related Records / cross-references (any record ↔ any record, bidirectional, optional note)
+
+- [x] Weekly Francis Files Recap: Sunday 2AM auto-generation, admin "Generate now"/regenerate/edit/publish, archived at /recaps with linked FH/DS records
