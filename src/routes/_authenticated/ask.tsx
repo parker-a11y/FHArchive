@@ -174,6 +174,85 @@ function Inline({ text }: { text: string }) {
   );
 }
 
+type ShareRecord = { kind: "letter" | "source"; id: string; identifier: string; title?: string | null };
+
+/**
+ * Emails a research answer together with the FH / DS records it cited. The
+ * records travel as unlisted archive links, exactly like a record email.
+ */
+function ShareAnswerButton({ turn }: { turn: Turn }) {
+  const ids = turn.answer.citations.map((c) => c.archive_id).slice(0, 10);
+
+  const { data: records, isLoading } = useQuery({
+    queryKey: ["ask-share-records", ids.join(",")],
+    queryFn: async (): Promise<ShareRecord[]> => {
+      const fh = ids.filter((i) => !i.startsWith("DS"));
+      const ds = ids.filter((i) => i.startsWith("DS"));
+      const found = new Map<string, ShareRecord>();
+      if (fh.length) {
+        const { data } = await supabase.from("letters").select("id, archive_id, title").in("archive_id", fh);
+        for (const r of data ?? [])
+          found.set(r.archive_id as string, {
+            kind: "letter",
+            id: r.id as string,
+            identifier: r.archive_id as string,
+            title: (r.title as string | null) ?? null,
+          });
+      }
+      if (ds.length) {
+        const { data } = await supabase.from("digital_sources").select("id, ds_id, title").in("ds_id", ds);
+        for (const r of data ?? [])
+          found.set(r.ds_id as string, {
+            kind: "source",
+            id: r.id as string,
+            identifier: r.ds_id as string,
+            title: (r.title as string | null) ?? null,
+          });
+      }
+      return ids.map((i) => found.get(i)).filter(Boolean) as ShareRecord[];
+    },
+  });
+
+  const body = [
+    `Research question: ${turn.question}`,
+    "",
+    turn.answer.answer,
+    turn.answer.caveats ? `\nCaveats: ${turn.answer.caveats}` : "",
+    `\nConfidence: ${turn.answer.confidence}`,
+    ids.length ? `Supporting records: ${ids.join(", ")}` : "",
+    "\nShared from Ask Francis — an AI research finding, not catalog fact.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  if (isLoading)
+    return (
+      <Button size="sm" className="gap-1.5" disabled>
+        <Loader2 className="size-3.5 animate-spin" /> Share Results
+      </Button>
+    );
+
+  return (
+    <EmailArchiveDialog
+      records={records ?? []}
+      defaultSubject={`Research from The Francis Files: ${turn.question.slice(0, 120)}`}
+      defaultMessage={body}
+      description={
+        (records ?? []).length > 0
+          ? `Emails this research answer along with ${(records ?? []).map((r) => r.identifier).join(", ")}. Records travel as unlisted archive links you can switch off later.`
+          : "Emails this research answer. No linked records were cited."
+      }
+      trigger={
+        <Button size="sm" className="gap-1.5">
+          <Share2 className="size-3.5" /> Share Results
+        </Button>
+      }
+    />
+  );
+}
+
+
+
 function AskFrancis() {
   const { canEdit, user, isGuestViewer } = useAuth();
   const qc = useQueryClient();
