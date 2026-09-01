@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 /** Turns FH / DS record numbers into links into the archive. */
 export function RecapInline({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|FH\d{3,}|DS\d{3,})/g);
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|FH-?\d{3,}|DS-?\d{3,})/g);
   return (
     <>
       {parts.map((part, i) => {
@@ -18,7 +18,7 @@ export function RecapInline({ text }: { text: string }) {
               <RecapInline text={part.slice(1, -1)} />
             </em>
           );
-        if (/^FH\d{3,}$/.test(part))
+        if (/^FH-?\d{3,}$/.test(part))
           return (
             <Link
               key={i}
@@ -29,7 +29,7 @@ export function RecapInline({ text }: { text: string }) {
               {part}
             </Link>
           );
-        if (/^DS\d{3,}$/.test(part))
+        if (/^DS-?\d{3,}$/.test(part))
           return (
             <Link
               key={i}
