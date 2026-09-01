@@ -236,6 +236,9 @@ function RecapPage() {
                   <Button variant="outline" className="gap-2" onClick={() => setAddOpen(true)}>
                     <Sparkles className="size-4 text-archive-gold" /> Add with AI
                   </Button>
+                  <Button className="gap-2" onClick={() => setEmailOpen(true)}>
+                    <Mail className="size-4" /> Email recap
+                  </Button>
                   <Button
                     variant="outline"
                     className="gap-2"
@@ -370,6 +373,107 @@ function RecapPage() {
           </article>
         )}
       </div>
+
+      <Dialog open={emailOpen} onOpenChange={(o) => !sendEmail.isPending && setEmailOpen(o)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Email this recap</DialogTitle>
+            <DialogDescription>
+              Recaps are never sent automatically — this goes out only when you send it, with the
+              Francis Files Weekly Recap header.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div>
+              <p className="field-label mb-1.5">Recipients</p>
+              <div className="flex gap-2">
+                <Input
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addRecipient(newEmail);
+                    }
+                  }}
+                  placeholder="name@example.com"
+                  type="email"
+                />
+                <Button variant="outline" className="gap-1.5" onClick={() => addRecipient(newEmail)}>
+                  <Plus className="size-4" /> Add
+                </Button>
+              </div>
+
+              {recipients.length > 0 && (
+                <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
+                  {recipients.map((r) => (
+                    <li key={r.email} className="flex items-center gap-2 px-3 py-1.5 text-sm">
+                      <span className="truncate">{r.name ? `${r.name} — ${r.email}` : r.email}</span>
+                      <button
+                        type="button"
+                        className="ml-auto text-muted-foreground hover:text-tone-rose"
+                        onClick={() =>
+                          setRecipients((list) => list.filter((x) => x.email !== r.email))
+                        }
+                        aria-label={`Remove ${r.email}`}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {contacts.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {contacts
+                    .filter((c) => !recipients.some((r) => r.email === c.email))
+                    .slice(0, 12)
+                    .map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => addRecipient(c.email, c.name)}
+                        className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-archive-gold/50 hover:text-foreground"
+                      >
+                        {c.name || c.email}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="field-label mb-1.5">Personal note (optional)</p>
+              <Textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                placeholder="A short line at the top of the email."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailOpen(false)} disabled={sendEmail.isPending}>
+              Cancel
+            </Button>
+            <Button
+              className="gap-2"
+              onClick={() => sendEmail.mutate()}
+              disabled={sendEmail.isPending || recipients.length === 0}
+            >
+              {sendEmail.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Mail className="size-4" />
+              )}
+              Send recap
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addOpen} onOpenChange={(o) => !refine.isPending && setAddOpen(o)}>
         <DialogContent className="sm:max-w-lg">
