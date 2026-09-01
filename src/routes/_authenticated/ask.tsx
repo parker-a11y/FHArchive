@@ -254,7 +254,7 @@ function ShareAnswerButton({ turn }: { turn: Turn }) {
 
 
 function AskFrancis() {
-  const { canEdit, user, isGuestViewer } = useAuth();
+  const { canEdit, user, isGuestViewer, isAdmin } = useAuth();
   const qc = useQueryClient();
   const ask = useServerFn(askFrancis);
   const refresh = useServerFn(refreshResearchSnapshot);
