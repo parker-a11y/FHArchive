@@ -76,6 +76,9 @@ function RecapPage() {
   const [draft, setDraft] = useState({ title: "", lede: "", body_md: "" });
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [instructions, setInstructions] = useState("");
+  const refineFn = useServerFn(refineWeeklyRecapFn);
 
   useEffect(() => {
     if (recap) setDraft({ title: recap.title, lede: recap.lede ?? "", body_md: recap.body_md });
