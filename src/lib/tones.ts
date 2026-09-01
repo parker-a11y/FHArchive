@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeName } from "@/lib/normalize";
 
 /** Seed tone / sentiment categories. Custom ones live in `tone_options`. */
 export const DEFAULT_TONES = [
@@ -28,7 +29,8 @@ export async function fetchToneOptions(): Promise<ToneOption[]> {
 }
 
 export async function createToneOption(name: string): Promise<void> {
-  const { error } = await supabase.from("tone_options").insert({ name } as never);
+  const clean = normalizeName(name);
+  const { error } = await supabase.from("tone_options").insert({ name: clean } as never);
   // Ignore duplicates — the option already exists and can simply be selected.
   if (error && !/duplicate key/i.test(error.message)) throw error;
 }

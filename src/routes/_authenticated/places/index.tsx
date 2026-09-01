@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findExisting, normalizeName } from "@/lib/normalize";
 import { Merge, Trash2 } from "lucide-react";
 import { DeletePlaceButton } from "@/components/places/DeletePlaceButton";
 import { MergePlaceButton } from "@/components/places/MergePlaceButton";
@@ -51,8 +52,14 @@ function Places() {
   });
 
   async function add() {
-    if (!name.trim()) return;
-    const { error } = await supabase.from("places").insert({ canonical_name: name.trim() });
+    const clean = normalizeName(name);
+    if (!clean) return;
+    const dupe = findExisting(clean, places, (x) => x.canonical_name);
+    if (dupe) {
+      setName("");
+      return toast.info(`Already in the archive as “${dupe.canonical_name}”`);
+    }
+    const { error } = await supabase.from("places").insert({ canonical_name: clean });
     if (error) return toast.error(error.message);
     setName("");
     qc.invalidateQueries({ queryKey: ["places"] });
