@@ -24,8 +24,9 @@ export const ANALYSIS_FIELDS = [
   ],
   [
     "closing_as_written",
-    "The closing phrase immediately before the signature, copied EXACTLY as written (e.g. \"Lovingly\", \"Yours\"). Blank if there is none.",
+    "The closing phrase immediately before the signature, copied EXACTLY as written (e.g. \"Lovingly\", \"Yours\"). If the correspondence has no closing phrase at all, return exactly \"No closing\" (never blank) so the archivist can confirm the absence. Leave blank only when the record is not correspondence.",
   ],
+
   [
     "signature_as_written",
     "How the writer signed, copied EXACTLY as written (e.g. \"F\", \"Fran\", \"Dad\"), separate from the closing. Blank if unsigned.",
