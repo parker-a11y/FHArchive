@@ -35,6 +35,9 @@ export function EmailArchiveDialog({
   title,
   records,
   trigger,
+  defaultSubject,
+  defaultMessage,
+  description,
 }: {
   kind?: "letter" | "source";
   id?: string;
@@ -42,9 +45,12 @@ export function EmailArchiveDialog({
   title?: string | null;
   records?: RecordRef[];
   trigger?: ReactNode;
+  defaultSubject?: string;
+  defaultMessage?: string;
+  description?: ReactNode;
 }) {
   const recordList: RecordRef[] =
-    records ?? [{ kind: kind!, id: id!, identifier: identifier!, title }];
+    records ?? (id ? [{ kind: kind!, id: id!, identifier: identifier!, title }] : []);
   const identifiers = recordList.map((r) => r.identifier).join(", ");
   const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
@@ -53,14 +59,16 @@ export function EmailArchiveDialog({
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [entry, setEntry] = useState("");
   const [subject, setSubject] = useState(
-    single?.title
-      ? `${single.identifier} — ${single.title}`
-      : `${identifiers} from The Francis Files`,
+    defaultSubject ??
+      (single?.title
+        ? `${single.identifier} — ${single.title}`
+        : `${identifiers || "A note"} from The Francis Files`),
   );
   const [headerSubtitle, setHeaderSubtitle] = useState("From The Francis Files");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(defaultMessage ?? "");
   const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
+
 
   const { data: contacts = [] } = useQuery({
     queryKey: ["archive-contacts"],
@@ -207,9 +215,12 @@ export function EmailArchiveDialog({
         <DialogHeader>
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
-            Sends {identifiers} as a formatted email. Scans travel as an unlisted archive link you
-            can switch off later — file attachments are not supported.
+            {description ??
+              (recordList.length > 0
+                ? `Sends ${identifiers} as a formatted email. Scans travel as an unlisted archive link you can switch off later — file attachments are not supported.`
+                : "Sends this as a formatted email from the archive.")}
           </DialogDescription>
+
         </DialogHeader>
 
         <div className="space-y-4">
