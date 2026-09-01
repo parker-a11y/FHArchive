@@ -22,6 +22,7 @@ export function ContainerSelect({
   const [title, setTitle] = useState("");
   const { data: containers = [] } = useQuery({
     queryKey: ["containers"],
+    staleTime: 10 * 60_000,
     queryFn: fetchContainers,
   });
 
