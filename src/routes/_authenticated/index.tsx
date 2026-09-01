@@ -37,10 +37,10 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDashboardStats, type Letter } from "@/lib/queries";
-import { fetchSources } from "@/lib/sources";
 import { fetchQuotations } from "@/lib/quotations";
 
 import { displayDate } from "@/lib/archive";
+import { recordHealth } from "@/lib/record-health";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { ArchiveNotes } from "@/components/ArchiveNotes";
 import { useAuth } from "@/hooks/useAuth";
@@ -223,17 +223,23 @@ function Dashboard() {
       const { data, error } = await supabase
         .from("letters")
         .select(
-          "id, archive_id, title, author, recipient, origin, normalized_date, date_precision, date_as_written, date_certainty",
+          "id, archive_id, title, author, recipient, origin, normalized_date, date_precision, date_as_written, date_certainty, record_type, scan_status, transcription_status, created_at",
         )
         .order("fh_seq", { ascending: false })
-        .limit(8);
+        .limit(10);
       if (error) throw error;
       return (data ?? []) as unknown as Letter[];
     },
   });
-  const { data: sources = [] } = useQuery({
-    queryKey: ["sources"],
-    queryFn: fetchSources,
+  // Only the count is needed here — never download the sources table.
+  const { data: sourceCount = 0 } = useQuery({
+    queryKey: ["source-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("digital_sources")
+        .select("id", { count: "exact", head: true });
+      return count ?? 0;
+    },
   });
   const [dailyOpen, setDailyOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -252,6 +258,7 @@ function Dashboard() {
   const { data: quotations = [] } = useQuery({
     queryKey: ["quotations"],
     queryFn: fetchQuotations,
+    staleTime: 5 * 60_000,
   });
 
 
@@ -282,7 +289,7 @@ function Dashboard() {
     { label: "FH records", value: stats0?.total_records ?? 0, tone: "blue", icon: Hash, to: "/letters" },
     {
       label: "Digital sources",
-      value: sources.length,
+      value: sourceCount,
       tone: "teal",
       icon: Globe,
       to: "/sources",
@@ -442,7 +449,7 @@ function Dashboard() {
             <ArchiveNotes />
 
 
-            <h2 className="field-label mt-10 mb-3">Recently added</h2>
+            <h2 className="field-label mt-10 mb-3">Recently entered — last 10</h2>
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               <div className="divide-y divide-border">
                 {recent.length === 0 && (
@@ -460,6 +467,12 @@ function Dashboard() {
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-amber-soft text-tone-amber">
                       <Mail className="size-4" />
                     </div>
+                    <span
+                      title={recordHealth(l).label}
+                      aria-label={recordHealth(l).label}
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: recordHealth(l).color }}
+                    />
                     <span className="archive-id w-24 text-base">{l.archive_id}</span>
                     <span className="w-36 text-muted-foreground">{displayDate(l)}</span>
                     <span className="truncate font-medium">
