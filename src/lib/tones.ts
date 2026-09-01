@@ -40,3 +40,17 @@ export function mergeToneOptions(custom: ToneOption[], selected: string[] = []):
   for (const s of selected) if (s) set.add(s);
   return Array.from(set);
 }
+
+/** Correspondence subtypes that get automatic tone / sentiment suggestions. */
+export const TONE_SUBTYPES = [
+  "Personal letter",
+  "Circular / Group letter",
+  "Postcard",
+  "Telegram",
+  "Greeting card",
+];
+
+/** True when a record should be offered AI tone suggestions. */
+export function toneEligible(recordType?: string | null, subtype?: string | null) {
+  return recordType === "letter" && TONE_SUBTYPES.includes(subtype ?? "");
+}
