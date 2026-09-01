@@ -3,7 +3,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Eye, EyeOff, Loader2, PenLine, RefreshCw, Save, Sparkles, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Loader2,
+  Mail,
+  PenLine,
+  Plus,
+  RefreshCw,
+  Save,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,7 +48,12 @@ import {
   setRecapStatus,
   signRecapImage,
 } from "@/lib/recaps";
-import { generateWeeklyRecap, refineWeeklyRecapFn } from "@/lib/recaps.functions";
+import { fetchContacts } from "@/lib/archive-email";
+import {
+  emailWeeklyRecapFn,
+  generateWeeklyRecap,
+  refineWeeklyRecapFn,
+} from "@/lib/recaps.functions";
 
 export const Route = createFileRoute("/_authenticated/recaps/$weekStart")({
   head: ({ params }) => ({
@@ -79,6 +97,48 @@ function RecapPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
   const refineFn = useServerFn(refineWeeklyRecapFn);
+
+  // Recaps are never emailed automatically — an admin sends them after review.
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [recipients, setRecipients] = useState<{ email: string; name?: string | null }[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [note, setNote] = useState("");
+  const emailFn = useServerFn(emailWeeklyRecapFn);
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["archive-contacts"],
+    queryFn: fetchContacts,
+    enabled: emailOpen,
+  });
+
+  const addRecipient = (email: string, name?: string | null) => {
+    const value = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
+      toast.error("Enter a valid email address.");
+      return;
+    }
+    setRecipients((list) =>
+      list.some((r) => r.email === value) ? list : [...list, { email: value, name: name ?? null }],
+    );
+    setNewEmail("");
+  };
+
+  const sendEmail = useMutation({
+    mutationFn: async () => emailFn({ data: { weekStart, recipients, message: note } }),
+    onSuccess: (result) => {
+      if (result.sent.length)
+        toast.success(`Recap sent to ${result.sent.length} recipient${result.sent.length === 1 ? "" : "s"}.`);
+      if (result.suppressed.length)
+        toast.warning(`Skipped (unsubscribed or bounced): ${result.suppressed.join(", ")}`);
+      if (result.failed.length)
+        toast.error(result.failed.map((f) => `${f.email}: ${f.error}`).join(" · "));
+      if (result.sent.length) {
+        setEmailOpen(false);
+        setRecipients([]);
+        setNote("");
+      }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   useEffect(() => {
     if (recap) setDraft({ title: recap.title, lede: recap.lede ?? "", body_md: recap.body_md });

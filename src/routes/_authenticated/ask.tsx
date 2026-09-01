@@ -40,6 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { askFrancis, refreshResearchSnapshot } from "@/lib/research.functions";
 import { postArchiveNote } from "@/lib/archive-notes";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { LensPanel } from "@/components/research/LensPanel";
 
 
 export const Route = createFileRoute("/_authenticated/ask")({
@@ -77,18 +78,19 @@ const EXAMPLES = [
 ];
 
 /**
- * Research output types. Only "answer" is implemented today; the others are
- * placeholders so timelines, networks and maps can be added later without
- * reworking the thread structure.
+ * Research output types. "Answer" is the conversational thread; the other
+ * lenses read the same research index a different way.
  */
 const LENSES = [
-  { key: "answer", label: "Answer", ready: true },
-  { key: "timeline", label: "Timeline", ready: false },
-  { key: "people", label: "People network", ready: false },
-  { key: "map", label: "Map", ready: false },
-  { key: "themes", label: "Theme analysis", ready: false },
-  { key: "contradictions", label: "Contradictions", ready: false },
-];
+  { key: "answer", label: "Answer" },
+  { key: "timeline", label: "Timeline" },
+  { key: "people", label: "People network" },
+  { key: "map", label: "Map" },
+  { key: "themes", label: "Theme analysis" },
+  { key: "contradictions", label: "Contradictions" },
+] as const;
+
+type LensKey = (typeof LENSES)[number]["key"];
 
 const CONFIDENCE_TONE: Record<string, string> = {
   confirmed: "bg-tone-emerald-soft text-tone-emerald",
@@ -258,6 +260,7 @@ function AskFrancis() {
   const qc = useQueryClient();
   const ask = useServerFn(askFrancis);
   const refresh = useServerFn(refreshResearchSnapshot);
+  const [lens, setLens] = useState<LensKey>("answer");
   const [question, setQuestion] = useState("");
   const [thread, setThread] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
@@ -501,18 +504,19 @@ function AskFrancis() {
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-1.5">
-              {LENSES.map((lens) => (
-                <span
-                  key={lens.key}
-                  title={lens.ready ? undefined : "Coming soon"}
-                  className={`rounded-full px-2.5 py-1 text-xs ${
-                    lens.ready
+              {LENSES.map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => setLens(l.key)}
+                  className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+                    lens === l.key
                       ? "bg-tone-blue-soft text-tone-blue"
-                      : "border border-dashed border-border text-muted-foreground/70"
+                      : "border border-border text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {lens.label}
-                </span>
+                  {l.label}
+                </button>
               ))}
             </div>
             <Button className="gap-2" onClick={() => run(question)} disabled={busy || !question.trim()}>
@@ -540,14 +544,17 @@ function AskFrancis() {
           </div>
         </div>
 
+        {/* ---- Lens views ---- */}
+        {lens !== "answer" && <LensPanel lens={lens} />}
+
         {/* ---- Thread ---- */}
-        {busy && (
+        {lens === "answer" && busy && (
           <p className="text-sm text-muted-foreground">
             Searching the research index and reading the supporting records…
           </p>
         )}
 
-        {thread
+        {(lens === "answer" ? thread : [])
           .slice()
           .reverse()
           .map((turn) => (

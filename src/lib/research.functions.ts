@@ -43,3 +43,19 @@ export const refreshResearchSnapshot = createServerFn({ method: "POST" })
     const { runResearchSnapshot } = await import("@/lib/research/snapshot.server");
     return runResearchSnapshot("manual");
   });
+
+/** Research lenses: Timeline, People network, Map, Themes, Contradictions. */
+export const researchLens = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { lens: string }) => {
+    const allowed = ["timeline", "people", "map", "themes", "contradictions"] as const;
+    const lens = allowed.find((l) => l === data?.lens);
+    if (!lens) throw new Error("Unknown research lens.");
+    return { lens };
+  })
+  .handler(async ({ data, context }) => {
+    await assertResearchAccess(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { buildLens } = await import("@/lib/research/lenses.server");
+    return buildLens(supabaseAdmin, data.lens);
+  });
