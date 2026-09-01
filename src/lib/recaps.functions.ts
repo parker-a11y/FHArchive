@@ -41,3 +41,37 @@ export const refineWeeklyRecapFn = createServerFn({ method: "POST" })
     const { refineWeeklyRecap } = await import("@/lib/recaps/weekly.server");
     return refineWeeklyRecap(data.weekStart, data.instructions);
   });
+
+/**
+ * Emails a recap after review. Recaps are never sent automatically — an
+ * administrator triggers this from the recap page whenever they choose.
+ */
+export const emailWeeklyRecapFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      weekStart: string;
+      recipients: { email: string; name?: string | null }[];
+      message?: string;
+    }) => {
+      const weekStart = String(data?.weekStart ?? "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) throw new Error("Invalid week.");
+      const recipients = (data?.recipients ?? [])
+        .slice(0, 25)
+        .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
+        .filter((r) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
+      if (recipients.length === 0) throw new Error("Add at least one valid email address.");
+      return { weekStart, recipients, message: String(data?.message ?? "").slice(0, 4000) };
+    },
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { sendRecapEmail } = await import("@/lib/recaps/email.server");
+    return sendRecapEmail(
+      context.supabase,
+      context.userId,
+      data.weekStart,
+      data.recipients,
+      data.message,
+    );
+  });
