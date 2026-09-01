@@ -48,7 +48,12 @@ import {
   setRecapStatus,
   signRecapImage,
 } from "@/lib/recaps";
-import { generateWeeklyRecap, refineWeeklyRecapFn } from "@/lib/recaps.functions";
+import { fetchContacts } from "@/lib/archive-email";
+import {
+  emailWeeklyRecapFn,
+  generateWeeklyRecap,
+  refineWeeklyRecapFn,
+} from "@/lib/recaps.functions";
 
 export const Route = createFileRoute("/_authenticated/recaps/$weekStart")({
   head: ({ params }) => ({
