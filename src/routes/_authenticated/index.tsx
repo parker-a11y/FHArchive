@@ -262,6 +262,16 @@ function Dashboard() {
     queryFn: fetchQuotations,
     staleTime: 5 * 60_000,
   });
+  const { data: recapCount = 0 } = useQuery({
+    queryKey: ["weekly-recap-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("weekly_recaps")
+        .select("id", { count: "exact", head: true });
+      return count ?? 0;
+    },
+    staleTime: 5 * 60_000,
+  });
 
 
   const byType = stats0?.by_type ?? {};
