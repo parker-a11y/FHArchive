@@ -42,6 +42,7 @@ export async function sendRecapEmail(
   weekStart: string,
   recipients: { email: string; name?: string | null }[],
   message: string,
+  options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
 ): Promise<RecapEmailResult> {
   const { data: recap } = await db
     .from("weekly_recaps")
@@ -68,6 +69,21 @@ export async function sendRecapEmail(
     .slice(0, 6)
     .map(([k, v]) => ({ label: STAT_LABELS[k] ?? k.replace(/_/g, " "), value: v }));
 
+  // Unlisted share links so recipients without an archive account can open records.
+  const relatedIds: string[] = (recap.related_ids ?? []).slice(0, 40);
+  let shareLinks: Record<string, string> = {};
+  if (options.publicLinks !== false) {
+    const inBody: string[] = (String(recap.body_md ?? "").match(/\b(?:FH-?\d{3,}|DS-?\d{3,})\b/g) ??
+      []) as string[];
+    const { ensureShareLinksForRefs } = await import("@/lib/archive-email.server");
+    shareLinks = await ensureShareLinksForRefs(
+      db,
+      ownerId,
+      [...relatedIds, ...inBody],
+      options.includeTranscription === true,
+    );
+  }
+
   const templateData = {
     subject: `Francis Files Weekly Recap — ${weekRange}`,
     weekRange,
@@ -77,7 +93,8 @@ export async function sendRecapEmail(
     message: message || null,
     imageUrl,
     imageCaption: recap.image_caption,
-    relatedIds: (recap.related_ids ?? []).slice(0, 40),
+    relatedIds,
+    shareLinks,
     stats,
     recapUrl: `${SITE_URL}/recaps/${recap.week_start}`,
   };

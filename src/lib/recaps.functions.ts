@@ -53,6 +53,8 @@ export const emailWeeklyRecapFn = createServerFn({ method: "POST" })
       weekStart: string;
       recipients: { email: string; name?: string | null }[];
       message?: string;
+      publicLinks?: boolean;
+      includeTranscription?: boolean;
     }) => {
       const weekStart = String(data?.weekStart ?? "");
       if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) throw new Error("Invalid week.");
@@ -61,7 +63,13 @@ export const emailWeeklyRecapFn = createServerFn({ method: "POST" })
         .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
         .filter((r) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email));
       if (recipients.length === 0) throw new Error("Add at least one valid email address.");
-      return { weekStart, recipients, message: String(data?.message ?? "").slice(0, 4000) };
+      return {
+        weekStart,
+        recipients,
+        message: String(data?.message ?? "").slice(0, 4000),
+        publicLinks: data?.publicLinks !== false,
+        includeTranscription: data?.includeTranscription === true,
+      };
     },
   )
   .handler(async ({ data, context }) => {
@@ -73,5 +81,6 @@ export const emailWeeklyRecapFn = createServerFn({ method: "POST" })
       data.weekStart,
       data.recipients,
       data.message,
+      { publicLinks: data.publicLinks, includeTranscription: data.includeTranscription },
     );
   });
