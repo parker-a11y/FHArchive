@@ -13,6 +13,8 @@ import {
   NotebookPen,
   RefreshCw,
   Send,
+  Share2,
+
 } from "lucide-react";
 import askIcon from "@/assets/ask-francis.png";
 import { AppShell, PageHeader } from "@/components/AppShell";
