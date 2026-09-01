@@ -19,6 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { fetchContacts } from "@/lib/archive-email";
 import { sendArchiveEmail } from "@/lib/archive-email.functions";
+import {
+  checkStaleTranscriptions,
+  rollupRecordTranscription,
+} from "@/lib/transcription.functions";
 
 type Recipient = { email: string; name?: string | null };
 
@@ -92,6 +96,51 @@ export function EmailArchiveDialog({
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, single?.id]);
+
+  /**
+   * A combined transcription can lag behind corrections made on individual
+   * pages; emailing that stale copy is exactly the bug this guards against.
+   */
+  const letterIds = recordList.filter((r) => r.kind === "letter").map((r) => r.id);
+  const [stale, setStale] = useState<{ letterId: string; handEdited: boolean }[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    if (!open || !includeTranscription || letterIds.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await checkStaleTranscriptions({ data: { letterIds } });
+        if (!cancelled) setStale(res ?? []);
+      } catch {
+        // Advisory only — never block sending.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, includeTranscription, letterIds.join(",")]);
+
+  const refreshStale = async () => {
+    setRefreshing(true);
+    try {
+      for (const s of stale) {
+        await rollupRecordTranscription({ data: { letterId: s.letterId, force: true } });
+      }
+      setStale([]);
+      toast.success("Transcriptions refreshed from the latest page text");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const staleIds = stale
+    .map((s) => recordList.find((r) => r.id === s.letterId)?.identifier)
+    .filter(Boolean)
+    .join(", ");
 
   const addRecipient = (email: string, name?: string | null) => {
     const value = email.trim().toLowerCase();
@@ -256,6 +305,17 @@ export function EmailArchiveDialog({
               />
               Include the transcription
             </label>
+            {includeTranscription && stale.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:bg-amber-950/30">
+                <span>
+                  The combined transcription for {staleIds} is older than the corrected page text —
+                  the email would send the earlier wording.
+                </span>
+                <Button size="sm" variant="outline" onClick={refreshStale} disabled={refreshing}>
+                  {refreshing ? "Refreshing…" : "Use latest page text"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
