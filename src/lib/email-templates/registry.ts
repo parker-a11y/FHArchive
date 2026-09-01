@@ -29,4 +29,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'guest-approved': guestApprovedTemplate,
   'archivist-granted': archivistGrantedTemplate,
   'archivist-activity': archivistActivityTemplate,
+  'weekly-recap': weeklyRecapTemplate,
 }
