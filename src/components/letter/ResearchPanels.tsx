@@ -14,6 +14,11 @@ import {
   type EntityKind,
 } from "@/components/ai/ConfirmEntitiesDialog";
 import type { EntityKindKey } from "@/lib/ai-analysis";
+import { suggestTones } from "@/lib/tone-suggest.functions";
+import { TONE_SUBTYPES } from "@/lib/tone-suggest.server";
+import { ConfirmTonesDialog, type ToneProposal } from "@/components/ai/ConfirmTonesDialog";
+import { mergeToneOptions } from "@/lib/tones";
+import { useToneOptions } from "@/components/ToneMultiSelect";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -554,6 +559,9 @@ export function AiPanel({ letter }: { letter: Letter }) {
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
   const { confirmEntities, dialog: entityDialog } = useEntityConfirmer();
   const runAnalysis = useServerFn(analyzeRecord);
+  const runToneSuggest = useServerFn(suggestTones);
+  const { data: toneOptions = [] } = useToneOptions();
+  const [toneProposals, setToneProposals] = useState<ToneProposal[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: rows = [] } = useQuery({
@@ -581,12 +589,39 @@ export function AiPanel({ letter }: { letter: Letter }) {
       qc.invalidateQueries({ queryKey: ["ai", letter.id] });
       qc.invalidateQueries({ queryKey: ["ai_pending"] });
       toast.success(`AI analysis complete — ${res.suggestions} suggestion(s) awaiting review`);
+      await proposeTones();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "AI analysis failed";
       setError(msg);
       toast.error(msg);
     } finally {
       setBusy(false);
+    }
+  }
+
+  const toneEligible =
+    letter.record_type === "letter" && TONE_SUBTYPES.includes(letter.subtype ?? "");
+
+  /** Asks the model for tone / sentiment values; the archivist confirms them. */
+  async function proposeTones() {
+    if (!toneEligible) return;
+    try {
+      const vocabulary = mergeToneOptions(toneOptions, letter.tones ?? []);
+      const out = await runToneSuggest({ data: { letterId: letter.id, vocabulary } });
+      if (out.skipped) return;
+      const existing = letter.tones ?? [];
+      const lower = new Set(existing.map((t) => t.toLowerCase()));
+      const matched = out.matched.filter((t) => !lower.has(t.toLowerCase()));
+      const proposed = out.proposed.filter((t) => !lower.has(t.toLowerCase()));
+      if (!matched.length && !proposed.length) {
+        toast.info("No new tone / sentiment suggestions for this record.");
+        return;
+      }
+      setToneProposals([
+        { letterId: letter.id, archiveId: letter.archive_id, existing, matched, proposed },
+      ]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Tone suggestion failed");
     }
   }
 
@@ -676,6 +711,18 @@ export function AiPanel({ letter }: { letter: Letter }) {
     <div className="max-w-4xl space-y-4">
       {personDialog}
       {entityDialog}
+      <ConfirmTonesDialog
+        open={!!toneProposals}
+        proposals={toneProposals ?? []}
+        onCancel={() => setToneProposals(null)}
+        onDone={(n) => {
+          setToneProposals(null);
+          qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
+          qc.invalidateQueries({ queryKey: ["letters"] });
+          qc.invalidateQueries({ queryKey: ["tone_options"] });
+          toast.success(n ? "Tone / sentiment saved" : "No tones saved");
+        }}
+      />
       <div className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-archive-ai">
@@ -686,6 +733,11 @@ export function AiPanel({ letter }: { letter: Letter }) {
             {acceptable.length > 0 && (
               <Button size="sm" variant="outline" onClick={acceptAll} disabled={busy}>
                 Accept all ({acceptable.length})
+              </Button>
+            )}
+            {toneEligible && (
+              <Button size="sm" variant="outline" onClick={proposeTones} disabled={busy || !hasTranscript}>
+                Suggest tone / sentiment
               </Button>
             )}
             <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
