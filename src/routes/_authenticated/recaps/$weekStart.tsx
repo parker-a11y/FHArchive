@@ -127,6 +127,17 @@ function RecapPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const refine = useMutation({
+    mutationFn: async () => refineFn({ data: { weekStart, instructions } }),
+    onSuccess: async () => {
+      await invalidate();
+      setAddOpen(false);
+      setInstructions("");
+      toast.success("Recap updated with your notes.");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   if (isLoading)
     return <p className="p-8 text-sm text-muted-foreground">Loading…</p>;
 
