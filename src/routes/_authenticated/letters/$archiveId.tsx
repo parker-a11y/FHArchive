@@ -701,29 +701,24 @@ function LetterPage() {
                     {
                       key: "salutation_as_written",
                       label: "Salutation — as written",
-                      placeholder: "My Darling",
                     },
                     {
                       key: "addressee_normalized",
                       label: "Addressee — normalized",
-                      placeholder: "Jacqueline Harrington",
                     },
                     {
                       key: "closing_as_written",
                       label: "Closing — as written",
-                      placeholder: "Lovingly",
                     },
                     {
                       key: "signature_as_written",
                       label: "Signature — as written",
-                      placeholder: "F",
                     },
                   ].map((f) => (
                     <div key={f.key}>
                       <label className="field-label">{f.label}</label>
                       <Input
                         value={(form[f.key] as string) ?? ""}
-                        placeholder={f.placeholder}
                         onChange={(e) => set(f.key, e.target.value)}
                       />
                     </div>
