@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "sdk_version": "0.28.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pcsydungdqeyhcawhnuh.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "harrington-letters-archive",
+      "version": "0.1.0",
+      "title": "Harrington Letters Archive"
+    },
+    "tools": [
+      {
+        "name": "search_records",
+        "title": "Search archive records",
+        "description": "Search FH archive records by title, people, places or transcription text. Returns matching records with their FH archive IDs.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Free-text search term, e.g. a name, place or phrase."
+            },
+            "limit": {
+              "description": "Maximum records to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_record",
+        "title": "Get archive record",
+        "description": "Fetch one FH archive record in full by its archive ID (e.g. FH0014), including catalog fields and the best available transcription.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "archive_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The FH archive ID, e.g. FH0014."
+            },
+            "include_transcription": {
+              "description": "Include the transcription text (default true).",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "archive_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_people",
+        "title": "List people",
+        "description": "List or search the people records in the archive (canonical names and details).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Optional name filter.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Maximum people to return (default 25).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_quotations",
+        "title": "List important quotations",
+        "description": "List notable quotations captured from archive records, with the record they came from.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Optional text filter on the quotation.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Maximum records to scan (default 50).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
