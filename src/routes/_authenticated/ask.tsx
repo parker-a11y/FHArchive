@@ -40,6 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { askFrancis, refreshResearchSnapshot } from "@/lib/research.functions";
 import { postArchiveNote } from "@/lib/archive-notes";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { LensPanel } from "@/components/research/LensPanel";
 
 
 export const Route = createFileRoute("/_authenticated/ask")({
