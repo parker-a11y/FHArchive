@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Download, FileText, Trash2, Upload } from "lucide-react";
+import { Download, FileText, Loader2, RotateCw, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { supabase } from "@/integrations/supabase/client";
+import { rotateStoredImage } from "@/lib/rotate";
 import {
   DS_FILE_TYPES,
   fetchDsFiles,
@@ -66,6 +67,24 @@ function FileCard({
   const url = file.signedUrl || useSignedUrl(file.storage_path);
   const [label, setLabel] = useState(file.file_label);
   const [notes, setNotes] = useState(file.notes ?? "");
+  const [bust, setBust] = useState(0);
+  const [rotating, setRotating] = useState(false);
+  const src = url && bust ? `${url}${url.includes("?") ? "&" : "?"}t=${bust}` : url;
+
+  async function rotate() {
+    setRotating(true);
+    try {
+      const r = await rotateStoredImage(BUCKET, file.storage_path, 90);
+      onSave({ file_size: r.size });
+      setBust(Date.now());
+      toast.success("Rotated 90°");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRotating(false);
+    }
+  }
+
   const dirty = label !== file.file_label || notes !== (file.notes ?? "");
   const isViewable = ["image", "audio", "video"].includes(file.file_type);
 
@@ -78,7 +97,7 @@ function FileCard({
             className="block h-56 w-full cursor-zoom-in"
             aria-label={`Open ${file.file_label || "image"} fullscreen`}
           >
-            <img src={url} alt={file.file_label || "Preservation copy"} className="h-full w-full object-contain" />
+            <img src={src} alt={file.file_label || "Preservation copy"} className="h-full w-full object-contain" />
           </button>
         )}
         {file.file_type === "audio" && url && (
@@ -119,6 +138,21 @@ function FileCard({
           </Select>
           <span className="text-xs text-muted-foreground">{formatFileSize(file.file_size)}</span>
           <div className="ml-auto flex items-center gap-1">
+            {file.file_type === "image" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Rotate 90° clockwise"
+                disabled={rotating}
+                onClick={rotate}
+              >
+                {rotating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RotateCw className="size-4" />
+                )}
+              </Button>
+            )}
             {url && (
               <Button variant="ghost" size="icon" asChild>
                 <a href={url} download={file.original_filename ?? undefined} target="_blank" rel="noreferrer">

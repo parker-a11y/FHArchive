@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Download, Trash2, Upload } from "lucide-react";
+import { Camera, Download, Loader2, RotateCw, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { supabase } from "@/integrations/supabase/client";
+import { rotateStoredImage } from "@/lib/rotate";
 import {
   CONTAINER_BUCKET,
   fetchContainerFiles,
@@ -48,7 +49,24 @@ function PhotoCard({
 }) {
   const url = useSignedUrl(file.storage_path);
   const [label, setLabel] = useState(file.file_label);
+  const [bust, setBust] = useState(0);
+  const [rotating, setRotating] = useState(false);
   const isImage = (file.mime_type ?? "").startsWith("image/");
+  const src = url && bust ? `${url}${url.includes("?") ? "&" : "?"}t=${bust}` : url;
+
+  async function rotate() {
+    setRotating(true);
+    try {
+      const r = await rotateStoredImage(CONTAINER_BUCKET, file.storage_path, 90);
+      onSave({ file_size: r.size });
+      setBust(Date.now());
+      toast.success("Rotated 90°");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRotating(false);
+    }
+  }
 
   return (
     <div
@@ -69,7 +87,7 @@ function PhotoCard({
             aria-label={`Open ${file.file_label || "container photograph"} fullscreen`}
           >
             <img
-              src={url}
+              src={src}
               alt={file.file_label || "Source container documentation photograph"}
               className="h-full w-full object-contain"
             />
@@ -90,6 +108,21 @@ function PhotoCard({
       <div className="mt-2 flex items-center gap-1">
         <span className="text-xs text-muted-foreground">{formatFileSize(file.file_size)}</span>
         <div className="ml-auto flex items-center gap-1">
+          {isImage && (
+            <Button
+              variant="ghost"
+              size="icon"
+              title="Rotate 90° clockwise"
+              disabled={rotating}
+              onClick={rotate}
+            >
+              {rotating ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RotateCw className="size-4" />
+              )}
+            </Button>
+          )}
           {url && (
             <Button variant="ghost" size="icon" asChild>
               <a href={url} download={file.original_filename ?? undefined} target="_blank" rel="noreferrer">
