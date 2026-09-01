@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Eye, EyeOff, Loader2, PenLine, RefreshCw, Save, X } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, PenLine, RefreshCw, Save, Sparkles, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
