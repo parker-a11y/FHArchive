@@ -654,7 +654,9 @@ function AskFrancis() {
                     </Button>
                   </>
                 )}
+                {isAdmin && <div className="ml-auto"><ShareAnswerButton turn={turn} /></div>}
               </div>
+
             </div>
           ))}
 
