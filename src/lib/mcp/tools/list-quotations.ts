@@ -27,7 +27,8 @@ export default defineTool({
 
     const needle = query?.toLowerCase();
     const quotes = (data ?? []).flatMap((row) => {
-      const letter = (row as { letters?: Record<string, unknown> }).letters ?? {};
+      const rel = (row as unknown as { letters?: unknown }).letters;
+      const letter = (Array.isArray(rel) ? rel[0] : rel) as Record<string, unknown> | undefined ?? {};
       return String(row.content ?? "")
         .split("\n")
         .map((line) => line.trim())
