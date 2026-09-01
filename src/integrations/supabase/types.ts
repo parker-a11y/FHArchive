@@ -1076,6 +1076,51 @@ export type Database = {
           },
         ]
       }
+      historical_claims: {
+        Row: {
+          claim: string
+          confidence: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          evidence: string[]
+          id: string
+          owner_id: string
+          question: string | null
+          reasoning: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          claim: string
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          evidence?: string[]
+          id?: string
+          owner_id?: string
+          question?: string | null
+          reasoning?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          claim?: string
+          confidence?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          evidence?: string[]
+          id?: string
+          owner_id?: string
+          question?: string | null
+          reasoning?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       historical_references: {
         Row: {
           created_at: string
@@ -1868,6 +1913,7 @@ export type Database = {
       profiles: {
         Row: {
           approved_at: string | null
+          ask_francis: boolean
           created_at: string
           email: string
           full_name: string | null
@@ -1878,6 +1924,7 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          ask_francis?: boolean
           created_at?: string
           email: string
           full_name?: string | null
@@ -1888,6 +1935,7 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          ask_francis?: boolean
           created_at?: string
           email?: string
           full_name?: string | null
@@ -2054,6 +2102,153 @@ export type Database = {
           name?: string
           name_norm?: string | null
           owner_id?: string
+        }
+        Relationships: []
+      }
+      research_index: {
+        Row: {
+          archive_id: string
+          author: string | null
+          body: string | null
+          date_text: string | null
+          destination: string | null
+          events: string[]
+          fts: unknown
+          has_transcription: boolean
+          id: string
+          keywords: string[]
+          kind: string
+          linked_refs: string[]
+          organizations: string[]
+          origin: string | null
+          people: string[]
+          period: string | null
+          places: string[]
+          recipient: string | null
+          record_type: string | null
+          ref_id: string
+          snapshot_id: string | null
+          sort_date: string | null
+          subtype: string | null
+          summary: string | null
+          title: string | null
+          tones: string[]
+          updated_at: string
+        }
+        Insert: {
+          archive_id: string
+          author?: string | null
+          body?: string | null
+          date_text?: string | null
+          destination?: string | null
+          events?: string[]
+          fts?: unknown
+          has_transcription?: boolean
+          id?: string
+          keywords?: string[]
+          kind: string
+          linked_refs?: string[]
+          organizations?: string[]
+          origin?: string | null
+          people?: string[]
+          period?: string | null
+          places?: string[]
+          recipient?: string | null
+          record_type?: string | null
+          ref_id: string
+          snapshot_id?: string | null
+          sort_date?: string | null
+          subtype?: string | null
+          summary?: string | null
+          title?: string | null
+          tones?: string[]
+          updated_at?: string
+        }
+        Update: {
+          archive_id?: string
+          author?: string | null
+          body?: string | null
+          date_text?: string | null
+          destination?: string | null
+          events?: string[]
+          fts?: unknown
+          has_transcription?: boolean
+          id?: string
+          keywords?: string[]
+          kind?: string
+          linked_refs?: string[]
+          organizations?: string[]
+          origin?: string | null
+          people?: string[]
+          period?: string | null
+          places?: string[]
+          recipient?: string | null
+          record_type?: string | null
+          ref_id?: string
+          snapshot_id?: string | null
+          sort_date?: string | null
+          subtype?: string | null
+          summary?: string | null
+          title?: string | null
+          tones?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      research_snapshots: {
+        Row: {
+          bytes_written: number
+          created_at: string
+          error: string | null
+          files: Json
+          finished_at: string | null
+          folder: string | null
+          id: string
+          people_count: number
+          places_count: number
+          records_indexed: number
+          sources_indexed: number
+          started_at: string
+          status: string
+          transcriptions_indexed: number
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          bytes_written?: number
+          created_at?: string
+          error?: string | null
+          files?: Json
+          finished_at?: string | null
+          folder?: string | null
+          id?: string
+          people_count?: number
+          places_count?: number
+          records_indexed?: number
+          sources_indexed?: number
+          started_at?: string
+          status?: string
+          transcriptions_indexed?: number
+          trigger?: string
+          updated_at?: string
+        }
+        Update: {
+          bytes_written?: number
+          created_at?: string
+          error?: string | null
+          files?: Json
+          finished_at?: string | null
+          folder?: string | null
+          id?: string
+          people_count?: number
+          places_count?: number
+          records_indexed?: number
+          sources_indexed?: number
+          started_at?: string
+          status?: string
+          transcriptions_indexed?: number
+          trigger?: string
+          updated_at?: string
         }
         Relationships: []
       }

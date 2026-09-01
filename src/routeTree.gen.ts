@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/ask'
 import { Route as AuthenticatedBackupsRouteImport } from './routes/_authenticated/backups'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
@@ -49,6 +50,7 @@ import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
 import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
+import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -90,6 +92,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAskRoute = AuthenticatedAskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBackupsRoute = AuthenticatedBackupsRouteImport.update({
@@ -268,6 +275,12 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   path: '/api/public/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicResearchSnapshotRoute =
+  ApiPublicResearchSnapshotRouteImport.update({
+    id: '/api/public/research-snapshot',
+    path: '/api/public/research-snapshot',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -283,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/ask': typeof AuthenticatedAskRoute
   '/backups': typeof AuthenticatedBackupsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
@@ -307,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -324,6 +339,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/ask': typeof AuthenticatedAskRoute
   '/backups': typeof AuthenticatedBackupsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
@@ -349,6 +365,7 @@ export interface FileRoutesByTo {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/keywords': typeof AuthenticatedKeywordsIndexRoute
@@ -368,6 +385,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/_authenticated/ask': typeof AuthenticatedAskRoute
   '/_authenticated/backups': typeof AuthenticatedBackupsRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
@@ -393,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -413,6 +432,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/ask'
     | '/backups'
     | '/catalog'
     | '/categories'
@@ -437,6 +457,7 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/research-snapshot'
     | '/containers/'
     | '/events/'
     | '/keywords/'
@@ -454,6 +475,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/ask'
     | '/backups'
     | '/catalog'
     | '/categories'
@@ -479,6 +501,7 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/research-snapshot'
     | '/containers'
     | '/events'
     | '/keywords'
@@ -497,6 +520,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/_authenticated/ask'
     | '/_authenticated/backups'
     | '/_authenticated/catalog'
     | '/_authenticated/categories'
@@ -522,6 +546,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/research-snapshot'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
     | '/_authenticated/keywords/'
@@ -548,6 +573,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  ApiPublicResearchSnapshotRoute: typeof ApiPublicResearchSnapshotRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -607,6 +633,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ask': {
+      id: '/_authenticated/ask'
+      path: '/ask'
+      fullPath: '/ask'
+      preLoaderRoute: typeof AuthenticatedAskRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/backups': {
@@ -833,6 +866,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/research-snapshot': {
+      id: '/api/public/research-snapshot'
+      path: '/api/public/research-snapshot'
+      fullPath: '/api/public/research-snapshot'
+      preLoaderRoute: typeof ApiPublicResearchSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -844,6 +884,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAskRoute: typeof AuthenticatedAskRoute
   AuthenticatedBackupsRoute: typeof AuthenticatedBackupsRoute
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
@@ -873,6 +914,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAskRoute: AuthenticatedAskRoute,
   AuthenticatedBackupsRoute: AuthenticatedBackupsRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
@@ -920,6 +962,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  ApiPublicResearchSnapshotRoute: ApiPublicResearchSnapshotRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
