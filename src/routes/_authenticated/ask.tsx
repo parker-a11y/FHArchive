@@ -553,7 +553,7 @@ function AskFrancis() {
           </p>
         )}
 
-        {thread
+        {(lens === "answer" ? thread : [])
           .slice()
           .reverse()
           .map((turn) => (
