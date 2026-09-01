@@ -169,12 +169,10 @@ export async function setRecapShareEnabled(
   id: string,
   enabled: boolean,
 ) {
-  const table = kind === "letter" ? "record_shares" : "source_shares";
-  const column = kind === "letter" ? "letter_id" : "source_id";
-  const { error } = await supabase
-    .from(table)
-    .update({ enabled } as never)
-    .eq(column, id)
-    .eq("scope", "record");
+  const query =
+    kind === "letter"
+      ? supabase.from("record_shares").update({ enabled } as never).eq("letter_id", id)
+      : supabase.from("source_shares").update({ enabled } as never).eq("source_id", id);
+  const { error } = await query.eq("scope", "record");
   if (error) throw error;
 }
