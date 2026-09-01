@@ -502,18 +502,19 @@ function AskFrancis() {
           />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-1.5">
-              {LENSES.map((lens) => (
-                <span
-                  key={lens.key}
-                  title={lens.ready ? undefined : "Coming soon"}
-                  className={`rounded-full px-2.5 py-1 text-xs ${
-                    lens.ready
+              {LENSES.map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => setLens(l.key)}
+                  className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+                    lens === l.key
                       ? "bg-tone-blue-soft text-tone-blue"
-                      : "border border-dashed border-border text-muted-foreground/70"
+                      : "border border-border text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {lens.label}
-                </span>
+                  {l.label}
+                </button>
               ))}
             </div>
             <Button className="gap-2" onClick={() => run(question)} disabled={busy || !question.trim()}>
