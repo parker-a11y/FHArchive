@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/** Only same-origin relative paths may be used as a post-login redirect. */
+function safeNext(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (!value.startsWith("/") || value.startsWith("//")) return undefined;
+  return value;
+}
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const next = safeNext(s["next"]);
+    return next ? { next } : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign In — The Francis Files" },
