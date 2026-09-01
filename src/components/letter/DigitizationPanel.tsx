@@ -10,6 +10,7 @@ import {
   ImageIcon,
   Layers,
   Loader2,
+  RotateCw,
   Sparkles,
   ShieldCheck,
   Trash2,
@@ -59,6 +60,7 @@ import {
   renameScanFile,
   sanitizeLabel,
 } from "@/lib/scan-rename";
+import { rotateStoredImage } from "@/lib/rotate";
 import { transcribeScans } from "@/lib/transcription.functions";
 import type { Letter } from "@/lib/queries";
 
@@ -101,6 +103,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [lastLabel, setLastLabel] = useState<string | null>(null);
   const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [rotatingId, setRotatingId] = useState<string | null>(null);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
@@ -383,6 +386,40 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     a.download = file.original_filename;
     a.target = "_blank";
     a.click();
+  }
+
+  /** Rotates the viewing JPG + thumbnail 90° clockwise. The master is untouched. */
+  async function rotate(file: DigitalFileWithDerivatives) {
+    const targets = file.derivatives.filter(
+      (d) => (d.kind === "jpeg" || d.kind === "thumbnail") && d.status === "complete" && d.storage_path,
+    );
+    setRotatingId(file.id);
+    try {
+      if (!targets.length) {
+        const next = (((file.rotation ?? 0) + 90) % 360 + 360) % 360;
+        const { error } = await supabase
+          .from("digital_files")
+          .update({ rotation: next } as never)
+          .eq("id", file.id);
+        if (error) throw error;
+        toast.success("Rotated — will be baked in when derivatives are generated");
+      } else {
+        for (const d of targets) {
+          const r = await rotateStoredImage("scans", d.storage_path as string, 90);
+          await supabase
+            .from("file_derivatives")
+            .update({ width: r.width, height: r.height, file_size: r.size } as never)
+            .eq("id", d.id);
+        }
+        await supabase.from("digital_files").update({ rotation: 0 } as never).eq("id", file.id);
+        toast.success("Rotated 90° — viewing JPG and thumbnail updated");
+      }
+      refresh();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRotatingId(null);
+    }
   }
 
   const lightboxItems: LightboxItem[] = useMemo(
@@ -899,6 +936,20 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     </Button>
                     {!isGuestViewer && (
                       <>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-7"
+                          title="Rotate 90° clockwise (updates the viewing JPG and thumbnail)"
+                          disabled={rotatingId === f.id}
+                          onClick={() => rotate(f)}
+                        >
+                          {rotatingId === f.id ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <RotateCw className="size-3.5" />
+                          )}
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
