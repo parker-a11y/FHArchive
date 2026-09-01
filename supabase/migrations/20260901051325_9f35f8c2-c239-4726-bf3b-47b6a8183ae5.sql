@@ -1,0 +1,1 @@
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS transcription_rollup_text text;

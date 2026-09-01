@@ -415,7 +415,9 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         {rollupConflict && !isGuestViewer && (
           <div className="mb-3 flex flex-wrap items-center gap-3 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm dark:bg-amber-950/30">
             <span>
-              Pages have changed since this combined transcription was edited by hand.
+              This combined transcription was edited by hand and no longer matches the page text.
+              Emails and shared links use this combined version, so they will show the older
+              wording until you refresh it.
             </span>
             <Button size="sm" variant="outline" onClick={() => rollup(true)}>
               Refresh combined transcription
