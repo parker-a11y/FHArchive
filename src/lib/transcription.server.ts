@@ -268,3 +268,55 @@ export async function rebuildRecordTranscription(
   return { updated: Object.keys(patch).length > 0, conflict, allVerified, pages: withText };
 
 }
+
+/**
+ * Reports which of the given records have a combined transcription that no
+ * longer matches their page text — the state that used to let a stale
+ * transcription go out by email unnoticed.
+ */
+export async function staleRecordTranscriptions(
+  supabase: SupabaseClient,
+  letterIds: string[],
+): Promise<{ letterId: string; handEdited: boolean }[]> {
+  const out: { letterId: string; handEdited: boolean }[] = [];
+  for (const letterId of letterIds) {
+    const [{ data: files }, { data: rows }, { data: letter }] = await Promise.all([
+      supabase
+        .from("digital_files")
+        .select("id, label, original_filename, sort_order")
+        .eq("letter_id", letterId)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("scan_transcriptions")
+        .select("file_id, ai_text, verified_text")
+        .eq("letter_id", letterId),
+      supabase
+        .from("letters")
+        .select("transcription_verified, transcription_rollup_text")
+        .eq("id", letterId)
+        .maybeSingle(),
+    ]);
+
+    const byFile = new Map((rows ?? []).map((r: any) => [r.file_id, r]));
+    const parts: string[] = [];
+    (files ?? [])
+      .filter((f: any) => !isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`))
+      .forEach((f: any, i: number) => {
+        const r: any = byFile.get(f.id);
+        const best = (r?.verified_text?.trim() || r?.ai_text?.trim() || "") as string;
+        if (!best) return;
+        parts.push(`— Page ${i + 1}${f.label ? ` (${f.label})` : ""} —\n\n${best}`);
+      });
+    if (!parts.length) continue;
+
+    const combined = parts.join("\n\n");
+    const existing = (letter as any)?.transcription_verified as string | null;
+    const snapshot = (letter as any)?.transcription_rollup_text as string | null;
+    if (!norm(existing) || norm(existing) === norm(combined)) continue;
+    out.push({
+      letterId,
+      handEdited: Boolean(norm(snapshot)) && norm(existing) !== norm(snapshot),
+    });
+  }
+  return out;
+}

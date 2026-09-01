@@ -190,3 +190,14 @@ export const rollupRecordTranscription = createServerFn({ method: "POST" })
     const { rebuildRecordTranscription } = await import("@/lib/transcription.server");
     return rebuildRecordTranscription(context.supabase, data.letterId, data.force);
   });
+
+/** Records whose combined transcription has drifted from their page text. */
+export const checkStaleTranscriptions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { letterIds: string[] }) => ({
+    letterIds: (data.letterIds ?? []).map(String),
+  }))
+  .handler(async ({ data, context }) => {
+    const { staleRecordTranscriptions } = await import("@/lib/transcription.server");
+    return staleRecordTranscriptions(context.supabase, data.letterIds);
+  });
