@@ -1545,6 +1545,7 @@ export type Database = {
           tones: string[]
           transcription_ai_generated_at: string | null
           transcription_raw_ai: string | null
+          transcription_rollup_text: string | null
           transcription_status: string
           transcription_verified: string | null
           updated_at: string
@@ -1617,6 +1618,7 @@ export type Database = {
           tones?: string[]
           transcription_ai_generated_at?: string | null
           transcription_raw_ai?: string | null
+          transcription_rollup_text?: string | null
           transcription_status?: string
           transcription_verified?: string | null
           updated_at?: string
@@ -1689,6 +1691,7 @@ export type Database = {
           tones?: string[]
           transcription_ai_generated_at?: string | null
           transcription_raw_ai?: string | null
+          transcription_rollup_text?: string | null
           transcription_status?: string
           transcription_verified?: string | null
           updated_at?: string
