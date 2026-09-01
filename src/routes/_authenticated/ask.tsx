@@ -77,18 +77,19 @@ const EXAMPLES = [
 ];
 
 /**
- * Research output types. Only "answer" is implemented today; the others are
- * placeholders so timelines, networks and maps can be added later without
- * reworking the thread structure.
+ * Research output types. "Answer" is the conversational thread; the other
+ * lenses read the same research index a different way.
  */
 const LENSES = [
-  { key: "answer", label: "Answer", ready: true },
-  { key: "timeline", label: "Timeline", ready: false },
-  { key: "people", label: "People network", ready: false },
-  { key: "map", label: "Map", ready: false },
-  { key: "themes", label: "Theme analysis", ready: false },
-  { key: "contradictions", label: "Contradictions", ready: false },
-];
+  { key: "answer", label: "Answer" },
+  { key: "timeline", label: "Timeline" },
+  { key: "people", label: "People network" },
+  { key: "map", label: "Map" },
+  { key: "themes", label: "Theme analysis" },
+  { key: "contradictions", label: "Contradictions" },
+] as const;
+
+type LensKey = (typeof LENSES)[number]["key"];
 
 const CONFIDENCE_TONE: Record<string, string> = {
   confirmed: "bg-tone-emerald-soft text-tone-emerald",
