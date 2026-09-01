@@ -46,7 +46,10 @@ function People() {
   const { data: people = [] } = useQuery({
     queryKey: ["people"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("people").select("*").order("name");
+      const { data, error } = await supabase
+        .from("people")
+        .select("id, name, relationship, birth_date, death_date")
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },

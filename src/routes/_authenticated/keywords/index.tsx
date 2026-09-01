@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { findExisting, normalizeName } from "@/lib/normalize";
 
 export const Route = createFileRoute("/_authenticated/keywords/")({
   head: () => ({
@@ -34,7 +35,10 @@ function Keywords() {
   const { data: keywords = [] } = useQuery({
     queryKey: ["keywords"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("keywords").select("*").order("name");
+      const { data, error } = await supabase
+        .from("keywords")
+        .select("id, name, description")
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
@@ -52,9 +56,20 @@ function Keywords() {
     },
   });
 
+  /**
+   * Keyword taxonomy stays clean only if duplicates are stopped at entry:
+   * the name is normalized and matched case-insensitively against existing
+   * tags before anything is inserted.
+   */
   async function add() {
-    if (!name.trim()) return;
-    const { error } = await supabase.from("keywords").insert({ name: name.trim() });
+    const clean = normalizeName(name);
+    if (!clean) return;
+    const dupe = findExisting(clean, keywords, (k) => k.name);
+    if (dupe) {
+      setName("");
+      return toast.info(`Already in the archive as “${dupe.name}”`);
+    }
+    const { error } = await supabase.from("keywords").insert({ name: clean });
     if (error) return toast.error(error.message);
     setName("");
     qc.invalidateQueries({ queryKey: ["keywords"] });

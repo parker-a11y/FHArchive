@@ -51,6 +51,7 @@ export function useCategories() {
       if (error) throw error;
       return (data ?? []) as Category[];
     },
+    staleTime: 10 * 60_000,
   });
 }
 

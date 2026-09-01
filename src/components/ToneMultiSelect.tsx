@@ -16,7 +16,7 @@ import { createToneOption, fetchToneOptions, mergeToneOptions } from "@/lib/tone
 import { cn } from "@/lib/utils";
 
 export function useToneOptions() {
-  return useQuery({ queryKey: ["tone_options"], queryFn: fetchToneOptions });
+  return useQuery({ queryKey: ["tone_options"], queryFn: fetchToneOptions, staleTime: 10 * 60_000 });
 }
 
 export function ToneMultiSelect({
