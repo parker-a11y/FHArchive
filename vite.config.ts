@@ -7,6 +7,7 @@
 import path from "node:path";
 import { loadEnv } from "vite";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/tanstack/vite";
 
 // Server-side code (email routes, server functions) needs non-VITE_ env vars in
 // process.env. These are never added to the client define block.
