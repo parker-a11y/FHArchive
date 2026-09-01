@@ -236,6 +236,9 @@ function RecapPage() {
                   <Button variant="outline" className="gap-2" onClick={() => setAddOpen(true)}>
                     <Sparkles className="size-4 text-archive-gold" /> Add with AI
                   </Button>
+                  <Button className="gap-2" onClick={() => setEmailOpen(true)}>
+                    <Mail className="size-4" /> Email recap
+                  </Button>
                   <Button
                     variant="outline"
                     className="gap-2"
