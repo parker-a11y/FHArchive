@@ -18,6 +18,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { RecapBody } from "@/components/RecapBody";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -26,9 +34,8 @@ import {
   saveRecapEdits,
   setRecapStatus,
   signRecapImage,
-  type WeeklyRecap,
 } from "@/lib/recaps";
-import { generateWeeklyRecap } from "@/lib/recaps.functions";
+import { generateWeeklyRecap, refineWeeklyRecapFn } from "@/lib/recaps.functions";
 
 export const Route = createFileRoute("/_authenticated/recaps/$weekStart")({
   head: ({ params }) => ({
