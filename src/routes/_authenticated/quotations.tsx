@@ -1,14 +1,32 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Quote, ArrowUpDown, Search } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Quote, ArrowUpDown, Search, Bomb } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
 import { displayDate } from "@/lib/archive";
 import { HighlightedText } from "@/lib/highlight";
-import { fetchQuotations, findQuoteSource, quoteTime, type Quotation } from "@/lib/quotations";
+import {
+  fetchQuotations,
+  findQuoteSource,
+  quoteTime,
+  removeQuotation,
+  type Quotation,
+} from "@/lib/quotations";
 import { fetchDigitalFiles } from "@/lib/digital-files";
 
 export const Route = createFileRoute("/_authenticated/quotations")({
@@ -37,6 +55,8 @@ export const Route = createFileRoute("/_authenticated/quotations")({
 });
 
 function QuotationsPage() {
+  const { canEdit } = useAuth();
+  const queryClient = useQueryClient();
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotations"],
     queryFn: fetchQuotations,
@@ -45,6 +65,24 @@ function QuotationsPage() {
   const [newestFirst, setNewestFirst] = useState(true);
   const [includePending, setIncludePending] = useState(false);
   const [open, setOpen] = useState<Quotation | null>(null);
+  const [toRemove, setToRemove] = useState<Quotation | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  async function confirmRemove() {
+    if (!toRemove) return;
+    setRemoving(true);
+    try {
+      await removeQuotation(toRemove.id, toRemove.quote);
+      await queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      await queryClient.invalidateQueries({ queryKey: ["ai-suggestions", toRemove.letter_id] });
+      toast.success("Quotation removed");
+      setToRemove(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not remove the quotation");
+    } finally {
+      setRemoving(false);
+    }
+  }
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -109,33 +147,46 @@ function QuotationsPage() {
           ) : (
             <div className="divide-y divide-border">
               {rows.map((row) => (
-                <button
-                  key={row.key}
-                  type="button"
-                  onClick={() => setOpen(row)}
-                  className="flex w-full items-start gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/60"
-                >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-plum-soft text-tone-plum">
-                    <Quote className="size-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-relaxed">
-                      <HighlightedText text={`“${row.quote}”`} term={q.trim() || undefined} />
-                    </p>
-                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="archive-id text-sm">{row.archive_id}</span>
-                      <span>{displayDate(row)}</span>
-                      <span className="truncate">
-                        {row.title || `${row.author || "—"} → ${row.recipient || "—"}`}
-                      </span>
-                      {row.status !== "accepted" && (
-                        <span className="rounded-full bg-tone-ochre-soft px-2 py-0.5 text-tone-ochre">
-                          unreviewed
+                <div key={row.key} className="flex items-start transition-colors hover:bg-muted/60">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(row)}
+                    className="flex min-w-0 flex-1 items-start gap-4 px-4 py-3 text-left"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-plum-soft text-tone-plum">
+                      <Quote className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm leading-relaxed">
+                        <HighlightedText text={`“${row.quote}”`} term={q.trim() || undefined} />
+                      </p>
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="archive-id text-sm">{row.archive_id}</span>
+                        <span>{displayDate(row)}</span>
+                        <span className="truncate">
+                          {row.title || `${row.author || "—"} → ${row.recipient || "—"}`}
                         </span>
-                      )}
-                    </p>
-                  </div>
-                </button>
+                        {row.status !== "accepted" && (
+                          <span className="rounded-full bg-tone-ochre-soft px-2 py-0.5 text-tone-ochre">
+                            unreviewed
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </button>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="mt-2 mr-2 shrink-0 text-muted-foreground hover:text-destructive"
+                      title="Remove this quotation"
+                      aria-label="Remove this quotation"
+                      onClick={() => setToRemove(row)}
+                    >
+                      <Bomb className="size-4" />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -143,6 +194,35 @@ function QuotationsPage() {
       </div>
 
       <QuoteDetailDialog quote={open} onClose={() => setOpen(null)} />
+
+      <AlertDialog open={!!toRemove} onOpenChange={(o) => !o && !removing && setToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this quotation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will be deleted from {toRemove?.archive_id} and will no longer appear in this list.
+              The transcription itself is untouched.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {toRemove && (
+            <blockquote className="rounded-lg border-l-4 border-archive-gold bg-muted/40 px-3 py-2 text-sm italic">
+              “{toRemove.quote}”
+            </blockquote>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removing}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmRemove();
+              }}
+            >
+              {removing ? "Removing…" : "Remove quotation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
