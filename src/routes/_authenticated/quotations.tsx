@@ -55,6 +55,8 @@ export const Route = createFileRoute("/_authenticated/quotations")({
 });
 
 function QuotationsPage() {
+  const { canEdit } = useAuth();
+  const queryClient = useQueryClient();
   const { data: quotes = [], isLoading } = useQuery({
     queryKey: ["quotations"],
     queryFn: fetchQuotations,
@@ -63,6 +65,24 @@ function QuotationsPage() {
   const [newestFirst, setNewestFirst] = useState(true);
   const [includePending, setIncludePending] = useState(false);
   const [open, setOpen] = useState<Quotation | null>(null);
+  const [toRemove, setToRemove] = useState<Quotation | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  async function confirmRemove() {
+    if (!toRemove) return;
+    setRemoving(true);
+    try {
+      await removeQuotation(toRemove.id, toRemove.quote);
+      await queryClient.invalidateQueries({ queryKey: ["quotations"] });
+      await queryClient.invalidateQueries({ queryKey: ["ai-suggestions", toRemove.letter_id] });
+      toast.success("Quotation removed");
+      setToRemove(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not remove the quotation");
+    } finally {
+      setRemoving(false);
+    }
+  }
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
