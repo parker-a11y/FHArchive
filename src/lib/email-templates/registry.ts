@@ -4,6 +4,7 @@ import { template as guestRequestTemplate } from './guest-request'
 import { template as guestApprovedTemplate } from './guest-approved'
 import { template as archivistGrantedTemplate } from './archivist-granted'
 import { template as archivistActivityTemplate } from './archivist-activity'
+import { template as weeklyRecapTemplate } from './weekly-recap'
 
 export interface TemplateEntry {
   component: ComponentType<any>
