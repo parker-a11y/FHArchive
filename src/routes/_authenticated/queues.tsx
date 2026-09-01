@@ -8,6 +8,7 @@ import { transcribeRecord } from "@/lib/transcription.functions";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { fetchLetters, type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
+import { ToneBackfillCard } from "@/components/ai/ToneBackfillCard";
 import { displayDate, isUnidentifiedPhoto, needsDating } from "@/lib/archive";
 
 export const Route = createFileRoute("/_authenticated/queues")({
@@ -149,6 +150,9 @@ function Queues() {
   return (
     <>
       <PageHeader title="Work Queues" description="What remains to be done." />
+      <div className="px-4 pt-4 sm:px-8">
+        <ToneBackfillCard letters={letters} />
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-8 p-4 sm:p-8">
         <nav className="space-y-1">
           {queues.map((q) => (
