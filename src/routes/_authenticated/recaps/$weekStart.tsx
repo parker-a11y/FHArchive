@@ -21,6 +21,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,7 @@ import {
   signRecapImage,
 } from "@/lib/recaps";
 import { fetchContacts } from "@/lib/archive-email";
+import { fetchRecapShares, setRecapShareEnabled } from "@/lib/recaps";
 import {
   emailWeeklyRecapFn,
   generateWeeklyRecap,
@@ -103,6 +105,8 @@ function RecapPage() {
   const [recipients, setRecipients] = useState<{ email: string; name?: string | null }[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [note, setNote] = useState("");
+  const [publicLinks, setPublicLinks] = useState(true);
+  const [includeTranscription, setIncludeTranscription] = useState(false);
   const emailFn = useServerFn(emailWeeklyRecapFn);
   const { data: contacts = [] } = useQuery({
     queryKey: ["archive-contacts"],
@@ -123,7 +127,10 @@ function RecapPage() {
   };
 
   const sendEmail = useMutation({
-    mutationFn: async () => emailFn({ data: { weekStart, recipients, message: note } }),
+    mutationFn: async () =>
+      emailFn({
+        data: { weekStart, recipients, message: note, publicLinks, includeTranscription },
+      }),
     onSuccess: (result) => {
       if (result.sent.length)
         toast.success(`Recap sent to ${result.sent.length} recipient${result.sent.length === 1 ? "" : "s"}.`);
@@ -135,7 +142,24 @@ function RecapPage() {
         setEmailOpen(false);
         setRecipients([]);
         setNote("");
+        qc.invalidateQueries({ queryKey: ["recap-shares", weekStart] });
       }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const { data: shares = [] } = useQuery({
+    queryKey: ["recap-shares", weekStart],
+    queryFn: () => fetchRecapShares(recap?.related_ids ?? []),
+    enabled: isAdmin && Boolean(recap?.related_ids?.length),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (input: { kind: "letter" | "source"; id: string }) =>
+      setRecapShareEnabled(input.kind, input.id, false),
+    onSuccess: () => {
+      toast.success("Public link turned off.");
+      qc.invalidateQueries({ queryKey: ["recap-shares", weekStart] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -372,6 +396,41 @@ function RecapPage() {
             )}
           </article>
         )}
+
+        {isAdmin && shares.length > 0 && (
+          <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+            <p className="field-label mb-2">Public links from this recap</p>
+            <ul className="divide-y divide-border text-sm">
+              {shares.map((s) => (
+                <li key={`${s.kind}-${s.id}`} className="flex items-center gap-3 py-2">
+                  <span className="archive-id text-archive-gold">{s.ref}</span>
+                  <a
+                    href={s.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="truncate text-xs text-muted-foreground hover:underline"
+                  >
+                    {s.url}
+                  </a>
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                    {s.viewCount} view{s.viewCount === 1 ? "" : "s"}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={revoke.isPending}
+                    onClick={() => revoke.mutate({ kind: s.kind, id: s.id })}
+                  >
+                    Turn off
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Turning a link off immediately breaks it for anyone who received it.
+            </p>
+          </section>
+        )}
       </div>
 
       <Dialog open={emailOpen} onOpenChange={(o) => !sendEmail.isPending && setEmailOpen(o)}>
@@ -452,6 +511,36 @@ function RecapPage() {
                 rows={3}
                 placeholder="A short line at the top of the email."
               />
+            </div>
+
+            <div className="space-y-2 rounded-lg border border-border p-3">
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox
+                  checked={publicLinks}
+                  onCheckedChange={(v) => setPublicLinks(v === true)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Let recipients open linked records without signing in
+                  <span className="block text-xs text-muted-foreground">
+                    Creates unlisted, revocable links for the FH and DS records in this recap.
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox
+                  checked={includeTranscription}
+                  disabled={!publicLinks}
+                  onCheckedChange={(v) => setIncludeTranscription(v === true)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Include transcriptions in shared records
+                  <span className="block text-xs text-muted-foreground">
+                    Off by default — shared pages show catalog details and scans only.
+                  </span>
+                </span>
+              </label>
             </div>
           </div>
 

@@ -228,3 +228,56 @@ export async function rememberContacts(
     }
   }
 }
+
+/**
+ * Turns FH / DS record numbers into public share URLs, minting an unlisted
+ * link when one does not already exist. Used by the weekly recap email so
+ * recipients without an archive account can still open the records.
+ */
+export async function ensureShareLinksForRefs(
+  db: DB,
+  ownerId: string,
+  refs: string[],
+  includeTranscription: boolean,
+): Promise<Record<string, string>> {
+  const unique = Array.from(new Set(refs.map((r) => r.toUpperCase())));
+  const letterRefs = unique.filter((r) => r.startsWith("FH"));
+  const sourceRefs = unique.filter((r) => r.startsWith("DS"));
+  const map: Record<string, string> = {};
+
+  if (letterRefs.length) {
+    const { data } = await db
+      .from("letters")
+      .select("id, archive_id")
+      .in("archive_id", letterRefs);
+    for (const row of (data ?? []) as any[]) {
+      try {
+        const t = await ensureLetterShare(db, ownerId, row.id, includeTranscription);
+        map[String(row.archive_id).toUpperCase()] = `${PUBLIC_SITE_URL}/s/${t}`;
+      } catch {
+        /* a single unshareable record must never block the email */
+      }
+    }
+  }
+
+  if (sourceRefs.length) {
+    // DS numbers are stored with a dash (DS-0007) but are often written without one.
+    const variants = Array.from(
+      new Set(sourceRefs.flatMap((r) => [r, r.replace(/^DS-?/, "DS-"), r.replace(/-/g, "")])),
+    );
+    const { data } = await db.from("digital_sources").select("id, ds_id").in("ds_id", variants);
+    for (const row of (data ?? []) as any[]) {
+      try {
+        const t = await ensureSourceShare(db, ownerId, row.id, includeTranscription);
+        const url = `${PUBLIC_SITE_URL}/d/${t}`;
+        const key = String(row.ds_id).toUpperCase();
+        map[key] = url;
+        map[key.replace(/-/g, "")] = url;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  return map;
+}
