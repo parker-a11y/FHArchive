@@ -127,33 +127,46 @@ function QuotationsPage() {
           ) : (
             <div className="divide-y divide-border">
               {rows.map((row) => (
-                <button
-                  key={row.key}
-                  type="button"
-                  onClick={() => setOpen(row)}
-                  className="flex w-full items-start gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/60"
-                >
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-plum-soft text-tone-plum">
-                    <Quote className="size-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm leading-relaxed">
-                      <HighlightedText text={`“${row.quote}”`} term={q.trim() || undefined} />
-                    </p>
-                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="archive-id text-sm">{row.archive_id}</span>
-                      <span>{displayDate(row)}</span>
-                      <span className="truncate">
-                        {row.title || `${row.author || "—"} → ${row.recipient || "—"}`}
-                      </span>
-                      {row.status !== "accepted" && (
-                        <span className="rounded-full bg-tone-ochre-soft px-2 py-0.5 text-tone-ochre">
-                          unreviewed
+                <div key={row.key} className="flex items-start transition-colors hover:bg-muted/60">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(row)}
+                    className="flex min-w-0 flex-1 items-start gap-4 px-4 py-3 text-left"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-tone-plum-soft text-tone-plum">
+                      <Quote className="size-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm leading-relaxed">
+                        <HighlightedText text={`“${row.quote}”`} term={q.trim() || undefined} />
+                      </p>
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="archive-id text-sm">{row.archive_id}</span>
+                        <span>{displayDate(row)}</span>
+                        <span className="truncate">
+                          {row.title || `${row.author || "—"} → ${row.recipient || "—"}`}
                         </span>
-                      )}
-                    </p>
-                  </div>
-                </button>
+                        {row.status !== "accepted" && (
+                          <span className="rounded-full bg-tone-ochre-soft px-2 py-0.5 text-tone-ochre">
+                            unreviewed
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </button>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="mt-2 mr-2 shrink-0 text-muted-foreground hover:text-destructive"
+                      title="Remove this quotation"
+                      aria-label="Remove this quotation"
+                      onClick={() => setToRemove(row)}
+                    >
+                      <Bomb className="size-4" />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           )}
