@@ -141,7 +141,7 @@ export const WeeklyRecapEmail = ({
         <Hr style={hr} />
         <Text style={footer}>
           The Francis Files — a private family archive. Weekly recaps are written from the week&rsquo;s
-          catalog work and reviewed before sending.
+          catalog work.
         </Text>
       </Container>
     </Body>
