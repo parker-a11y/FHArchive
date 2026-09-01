@@ -261,11 +261,18 @@ export async function ensureShareLinksForRefs(
   }
 
   if (sourceRefs.length) {
-    const { data } = await db.from("digital_sources").select("id, ds_id").in("ds_id", sourceRefs);
+    // DS numbers are stored with a dash (DS-0007) but are often written without one.
+    const variants = Array.from(
+      new Set(sourceRefs.flatMap((r) => [r, r.replace(/^DS-?/, "DS-"), r.replace(/-/g, "")])),
+    );
+    const { data } = await db.from("digital_sources").select("id, ds_id").in("ds_id", variants);
     for (const row of (data ?? []) as any[]) {
       try {
         const t = await ensureSourceShare(db, ownerId, row.id, includeTranscription);
-        map[String(row.ds_id).toUpperCase()] = `${PUBLIC_SITE_URL}/d/${t}`;
+        const url = `${PUBLIC_SITE_URL}/d/${t}`;
+        const key = String(row.ds_id).toUpperCase();
+        map[key] = url;
+        map[key.replace(/-/g, "")] = url;
       } catch {
         /* ignore */
       }
