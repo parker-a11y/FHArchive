@@ -9,7 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/** Only same-origin relative paths may be used as a post-login redirect. */
+function safeNext(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (!value.startsWith("/") || value.startsWith("//")) return undefined;
+  return value;
+}
+
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => {
+    const next = safeNext(s["next"]);
+    return next ? { next } : {};
+  },
   head: () => ({
     meta: [
       { title: "Sign In — The Francis Files" },
@@ -30,6 +41,7 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { next } = Route.useSearch() as { next?: string };
   const [mode, setMode] = useState<"in" | "up">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,8 +49,13 @@ function AuthPage() {
   const [signUpMessage, setSignUpMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session) navigate({ to: "/" });
-  }, [session, navigate]);
+    if (!session) return;
+    if (next) {
+      window.location.replace(next);
+      return;
+    }
+    navigate({ to: "/" });
+  }, [session, navigate, next]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,7 +71,9 @@ function AuthPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin },
+      options: {
+        emailRedirectTo: next ? `${window.location.origin}${next}` : window.location.origin,
+      },
     });
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -66,7 +85,7 @@ function AuthPage() {
   async function signInWithGoogle() {
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: next ? `${window.location.origin}${next}` : window.location.origin,
     });
     if (result.error) {
       setBusy(false);
@@ -74,6 +93,10 @@ function AuthPage() {
     }
     if (result.redirected) return;
     setBusy(false);
+    if (next) {
+      window.location.replace(next);
+      return;
+    }
     navigate({ to: "/" });
   }
 
