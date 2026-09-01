@@ -102,15 +102,6 @@ ${transcript}`;
   };
 }
 
-/** True when the record is correspondence of a kind that carries tone. */
-export const TONE_SUBTYPES = [
-  "Personal letter",
-  "Circular / Group letter",
-  "Postcard",
-  "Telegram",
-  "Greeting card",
-];
-
 export async function loadToneContext(supabase: SupabaseClient, letterId: string) {
   const { buildAnalysisContext } = await import("./ai-analysis.server");
   return buildAnalysisContext(supabase, letterId);

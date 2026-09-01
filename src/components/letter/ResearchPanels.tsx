@@ -15,9 +15,8 @@ import {
 } from "@/components/ai/ConfirmEntitiesDialog";
 import type { EntityKindKey } from "@/lib/ai-analysis";
 import { suggestTones } from "@/lib/tone-suggest.functions";
-import { TONE_SUBTYPES } from "@/lib/tone-suggest.server";
 import { ConfirmTonesDialog, type ToneProposal } from "@/components/ai/ConfirmTonesDialog";
-import { mergeToneOptions } from "@/lib/tones";
+import { mergeToneOptions, toneEligible as isToneEligible } from "@/lib/tones";
 import { useToneOptions } from "@/components/ToneMultiSelect";
 
 import { Button } from "@/components/ui/button";
@@ -599,8 +598,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
     }
   }
 
-  const toneEligible =
-    letter.record_type === "letter" && TONE_SUBTYPES.includes(letter.subtype ?? "");
+  const toneEligible = isToneEligible(letter.record_type, letter.subtype);
 
   /** Asks the model for tone / sentiment values; the archivist confirms them. */
   async function proposeTones() {
