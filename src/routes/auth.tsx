@@ -49,8 +49,13 @@ function AuthPage() {
   const [signUpMessage, setSignUpMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (session) navigate({ to: "/" });
-  }, [session, navigate]);
+    if (!session) return;
+    if (next) {
+      window.location.replace(next);
+      return;
+    }
+    navigate({ to: "/" });
+  }, [session, navigate, next]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
