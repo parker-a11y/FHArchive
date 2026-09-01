@@ -29,6 +29,7 @@ import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticat
 import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
@@ -149,6 +150,11 @@ const DTokenRoute = DTokenRouteImport.update({
 const STokenRoute = STokenRouteImport.update({
   id: '/s/$token',
   path: '/s/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -289,6 +295,7 @@ export interface FileRoutesByFullPath {
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
@@ -330,6 +337,7 @@ export interface FileRoutesByTo {
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
@@ -373,6 +381,7 @@ export interface FileRoutesById {
   '/d/$token': typeof DTokenRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
@@ -416,6 +425,7 @@ export interface FileRouteTypes {
     | '/api/send-sample-email'
     | '/d/$token'
     | '/s/$token'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/users'
     | '/containers/$boxId'
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/s/$token'
     | '/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/users'
     | '/containers/$boxId'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/s/$token'
     | '/_authenticated/'
+    | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/users'
     | '/_authenticated/containers/$boxId'
@@ -532,6 +544,7 @@ export interface RootRouteChildren {
   ApiSendSampleEmailRoute: typeof ApiSendSampleEmailRoute
   DTokenRoute: typeof DTokenRoute
   STokenRoute: typeof STokenRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
@@ -678,6 +691,13 @@ declare module '@tanstack/react-router' {
       path: '/s/$token'
       fullPath: '/s/$token'
       preLoaderRoute: typeof STokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -896,6 +916,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSendSampleEmailRoute: ApiSendSampleEmailRoute,
   DTokenRoute: DTokenRoute,
   STokenRoute: STokenRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
