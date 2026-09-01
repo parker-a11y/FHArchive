@@ -25,3 +25,19 @@ export const generateWeeklyRecap = createServerFn({ method: "POST" })
       ? runWeeklyRecap("week", { weekStart: data.weekStart })
       : runWeeklyRecap(data.mode);
   });
+
+/** Apply plain-language additions to an existing recap without regenerating it. */
+export const refineWeeklyRecapFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { weekStart: string; instructions: string }) => {
+    const weekStart = String(data?.weekStart ?? "");
+    const instructions = String(data?.instructions ?? "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) throw new Error("Invalid week.");
+    if (instructions.length < 3) throw new Error("Tell the AI what to add or change.");
+    return { weekStart, instructions: instructions.slice(0, 4000) };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { refineWeeklyRecap } = await import("@/lib/recaps/weekly.server");
+    return refineWeeklyRecap(data.weekStart, data.instructions);
+  });

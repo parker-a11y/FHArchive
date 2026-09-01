@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Eye, EyeOff, Loader2, PenLine, RefreshCw, Save, X } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Loader2, PenLine, RefreshCw, Save, Sparkles, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { RecapBody } from "@/components/RecapBody";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -26,9 +34,8 @@ import {
   saveRecapEdits,
   setRecapStatus,
   signRecapImage,
-  type WeeklyRecap,
 } from "@/lib/recaps";
-import { generateWeeklyRecap } from "@/lib/recaps.functions";
+import { generateWeeklyRecap, refineWeeklyRecapFn } from "@/lib/recaps.functions";
 
 export const Route = createFileRoute("/_authenticated/recaps/$weekStart")({
   head: ({ params }) => ({
@@ -69,6 +76,9 @@ function RecapPage() {
   const [draft, setDraft] = useState({ title: "", lede: "", body_md: "" });
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [instructions, setInstructions] = useState("");
+  const refineFn = useServerFn(refineWeeklyRecapFn);
 
   useEffect(() => {
     if (recap) setDraft({ title: recap.title, lede: recap.lede ?? "", body_md: recap.body_md });
@@ -117,6 +127,17 @@ function RecapPage() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const refine = useMutation({
+    mutationFn: async () => refineFn({ data: { weekStart, instructions } }),
+    onSuccess: async () => {
+      await invalidate();
+      setAddOpen(false);
+      setInstructions("");
+      toast.success("Recap updated with your notes.");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   if (isLoading)
     return <p className="p-8 text-sm text-muted-foreground">Loading…</p>;
 
@@ -151,6 +172,9 @@ function RecapPage() {
                 <>
                   <Button variant="outline" className="gap-2" onClick={() => setEditing(true)}>
                     <PenLine className="size-4" /> Edit
+                  </Button>
+                  <Button variant="outline" className="gap-2" onClick={() => setAddOpen(true)}>
+                    <Sparkles className="size-4 text-archive-gold" /> Add with AI
                   </Button>
                   <Button
                     variant="outline"
@@ -286,6 +310,42 @@ function RecapPage() {
           </article>
         )}
       </div>
+
+      <Dialog open={addOpen} onOpenChange={(o) => !refine.isPending && setAddOpen(o)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add to this recap</DialogTitle>
+            <DialogDescription>
+              Tell the AI what to work in — it revises the existing recap rather than rewriting the
+              week. For example: “Please mention the Christmas party” or “Don’t forget the quote in
+              FH0087.”
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            rows={6}
+            placeholder="Also mention the Christmas party described in FH0092, and keep the closing paragraph as it is."
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)} disabled={refine.isPending}>
+              Cancel
+            </Button>
+            <Button
+              className="gap-2"
+              onClick={() => refine.mutate()}
+              disabled={refine.isPending || instructions.trim().length < 3}
+            >
+              {refine.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Sparkles className="size-4" />
+              )}
+              Add to recap
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={confirmRegen} onOpenChange={setConfirmRegen}>
         <AlertDialogContent>
