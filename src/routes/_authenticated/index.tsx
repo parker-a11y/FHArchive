@@ -305,6 +305,14 @@ function Dashboard() {
       to: "/quotations",
     },
     {
+      label: "Weekly recaps",
+      value: recapCount,
+      sub: "The story so far, week by week",
+      tone: "teal",
+      icon: Newspaper,
+      to: "/recaps",
+    },
+    {
       label: "FFF — Francis File Finds",
       value: (stats0?.starred_records ?? 0) + (stats0?.starred_sources ?? 0),
       tone: "amber",
