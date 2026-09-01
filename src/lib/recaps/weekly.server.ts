@@ -455,3 +455,90 @@ export async function runWeeklyRecap(
 
   return { status: "ok", week_start: weekStart, week_end: weekEnd, id: data?.id };
 }
+
+// ------------------------------------------------------- targeted refinement
+
+const REFINE_SYSTEM = `${SYSTEM}
+
+You are now REVISING an existing recap, not rewriting it from scratch. Keep the existing wording, structure, order and voice intact wherever the editor's instructions do not ask for a change. Weave the requested additions or corrections in naturally where they belong, using the supplied archive material for any facts and record numbers. Keep the same four sections. Never invent records, people or quotations.`;
+
+/**
+ * Applies an archivist's plain-language instructions to the stored recap text
+ * ("also mention the Christmas party") without regenerating the whole week.
+ */
+export async function refineWeeklyRecap(
+  weekStart: string,
+  instructions: string,
+): Promise<RecapRunResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const admin = supabaseAdmin as any;
+
+  const { data: recap, error: loadError } = await admin
+    .from("weekly_recaps")
+    .select("id, week_start, week_end, title, lede, body_md, related_ids")
+    .eq("week_start", weekStart)
+    .maybeSingle();
+  if (loadError) throw new Error(`Loading the recap failed: ${loadError.message}`);
+  if (!recap) throw new Error("There is no recap for that week yet — generate one first.");
+
+  const weekEnd: string = recap.week_end;
+  const [material, memory] = await Promise.all([
+    gatherWeek(admin, weekStart, weekEnd),
+    gatherMemory(admin, weekStart),
+  ]);
+
+  const prompt = `WEEK COVERED: ${formatRange(weekStart, weekEnd)}
+
+CURRENT RECAP (revise this)
+TITLE: ${recap.title}
+LEDE: ${recap.lede ?? ""}
+BODY:
+${recap.body_md}
+
+EDITOR'S INSTRUCTIONS (apply these, and only these, plus any wording needed to make them read naturally)
+${instructions}
+
+THIS WEEK'S ARCHIVE MATERIAL (use for facts and record numbers)
+${materialText(material) || "(nothing was processed this week)"}
+
+QUOTATIONS ACCEPTED THIS WEEK
+${material.quotes.map((q) => `${q.archive_id}: "${q.text}"`).join("\n") || "(none)"}
+
+COLLECTION SO FAR
+People: ${memory.collection.people.join("; ") || "—"}
+Places: ${memory.collection.places.join("; ") || "—"}
+Events: ${memory.collection.events.join("; ") || "—"}
+
+Return a single JSON object:
+{
+  "title": "the revised (usually unchanged) headline",
+  "lede": "the revised (usually unchanged) one-sentence preview, max 220 characters",
+  "body_md": "the full revised markdown, same four '## ' sections in the same order",
+  "related_ids": ["every record number cited in the revised body"]
+}`;
+
+  const parsed = parseJson(await callModel(REFINE_SYSTEM, prompt));
+  const known = new Set(material.archiveIds);
+  const existingIds: string[] = Array.isArray(recap.related_ids) ? recap.related_ids : [];
+  const related = Array.from(
+    new Set(
+      (Array.isArray(parsed.related_ids) ? parsed.related_ids : [])
+        .map((x: any) => String(x).trim().toUpperCase())
+        .filter((x: string) => known.has(x) || existingIds.includes(x)),
+    ),
+  ).slice(0, 40);
+
+  const { error } = await admin
+    .from("weekly_recaps")
+    .update({
+      title: String(parsed.title ?? recap.title).trim().slice(0, 160) || recap.title,
+      lede: String(parsed.lede ?? recap.lede ?? "").trim().slice(0, 400),
+      body_md: String(parsed.body_md ?? "").trim() || recap.body_md,
+      related_ids: related.length ? related : existingIds,
+      manually_edited: true,
+    })
+    .eq("id", recap.id);
+  if (error) throw new Error(`Saving the revised recap failed: ${error.message}`);
+
+  return { status: "ok", week_start: weekStart, week_end: weekEnd, id: recap.id };
+}
