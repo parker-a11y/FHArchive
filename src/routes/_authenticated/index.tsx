@@ -1,6 +1,6 @@
 import logoMark from "@/assets/francis-files-logo.png";
 import askFrancisIcon from "@/assets/ask-francis.png";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -160,7 +160,7 @@ function Stat({
   onClick,
   active,
 }: {
-  label: string;
+  label: ReactNode;
   value: number;
   sub?: string;
   to?: string;
@@ -171,26 +171,26 @@ function Stat({
 }) {
   const body = (
     <div
-      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card p-4 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg sm:p-5 ${
         active ? "border-archive-gold/60 ring-1 ring-archive-gold/40" : "border-border"
       }`}
     >
       <div className={`absolute top-0 left-0 h-full w-1.5 ${TONE_BAR[tone]}`} />
-      <div className="mb-3 flex items-start gap-2.5">
+      <div className="mb-3 flex items-start gap-2 sm:gap-2.5">
         {Icon && (
           <div
-            className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${TONE_CHIP[tone]}`}
+            className={`flex size-7 shrink-0 items-center justify-center rounded-lg sm:size-8 ${TONE_CHIP[tone]}`}
           >
-            <Icon className="size-4" />
+            <Icon className="size-3.5 sm:size-4" />
           </div>
         )}
-        <span className="field-label whitespace-normal leading-5">{label}</span>
+        <span className="field-label line-clamp-2 whitespace-normal max-sm:text-[10px] max-sm:leading-4">{label}</span>
       </div>
       <div className="mt-auto flex flex-col gap-2">
         {sub && (
-          <p className="whitespace-normal text-center text-xs leading-relaxed text-muted-foreground">{sub}</p>
+          <p className="whitespace-normal text-center text-[10px] leading-snug text-muted-foreground sm:text-xs sm:leading-relaxed">{sub}</p>
         )}
-        <div className="font-display text-center text-3xl font-bold tabular-nums">{value}</div>
+        <div className="font-display text-center text-2xl font-bold tabular-nums sm:text-3xl">{value}</div>
       </div>
     </div>
   );
@@ -297,7 +297,7 @@ function Dashboard() {
     return tiles;
   }, [byType, typeOptions]);
 
-  const stats: { label: string; value: number; sub?: string; tone: Tone; icon: LucideIcon; to?: string }[] = [
+  const stats: { label: ReactNode; value: number; sub?: string; tone: Tone; icon: LucideIcon; to?: string }[] = [
     { label: "FH records", value: stats0?.total_records ?? 0, tone: "blue", icon: Hash, to: "/letters" },
     {
       label: "Digital sources",
@@ -323,7 +323,12 @@ function Dashboard() {
       to: "/recaps",
     },
     {
-      label: "FFF — Francis File Finds",
+      label: (
+        <>
+          <span className="sm:hidden">FFF — Finds</span>
+          <span className="hidden sm:inline">FFF — Francis File Finds</span>
+        </>
+      ),
       value: (stats0?.starred_records ?? 0) + (stats0?.starred_sources ?? 0),
       tone: "amber",
       icon: Star,
@@ -374,14 +379,14 @@ function Dashboard() {
             alt="The Francis Files"
             width={1024}
             height={1024}
-            className="size-32 shrink-0 object-contain sm:size-40"
+            className="size-20 shrink-0 object-contain sm:size-40"
           />
         }
         actions={
           isGuestViewer ? undefined : (
             <Button
               size="lg"
-              className="gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95"
+              className="w-full justify-center gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95 sm:w-auto"
               onClick={() => navigate({ to: "/catalog" })}
             >
               <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
@@ -394,7 +399,7 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
           <>
-            <div className="grid auto-rows-fr grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+            <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
               <Stat
                 label="New today"
                 value={(daily?.records ?? 0) + (daily?.dsRecords ?? 0)}
@@ -405,13 +410,13 @@ function Dashboard() {
                 active={dailyOpen}
               />
               <Link to="/ask" className="block h-full">
-                <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg">
+                <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg sm:p-5">
                   <div className="absolute top-0 left-0 h-full w-1.5 bg-tone-ochre" />
-                  <div className="mb-3 flex items-start gap-2.5">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-tone-ochre-soft text-tone-ochre">
-                      <FileSearch className="size-4" />
+                  <div className="mb-3 flex items-start gap-2 sm:gap-2.5">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-tone-ochre-soft text-tone-ochre sm:size-8">
+                      <FileSearch className="size-3.5 sm:size-4" />
                     </div>
-                    <span className="field-label whitespace-normal leading-5">Ask Francis</span>
+                    <span className="field-label line-clamp-2 whitespace-normal max-sm:text-[10px] max-sm:leading-4">Ask Francis</span>
                   </div>
                   <div className="mt-auto flex flex-col items-center gap-2">
                     <img src={askFrancisIcon} alt="" loading="lazy" width={512} height={512} className="size-14 object-contain" />
@@ -422,7 +427,7 @@ function Dashboard() {
                 </div>
               </Link>
               {stats.map((s) => (
-                <Stat key={s.label} {...s} />
+                <Stat key={typeof s.label === "string" ? s.label : s.to} {...s} />
               ))}
               <Stat
                 label="All categories"
@@ -447,7 +452,7 @@ function Dashboard() {
                     })}
                   </span>
                 </div>
-                <div className="grid auto-rows-fr grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
                   <Stat label="New FH records" value={daily?.records ?? 0} tone="blue" icon={Hash} />
                   <Stat label="New digital sources" value={daily?.dsRecords ?? 0} tone="teal" icon={Globe} />
                   <Stat label="Files uploaded" value={daily?.filesUploaded ?? 0} tone="amber" icon={Paperclip} />
@@ -468,7 +473,7 @@ function Dashboard() {
                     Collapse
                   </button>
                 </div>
-                <div className="grid auto-rows-fr grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
                   {categoryTiles.map((cat) => (
                     <Stat
                       key={cat.value}
@@ -510,12 +515,12 @@ function Dashboard() {
                       className="size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: recordHealth(l).color }}
                     />
-                    <span className="archive-id w-24 text-base">{l.archive_id}</span>
-                    <span className="w-36 text-muted-foreground">{displayDate(l)}</span>
-                    <span className="truncate font-medium">
+                    <span className="archive-id w-20 shrink-0 text-base sm:w-24">{l.archive_id}</span>
+                    <span className="hidden w-36 shrink-0 text-muted-foreground sm:inline">{displayDate(l)}</span>
+                    <span className="min-w-0 truncate font-medium">
                       {l.title || `${l.author || "—"} → ${l.recipient || "—"}`}
                     </span>
-                    <span className="ml-auto text-muted-foreground">{l.origin}</span>
+                    <span className="ml-auto hidden shrink-0 text-muted-foreground md:inline">{l.origin}</span>
                   </Link>
                 ))}
               </div>
