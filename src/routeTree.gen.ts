@@ -46,6 +46,7 @@ import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authe
 import { Route as AuthenticatedPlacesIndexRouteImport } from './routes/_authenticated/places/index'
 import { Route as AuthenticatedPlacesPlaceIdRouteImport } from './routes/_authenticated/places/$placeId'
 import { Route as AuthenticatedRecapsIndexRouteImport } from './routes/_authenticated/recaps/index'
+import { Route as AuthenticatedRecapsWeekStartRouteImport } from './routes/_authenticated/recaps/$weekStart'
 import { Route as AuthenticatedSourcesIndexRouteImport } from './routes/_authenticated/sources/index'
 import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenticated/sources/$dsId'
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
@@ -255,6 +256,12 @@ const AuthenticatedRecapsIndexRoute =
     path: '/recaps/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRecapsWeekStartRoute =
+  AuthenticatedRecapsWeekStartRouteImport.update({
+    id: '/recaps/$weekStart',
+    path: '/recaps/$weekStart',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSourcesIndexRoute =
   AuthenticatedSourcesIndexRouteImport.update({
     id: '/sources/',
@@ -330,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
+  '/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
   '/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
@@ -376,6 +384,7 @@ export interface FileRoutesByTo {
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
+  '/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
   '/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
@@ -424,6 +433,7 @@ export interface FileRoutesById {
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/_authenticated/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
+  '/_authenticated/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
   '/_authenticated/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/recaps/$weekStart'
     | '/sources/$dsId'
     | '/sources/new'
     | '/api/public/archivist-digest'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/people/$personId'
     | '/places/$placeId'
+    | '/recaps/$weekStart'
     | '/sources/$dsId'
     | '/sources/new'
     | '/api/public/archivist-digest'
@@ -565,6 +577,7 @@ export interface FileRouteTypes {
     | '/_authenticated/letters/$archiveId'
     | '/_authenticated/people/$personId'
     | '/_authenticated/places/$placeId'
+    | '/_authenticated/recaps/$weekStart'
     | '/_authenticated/sources/$dsId'
     | '/_authenticated/sources/new'
     | '/api/public/archivist-digest'
@@ -864,6 +877,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRecapsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recaps/$weekStart': {
+      id: '/_authenticated/recaps/$weekStart'
+      path: '/recaps/$weekStart'
+      fullPath: '/recaps/$weekStart'
+      preLoaderRoute: typeof AuthenticatedRecapsWeekStartRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sources/': {
       id: '/_authenticated/sources/'
       path: '/sources'
@@ -941,6 +961,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
   AuthenticatedPlacesPlaceIdRoute: typeof AuthenticatedPlacesPlaceIdRoute
+  AuthenticatedRecapsWeekStartRoute: typeof AuthenticatedRecapsWeekStartRoute
   AuthenticatedSourcesDsIdRoute: typeof AuthenticatedSourcesDsIdRoute
   AuthenticatedSourcesNewRoute: typeof AuthenticatedSourcesNewRoute
   AuthenticatedContainersIndexRoute: typeof AuthenticatedContainersIndexRoute
@@ -972,6 +993,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
   AuthenticatedPlacesPlaceIdRoute: AuthenticatedPlacesPlaceIdRoute,
+  AuthenticatedRecapsWeekStartRoute: AuthenticatedRecapsWeekStartRoute,
   AuthenticatedSourcesDsIdRoute: AuthenticatedSourcesDsIdRoute,
   AuthenticatedSourcesNewRoute: AuthenticatedSourcesNewRoute,
   AuthenticatedContainersIndexRoute: AuthenticatedContainersIndexRoute,
