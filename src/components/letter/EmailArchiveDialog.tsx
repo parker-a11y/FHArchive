@@ -215,9 +215,12 @@ export function EmailArchiveDialog({
         <DialogHeader>
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
-            Sends {identifiers} as a formatted email. Scans travel as an unlisted archive link you
-            can switch off later — file attachments are not supported.
+            {description ??
+              (recordList.length > 0
+                ? `Sends ${identifiers} as a formatted email. Scans travel as an unlisted archive link you can switch off later — file attachments are not supported.`
+                : "Sends this as a formatted email from the archive.")}
           </DialogDescription>
+
         </DialogHeader>
 
         <div className="space-y-4">
