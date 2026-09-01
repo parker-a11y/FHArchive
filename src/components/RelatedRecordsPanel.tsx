@@ -263,6 +263,7 @@ export function RelatedRecordsField({
             />
           </div>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
             aria-label={`Remove ${r.record.ref}`}
