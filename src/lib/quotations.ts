@@ -147,3 +147,39 @@ export async function findQuoteSource(
   if (!text) return null;
   return { fileId: null, pageLabel: null, pageIndex: null, text };
 }
+
+/**
+ * Permanently drops a single quote line from its AI suggestion so it no longer
+ * appears on the record or in the quotations list. When the last quote is
+ * removed the whole suggestion is marked rejected.
+ */
+export async function removeQuotation(suggestionId: string, quote: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("ai_suggestions")
+    .select("content")
+    .eq("id", suggestionId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const target = normalize(quote);
+  const kept = (data?.content ?? "").split(/\r?\n/).filter((line) => {
+    const c = cleanQuote(line);
+    if (!c) return false;
+    return normalize(c) !== target;
+  });
+
+  if (kept.length === 0) {
+    const { error: e2 } = await supabase
+      .from("ai_suggestions")
+      .update({ content: "", status: "rejected" })
+      .eq("id", suggestionId);
+    if (e2) throw e2;
+    return;
+  }
+
+  const { error: e3 } = await supabase
+    .from("ai_suggestions")
+    .update({ content: kept.join("\n") })
+    .eq("id", suggestionId);
+  if (e3) throw e3;
+}
