@@ -289,14 +289,24 @@ function QuickEntry() {
             save("next");
           }}
           onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            // Keyboard-first intake: hands never have to leave the keyboard.
+            if (!(e.metaKey || e.ctrlKey)) return;
+            if (e.key === "Enter") {
               e.preventDefault();
-              save("next");
+              save(e.shiftKey ? "open" : "next");
+            } else if (e.key.toLowerCase() === "l") {
+              e.preventDefault();
+              save("label");
             }
           }}
         >
           <div className="mb-6 rounded border border-border bg-card px-5 py-4">
-            <div className="field-label">Next archive ID (assigned on save)</div>
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="field-label">Next archive ID (assigned on save)</div>
+              <div className="hidden text-[11px] text-muted-foreground sm:block">
+                ⌘/Ctrl + ↵ save &amp; next · ⌘/Ctrl + ⇧ + ↵ save &amp; open · ⌘/Ctrl + L save &amp; label
+              </div>
+            </div>
             <div className="archive-id font-display mt-1 text-4xl">
               {next?.archive_id ?? "……"}
             </div>
@@ -667,7 +677,9 @@ function QuickEntry() {
         </form>
 
         <aside>
-          <h2 className="field-label mb-2">This session</h2>
+          <h2 className="field-label mb-2">
+            This session{session.length > 0 ? ` — ${session.length}` : ""}
+          </h2>
           <div className="rounded border border-border bg-card">
             {session.length === 0 && (
               <p className="px-3 py-3 text-xs text-muted-foreground">Nothing cataloged yet.</p>
