@@ -21,6 +21,7 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    plugins: [mcpPlugin()],
     resolve: {
       alias: {
         // React Email's htmlparser2 path needs entities v4.5.0; pin every import
