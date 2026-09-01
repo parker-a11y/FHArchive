@@ -26,6 +26,8 @@ export interface WeeklyRecapEmailProps {
   imageUrl?: string | null
   imageCaption?: string | null
   relatedIds?: string[]
+  /** FH / DS number -> public share URL, so non-members can open records. */
+  shareLinks?: Record<string, string>
   stats?: { label: string; value: string | number }[]
   recapUrl?: string | null
 }
@@ -49,6 +51,21 @@ function blocksOf(body: string) {
 /** Strips markdown emphasis so the email reads cleanly in every client. */
 const plain = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/`/g, '')
 
+/** Turns FH / DS numbers into links to their public share page when one exists. */
+function linkify(text: string, shareLinks: Record<string, string>) {
+  const clean = plain(text)
+  if (!Object.keys(shareLinks).length) return clean
+  return clean.split(/(FH-?\d{3,}|DS-?\d{3,})/g).map((part, i) => {
+    const url = shareLinks[part.toUpperCase()]
+    if (!url) return <React.Fragment key={i}>{part}</React.Fragment>
+    return (
+      <Link key={i} href={url} style={recordLink}>
+        {part}
+      </Link>
+    )
+  })
+}
+
 export const WeeklyRecapEmail = ({
   weekRange = '',
   title = 'Weekly Recap',
@@ -58,6 +75,7 @@ export const WeeklyRecapEmail = ({
   imageUrl = null,
   imageCaption = null,
   relatedIds = [],
+  shareLinks = {},
   stats = [],
   recapUrl = null,
 }: WeeklyRecapEmailProps) => (
@@ -92,7 +110,7 @@ export const WeeklyRecapEmail = ({
             if (block.kind === 'heading')
               return (
                 <Text key={i} style={h2}>
-                  {plain(block.text)}
+                  {linkify(block.text, shareLinks)}
                 </Text>
               )
             if (block.kind === 'bullets')
@@ -100,14 +118,14 @@ export const WeeklyRecapEmail = ({
                 <Section key={i}>
                   {block.items.map((item, j) => (
                     <Text key={j} style={bullet}>
-                      • {plain(item)}
+                      • {linkify(item, shareLinks)}
                     </Text>
                   ))}
                 </Section>
               )
             return (
               <Text key={i} style={para}>
-                {plain(block.text)}
+                {linkify(block.text, shareLinks)}
               </Text>
             )
           })}
@@ -126,7 +144,23 @@ export const WeeklyRecapEmail = ({
         {relatedIds.length ? (
           <Section>
             <Text style={label}>Records in this recap</Text>
-            <Text style={ids}>{relatedIds.join('  ·  ')}</Text>
+            <Text style={ids}>
+              {relatedIds.map((id, i) => {
+                const url = shareLinks[id.toUpperCase()]
+                return (
+                  <React.Fragment key={id}>
+                    {i > 0 ? '  ·  ' : ''}
+                    {url ? (
+                      <Link href={url} style={recordLink}>
+                        {id}
+                      </Link>
+                    ) : (
+                      id
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </Text>
           </Section>
         ) : null}
 
@@ -139,6 +173,13 @@ export const WeeklyRecapEmail = ({
         ) : null}
 
         <Hr style={hr} />
+        {Object.keys(shareLinks).length ? (
+          <Text style={footer}>
+            Record links above open a private, read-only view of that item — no account needed.
+            Please don&rsquo;t forward them outside the family.
+          </Text>
+        ) : null}
+
         <Text style={footer}>
           The Francis Files — a private family archive. Weekly recaps are written from the week&rsquo;s
           catalog work.
@@ -169,6 +210,8 @@ export const template = {
     recapUrl: 'https://fharchive.com/recaps/2026-08-24',
   },
 } satisfies TemplateEntry
+
+const recordLink = { color: '#8a6a1f', textDecoration: 'underline', fontWeight: 'bold' as const }
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Georgia, "Times New Roman", serif' }
 const container = { padding: '24px 24px 40px', maxWidth: '640px' }
