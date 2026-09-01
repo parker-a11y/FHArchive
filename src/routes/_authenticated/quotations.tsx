@@ -1,14 +1,32 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Quote, ArrowUpDown, Search } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Quote, ArrowUpDown, Search, Bomb } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
 import { displayDate } from "@/lib/archive";
 import { HighlightedText } from "@/lib/highlight";
-import { fetchQuotations, findQuoteSource, quoteTime, type Quotation } from "@/lib/quotations";
+import {
+  fetchQuotations,
+  findQuoteSource,
+  quoteTime,
+  removeQuotation,
+  type Quotation,
+} from "@/lib/quotations";
 import { fetchDigitalFiles } from "@/lib/digital-files";
 
 export const Route = createFileRoute("/_authenticated/quotations")({
