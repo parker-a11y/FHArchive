@@ -45,6 +45,7 @@ import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
 import { Route as AuthenticatedPlacesIndexRouteImport } from './routes/_authenticated/places/index'
 import { Route as AuthenticatedPlacesPlaceIdRouteImport } from './routes/_authenticated/places/$placeId'
+import { Route as AuthenticatedRecapsIndexRouteImport } from './routes/_authenticated/recaps/index'
 import { Route as AuthenticatedSourcesIndexRouteImport } from './routes/_authenticated/sources/index'
 import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenticated/sources/$dsId'
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
@@ -248,6 +249,12 @@ const AuthenticatedPlacesPlaceIdRoute =
     path: '/places/$placeId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRecapsIndexRoute =
+  AuthenticatedRecapsIndexRouteImport.update({
+    id: '/recaps/',
+    path: '/recaps/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSourcesIndexRoute =
   AuthenticatedSourcesIndexRouteImport.update({
     id: '/sources/',
@@ -336,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/people/': typeof AuthenticatedPeopleIndexRoute
   '/places/': typeof AuthenticatedPlacesIndexRoute
+  '/recaps/': typeof AuthenticatedRecapsIndexRoute
   '/sources/': typeof AuthenticatedSourcesIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
@@ -381,6 +389,7 @@ export interface FileRoutesByTo {
   '/organizations': typeof AuthenticatedOrganizationsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/places': typeof AuthenticatedPlacesIndexRoute
+  '/recaps': typeof AuthenticatedRecapsIndexRoute
   '/sources': typeof AuthenticatedSourcesIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
@@ -428,6 +437,7 @@ export interface FileRoutesById {
   '/_authenticated/organizations/': typeof AuthenticatedOrganizationsIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
   '/_authenticated/places/': typeof AuthenticatedPlacesIndexRoute
+  '/_authenticated/recaps/': typeof AuthenticatedRecapsIndexRoute
   '/_authenticated/sources/': typeof AuthenticatedSourcesIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
@@ -475,6 +485,7 @@ export interface FileRouteTypes {
     | '/organizations/'
     | '/people/'
     | '/places/'
+    | '/recaps/'
     | '/sources/'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
@@ -520,6 +531,7 @@ export interface FileRouteTypes {
     | '/organizations'
     | '/people'
     | '/places'
+    | '/recaps'
     | '/sources'
     | '/lovable/email/transactional/preview'
   id:
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/organizations/'
     | '/_authenticated/people/'
     | '/_authenticated/places/'
+    | '/_authenticated/recaps/'
     | '/_authenticated/sources/'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
@@ -844,6 +857,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlacesPlaceIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/recaps/': {
+      id: '/_authenticated/recaps/'
+      path: '/recaps'
+      fullPath: '/recaps/'
+      preLoaderRoute: typeof AuthenticatedRecapsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sources/': {
       id: '/_authenticated/sources/'
       path: '/sources'
@@ -930,6 +950,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOrganizationsIndexRoute: typeof AuthenticatedOrganizationsIndexRoute
   AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
   AuthenticatedPlacesIndexRoute: typeof AuthenticatedPlacesIndexRoute
+  AuthenticatedRecapsIndexRoute: typeof AuthenticatedRecapsIndexRoute
   AuthenticatedSourcesIndexRoute: typeof AuthenticatedSourcesIndexRoute
 }
 
@@ -960,6 +981,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOrganizationsIndexRoute: AuthenticatedOrganizationsIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
   AuthenticatedPlacesIndexRoute: AuthenticatedPlacesIndexRoute,
+  AuthenticatedRecapsIndexRoute: AuthenticatedRecapsIndexRoute,
   AuthenticatedSourcesIndexRoute: AuthenticatedSourcesIndexRoute,
 }
 
