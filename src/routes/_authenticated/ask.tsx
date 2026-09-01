@@ -259,6 +259,7 @@ function AskFrancis() {
   const qc = useQueryClient();
   const ask = useServerFn(askFrancis);
   const refresh = useServerFn(refreshResearchSnapshot);
+  const [lens, setLens] = useState<LensKey>("answer");
   const [question, setQuestion] = useState("");
   const [thread, setThread] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
