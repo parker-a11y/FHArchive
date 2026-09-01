@@ -194,6 +194,35 @@ function QuotationsPage() {
       </div>
 
       <QuoteDetailDialog quote={open} onClose={() => setOpen(null)} />
+
+      <AlertDialog open={!!toRemove} onOpenChange={(o) => !o && !removing && setToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this quotation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              It will be deleted from {toRemove?.archive_id} and will no longer appear in this list.
+              The transcription itself is untouched.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {toRemove && (
+            <blockquote className="rounded-lg border-l-4 border-archive-gold bg-muted/40 px-3 py-2 text-sm italic">
+              “{toRemove.quote}”
+            </blockquote>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removing}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmRemove();
+              }}
+            >
+              {removing ? "Removing…" : "Remove quotation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
