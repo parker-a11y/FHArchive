@@ -1,22 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Ask Francis: readers with research access; editors always. */
+/** Ask Francis: available to every account with archive read access (admins, archivists, guests). */
 async function assertResearchAccess(context: any) {
   const [{ data: canEdit }, { data: canRead }] = await Promise.all([
     context.supabase.rpc("can_edit_archive", { _user_id: context.userId }),
     context.supabase.rpc("can_read_archive", { _user_id: context.userId }),
   ]);
-  if (canEdit) return { canEdit: true };
-  if (!canRead) throw new Error("You do not have access to the archive.");
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("ask_francis")
-    .eq("id", context.userId)
-    .maybeSingle();
-  if (!profile?.ask_francis)
-    throw new Error("Ask Francis is not enabled for your account. Ask the archive owner to turn it on.");
-  return { canEdit: false };
+  if (!canRead && !canEdit) throw new Error("You do not have access to the archive.");
+  return { canEdit: !!canEdit };
 }
 
 export const askFrancis = createServerFn({ method: "POST" })
