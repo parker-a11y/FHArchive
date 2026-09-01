@@ -198,7 +198,9 @@ export async function rebuildRecordTranscription(
       .eq("letter_id", letterId),
     supabase
       .from("letters")
-      .select("transcription_raw_ai, transcription_verified, transcription_status")
+      .select(
+        "transcription_raw_ai, transcription_verified, transcription_status, transcription_rollup_text",
+      )
       .eq("id", letterId)
       .maybeSingle(),
   ]);
@@ -232,30 +234,31 @@ export async function rebuildRecordTranscription(
   const allVerified = verifiedCount === withText;
 
   const existingVerified = (letter as any)?.transcription_verified as string | null;
-  const conflict =
-    !force &&
-    Boolean(norm(existingVerified)) &&
-    norm(existingVerified) !== norm(combinedBest) &&
-    norm(existingVerified) !== norm(combinedAi);
+  const lastRollup = (letter as any)?.transcription_rollup_text as string | null;
+
+  /**
+   * The combined text is "system-owned" while it still matches what the roll-up
+   * last produced (or the raw AI text, for records predating the snapshot).
+   * Only genuinely hand-typed text counts as a conflict worth asking about.
+   */
+  const systemOwned =
+    !norm(existingVerified) ||
+    norm(existingVerified) === norm(combinedBest) ||
+    norm(existingVerified) === norm(combinedAi) ||
+    (Boolean(norm(lastRollup)) && norm(existingVerified) === norm(lastRollup));
+  const conflict = !force && !systemOwned;
 
   const patch: Record<string, unknown> = {};
   if (combinedAi) patch['transcription_raw_ai'] = combinedAi;
 
   if (!conflict) {
-    if (allVerified) {
-      patch['transcription_verified'] = combinedBest;
-      patch['transcription_status'] = "human_verified";
-    } else {
-      patch['transcription_status'] =
-        (letter as any)?.transcription_status === "human_verified"
-          ? "needs_review"
-          : "ai_transcribed";
-      if (norm(existingVerified) && norm(existingVerified) !== norm(combinedBest)) {
-        // leave the hand-edited verified text alone
-      } else if (norm(existingVerified)) {
-        patch['transcription_verified'] = combinedBest;
-      }
-    }
+    patch['transcription_verified'] = combinedBest;
+    patch['transcription_rollup_text'] = combinedBest;
+    patch['transcription_status'] = allVerified
+      ? "human_verified"
+      : (letter as any)?.transcription_status === "human_verified"
+        ? "needs_review"
+        : "ai_transcribed";
   }
 
   if (Object.keys(patch).length) {
@@ -263,4 +266,5 @@ export async function rebuildRecordTranscription(
   }
 
   return { updated: Object.keys(patch).length > 0, conflict, allVerified, pages: withText };
+
 }
