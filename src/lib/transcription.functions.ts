@@ -40,8 +40,10 @@ export const transcribeScans = createServerFn({ method: "POST" })
       );
 
       try {
-        const url = await toDataUrl(supabase, t.path, t.mime);
-        const text = await transcribeImage(url, `Page ${i + 1}${t.label ? ` — ${t.label}` : ""}`);
+        const urls = await Promise.all(
+          (t.paths?.length ? t.paths : [t.path]).map((p) => toDataUrl(supabase, p, t.mime)),
+        );
+        const text = await transcribeImage(urls, `Page ${i + 1}${t.label ? ` — ${t.label}` : ""}`);
         await supabase
           .from("scan_transcriptions")
           .update({
@@ -133,8 +135,10 @@ export const transcribeRecord = createServerFn({ method: "POST" })
       );
 
       try {
-        const url = await toDataUrl(supabase, t.path, t.mime);
-        const text = await transcribeImage(url, `Page ${i + 1}${t.label ? ` — ${t.label}` : ""}`);
+        const urls = await Promise.all(
+          (t.paths?.length ? t.paths : [t.path]).map((p) => toDataUrl(supabase, p, t.mime)),
+        );
+        const text = await transcribeImage(urls, `Page ${i + 1}${t.label ? ` — ${t.label}` : ""}`);
         await supabase
           .from("scan_transcriptions")
           .update({

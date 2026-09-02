@@ -26,6 +26,7 @@ import {
   SCAN_STATUS_LABEL,
   derivativeFailed,
   generateDerivatives,
+  generatePdfPageDerivatives,
   hasJpeg,
   hasThumb,
   isNamed,
@@ -314,6 +315,25 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     }
   }
 
+
+  /** Renders (or re-renders) every page of a PDF master into viewing JPEGs. */
+  async function regeneratePdf(f: DigitalFileWithDerivatives) {
+    setGenerating({ done: 0, total: 1 });
+    try {
+      const pages = await generatePdfPageDerivatives(
+        letter.archive_id,
+        letter.id,
+        f,
+        (done, total) => setGenerating({ done, total }),
+      );
+      toast.success(`${pages} PDF page${pages === 1 ? "" : "s"} rendered for viewing and AI.`);
+    } catch (err) {
+      toast.error(`PDF pages could not be rendered — ${(err as Error).message}`);
+    } finally {
+      setGenerating(null);
+      refresh();
+    }
+  }
 
   /* ----------------------------- transcription ---------------------------- */
 
@@ -852,18 +872,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       </span>
                     )}
                   </div>
-                  {f.isPdf ? (
-                    <a
-                      href={f.pdfUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex h-36 w-full flex-col items-center justify-center gap-1 rounded bg-muted text-xs text-muted-foreground hover:bg-muted/70"
-                    >
-                      <FileText className="size-7 text-primary" />
-                      <span className="font-medium text-foreground">Open PDF</span>
-                      <span className="text-[10px]">Stored as uploaded</span>
-                    </a>
-                  ) : (
                   <button
                     onClick={() => {
                       const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
@@ -881,12 +889,43 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                         className="h-full w-full object-contain"
                       />
                     ) : (
-                      <span className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                        <ImageIcon className="mr-1 size-4" /> No preview
+                      <span className="flex h-full flex-col items-center justify-center gap-1 text-xs text-muted-foreground">
+                        {f.isPdf ? (
+                          <>
+                            <FileText className="size-6 text-primary" />
+                            PDF — pages not rendered yet
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="size-4" /> No preview
+                          </>
+                        )}
                       </span>
                     )}
                   </button>
+                  {f.isPdf && (
+                    <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                      <span>
+                        PDF · {f.pageUrls.length || 0} page{f.pageUrls.length === 1 ? "" : "s"}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <a href={f.pdfUrl} target="_blank" rel="noreferrer" className="underline">
+                          Original
+                        </a>
+                        {!isGuestViewer && (
+                          <button
+                            className="underline disabled:opacity-50"
+                            disabled={Boolean(generating)}
+                            onClick={() => regeneratePdf(f)}
+                          >
+                            {f.pageUrls.length ? "Re-render pages" : "Render pages"}
+                          </button>
+                        )}
+                      </span>
+                    </div>
                   )}
+
+
 
 
                   <p

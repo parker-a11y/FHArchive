@@ -36,10 +36,12 @@ export type DigitalFileWithDerivatives = DigitalFile & {
   derivatives: FileDerivative[];
   viewUrl: string;
   thumbUrl: string;
-  /** True for PDF masters — they are stored as-is and never rendered to JPEG. */
+  /** True for PDF masters — stored as-is, with each page rendered to a JPEG. */
   isPdf: boolean;
-  /** Signed URL to the PDF master (empty for non-PDF files). */
+  /** Signed URL to the PDF master itself (empty for non-PDF files). */
   pdfUrl: string;
+  /** Signed viewing URLs, one per rendered page (single entry for a scan). */
+  pageUrls: string[];
 };
 
 export function isPdfMaster(f: { master_mime: string | null; master_path: string }) {
@@ -71,18 +73,33 @@ export async function fetchDigitalFiles(letterId: string): Promise<DigitalFileWi
   return Promise.all(
     files.map(async (f) => {
       const own = derivatives.filter((d) => d.file_id === f.id);
-      const jpeg = own.find((d) => d.kind === "jpeg" && d.status === "complete");
-      const thumb = own.find((d) => d.kind === "thumbnail" && d.status === "complete");
+      const byPath = (a: FileDerivative, b: FileDerivative) =>
+        (a.storage_path ?? "").localeCompare(b.storage_path ?? "");
+      const jpegs = own
+        .filter((d) => d.kind === "jpeg" && d.status === "complete" && d.storage_path)
+        .sort(byPath);
+      const thumb = own
+        .filter((d) => d.kind === "thumbnail" && d.status === "complete" && d.storage_path)
+        .sort(byPath)[0];
       const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
-      const viewPath = jpeg?.storage_path ?? (browserViewable ? f.master_path : null);
+      const viewPath = jpegs[0]?.storage_path ?? (browserViewable ? f.master_path : null);
       const thumbPath = thumb?.storage_path ?? viewPath;
       const pdf = isPdfMaster(f);
-      const [viewUrl, thumbUrl, pdfUrl] = await Promise.all([
+      const [viewUrl, thumbUrl, pdfUrl, pageUrls] = await Promise.all([
         viewPath ? signedScanUrl(viewPath) : Promise.resolve(""),
         thumbPath ? signedScanUrl(thumbPath) : Promise.resolve(""),
         pdf ? signedScanUrl(f.master_path) : Promise.resolve(""),
+        Promise.all(jpegs.map((d) => signedScanUrl(d.storage_path as string))),
       ]);
-      return { ...f, derivatives: own, viewUrl, thumbUrl, isPdf: pdf, pdfUrl };
+      return {
+        ...f,
+        derivatives: own,
+        viewUrl,
+        thumbUrl,
+        isPdf: pdf,
+        pdfUrl,
+        pageUrls: pageUrls.filter(Boolean).length ? pageUrls.filter(Boolean) : viewUrl ? [viewUrl] : [],
+      };
     }),
   );
 }

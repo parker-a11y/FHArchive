@@ -41,6 +41,8 @@ export type ScanTarget = {
   label: string | null;
   sortOrder: number;
   path: string;
+  /** All page images for this master (one entry unless it's a multi-page PDF). */
+  paths: string[];
   mime: string;
 };
 
@@ -63,9 +65,13 @@ export async function resolveScanTargets(
 
   const targets: ScanTarget[] = [];
   for (const f of files ?? []) {
-    const jpeg = (derivatives ?? []).find(
-      (d) => d.file_id === f.id && d.kind === "jpeg" && d.status === "complete" && d.storage_path,
-    );
+    // A PDF master renders to one JPEG per page — transcribe all of them together.
+    const jpegs = (derivatives ?? [])
+      .filter(
+        (d) => d.file_id === f.id && d.kind === "jpeg" && d.status === "complete" && d.storage_path,
+      )
+      .sort((a, b) => String(a.storage_path).localeCompare(String(b.storage_path)));
+    const jpeg = jpegs[0];
     const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
     const path = jpeg?.storage_path ?? (browserViewable ? f.master_path : null);
     if (!path) continue;
@@ -75,6 +81,7 @@ export async function resolveScanTargets(
       label: f.label ?? f.original_filename ?? null,
       sortOrder: f.sort_order ?? 0,
       path,
+      paths: jpegs.length ? jpegs.map((d) => String(d.storage_path)) : [path],
       mime: jpeg?.mime_type ?? f.master_mime ?? "image/jpeg",
     });
   }
@@ -127,17 +134,26 @@ async function callGateway(apiKey: string, messages: ChatMessage[]) {
   };
 }
 
-/** Calls the gateway and returns transcription text, or throws a readable error. */
-export async function transcribeImage(dataUrl: string, pageNote: string) {
+/**
+ * Calls the gateway and returns transcription text, or throws a readable error.
+ * Accepts one image, or several (every rendered page of a multi-page PDF master).
+ */
+export async function transcribeImage(dataUrl: string | string[], pageNote: string) {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI is not configured on the server");
+
+  const urls = Array.isArray(dataUrl) ? dataUrl : [dataUrl];
+  const note =
+    urls.length > 1
+      ? `${pageNote} — ${urls.length} page images follow in order; transcribe them all in sequence.`
+      : pageNote;
 
   const messages: ChatMessage[] = [
     {
       role: "user",
       content: [
-        { type: "text", text: `${TRANSCRIPTION_PROMPT}\n\n(${pageNote})` },
-        { type: "image_url", image_url: { url: dataUrl } },
+        { type: "text", text: `${TRANSCRIPTION_PROMPT}\n\n(${note})` },
+        ...urls.map((url) => ({ type: "image_url" as const, image_url: { url } })),
       ],
     },
   ];

@@ -122,6 +122,15 @@ function scaleTo(source: Source, max: number, quality: number): Promise<DerivedI
   });
 }
 
+/** Scales any already-rendered canvas down to a JPEG (used by the PDF renderer). */
+export function jpegFromCanvas(
+  canvas: HTMLCanvasElement,
+  max: number,
+  quality: number,
+): Promise<DerivedImage> {
+  return scaleTo({ canvas, width: canvas.width, height: canvas.height }, max, quality);
+}
+
 export function canDerive(file: File) {
   return (
     /\.tiff?$/i.test(file.name) ||

@@ -36,15 +36,19 @@ export const SCAN_STATUS_LABEL: Record<ScanStatusKey, string> = {
   complete: "Processing Complete",
 };
 
+export function isPdf(f: DigitalFileWithDerivatives) {
+  return /pdf/i.test(f.master_mime ?? "") || /\.pdf$/i.test(f.master_path ?? "");
+}
+
 /**
- * PDFs (and any other non-image master) are archival deliverables in their own
- * right — they are stored byte-for-byte and never rendered to JPEG, so they
- * never wait on derivatives and never report a processing error.
+ * Which masters produce viewing images. PDFs qualify: the master file is stored
+ * byte-for-byte and each page is rendered to a JPEG so it can be viewed,
+ * transcribed and analysed like any scan. Anything else (audio, zip, …) does not.
  */
 export function needsDerivatives(f: DigitalFileWithDerivatives) {
   const path = f.master_path ?? "";
   const mime = f.master_mime ?? "";
-  if (/pdf/i.test(mime) || /\.pdf$/i.test(path)) return false;
+  if (isPdf(f)) return true;
   return (
     /\.tiff?$/i.test(path) ||
     /^image\/(tiff|jpeg|png|webp|gif|bmp)$/i.test(mime) ||
@@ -106,6 +110,74 @@ async function masterAsFile(file: DigitalFileWithDerivatives): Promise<File> {
 }
 
 /**
+ * Renders every page of a PDF master to a viewing JPEG + thumbnail so the PDF
+ * is web viewable and can be transcribed/analysed page by page. The PDF master
+ * itself is only read, never rewritten.
+ */
+export async function generatePdfPageDerivatives(
+  archiveId: string,
+  letterId: string,
+  file: DigitalFileWithDerivatives,
+  onProgress?: (done: number, total: number) => void,
+) {
+  const { renderPdfPages } = await import("@/lib/pdf-pages");
+  const base = basenameOf(file.master_path);
+  const source = await masterAsFile(file);
+  const pages = await renderPdfPages(source, onProgress);
+
+  const rows: Record<string, unknown>[] = [];
+  for (const p of pages) {
+    const suffix = String(p.page).padStart(3, "0");
+    const viewPath = `${archiveId}/derivatives/${base}_p${suffix}.jpg`;
+    const thumbPath = `${archiveId}/derivatives/${base}_p${suffix}_thumb.jpg`;
+    const [v, t] = await Promise.all([
+      supabase.storage
+        .from(BUCKET)
+        .upload(viewPath, p.view.blob, { upsert: true, contentType: "image/jpeg" }),
+      supabase.storage
+        .from(BUCKET)
+        .upload(thumbPath, p.thumb.blob, { upsert: true, contentType: "image/jpeg" }),
+    ]);
+    if (v.error || t.error) {
+      throw new Error(v.error?.message ?? t.error?.message ?? "Page upload failed");
+    }
+    rows.push(
+      {
+        letter_id: letterId,
+        file_id: file.id,
+        kind: "jpeg",
+        status: "complete",
+        storage_path: viewPath,
+        mime_type: "image/jpeg",
+        file_size: p.view.blob.size,
+        width: p.view.width,
+        height: p.view.height,
+      },
+      {
+        letter_id: letterId,
+        file_id: file.id,
+        kind: "thumbnail",
+        status: "complete",
+        storage_path: thumbPath,
+        mime_type: "image/jpeg",
+        file_size: p.thumb.blob.size,
+        width: p.thumb.width,
+        height: p.thumb.height,
+      },
+    );
+  }
+
+  await supabase
+    .from("file_derivatives")
+    .delete()
+    .eq("file_id", file.id)
+    .in("kind", ["jpeg", "thumbnail"]);
+  const { error } = await supabase.from("file_derivatives").insert(rows as never);
+  if (error) throw error;
+  return pages.length;
+}
+
+/**
  * Generates (or regenerates) the JPEG + thumbnail for one master.
  * The master itself is only read, never rewritten.
  */
@@ -114,6 +186,10 @@ export async function generateDerivatives(
   letterId: string,
   file: DigitalFileWithDerivatives,
 ) {
+  if (isPdf(file)) {
+    await generatePdfPageDerivatives(archiveId, letterId, file);
+    return;
+  }
   const base = basenameOf(file.master_path);
   const source = await masterAsFile(file);
   if (!canDerive(source)) throw new Error("This file type cannot produce image derivatives");
