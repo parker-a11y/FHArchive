@@ -17,6 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDigitalFiles, type DigitalFileWithDerivatives } from "@/lib/digital-files";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PostalFields, type PostalValues } from "@/components/letter/PostalFields";
 import { displayDate } from "@/lib/archive";
 
@@ -110,6 +116,7 @@ function EnvelopeReview() {
   const [side, setSide] = useState<"front" | "back">("front");
   const [rotation, setRotation] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
@@ -144,6 +151,7 @@ function EnvelopeReview() {
     });
     setSide("front");
     setRotation(0);
+    setZoomed(false);
   }, [current?.id]);
 
   const { data: files = [] } = useQuery({
@@ -166,21 +174,29 @@ function EnvelopeReview() {
     if (!current) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const payload = {
+        origin: origin.trim() || null,
+        destination: destination.trim() || null,
+        forwarded: postal.forwarded,
+        forwarded_to: postal.forwarded ? postal.forwarded_to.trim() || null : null,
+        postal_service: postal.postal_service || null,
+        postal_notes: postal.postal_notes.trim() || null,
+      };
+      const { data, error } = await supabase
         .from("letters")
-        .update({
-          origin: origin.trim() || null,
-          destination: destination.trim() || null,
-          forwarded: postal.forwarded,
-          forwarded_to: postal.forwarded ? postal.forwarded_to.trim() || null : null,
-          postal_service: postal.postal_service || null,
-          postal_notes: postal.postal_notes.trim() || null,
-        } as never)
-        .eq("id", current.id);
+        .update(payload as never)
+        .eq("id", current.id)
+        .select("id, origin, destination, postal_service")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Nothing was saved — you may not have permission to edit this record.");
+      if ((data.origin ?? null) !== payload.origin || (data.destination ?? null) !== payload.destination) {
+        throw new Error("Mailing origin/destination did not persist. Please try again.");
+      }
       toast.success(`${current.archive_id} saved`);
       await qc.invalidateQueries({ queryKey: ["envelope-records"] });
       await qc.invalidateQueries({ queryKey: ["letters"] });
+      await qc.invalidateQueries({ queryKey: ["letter", current.archive_id] });
       if (advance) go(1);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save");
@@ -188,6 +204,7 @@ function EnvelopeReview() {
       setSaving(false);
     }
   };
+
 
   return (
     <>
@@ -298,18 +315,56 @@ function EnvelopeReview() {
                 </div>
                 <div className="flex min-h-[320px] items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/30 p-2">
                   {shown?.viewUrl ? (
-                    <a href={shown.viewUrl} target="_blank" rel="noreferrer">
+                    <button
+                      type="button"
+                      onClick={() => setZoomed(true)}
+                      className="cursor-zoom-in"
+                      aria-label="Enlarge envelope scan"
+                    >
                       <img
                         src={shown.viewUrl}
                         alt={shown.label ?? "Envelope scan"}
                         style={{ transform: `rotate(${rotation}deg)` }}
                         className="max-h-[62vh] w-auto object-contain transition-transform"
                       />
-                    </a>
+                    </button>
                   ) : (
                     <p className="text-sm text-muted-foreground">No viewable envelope scan.</p>
                   )}
                 </div>
+                <Dialog open={zoomed} onOpenChange={setZoomed}>
+                  <DialogContent className="max-w-5xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-3">
+                        {current.archive_id} — {shown?.label ?? "Envelope"}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setRotation((r) => (r + 90) % 360)}
+                          aria-label="Rotate view"
+                        >
+                          <RotateCw className="size-4" />
+                        </Button>
+                      </DialogTitle>
+                    </DialogHeader>
+                    {shown?.viewUrl && (
+                      <div className="flex max-h-[70vh] items-center justify-center overflow-auto">
+                        <img
+                          src={shown.viewUrl}
+                          alt={shown.label ?? "Envelope scan"}
+                          style={{ transform: `rotate(${rotation}deg)` }}
+                          className="max-h-[70vh] w-auto object-contain transition-transform"
+                        />
+                      </div>
+                    )}
+                    <div className="flex justify-end">
+                      <Button variant="outline" onClick={() => setZoomed(false)}>
+                        Close
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 {shown?.label && (
                   <p className="text-center text-xs text-muted-foreground">{shown.label}</p>
                 )}
