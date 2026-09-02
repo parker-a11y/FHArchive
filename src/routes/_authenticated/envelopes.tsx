@@ -17,6 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDigitalFiles, type DigitalFileWithDerivatives } from "@/lib/digital-files";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PostalFields, type PostalValues } from "@/components/letter/PostalFields";
 import { displayDate } from "@/lib/archive";
 
@@ -110,6 +116,7 @@ function EnvelopeReview() {
   const [side, setSide] = useState<"front" | "back">("front");
   const [rotation, setRotation] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
@@ -144,6 +151,7 @@ function EnvelopeReview() {
     });
     setSide("front");
     setRotation(0);
+    setZoomed(false);
   }, [current?.id]);
 
   const { data: files = [] } = useQuery({
