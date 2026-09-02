@@ -1,52 +1,30 @@
-# Connect Francis Files to GitHub and Deploy Externally
+# PDFs skip derivatives + "Digital Only" storage location
 
-## Goal
-Sync the Francis Files archive codebase to a GitHub repository and make the app runnable on a public URL outside the Lovable editor.
+## 1. PDFs are complete on upload
 
-## Recommended hosting
-**Cloudflare Pages** is the best fit for this project because the current build stack already targets Cloudflare Workers (via Nitro in `@lovable.dev/vite-tanstack-config`). Vercel and Netlify are viable alternatives, but Cloudflare Pages will require the fewest adapter changes.
+Right now every uploaded master is expected to produce a JPEG viewing copy and a thumbnail. A PDF can't be rendered in the browser, so it stays stuck in "Ready to Confirm" and, on confirm, throws "This file type cannot produce image derivatives".
 
-## Plan
+Change:
+- Treat a PDF (and any other non-image master) as **not needing derivatives**. It is counted as processed the moment it is uploaded.
+- The confirm step skips those files instead of attempting generation, so no error is recorded and no red "Processing Error" state appears.
+- A record whose only masters are PDFs shows **Processing Complete**, not "Ready to Confirm".
+- In the file list, a PDF shows a document icon plus an "Open PDF" / download link in place of the missing thumbnail.
+- Existing PDFs that already logged a failed derivative are treated as clean once this ships.
 
-### 1. Connect GitHub from Lovable
-- User opens the **Plus (+) menu in the chat input → GitHub → Connect project**.
-- Authorize the Lovable GitHub App.
-- Select the GitHub account/organization where the repository will live.
-- Create a new repository through Lovable (e.g., `francis-files-archive`).
-- Lovable will push the current codebase to that repo and enable bidirectional sync.
+Nothing changes for TIFF/JPEG/PNG scans.
 
-### 2. Verify the repository sync
-- Confirm the repo contains the full project: `src/`, `package.json`, `vite.config.ts`, `.env`, etc.
-- Verify that future edits in Lovable push to GitHub and that GitHub pushes sync back to Lovable.
-- Note: `.env` is currently tracked in the repo and contains Supabase configuration. We will review whether it should remain tracked or move to host-only environment variables.
+## 2. "Digital Only" storage location
 
-### 3. Prepare for external deployment
-- Confirm the project builds locally with `bun run build` or `vite build`.
-- Identify required environment variables:
-  - Client: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PROJECT_ID`, `VITE_SUPABASE_PUBLISHABLE_KEY`
-  - Server: `SUPABASE_URL`, `SUPABASE_PROJECT_ID`, `SUPABASE_PUBLISHABLE_KEY`
-- Document any additional secrets the app relies on (e.g., `LOVABLE_API_KEY`, `APP_USER_CONNECTION_KEY_SECRET`, connector keys, email keys). These are currently injected by Lovable Cloud and will need to be re-created or re-linked on the external host.
+Add **Digital Only** as a choice in the physical Storage Type picker (record intake and record editing), described as: item exists only in this archive plus the nightly Google Drive backup — no physical container.
 
-### 4. Deploy to Cloudflare Pages
-- In Cloudflare dashboard, create a new Pages project and connect the GitHub repo.
-- Configure build settings:
-  - Build command: `bun run build`
-  - Build output directory: `dist` (or the directory Nitro emits; confirm after first build)
-- Add the environment variables from step 3 to Cloudflare Pages project settings.
-- Trigger a first deploy and inspect the build log.
+When Digital Only is selected:
+- The physical placement fields (folder, position, box/container) are hidden, since there is no shelf location.
+- The record detail header shows "Digital Only" where a physical location would normally be shown.
 
-### 5. Post-deploy verification
-- Confirm the live URL loads the login/dashboard page.
-- Test sign-in, record search, and a transcription flow to ensure the Supabase backend is reachable.
-- Verify that server functions and AI Gateway calls work; if any Lovable-only secrets are missing, surface them and decide whether to migrate those features or supply alternate keys.
+No change to the backup job itself — digital masters and PDFs are already included in the nightly Google Drive mirror.
 
-### 6. Optional cleanup
-- Decide whether to keep `.env` in the repo or move values to the host's environment variables and add `.env` to `.gitignore`.
-- Set up a custom domain in Cloudflare Pages if desired.
+## Technical notes
 
-## Out of scope for this plan
-- Migrating off Lovable Cloud/Supabase to a different backend.
-- Re-implementing Lovable-only features (AI Gateway, managed email, connectors) that depend on secrets unavailable outside Lovable.
-
-## First step
-The first action is the GitHub connection, which must be done by the account owner through the Lovable UI. After that, I can help verify the repo and configure the external host.
+- `src/lib/derivatives.ts` `canDerive()` already identifies non-image types; `src/lib/scan-confirm.ts` (`pendingFiles`, `scanStatus`, `generateDerivatives`) will use the same predicate so non-derivable masters are excluded from the pending set.
+- `src/components/letter/DigitizationPanel.tsx` confirm loop skips them; `src/lib/digital-files.ts` returns an empty `thumbUrl` with a signed master URL for PDF display.
+- `STORAGE_TYPES` in `src/lib/archive.ts` gains `{ value: "digital_only", label: "Digital Only" }`; conditional rendering in `catalog.tsx` and `letters/$archiveId.tsx`. No migration needed — `storage_type` is a free text column.
