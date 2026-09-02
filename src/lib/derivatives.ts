@@ -39,10 +39,19 @@ async function decodeTiff(file: File): Promise<Source> {
   if (!ifds.length) throw new Error("No image found inside the TIFF");
   const page = ifds[0];
 
-  const width = Number(page["width"]);
-  const height = Number(page["height"]);
-  if (!width || !height) throw new Error("TIFF has no readable dimensions");
-  if (width * height > MAX_TIFF_PIXELS) {
+  // UTIF only populates ifd.width/height during decodeImage(); before that the
+  // dimensions live in the raw TIFF tags t256 (ImageWidth) / t257 (ImageLength).
+  const tagValue = (ifd: Record<string, unknown>, tag: string): number => {
+    const raw = ifd[tag];
+    const v = Array.isArray(raw) ? raw[0] : raw;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  let width = tagValue(page, "t256") || Number(page["width"]) || 0;
+  let height = tagValue(page, "t257") || Number(page["height"]) || 0;
+
+  if (width && height && width * height > MAX_TIFF_PIXELS) {
     throw new Error(
       `TIFF is too large to decode in the browser (${width.toLocaleString()} × ${height.toLocaleString()} pixels). ` +
         `Please downsample the master or contact support for server-side processing.`,
@@ -56,7 +65,14 @@ async function decodeTiff(file: File): Promise<Source> {
     throw new Error(`TIFF could not be decoded (${msg}). The file may use an unsupported compression.`);
   }
 
+  width = Number(page["width"]) || width;
+  height = Number(page["height"]) || height;
+  if (!width || !height) throw new Error("TIFF has no readable dimensions");
+
   const rgba = UTIF.toRGBA8(page);
+  if (!rgba || rgba.length < width * height * 4) {
+    throw new Error("TIFF pixel data could not be read (unsupported compression or corrupt file)");
+  }
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -67,6 +83,7 @@ async function decodeTiff(file: File): Promise<Source> {
   ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
   return { canvas, width, height };
 }
+
 
 async function decodeBrowserImage(file: File): Promise<Source> {
   const bitmap = await createImageBitmap(file);
