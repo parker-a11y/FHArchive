@@ -885,6 +885,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       </span>
                     )}
                   </button>
+                  )}
+
 
                   <p
                     className="mt-1 truncate text-[11px] font-medium"
