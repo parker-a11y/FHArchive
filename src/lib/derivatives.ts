@@ -25,6 +25,8 @@ export type DerivedSet = {
 
 type Source = { canvas: HTMLCanvasElement; width: number; height: number };
 
+const MAX_TIFF_PIXELS = 120_000_000; // ~480 MB raw RGBA; most browsers can handle this
+
 async function decodeTiff(file: File): Promise<Source> {
   const mod = await import("utif2");
   const UTIF = ((mod as unknown as { default?: unknown }).default ?? mod) as {
@@ -36,11 +38,25 @@ async function decodeTiff(file: File): Promise<Source> {
   const ifds = UTIF.decode(buf);
   if (!ifds.length) throw new Error("No image found inside the TIFF");
   const page = ifds[0];
-  UTIF.decodeImage(buf, page, ifds);
-  const rgba = UTIF.toRGBA8(page);
+
   const width = Number(page["width"]);
   const height = Number(page["height"]);
   if (!width || !height) throw new Error("TIFF has no readable dimensions");
+  if (width * height > MAX_TIFF_PIXELS) {
+    throw new Error(
+      `TIFF is too large to decode in the browser (${width.toLocaleString()} × ${height.toLocaleString()} pixels). ` +
+        `Please downsample the master or contact support for server-side processing.`,
+    );
+  }
+
+  try {
+    UTIF.decodeImage(buf, page, ifds);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`TIFF could not be decoded (${msg}). The file may use an unsupported compression.`);
+  }
+
+  const rgba = UTIF.toRGBA8(page);
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
