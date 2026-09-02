@@ -1,0 +1,1 @@
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS censor_mark boolean NOT NULL DEFAULT false;

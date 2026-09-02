@@ -190,6 +190,7 @@ function LetterPage() {
       forwarded_to: letter.forwarded_to ?? "",
       postal_service: letter.postal_service ?? "",
       postal_notes: letter.postal_notes ?? "",
+      censor_mark: letter.censor_mark ?? false,
       period: letter.period,
       sheets: letter.sheets === null ? "" : String(letter.sheets),
       has_envelope: letter.has_envelope,
@@ -264,6 +265,7 @@ function LetterPage() {
     payload.transcription_status = form.transcription_status || "not_started";
     payload.tones = tones;
     payload.forwarded = !!form.forwarded;
+    payload.censor_mark = !!form.censor_mark;
     if (!form.forwarded) payload.forwarded_to = null;
 
 
@@ -736,6 +738,7 @@ function LetterPage() {
                   forwarded_to: (form.forwarded_to as string) ?? "",
                   postal_service: (form.postal_service as string) ?? "",
                   postal_notes: (form.postal_notes as string) ?? "",
+                  censor_mark: !!form.censor_mark,
                 }}
                 onChange={(k, v) => set(k as never, v as never)}
               />

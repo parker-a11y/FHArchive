@@ -86,6 +86,7 @@ const blank = {
   forwarded_to: "",
   postal_service: "",
   postal_notes: "",
+  censor_mark: false,
   period: "wartime",
   sheets: "",
   has_envelope: false,
@@ -207,6 +208,7 @@ function QuickEntry() {
         forwarded_to: isLetter && form.forwarded ? form.forwarded_to || null : null,
         postal_service: isLetter ? form.postal_service || null : null,
         postal_notes: isLetter ? form.postal_notes || null : null,
+        censor_mark: isLetter ? form.censor_mark : false,
         storage_type: form.storage_type || null,
         storage_folder: form.storage_folder || null,
         source_container_id: form.source_container_id || null,
@@ -602,6 +604,7 @@ function QuickEntry() {
                   forwarded_to: form.forwarded_to,
                   postal_service: form.postal_service,
                   postal_notes: form.postal_notes,
+                  censor_mark: form.censor_mark,
                 }}
                 onChange={(k, v) => set(k as never, v as never)}
               />

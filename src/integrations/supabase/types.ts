@@ -1527,6 +1527,7 @@ export type Database = {
           addressee_normalized: string | null
           archive_id: string
           author: string | null
+          censor_mark: boolean
           citations: string | null
           closing_as_written: string | null
           completeness_check: boolean
@@ -1605,6 +1606,7 @@ export type Database = {
           addressee_normalized?: string | null
           archive_id: string
           author?: string | null
+          censor_mark?: boolean
           citations?: string | null
           closing_as_written?: string | null
           completeness_check?: boolean
@@ -1683,6 +1685,7 @@ export type Database = {
           addressee_normalized?: string | null
           archive_id?: string
           author?: string | null
+          censor_mark?: boolean
           citations?: string | null
           closing_as_written?: string | null
           completeness_check?: boolean
