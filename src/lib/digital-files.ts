@@ -36,7 +36,15 @@ export type DigitalFileWithDerivatives = DigitalFile & {
   derivatives: FileDerivative[];
   viewUrl: string;
   thumbUrl: string;
+  /** True for PDF masters — they are stored as-is and never rendered to JPEG. */
+  isPdf: boolean;
+  /** Signed URL to the PDF master (empty for non-PDF files). */
+  pdfUrl: string;
 };
+
+export function isPdfMaster(f: { master_mime: string | null; master_path: string }) {
+  return /pdf/i.test(f.master_mime ?? "") || /\.pdf$/i.test(f.master_path);
+}
 
 const BUCKET = "scans";
 
