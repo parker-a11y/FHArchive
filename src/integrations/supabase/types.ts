@@ -2722,87 +2722,47 @@ export type Database = {
           type_label: string
         }[]
       }
-      search_letters:
-        | {
-            Args: {
-              p_addressee?: string
-              p_author?: string
-              p_closing?: string
-              p_date_from?: string
-              p_date_precision?: string
-              p_date_to?: string
-              p_dig_status?: string
-              p_dir?: string
-              p_event?: string
-              p_id_status?: string
-              p_limit?: number
-              p_offset?: number
-              p_org?: string
-              p_period?: string
-              p_person?: string
-              p_place?: string
-              p_q?: string
-              p_recipient?: string
-              p_research?: string
-              p_review?: string
-              p_salutation?: string
-              p_scan?: string
-              p_signature?: string
-              p_sort?: string
-              p_starred?: boolean
-              p_subtype?: string
-              p_tones?: string[]
-              p_tstatus?: string
-              p_type?: string
-              p_uncertain?: boolean
-              p_view?: string
-            }
-            Returns: {
-              letter: Database["public"]["Tables"]["letters"]["Row"]
-              total_count: number
-            }[]
-          }
-        | {
-            Args: {
-              p_addressee?: string
-              p_author?: string
-              p_closing?: string
-              p_date_from?: string
-              p_date_precision?: string
-              p_date_to?: string
-              p_dig_status?: string
-              p_dir?: string
-              p_event?: string
-              p_forwarded?: boolean
-              p_id_status?: string
-              p_limit?: number
-              p_offset?: number
-              p_org?: string
-              p_period?: string
-              p_person?: string
-              p_place?: string
-              p_postal?: string
-              p_q?: string
-              p_recipient?: string
-              p_research?: string
-              p_review?: string
-              p_salutation?: string
-              p_scan?: string
-              p_signature?: string
-              p_sort?: string
-              p_starred?: boolean
-              p_subtype?: string
-              p_tones?: string[]
-              p_tstatus?: string
-              p_type?: string
-              p_uncertain?: boolean
-              p_view?: string
-            }
-            Returns: {
-              letter: Database["public"]["Tables"]["letters"]["Row"]
-              total_count: number
-            }[]
-          }
+      search_letters: {
+        Args: {
+          p_addressee?: string
+          p_author?: string
+          p_closing?: string
+          p_date_from?: string
+          p_date_precision?: string
+          p_date_to?: string
+          p_dig_status?: string
+          p_dir?: string
+          p_event?: string
+          p_forwarded?: boolean
+          p_id_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_org?: string
+          p_period?: string
+          p_person?: string
+          p_place?: string
+          p_postal?: string
+          p_q?: string
+          p_recipient?: string
+          p_research?: string
+          p_review?: string
+          p_salutation?: string
+          p_scan?: string
+          p_signature?: string
+          p_sort?: string
+          p_starred?: boolean
+          p_subtype?: string
+          p_tones?: string[]
+          p_tstatus?: string
+          p_type?: string
+          p_uncertain?: boolean
+          p_view?: string
+        }
+        Returns: {
+          letter: Database["public"]["Tables"]["letters"]["Row"]
+          total_count: number
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
