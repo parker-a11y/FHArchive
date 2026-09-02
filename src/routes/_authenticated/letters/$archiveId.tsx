@@ -181,6 +181,7 @@ function LetterPage() {
 
       date_precision: letter.date_precision,
       date_certainty: letter.date_certainty,
+      date_from_postmark: letter.date_from_postmark ?? false,
       author: letter.author ?? "",
       recipient: letter.recipient ?? "",
       origin: letter.origin ?? "",
@@ -252,6 +253,7 @@ function LetterPage() {
     }
     payload.date_precision = form.date_precision;
     payload.date_certainty = form.date_certainty;
+    payload.date_from_postmark = !!form.date_from_postmark;
     payload.period = form.period;
     payload.review_status = form.review_status;
     payload.scan_status = form.scan_status;
@@ -660,6 +662,15 @@ function LetterPage() {
                   Month / year only
                 </label>
               </div>
+              <label className="flex items-center gap-1.5 pt-1.5 text-[11px] text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 accent-primary"
+                  checked={!!form.date_from_postmark}
+                  onChange={(e) => set("date_from_postmark", e.target.checked)}
+                />
+                Date from postmark
+              </label>
             </div>
             <div>
               <label className="field-label">End date (range)</label>

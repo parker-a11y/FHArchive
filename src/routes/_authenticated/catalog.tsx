@@ -75,6 +75,7 @@ const blank = {
   date_end: "",
   date_precision: "exact",
   date_certainty: "confirmed",
+  date_from_postmark: false,
   primary_person: "",
   tones: [] as string[],
   author: "",
@@ -201,6 +202,7 @@ function QuickEntry() {
       });
       const extras = {
         identification_status: form.identification_status,
+        date_from_postmark: form.date_from_postmark,
         forwarded: isLetter ? form.forwarded : false,
         forwarded_to: isLetter && form.forwarded ? form.forwarded_to || null : null,
         postal_service: isLetter ? form.postal_service || null : null,
@@ -495,6 +497,15 @@ function QuickEntry() {
                   Month / year only
                 </label>
               </div>
+              <label className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 accent-primary"
+                  checked={form.date_from_postmark}
+                  onChange={(e) => set("date_from_postmark", e.target.checked)}
+                />
+                Date from postmark
+              </label>
               <p className="text-[11px] text-muted-foreground">
                 Leave blank — the record saves as Undated.
               </p>

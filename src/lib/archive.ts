@@ -475,6 +475,8 @@ type DateShape = {
   date_as_written?: string | null;
   date_precision: string;
   date_certainty: string;
+  /** The stored date came from the postmark, not from the document itself. */
+  date_from_postmark?: boolean | null;
 };
 
 /** Label date rendering honouring precision/certainty — never invents precision. */
@@ -500,7 +502,8 @@ export function displayDate(letter: DateShape) {
   if (!letter.normalized_date) return letter.date_as_written || "Undated";
 
   const base = labelDate(letter);
-  return base.charAt(0) + base.slice(1).toLowerCase();
+  const pretty = base.charAt(0) + base.slice(1).toLowerCase();
+  return letter.date_from_postmark ? `${pretty} · Postmark date` : pretty;
 }
 
 /** Records whose date still needs work — powers the "Undated / Needs Dating" view. */

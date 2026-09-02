@@ -1534,6 +1534,7 @@ export type Database = {
           date_as_written: string | null
           date_certainty: string
           date_end: string | null
+          date_from_postmark: boolean
           date_precision: string
           destination: string | null
           digitization_completed_at: string | null
@@ -1611,6 +1612,7 @@ export type Database = {
           date_as_written?: string | null
           date_certainty?: string
           date_end?: string | null
+          date_from_postmark?: boolean
           date_precision?: string
           destination?: string | null
           digitization_completed_at?: string | null
@@ -1688,6 +1690,7 @@ export type Database = {
           date_as_written?: string | null
           date_certainty?: string
           date_end?: string | null
+          date_from_postmark?: boolean
           date_precision?: string
           destination?: string | null
           digitization_completed_at?: string | null
