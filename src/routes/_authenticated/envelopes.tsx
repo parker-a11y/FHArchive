@@ -8,7 +8,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
@@ -120,6 +120,8 @@ function EnvelopeReview() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
+  const originInputRef = useRef<HTMLInputElement>(null);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
 
   const list = useMemo(
     () => (onlyNeedsReview ? records.filter(needsReview) : records),
@@ -174,9 +176,14 @@ function EnvelopeReview() {
     if (!current) return;
     setSaving(true);
     try {
+      // Read the rendered inputs at click time as well as React state. Some
+      // browser autofill/input-method paths update the visible value without
+      // delivering an onChange before the save button is clicked.
+      const visibleOrigin = originInputRef.current?.value ?? origin;
+      const visibleDestination = destinationInputRef.current?.value ?? destination;
       const payload = {
-        origin: origin.trim() || null,
-        destination: destination.trim() || null,
+        origin: visibleOrigin.trim() || null,
+        destination: visibleDestination.trim() || null,
         forwarded: postal.forwarded,
         forwarded_to: postal.forwarded ? postal.forwarded_to.trim() || null : null,
         postal_service: postal.postal_service || null,
@@ -375,16 +382,22 @@ function EnvelopeReview() {
                   <div className="space-y-1.5">
                     <Label className="field-label">Mailing origin</Label>
                     <Input
+                      ref={originInputRef}
+                      name="mailing-origin"
                       value={origin}
                       onChange={(e) => setOrigin(e.target.value)}
+                      onInput={(e) => setOrigin(e.currentTarget.value)}
                       placeholder="FPO San Francisco"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="field-label">Mailing destination</Label>
                     <Input
+                      ref={destinationInputRef}
+                      name="mailing-destination"
                       value={destination}
                       onChange={(e) => setDestination(e.target.value)}
+                      onInput={(e) => setDestination(e.currentTarget.value)}
                       placeholder="Worcester, Massachusetts"
                     />
                   </div>
