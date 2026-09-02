@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Globe, Hash } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
 import { FffBadge, FFF_NAME, FFF_PLURAL, FFF_SHORT } from "@/components/FffBadge";
 import { StarToggle } from "@/components/StarToggle";
 import { Button } from "@/components/ui/button";
@@ -114,13 +114,57 @@ function FffPage() {
     return sorted;
   }, [letters, starredSources, kind, sort]);
 
+  const featured = items[0];
+  const rest = items.slice(1);
+
   return (
     <>
-      <PageHeader
-        title={`${FFF_SHORT} — ${FFF_NAME}`}
-        description={`${FFF_PLURAL}: the headline discoveries of the archive — records and digital sources worth stopping for.`}
-        center={<FffBadge size={72} />}
-      />
+      {/* Masthead — navy archive banner with gold find mark */}
+      <div
+        className="relative mb-8 overflow-hidden rounded-3xl px-6 py-10 text-center sm:px-10 sm:py-14"
+        style={{
+          background:
+            "linear-gradient(160deg, var(--archive-ink) 0%, color-mix(in oklab, var(--archive-ink) 82%, black) 100%)",
+        }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 20%, var(--archive-gold) 0, transparent 40%), radial-gradient(circle at 85% 90%, var(--archive-gold) 0, transparent 45%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-8 top-4 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, var(--archive-gold), transparent)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-8 bottom-4 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, var(--archive-gold), transparent)" }}
+        />
+        <FffBadge size={84} className="mx-auto mb-4 drop-shadow-lg" />
+        <h1
+          className="font-display text-3xl font-semibold tracking-tight sm:text-4xl"
+          style={{ color: "var(--archive-gold)" }}
+        >
+          {FFF_PLURAL}
+        </h1>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed" style={{ color: "oklch(0.85 0.02 85)" }}>
+          The headline discoveries of the archive — the records and digital sources worth stopping for.
+        </p>
+        <p
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-medium uppercase tracking-[0.2em]"
+          style={{
+            color: "var(--archive-gold)",
+            border: "1px solid color-mix(in oklab, var(--archive-gold) 40%, transparent)",
+          }}
+        >
+          {items.length} {items.length === 1 ? "find" : "finds"} starred
+        </p>
+      </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         {(
@@ -162,59 +206,108 @@ function FffPage() {
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <FffBadge size={56} className="mx-auto mb-3" muted />
-          <p className="text-sm text-muted-foreground">
-            No Francis File Finds yet. Mark a record or digital source with the {FFF_SHORT} badge and
-            it headlines here.
+        <div className="rounded-2xl border border-dashed border-border bg-card/60 p-12 text-center">
+          <FffBadge size={64} className="mx-auto mb-4" muted />
+          <p className="font-display text-lg font-semibold">No finds yet</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Mark a record or digital source with the {FFF_SHORT} badge and it headlines here.
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((it) => (
-            <div
-              key={it.key}
-              className="relative rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md"
+        <>
+          {featured && (
+            <Link
+              key={featured.key}
+              to={featured.kind === "letter" ? "/letters/$archiveId" : "/sources/$dsId"}
+              params={
+                featured.kind === "letter"
+                  ? { archiveId: featured.identifier }
+                  : { dsId: featured.id }
+              }
+              className="group relative mb-6 block overflow-hidden rounded-3xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+              style={{ borderTop: "3px solid var(--archive-gold)" }}
             >
-              <div className="mb-2 flex items-center gap-2">
-                <FffBadge size={26} />
-                <span className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground">
-                  {it.kind === "letter" ? <Hash className="size-3" /> : <Globe className="size-3" />}
-                  {it.identifier}
-                </span>
-                <span className="ml-auto">
+              <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:gap-8 sm:p-8">
+                <FffBadge size={72} className="shrink-0 drop-shadow transition group-hover:scale-105" />
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-0.5 font-mono text-xs text-accent-foreground">
+                      {featured.kind === "letter" ? <Hash className="size-3" /> : <Globe className="size-3" />}
+                      {featured.identifier}
+                    </span>
+                    <span
+                      className="text-xs font-medium uppercase tracking-[0.15em]"
+                      style={{ color: "var(--archive-gold-strong)" }}
+                    >
+                      Latest find
+                    </span>
+                  </div>
+                  <h2 className="font-display text-2xl font-semibold leading-snug group-hover:underline sm:text-3xl">
+                    {featured.title}
+                  </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {[featured.date, featured.meta].filter(Boolean).join(" · ") || "—"}
+                  </p>
+                </div>
+                <span className="shrink-0 self-start sm:self-center" onClick={(e) => e.preventDefault()}>
                   <StarToggle
-                    table={it.kind === "letter" ? "letters" : "digital_sources"}
-                    id={it.id}
-                    starred={it.starred}
-                    label={`${it.identifier} — ${it.title}`}
-                    size="sm"
+                    table={featured.kind === "letter" ? "letters" : "digital_sources"}
+                    id={featured.id}
+                    starred={featured.starred}
+                    label={`${featured.identifier} — ${featured.title}`}
                   />
                 </span>
               </div>
-              {it.kind === "letter" ? (
-                <Link
-                  to="/letters/$archiveId"
-                  params={{ archiveId: it.identifier }}
-                  className="font-display text-lg font-semibold leading-snug hover:underline"
-                >
-                  {it.title}
-                </Link>
-              ) : (
-                <Link
-                  to="/sources/$dsId"
-                  params={{ dsId: it.id }}
-                  className="font-display text-lg font-semibold leading-snug hover:underline"
-                >
-                  {it.title}
-                </Link>
-              )}
-              <p className="mt-1 text-sm text-muted-foreground">
-                {[it.date, it.meta].filter(Boolean).join(" · ") || "—"}
-              </p>
-            </div>
-          ))}
-        </div>
+            </Link>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {rest.map((it) => (
+              <div
+                key={it.key}
+                className="group relative rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                style={{ borderTop: "2px solid color-mix(in oklab, var(--archive-gold) 55%, transparent)" }}
+              >
+                <div className="mb-2 flex items-center gap-2">
+                  <FffBadge size={26} />
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/60 px-2 py-0.5 font-mono text-xs text-accent-foreground">
+                    {it.kind === "letter" ? <Hash className="size-3" /> : <Globe className="size-3" />}
+                    {it.identifier}
+                  </span>
+                  <span className="ml-auto">
+                    <StarToggle
+                      table={it.kind === "letter" ? "letters" : "digital_sources"}
+                      id={it.id}
+                      starred={it.starred}
+                      label={`${it.identifier} — ${it.title}`}
+                      size="sm"
+                    />
+                  </span>
+                </div>
+                {it.kind === "letter" ? (
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: it.identifier }}
+                    className="font-display text-lg font-semibold leading-snug group-hover:underline"
+                  >
+                    {it.title}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/sources/$dsId"
+                    params={{ dsId: it.id }}
+                    className="font-display text-lg font-semibold leading-snug group-hover:underline"
+                  >
+                    {it.title}
+                  </Link>
+                )}
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {[it.date, it.meta].filter(Boolean).join(" · ") || "—"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </>
   );
