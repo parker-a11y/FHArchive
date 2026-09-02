@@ -134,6 +134,13 @@ export async function renameScanFile(opts: {
   const newMaster = `${archiveId}/masters/${base}.${ext}`;
 
   if (newMaster !== file.master_path) {
+    // Confirm the master actually exists in storage before attempting a move.
+    const { error: headErr } = await supabase.storage.from(BUCKET).createSignedUrl(file.master_path, 1);
+    if (headErr) {
+      throw new Error(
+        `Master not found in storage at "${file.master_path}". It may have failed to upload or been deleted.`,
+      );
+    }
     const { error } = await supabase.storage.from(BUCKET).move(file.master_path, newMaster);
     if (error) throw new Error(`Master could not be renamed: ${error.message}`);
   }
