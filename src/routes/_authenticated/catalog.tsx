@@ -31,6 +31,7 @@ import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelec
 import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
 import { linkLetterPeople } from "@/lib/letter-people";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
   addRecordType,
