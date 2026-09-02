@@ -17,6 +17,7 @@ export type PostalValues = {
   forwarded_to: string;
   postal_service: string;
   postal_notes: string;
+  censor_mark: boolean;
 };
 
 export function PostalFields({
@@ -56,6 +57,19 @@ export function PostalFields({
             onChange={(e) => onChange("forwarded", e.target.checked)}
           />
           Forwarded by the post office
+        </label>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="field-label">Censor mark</Label>
+        <label className="flex h-9 items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-primary"
+            checked={values.censor_mark}
+            onChange={(e) => onChange("censor_mark", e.target.checked)}
+          />
+          Censor Reviewed stamp on envelope
         </label>
       </div>
 
