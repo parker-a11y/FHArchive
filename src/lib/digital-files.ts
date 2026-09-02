@@ -76,11 +76,13 @@ export async function fetchDigitalFiles(letterId: string): Promise<DigitalFileWi
       const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
       const viewPath = jpeg?.storage_path ?? (browserViewable ? f.master_path : null);
       const thumbPath = thumb?.storage_path ?? viewPath;
-      const [viewUrl, thumbUrl] = await Promise.all([
+      const pdf = isPdfMaster(f);
+      const [viewUrl, thumbUrl, pdfUrl] = await Promise.all([
         viewPath ? signedScanUrl(viewPath) : Promise.resolve(""),
         thumbPath ? signedScanUrl(thumbPath) : Promise.resolve(""),
+        pdf ? signedScanUrl(f.master_path) : Promise.resolve(""),
       ]);
-      return { ...f, derivatives: own, viewUrl, thumbUrl };
+      return { ...f, derivatives: own, viewUrl, thumbUrl, isPdf: pdf, pdfUrl };
     }),
   );
 }
