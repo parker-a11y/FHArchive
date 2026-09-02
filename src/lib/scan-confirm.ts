@@ -36,6 +36,22 @@ export const SCAN_STATUS_LABEL: Record<ScanStatusKey, string> = {
   complete: "Processing Complete",
 };
 
+/**
+ * PDFs (and any other non-image master) are archival deliverables in their own
+ * right — they are stored byte-for-byte and never rendered to JPEG, so they
+ * never wait on derivatives and never report a processing error.
+ */
+export function needsDerivatives(f: DigitalFileWithDerivatives) {
+  const path = f.master_path ?? "";
+  const mime = f.master_mime ?? "";
+  if (/pdf/i.test(mime) || /\.pdf$/i.test(path)) return false;
+  return (
+    /\.tiff?$/i.test(path) ||
+    /^image\/(tiff|jpeg|png|webp|gif|bmp)$/i.test(mime) ||
+    /\.(jpe?g|png|webp|gif|bmp)$/i.test(path)
+  );
+}
+
 export function hasJpeg(f: DigitalFileWithDerivatives) {
   return f.derivatives.some((d) => d.kind === "jpeg" && d.status === "complete");
 }
