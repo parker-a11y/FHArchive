@@ -117,8 +117,6 @@ function EnvelopeReview() {
   const [rotation, setRotation] = useState(0);
   const [saving, setSaving] = useState(false);
   const [zoomed, setZoomed] = useState(false);
-  const [origin, setOrigin] = useState("");
-  const [destination, setDestination] = useState("");
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
   const originInputRef = useRef<HTMLInputElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
@@ -143,8 +141,6 @@ function EnvelopeReview() {
   // Load the selected record's fields into the form.
   useEffect(() => {
     if (!current) return;
-    setOrigin(current.origin ?? "");
-    setDestination(current.destination ?? "");
     setPostal({
       forwarded: !!current.forwarded,
       forwarded_to: current.forwarded_to ?? "",
@@ -176,11 +172,11 @@ function EnvelopeReview() {
     if (!current) return;
     setSaving(true);
     try {
-      // Read the rendered inputs at click time as well as React state. Some
-      // browser autofill/input-method paths update the visible value without
-      // delivering an onChange before the save button is clicked.
-      const visibleOrigin = originInputRef.current?.value ?? origin;
-      const visibleDestination = destinationInputRef.current?.value ?? destination;
+      // These two inputs are intentionally uncontrolled. Reading their native
+      // values avoids mobile input/composition timing replacing typed text
+      // with stale React state when Save is tapped.
+      const visibleOrigin = originInputRef.current?.value ?? "";
+      const visibleDestination = destinationInputRef.current?.value ?? "";
       const payload = {
         origin: visibleOrigin.trim() || null,
         destination: visibleDestination.trim() || null,
@@ -382,22 +378,20 @@ function EnvelopeReview() {
                   <div className="space-y-1.5">
                     <Label className="field-label">Mailing origin</Label>
                     <Input
+                      key={`origin-${current.id}`}
                       ref={originInputRef}
                       name="mailing-origin"
-                      value={origin}
-                      onChange={(e) => setOrigin(e.target.value)}
-                      onInput={(e) => setOrigin(e.currentTarget.value)}
+                      defaultValue={current.origin ?? ""}
                       placeholder="FPO San Francisco"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="field-label">Mailing destination</Label>
                     <Input
+                      key={`destination-${current.id}`}
                       ref={destinationInputRef}
                       name="mailing-destination"
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      onInput={(e) => setDestination(e.currentTarget.value)}
+                      defaultValue={current.destination ?? ""}
                       placeholder="Worcester, Massachusetts"
                     />
                   </div>
