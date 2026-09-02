@@ -22,10 +22,9 @@ export function quickIdentifyChoices(
   const type = recordType ?? "letter";
   if (type === "letter") {
     if (subtype === "postcard") return ["Front", "Back", "Enclosure", "Other"];
-    if (subtype === "telegram") return ["Front", "Back", "Envelope Front", "Envelope Back", "Other"];
+    if (subtype === "telegram")
+      return ["Front", "Back", "Envelope Front", "Envelope Back", "Other"];
     return [
-      "Envelope Front",
-      "Envelope Back",
       "Page 1 Front",
       "Page 1 Back",
       "Page 2 Front",
@@ -33,6 +32,8 @@ export function quickIdentifyChoices(
       "Page 3 Front",
       "Page 3 Back",
       "Enclosure",
+      "Envelope Front",
+      "Envelope Back",
       "Other",
     ];
   }
@@ -75,7 +76,7 @@ export function nextSuggestedChoice(current: string | null, choices: string[]): 
       page[2] === "Front" ? `Page ${page[1]} Back` : `Page ${Number(page[1]) + 1} Front`;
     if (choices.includes(candidate)) return candidate;
   }
-  if (/^Envelope Back$/.test(current) && choices.includes("Page 1 Front")) return "Page 1 Front";
+  
   const i = choices.indexOf(current);
   return i >= 0 && i + 1 < choices.length ? choices[i + 1] : null;
 }
