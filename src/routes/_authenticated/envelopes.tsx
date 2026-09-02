@@ -382,7 +382,6 @@ function EnvelopeReview() {
                       ref={originInputRef}
                       name="mailing-origin"
                       defaultValue={current.origin ?? ""}
-                      placeholder="FPO San Francisco"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -392,7 +391,6 @@ function EnvelopeReview() {
                       ref={destinationInputRef}
                       name="mailing-destination"
                       defaultValue={current.destination ?? ""}
-                      placeholder="Worcester, Massachusetts"
                     />
                   </div>
                 </div>
