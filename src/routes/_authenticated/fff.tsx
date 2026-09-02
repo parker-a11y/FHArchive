@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Globe, Hash } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { AppShell } from "@/components/AppShell";
 import { FffBadge, FFF_NAME, FFF_PLURAL, FFF_SHORT } from "@/components/FffBadge";
 import { StarToggle } from "@/components/StarToggle";
 import { Button } from "@/components/ui/button";
