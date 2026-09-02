@@ -43,6 +43,7 @@ const NAV = [
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks, adminOnly: true },
+  { to: "/envelopes", label: "Envelope Review", icon: Mail, adminOnly: true },
   { to: "/people", label: "People", icon: Users },
   { to: "/organizations", label: "Organizations", icon: Ship },
   { to: "/events", label: "Events", icon: CalendarDays },
