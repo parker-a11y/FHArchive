@@ -565,7 +565,29 @@ function LetterPage() {
               />
             </div>
             <div>
-              <label className="field-label">Title / short description</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="field-label">Title / short description</label>
+                {isPersonalLetter(form.record_type as string, form.subtype as string) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      set(
+                        "title",
+                        shortLetterTitle({
+                          author: form.author as string,
+                          recipient: form.recipient as string,
+                          normalized_date: form.normalized_date as string,
+                          date_precision: form.date_precision as string,
+                        }),
+                      )
+                    }
+                  >
+                    Create Short Title
+                  </Button>
+                )}
+              </div>
               <Input
                 value={(form.title as string) ?? ""}
                 onChange={(e) => set("title", e.target.value)}
