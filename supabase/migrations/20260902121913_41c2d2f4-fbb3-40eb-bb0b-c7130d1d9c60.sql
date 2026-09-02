@@ -1,0 +1,1 @@
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS date_from_postmark boolean NOT NULL DEFAULT false;
