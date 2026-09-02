@@ -233,7 +233,7 @@ function EnvelopeReview() {
                 <span className="min-w-0 flex-1">
                   <span className="font-mono text-xs">{r.archive_id}</span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {r.title || displayDate(r) || "Untitled"}
+                    {r.title || r.date_as_written || "Untitled"}
                   </span>
                 </span>
               </button>
