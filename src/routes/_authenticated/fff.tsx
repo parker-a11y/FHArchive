@@ -114,13 +114,57 @@ function FffPage() {
     return sorted;
   }, [letters, starredSources, kind, sort]);
 
+  const featured = items[0];
+  const rest = items.slice(1);
+
   return (
     <>
-      <PageHeader
-        title={`${FFF_SHORT} — ${FFF_NAME}`}
-        description={`${FFF_PLURAL}: the headline discoveries of the archive — records and digital sources worth stopping for.`}
-        center={<FffBadge size={72} />}
-      />
+      {/* Masthead — navy archive banner with gold find mark */}
+      <div
+        className="relative mb-8 overflow-hidden rounded-3xl px-6 py-10 text-center sm:px-10 sm:py-14"
+        style={{
+          background:
+            "linear-gradient(160deg, var(--archive-ink) 0%, color-mix(in oklab, var(--archive-ink) 82%, black) 100%)",
+        }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 20%, var(--archive-gold) 0, transparent 40%), radial-gradient(circle at 85% 90%, var(--archive-gold) 0, transparent 45%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-8 top-4 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, var(--archive-gold), transparent)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-8 bottom-4 h-px"
+          style={{ background: "linear-gradient(90deg, transparent, var(--archive-gold), transparent)" }}
+        />
+        <FffBadge size={84} className="mx-auto mb-4 drop-shadow-lg" />
+        <h1
+          className="font-display text-3xl font-semibold tracking-tight sm:text-4xl"
+          style={{ color: "var(--archive-gold)" }}
+        >
+          {FFF_PLURAL}
+        </h1>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed" style={{ color: "oklch(0.85 0.02 85)" }}>
+          The headline discoveries of the archive — the records and digital sources worth stopping for.
+        </p>
+        <p
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-medium uppercase tracking-[0.2em]"
+          style={{
+            color: "var(--archive-gold)",
+            border: "1px solid color-mix(in oklab, var(--archive-gold) 40%, transparent)",
+          }}
+        >
+          {items.length} {items.length === 1 ? "find" : "finds"} starred
+        </p>
+      </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         {(
