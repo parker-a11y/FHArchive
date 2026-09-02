@@ -543,19 +543,35 @@ function QuickEntry() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="field-label">Destination</Label>
+                  <Label className="field-label">Mailing destination</Label>
                   <Input
                     value={form.destination}
                     onChange={(e) => set("destination", e.target.value)}
+                    placeholder="Worcester, Massachusetts"
                   />
                 </div>
               </>
             )}
 
             <div className="space-y-1.5">
-              <Label className="field-label">{isLetter ? "Origin" : "Location"}</Label>
-              <Input value={form.origin} onChange={(e) => set("origin", e.target.value)} />
+              <Label className="field-label">{isLetter ? "Mailing origin" : "Location"}</Label>
+              <Input
+                value={form.origin}
+                onChange={(e) => set("origin", e.target.value)}
+                placeholder={isLetter ? "FPO San Francisco" : undefined}
+              />
             </div>
+            {isLetter && (
+              <PostalFields
+                values={{
+                  forwarded: form.forwarded,
+                  forwarded_to: form.forwarded_to,
+                  postal_service: form.postal_service,
+                  postal_notes: form.postal_notes,
+                }}
+                onChange={(k, v) => set(k, v)}
+              />
+            )}
             <div className="space-y-1.5">
               <Label className="field-label">Pages / sheets</Label>
               <Input
