@@ -1542,6 +1542,8 @@ export type Database = {
           digitization_status: string
           expected_scan_count: number | null
           fh_seq: number
+          forwarded: boolean
+          forwarded_to: string | null
           has_enclosures: boolean
           has_envelope: boolean
           historical_notes: string | null
@@ -1560,6 +1562,8 @@ export type Database = {
           photo_front_scanned: boolean
           physical_condition: string | null
           physical_description: string | null
+          postal_notes: string | null
+          postal_service: string | null
           primary_person: string | null
           provenance: string | null
           publication_status: string
@@ -1615,6 +1619,8 @@ export type Database = {
           digitization_status?: string
           expected_scan_count?: number | null
           fh_seq: number
+          forwarded?: boolean
+          forwarded_to?: string | null
           has_enclosures?: boolean
           has_envelope?: boolean
           historical_notes?: string | null
@@ -1633,6 +1639,8 @@ export type Database = {
           photo_front_scanned?: boolean
           physical_condition?: string | null
           physical_description?: string | null
+          postal_notes?: string | null
+          postal_service?: string | null
           primary_person?: string | null
           provenance?: string | null
           publication_status?: string
@@ -1688,6 +1696,8 @@ export type Database = {
           digitization_status?: string
           expected_scan_count?: number | null
           fh_seq?: number
+          forwarded?: boolean
+          forwarded_to?: string | null
           has_enclosures?: boolean
           has_envelope?: boolean
           historical_notes?: string | null
@@ -1706,6 +1716,8 @@ export type Database = {
           photo_front_scanned?: boolean
           physical_condition?: string | null
           physical_description?: string | null
+          postal_notes?: string | null
+          postal_service?: string | null
           primary_person?: string | null
           provenance?: string | null
           publication_status?: string
