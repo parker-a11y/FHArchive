@@ -578,7 +578,7 @@ function QuickEntry() {
                   postal_service: form.postal_service,
                   postal_notes: form.postal_notes,
                 }}
-                onChange={(k, v) => set(k, v)}
+                onChange={(k, v) => set(k as never, v as never)}
               />
             )}
             <div className="space-y-1.5">

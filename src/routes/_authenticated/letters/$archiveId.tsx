@@ -703,7 +703,7 @@ function LetterPage() {
                   postal_service: (form.postal_service as string) ?? "",
                   postal_notes: (form.postal_notes as string) ?? "",
                 }}
-                onChange={(k, v) => set(k, v)}
+                onChange={(k, v) => set(k as never, v as never)}
               />
             )}
 
