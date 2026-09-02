@@ -129,14 +129,25 @@ export async function renameScanFile(opts: {
   const taken = new Set(
     otherFiles.filter((f) => f.id !== file.id).map((f) => basenameOf(f.master_path).toLowerCase()),
   );
+
+  // Also treat anything already sitting in the masters folder as taken, so a
+  // partially-completed earlier rename can't collide with this one.
+  const { data: existing } = await supabase.storage.from(BUCKET).list(`${archiveId}/masters`, {
+    limit: 1000,
+  });
+  const selfName = basenameOf(file.master_path).toLowerCase();
+  for (const obj of existing ?? []) {
+    const nm = obj.name.toLowerCase();
+    if (nm !== selfName) taken.add(nm);
+  }
+
   const base = uniqueBaseName(archiveId, label, taken);
   const ext = extensionOf(file.master_path);
   const newMaster = `${archiveId}/masters/${base}.${ext}`;
 
   if (newMaster !== file.master_path) {
-    // Confirm the master actually exists in storage before attempting a move.
-    const { error: headErr } = await supabase.storage.from(BUCKET).createSignedUrl(file.master_path, 1);
-    if (headErr) {
+    const present = (existing ?? []).some((o) => o.name.toLowerCase() === selfName);
+    if (!present) {
       throw new Error(
         `Master not found in storage at "${file.master_path}". It may have failed to upload or been deleted.`,
       );
@@ -144,6 +155,7 @@ export async function renameScanFile(opts: {
     const { error } = await supabase.storage.from(BUCKET).move(file.master_path, newMaster);
     if (error) throw new Error(`Master could not be renamed: ${error.message}`);
   }
+
 
   const derivativeUpdates: { id: string; storage_path: string }[] = [];
   for (const d of file.derivatives) {
