@@ -298,18 +298,56 @@ function EnvelopeReview() {
                 </div>
                 <div className="flex min-h-[320px] items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/30 p-2">
                   {shown?.viewUrl ? (
-                    <a href={shown.viewUrl} target="_blank" rel="noreferrer">
+                    <button
+                      type="button"
+                      onClick={() => setZoomed(true)}
+                      className="cursor-zoom-in"
+                      aria-label="Enlarge envelope scan"
+                    >
                       <img
                         src={shown.viewUrl}
                         alt={shown.label ?? "Envelope scan"}
                         style={{ transform: `rotate(${rotation}deg)` }}
                         className="max-h-[62vh] w-auto object-contain transition-transform"
                       />
-                    </a>
+                    </button>
                   ) : (
                     <p className="text-sm text-muted-foreground">No viewable envelope scan.</p>
                   )}
                 </div>
+                <Dialog open={zoomed} onOpenChange={setZoomed}>
+                  <DialogContent className="max-w-5xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-3">
+                        {current.archive_id} — {shown?.label ?? "Envelope"}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setRotation((r) => (r + 90) % 360)}
+                          aria-label="Rotate view"
+                        >
+                          <RotateCw className="size-4" />
+                        </Button>
+                      </DialogTitle>
+                    </DialogHeader>
+                    {shown?.viewUrl && (
+                      <div className="flex max-h-[70vh] items-center justify-center overflow-auto">
+                        <img
+                          src={shown.viewUrl}
+                          alt={shown.label ?? "Envelope scan"}
+                          style={{ transform: `rotate(${rotation}deg)` }}
+                          className="max-h-[70vh] w-auto object-contain transition-transform"
+                        />
+                      </div>
+                    )}
+                    <div className="flex justify-end">
+                      <Button variant="outline" onClick={() => setZoomed(false)}>
+                        Close
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 {shown?.label && (
                   <p className="text-center text-xs text-muted-foreground">{shown.label}</p>
                 )}
