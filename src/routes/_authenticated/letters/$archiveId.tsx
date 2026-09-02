@@ -1075,26 +1075,43 @@ function LetterPage() {
   );
 }
 
-/** Thumbnail strip on the Catalog tab — click any scan to open Scans & Files. */
+/** Thumbnail strip on the Catalog tab — click a scan to open the viewer. */
 function CatalogThumbnails({ letterId, archiveId }: { letterId: string; archiveId: string }) {
   const { data: files } = useQuery({
     queryKey: ["catalog-thumbnails", letterId],
     queryFn: () => fetchDigitalFiles(letterId),
     staleTime: 30_000,
   });
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const thumbs = (files ?? []).filter((f) => f.thumbUrl);
   if (!thumbs.length) return null;
+  const lightboxItems: LightboxItem[] = thumbs
+    .filter((f) => f.viewUrl)
+    .map((f) => ({
+      id: f.id,
+      url: f.viewUrl as string,
+      type: "image" as const,
+      title: `${f.seq != null ? `Scan ${f.seq} — ` : ""}${f.label || f.original_filename}`,
+      subtitle: `${archiveId} · viewing derivative`,
+      filename: f.original_filename,
+      rotation: f.rotation ?? 0,
+    }));
   return (
     <div className="mb-6 max-w-5xl">
       <div className="field-label mb-2">Scans ({thumbs.length}) — click to view</div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {thumbs.map((f) => (
-          <Link
+          <button
             key={f.id}
-            to="/letters/$archiveId"
-            params={{ archiveId }}
-            search={{ tab: "digitization" }}
+            type="button"
             title={f.label ?? f.original_filename}
+            onClick={() => {
+              const idx = lightboxItems.findIndex((i) => i.id === f.id);
+              if (idx < 0) return;
+              setViewerIndex(idx);
+              setViewerOpen(true);
+            }}
             className="shrink-0 overflow-hidden rounded-md border border-border bg-card shadow-sm transition hover:border-primary hover:shadow-md"
           >
             <img
@@ -1103,9 +1120,15 @@ function CatalogThumbnails({ letterId, archiveId }: { letterId: string; archiveI
               className="h-28 w-auto object-cover"
               loading="lazy"
             />
-          </Link>
+          </button>
         ))}
       </div>
+      <MediaLightbox
+        items={lightboxItems}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
     </div>
   );
 }
