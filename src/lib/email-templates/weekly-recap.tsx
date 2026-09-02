@@ -14,7 +14,7 @@ import {
 import type { TemplateEntry } from './registry'
 
 const LOGO =
-  'https://fharchive.com/__l5e/assets-v1/51a85af2-9738-4ffc-9a78-c044e7fb5526/email-logo.png'
+  'https://fharchive.com/__l5e/assets-v1/2076d583-7259-453d-aa3c-ef7337993d1e/email-logo.png'
 
 export interface WeeklyRecapEmailProps {
   weekRange?: string
