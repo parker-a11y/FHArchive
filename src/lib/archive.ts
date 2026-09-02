@@ -267,6 +267,7 @@ export const IDENTIFICATION_STATUS = [
 
 export const STORAGE_TYPES = [
   { value: "", label: "—" },
+  { value: "digital_only", label: "Digital Only" },
   { value: "file_jacket", label: "File Jacket" },
   { value: "archival_sleeve", label: "Archival Sleeve" },
   { value: "photo_sleeve", label: "Photo Sleeve" },
