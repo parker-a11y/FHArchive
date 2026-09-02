@@ -43,6 +43,7 @@ import {
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 
 import { StarToggle } from "@/components/StarToggle";
+import { usePostalServiceOptions } from "@/lib/postal";
 import { FffBadge } from "@/components/FffBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -164,6 +165,7 @@ function LettersTable() {
   const qc = useQueryClient();
   const search = Route.useSearch();
   const recordTypeOptions = useRecordTypeOptions();
+  const postalOptions = usePostalServiceOptions();
 
   const [q, setQ] = useState("");
   const debouncedQ = useDebounced(q);
@@ -195,6 +197,8 @@ function LettersTable() {
   const [addressee, setAddressee] = useState("");
   const [closing, setClosing] = useState("");
   const [signature, setSignature] = useState("");
+  const [postal, setPostal] = useState("");
+  const [forwardedOnly, setForwardedOnly] = useState(false);
   const debouncedSalutation = useDebounced(salutation);
   const debouncedAddressee = useDebounced(addressee);
   const debouncedClosing = useDebounced(closing);
@@ -221,7 +225,7 @@ function LettersTable() {
   // Any filter change goes back to page 1.
   useEffect(() => {
     setPage(0);
-  }, [debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort, debouncedSalutation, debouncedAddressee, debouncedClosing, debouncedSignature]);
+  }, [postal, forwardedOnly, debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort, debouncedSalutation, debouncedAddressee, debouncedClosing, debouncedSignature]);
 
   const params: LetterSearchParams = {
     q: debouncedQ,
@@ -241,6 +245,8 @@ function LettersTable() {
     addressee: debouncedAddressee,
     closing: debouncedClosing,
     signature: debouncedSignature,
+    postal,
+    forwarded: forwardedOnly,
     sort: sort.key,
     dir: sort.dir === 1 ? "asc" : "desc",
   };
@@ -369,6 +375,8 @@ function LettersTable() {
     setAddressee("");
     setClosing("");
     setSignature("");
+    setPostal("");
+    setForwardedOnly(false);
     setSort({ key: "archive_id", dir: 1 });
     setStarredOnly(false);
     setPage(0);
@@ -390,6 +398,8 @@ function LettersTable() {
     addressee,
     closing,
     signature,
+    postal,
+    forwardedOnly ? "forwarded" : "",
     uncertainOnly ? "uncertain" : "",
     starredOnly ? "starred" : "",
     ...tones,
@@ -613,6 +623,27 @@ function LettersTable() {
           value={signature}
           onChange={(e) => setSignature(e.target.value)}
         />
+
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={postal}
+          onChange={(e) => setPostal(e.target.value)}
+        >
+          <option value="">All postage</option>
+          {postalOptions.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.value === "paid" ? "Stamped / Paid (incl. Airmail)" : p.label}
+            </option>
+          ))}
+        </select>
+        <Button
+          variant={forwardedOnly ? "default" : "outline"}
+          size="sm"
+          aria-pressed={forwardedOnly}
+          onClick={() => setForwardedOnly((v) => !v)}
+        >
+          Forwarded only
+        </Button>
 
         <Button
           variant={starredOnly ? "default" : "outline"}

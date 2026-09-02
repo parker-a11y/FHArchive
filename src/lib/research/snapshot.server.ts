@@ -337,8 +337,17 @@ function recordMarkdown(r: ComposedRecord): string {
     ["Author", r["author"]],
     ["Recipient", r["recipient"]],
     ["Primary person", r["primary_person"]],
-    ["Origin", r["origin"]],
-    ["Destination", r["destination"]],
+    ["Mailing origin", r["origin"]],
+    ["Mailing destination", r["destination"]],
+    ["Forwarded", r["forwarded"] ? "yes" : ""],
+    ["Forwarded to", r["forwarded_to"]],
+    [
+      "Postal service / postage",
+      r["postal_service"] === "airmail"
+        ? "airmail (counts as paid/stamped postage)"
+        : r["postal_service"],
+    ],
+    ["Postal notes", r["postal_notes"]],
     ["Salutation", r["salutation_as_written"]],
     ["Addressee", r["addressee_normalized"]],
     ["Closing", r["closing_as_written"]],

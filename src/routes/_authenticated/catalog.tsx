@@ -14,6 +14,7 @@ import { RelatedRecordsField, type PendingRelation } from "@/components/RelatedR
 import { addRecordLink } from "@/lib/record-links";
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
+import { PostalFields } from "@/components/letter/PostalFields";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import {
   DATE_CERTAINTY,
@@ -79,6 +80,10 @@ const blank = {
   recipient: "",
   origin: "",
   destination: "",
+  forwarded: false,
+  forwarded_to: "",
+  postal_service: "",
+  postal_notes: "",
   period: "wartime",
   sheets: "",
   has_envelope: false,
@@ -195,6 +200,10 @@ function QuickEntry() {
       });
       const extras = {
         identification_status: form.identification_status,
+        forwarded: isLetter ? form.forwarded : false,
+        forwarded_to: isLetter && form.forwarded ? form.forwarded_to || null : null,
+        postal_service: isLetter ? form.postal_service || null : null,
+        postal_notes: isLetter ? form.postal_notes || null : null,
         storage_type: form.storage_type || null,
         storage_folder: form.storage_folder || null,
         source_container_id: form.source_container_id || null,
@@ -543,19 +552,35 @@ function QuickEntry() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="field-label">Destination</Label>
+                  <Label className="field-label">Mailing destination</Label>
                   <Input
                     value={form.destination}
                     onChange={(e) => set("destination", e.target.value)}
+                    placeholder="Worcester, Massachusetts"
                   />
                 </div>
               </>
             )}
 
             <div className="space-y-1.5">
-              <Label className="field-label">{isLetter ? "Origin" : "Location"}</Label>
-              <Input value={form.origin} onChange={(e) => set("origin", e.target.value)} />
+              <Label className="field-label">{isLetter ? "Mailing origin" : "Location"}</Label>
+              <Input
+                value={form.origin}
+                onChange={(e) => set("origin", e.target.value)}
+                placeholder={isLetter ? "FPO San Francisco" : undefined}
+              />
             </div>
+            {isLetter && (
+              <PostalFields
+                values={{
+                  forwarded: form.forwarded,
+                  forwarded_to: form.forwarded_to,
+                  postal_service: form.postal_service,
+                  postal_notes: form.postal_notes,
+                }}
+                onChange={(k, v) => set(k as never, v as never)}
+              />
+            )}
             <div className="space-y-1.5">
               <Label className="field-label">Pages / sheets</Label>
               <Input

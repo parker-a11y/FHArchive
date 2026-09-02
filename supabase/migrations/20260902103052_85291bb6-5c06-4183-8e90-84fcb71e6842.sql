@@ -1,0 +1,2 @@
+ALTER TABLE public.record_categories DROP CONSTRAINT IF EXISTS record_categories_kind_check;
+ALTER TABLE public.record_categories ADD CONSTRAINT record_categories_kind_check CHECK (kind IN ('record_type','subtype','postal_service'));

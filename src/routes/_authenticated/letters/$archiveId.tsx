@@ -64,6 +64,7 @@ import {
   setLetterPersonRole,
   type LetterPersonLink,
 } from "@/lib/letter-people";
+import { PostalFields } from "@/components/letter/PostalFields";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
@@ -112,8 +113,8 @@ const TEXT_FIELDS = [
   { key: "date_as_written", label: "Date as written", letterOnly: false },
   { key: "author", label: "Author (from)", letterOnly: true },
   { key: "recipient", label: "Recipient (to)", letterOnly: true },
-  { key: "origin", label: "Origin / location", letterOnly: false },
-  { key: "destination", label: "Destination", letterOnly: true },
+  { key: "origin", label: "Mailing origin / location", letterOnly: false },
+  { key: "destination", label: "Mailing destination", letterOnly: true },
   { key: "primary_person", label: "Primary person", letterOnly: false },
 ];
 
@@ -183,6 +184,10 @@ function LetterPage() {
       recipient: letter.recipient ?? "",
       origin: letter.origin ?? "",
       destination: letter.destination ?? "",
+      forwarded: letter.forwarded ?? false,
+      forwarded_to: letter.forwarded_to ?? "",
+      postal_service: letter.postal_service ?? "",
+      postal_notes: letter.postal_notes ?? "",
       period: letter.period,
       sheets: letter.sheets === null ? "" : String(letter.sheets),
       has_envelope: letter.has_envelope,
@@ -255,6 +260,8 @@ function LetterPage() {
     payload.identification_status = form.identification_status || "unidentified";
     payload.transcription_status = form.transcription_status || "not_started";
     payload.tones = tones;
+    payload.forwarded = !!form.forwarded;
+    if (!form.forwarded) payload.forwarded_to = null;
 
 
     const { error } = await supabase.from("letters").update(payload as never).eq("id", letter.id);
@@ -362,7 +369,7 @@ function LetterPage() {
                 )}
               </span>
               <span>
-                <span className="field-label mr-2">Origin</span>
+                <span className="field-label mr-2">Mailing origin</span>
                 {letter.origin || "—"}
               </span>
               <span>
@@ -688,6 +695,17 @@ function LetterPage() {
               </div>
             ))}
 
+            {isLetterType(form.record_type as string) && (
+              <PostalFields
+                values={{
+                  forwarded: !!form.forwarded,
+                  forwarded_to: (form.forwarded_to as string) ?? "",
+                  postal_service: (form.postal_service as string) ?? "",
+                  postal_notes: (form.postal_notes as string) ?? "",
+                }}
+                onChange={(k, v) => set(k as never, v as never)}
+              />
+            )}
 
             {isLetterType(form.record_type as string) && (
               <div className="col-span-full rounded border border-border bg-card p-4">
