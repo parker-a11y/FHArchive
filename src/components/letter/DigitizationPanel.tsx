@@ -851,6 +851,18 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       </span>
                     )}
                   </div>
+                  {f.isPdf ? (
+                    <a
+                      href={f.pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex h-36 w-full flex-col items-center justify-center gap-1 rounded bg-muted text-xs text-muted-foreground hover:bg-muted/70"
+                    >
+                      <FileText className="size-7 text-primary" />
+                      <span className="font-medium text-foreground">Open PDF</span>
+                      <span className="text-[10px]">Stored as uploaded</span>
+                    </a>
+                  ) : (
                   <button
                     onClick={() => {
                       const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
