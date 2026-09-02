@@ -318,7 +318,7 @@ function LetterPage() {
 
   return (
     <>
-      <header className="no-print border-b border-border px-4 sm:px-8 py-5">
+      <header className="no-print sticky top-0 z-20 border-b border-border bg-background/95 px-4 py-5 backdrop-blur sm:px-8">
         <div className="flex items-start justify-between gap-6">
           <div>
             <div className="flex items-center gap-3">
