@@ -258,8 +258,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       }
       if (renameErrors.length) {
         toast.error(
-          `${renameErrors.length} scan${renameErrors.length === 1 ? "" : "s"} could not be renamed. Derivatives were not generated for those files.`,
-          { duration: 8000 },
+          `${renameErrors.length} scan${renameErrors.length === 1 ? "" : "s"} could not be renamed — ${renameErrors[0]}`,
+          { duration: 12000 },
         );
         renameErrors.forEach((e) => console.error("Rename failed:", e));
       } else {
