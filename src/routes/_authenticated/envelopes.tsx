@@ -38,6 +38,7 @@ type EnvelopeRecord = {
   forwarded_to: string | null;
   postal_service: string | null;
   postal_notes: string | null;
+  censor_mark: boolean;
 };
 
 const isEnvelope = (f: { label: string | null; original_filename: string }) =>
@@ -60,7 +61,7 @@ async function fetchEnvelopeRecords(): Promise<EnvelopeRecord[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, title, date_as_written, normalized_date, origin, destination, forwarded, forwarded_to, postal_service, postal_notes",
+      "id, archive_id, title, date_as_written, normalized_date, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
     )
     .in("id", ids)
     .order("archive_id", { ascending: true });
@@ -98,6 +99,7 @@ const emptyPostal: PostalValues = {
   forwarded_to: "",
   postal_service: "",
   postal_notes: "",
+  censor_mark: false,
 };
 
 function needsReview(r: EnvelopeRecord) {
@@ -146,6 +148,7 @@ function EnvelopeReview() {
       forwarded_to: current.forwarded_to ?? "",
       postal_service: current.postal_service ?? "",
       postal_notes: current.postal_notes ?? "",
+      censor_mark: !!current.censor_mark,
     });
     setSide("front");
     setRotation(0);
@@ -184,6 +187,7 @@ function EnvelopeReview() {
         forwarded_to: postal.forwarded ? postal.forwarded_to.trim() || null : null,
         postal_service: postal.postal_service || null,
         postal_notes: postal.postal_notes.trim() || null,
+        censor_mark: postal.censor_mark,
       };
       const { data, error } = await supabase
         .from("letters")
