@@ -47,7 +47,8 @@ export function usePersonMatcher() {
   const [pendingCreate, setPendingCreate] = useState<PendingCreate | null>(null);
   const [choice, setChoice] = useState<string>("");
   const [remember, setRemember] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [matchingBusy, setMatchingBusy] = useState(false);
+  const [creatingBusy, setCreatingBusy] = useState(false);
   const pendingRef = useRef<Pending | null>(null);
   const pendingCreateRef = useRef<PendingCreate | null>(null);
 
@@ -96,38 +97,41 @@ export function usePersonMatcher() {
   async function confirm() {
     const current = pendingRef.current;
     if (!current) return;
-    setBusy(true);
+
+    if (choice === "__new__") {
+      // Close the match dialog before opening the create confirmation. This
+      // handoff must not leave the second dialog in the match dialog's busy state.
+      const proposed = current.proposed;
+      const resolveMatch = current.resolve;
+      pendingRef.current = null;
+      setPending(null);
+      resolveMatch(await confirmCreate(proposed));
+      return;
+    }
+
+    setMatchingBusy(true);
     try {
-      if (choice === "__new__") {
-        // Close the match dialog, then require the big create confirmation.
-        const proposed = current.proposed;
-        const resolveMatch = current.resolve;
-        pendingRef.current = null;
-        setPending(null);
-        resolveMatch(await confirmCreate(proposed));
-      } else {
-        const match = current.candidates.find((c) => c.id === choice);
-        if (!match) return;
-        if (remember) await addPersonAlias(match.id, current.proposed);
-        finish({ id: match.id, name: match.name });
-      }
+      const match = current.candidates.find((c) => c.id === choice);
+      if (!match) return;
+      if (remember) await addPersonAlias(match.id, current.proposed);
+      finish({ id: match.id, name: match.name });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save the person");
     } finally {
-      setBusy(false);
+      setMatchingBusy(false);
     }
   }
 
   async function confirmNewPerson() {
     const current = pendingCreateRef.current;
     if (!current) return;
-    setBusy(true);
+    setCreatingBusy(true);
     try {
       finishCreate(await createPerson(current.name));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create the person");
     } finally {
-      setBusy(false);
+      setCreatingBusy(false);
     }
   }
 
@@ -136,7 +140,7 @@ export function usePersonMatcher() {
       <Dialog
         open={!!pending}
         onOpenChange={(open) => {
-          if (!open && !busy) finish(null);
+          if (!open && !matchingBusy) finish(null);
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -182,11 +186,11 @@ export function usePersonMatcher() {
           )}
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => finish(null)} disabled={busy}>
+            <Button variant="ghost" onClick={() => finish(null)} disabled={matchingBusy}>
               Skip
             </Button>
-            <Button onClick={confirm} disabled={busy || !choice}>
-              {busy ? "Saving…" : "Confirm"}
+            <Button onClick={confirm} disabled={matchingBusy || !choice}>
+              {matchingBusy ? "Saving…" : "Confirm"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -195,7 +199,7 @@ export function usePersonMatcher() {
       <Dialog
         open={!!pendingCreate}
         onOpenChange={(open) => {
-          if (!open && !busy) finishCreate(null);
+          if (!open && !creatingBusy) finishCreate(null);
         }}
       >
         <DialogContent className="max-w-xl sm:max-w-2xl">
@@ -215,11 +219,11 @@ export function usePersonMatcher() {
             </p>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => finishCreate(null)} disabled={busy}>
+            <Button variant="outline" onClick={() => finishCreate(null)} disabled={creatingBusy}>
               Cancel
             </Button>
-            <Button onClick={confirmNewPerson} disabled={busy}>
-              {busy ? "Creating…" : "Create person record"}
+            <Button onClick={confirmNewPerson} disabled={creatingBusy}>
+              {creatingBusy ? "Creating…" : "Create person record"}
             </Button>
           </DialogFooter>
         </DialogContent>
