@@ -36,7 +36,15 @@ export type DigitalFileWithDerivatives = DigitalFile & {
   derivatives: FileDerivative[];
   viewUrl: string;
   thumbUrl: string;
+  /** True for PDF masters — they are stored as-is and never rendered to JPEG. */
+  isPdf: boolean;
+  /** Signed URL to the PDF master (empty for non-PDF files). */
+  pdfUrl: string;
 };
+
+export function isPdfMaster(f: { master_mime: string | null; master_path: string }) {
+  return /pdf/i.test(f.master_mime ?? "") || /\.pdf$/i.test(f.master_path);
+}
 
 const BUCKET = "scans";
 
@@ -68,11 +76,13 @@ export async function fetchDigitalFiles(letterId: string): Promise<DigitalFileWi
       const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
       const viewPath = jpeg?.storage_path ?? (browserViewable ? f.master_path : null);
       const thumbPath = thumb?.storage_path ?? viewPath;
-      const [viewUrl, thumbUrl] = await Promise.all([
+      const pdf = isPdfMaster(f);
+      const [viewUrl, thumbUrl, pdfUrl] = await Promise.all([
         viewPath ? signedScanUrl(viewPath) : Promise.resolve(""),
         thumbPath ? signedScanUrl(thumbPath) : Promise.resolve(""),
+        pdf ? signedScanUrl(f.master_path) : Promise.resolve(""),
       ]);
-      return { ...f, derivatives: own, viewUrl, thumbUrl };
+      return { ...f, derivatives: own, viewUrl, thumbUrl, isPdf: pdf, pdfUrl };
     }),
   );
 }

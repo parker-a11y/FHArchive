@@ -627,15 +627,22 @@ function QuickEntry() {
                   onChange={(v) => set("storage_type", v)}
                   options={STORAGE_TYPES}
                 />
-                <div className="space-y-1.5">
-                  <Label className="field-label">Folder / jacket</Label>
-                  <Input
-                    value={form.storage_folder}
-                    onChange={(e) => set("storage_folder", e.target.value)}
-                    placeholder="FH-0268"
-                  />
-                </div>
+                {form.storage_type !== "digital_only" && (
+                  <div className="space-y-1.5">
+                    <Label className="field-label">Folder / jacket</Label>
+                    <Input
+                      value={form.storage_folder}
+                      onChange={(e) => set("storage_folder", e.target.value)}
+                      placeholder="FH-0268"
+                    />
+                  </div>
+                )}
               </div>
+              {form.storage_type === "digital_only" && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Digital only — no physical item is stored.
+                </p>
+              )}
             </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
               <div className="field-label mb-3">Original source container (provenance)</div>

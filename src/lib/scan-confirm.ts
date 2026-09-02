@@ -36,6 +36,22 @@ export const SCAN_STATUS_LABEL: Record<ScanStatusKey, string> = {
   complete: "Processing Complete",
 };
 
+/**
+ * PDFs (and any other non-image master) are archival deliverables in their own
+ * right — they are stored byte-for-byte and never rendered to JPEG, so they
+ * never wait on derivatives and never report a processing error.
+ */
+export function needsDerivatives(f: DigitalFileWithDerivatives) {
+  const path = f.master_path ?? "";
+  const mime = f.master_mime ?? "";
+  if (/pdf/i.test(mime) || /\.pdf$/i.test(path)) return false;
+  return (
+    /\.tiff?$/i.test(path) ||
+    /^image\/(tiff|jpeg|png|webp|gif|bmp)$/i.test(mime) ||
+    /\.(jpe?g|png|webp|gif|bmp)$/i.test(path)
+  );
+}
+
 export function hasJpeg(f: DigitalFileWithDerivatives) {
   return f.derivatives.some((d) => d.kind === "jpeg" && d.status === "complete");
 }
@@ -43,6 +59,7 @@ export function hasThumb(f: DigitalFileWithDerivatives) {
   return f.derivatives.some((d) => d.kind === "thumbnail" && d.status === "complete");
 }
 export function derivativeFailed(f: DigitalFileWithDerivatives) {
+  if (!needsDerivatives(f)) return false; // PDFs never needed one
   return f.derivatives.some((d) => d.status === "failed");
 }
 
@@ -55,9 +72,9 @@ export function unnamedFiles(files: DigitalFileWithDerivatives[]) {
   return files.filter((f) => !isNamed(f));
 }
 
-/** Masters still missing a complete JPEG or thumbnail. */
+/** Masters still missing a complete JPEG or thumbnail (PDFs are never pending). */
 export function pendingFiles(files: DigitalFileWithDerivatives[]) {
-  return files.filter((f) => !hasJpeg(f) || !hasThumb(f));
+  return files.filter((f) => needsDerivatives(f) && (!hasJpeg(f) || !hasThumb(f)));
 }
 
 export function scanStatus(
@@ -72,7 +89,8 @@ export function scanStatus(
   if (!pending.length) return files.some(derivativeFailed) ? "error" : "complete";
   if (pending.some(derivativeFailed)) return "error";
   // Some masters already processed → this is a later addition to the record.
-  return files.length > pending.length ? "updated_needs_confirmation" : "ready_to_confirm";
+  const derivable = files.filter(needsDerivatives);
+  return derivable.length > pending.length ? "updated_needs_confirmation" : "ready_to_confirm";
 }
 
 async function masterAsFile(file: DigitalFileWithDerivatives): Promise<File> {

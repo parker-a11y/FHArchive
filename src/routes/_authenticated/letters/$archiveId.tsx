@@ -876,17 +876,25 @@ function LetterPage() {
                     ))}
                   </select>
                 </div>
-                {STORAGE_FIELDS.map((f) => (
-                  <div key={f.key}>
-                    <label className="field-label">{f.label}</label>
-                    <Input
-                      placeholder={f.placeholder}
-                      value={(form[f.key] as string) ?? ""}
-                      onChange={(e) => set(f.key, e.target.value)}
-                    />
-                  </div>
-                ))}
+                {form.storage_type === "digital_only"
+                  ? null
+                  : STORAGE_FIELDS.map((f) => (
+                      <div key={f.key}>
+                        <label className="field-label">{f.label}</label>
+                        <Input
+                          placeholder={f.placeholder}
+                          value={(form[f.key] as string) ?? ""}
+                          onChange={(e) => set(f.key, e.target.value)}
+                        />
+                      </div>
+                    ))}
               </div>
+              {form.storage_type === "digital_only" && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Digital only — no physical item is stored. Files live in this archive and in the
+                  nightly Google Drive backup.
+                </p>
+              )}
             </div>
 
             <div className="col-span-full rounded border border-border bg-card p-4">
