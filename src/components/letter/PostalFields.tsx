@@ -49,10 +49,10 @@ export function PostalFields({
 
       <div className="space-y-1.5">
         <Label className="field-label">Forwarded</Label>
-        <label className="flex h-9 items-center gap-2 text-sm">
+        <label className="flex items-start gap-2 py-1 text-sm leading-snug">
           <input
             type="checkbox"
-            className="h-4 w-4 accent-primary"
+            className="mt-0.5 h-4 w-4 accent-primary"
             checked={values.forwarded}
             onChange={(e) => onChange("forwarded", e.target.checked)}
           />
@@ -62,10 +62,10 @@ export function PostalFields({
 
       <div className="space-y-1.5">
         <Label className="field-label">Censor mark</Label>
-        <label className="flex h-9 items-center gap-2 text-sm">
+        <label className="flex items-start gap-2 py-1 text-sm leading-snug">
           <input
             type="checkbox"
-            className="h-4 w-4 accent-primary"
+            className="mt-0.5 h-4 w-4 accent-primary"
             checked={values.censor_mark}
             onChange={(e) => onChange("censor_mark", e.target.checked)}
           />
