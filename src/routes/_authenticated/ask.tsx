@@ -427,67 +427,44 @@ function AskFrancis() {
 
       <div className="space-y-6 p-4 sm:p-8">
         {/* ---- Research dataset status ---- */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <Database className="size-4 text-archive-gold" />
-            <h2 className="field-label">Research Dataset</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
-            <div>
-              <p className="text-xs text-muted-foreground">Last snapshot</p>
-              <p className="font-medium">
-                {snapshot?.finished_at
-                  ? new Date(snapshot.finished_at).toLocaleString()
-                  : snapshot
-                    ? "In progress…"
-                    : "Never"}
-              </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-full border border-border bg-card px-4 py-2 text-sm shadow-sm">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <div className="flex items-center gap-1.5">
+              <Database className="size-3.5 text-archive-gold" />
+              <span className="font-medium tabular-nums">{snapshot?.records_indexed ?? 0} records</span>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Records indexed</p>
-              <p className="font-medium tabular-nums">{snapshot?.records_indexed ?? 0}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Transcriptions indexed</p>
-              <p className="font-medium tabular-nums">{snapshot?.transcriptions_indexed ?? 0}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">People</p>
-              <p className="font-medium tabular-nums">{snapshot?.people_count ?? 0}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Places</p>
-              <p className="font-medium tabular-nums">{snapshot?.places_count ?? 0}</p>
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3 text-sm">
+            <span className="hidden h-4 w-px bg-border sm:inline" />
+            <span className="text-muted-foreground">
+              Snapshot: {" "}
+              {snapshot?.finished_at
+                ? new Date(snapshot.finished_at).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : snapshot
+                  ? "In progress…"
+                  : "Never"}
+            </span>
             {snapshot?.status === "error" ? (
-              <span className="rounded-full bg-tone-rose-soft px-3 py-1 text-xs font-medium text-tone-rose">
-                Last snapshot failed — {snapshot.error}
+              <span className="rounded-full bg-tone-rose-soft px-2 py-0.5 text-xs font-medium text-tone-rose">
+                Failed
               </span>
             ) : stale ? (
-              <>
-                <span className="rounded-full bg-tone-amber-soft px-3 py-1 text-xs font-medium text-tone-amber">
-                  Archive changed since last snapshot
-                </span>
-                <span className="text-muted-foreground">
-                  New archive changes are not yet included in the Research Snapshot.
-                </span>
-              </>
+              <span className="rounded-full bg-tone-amber-soft px-2 py-0.5 text-xs font-medium text-tone-amber">
+                Stale
+              </span>
             ) : (
-              <span className="rounded-full bg-tone-emerald-soft px-3 py-1 text-xs font-medium text-tone-emerald">
-                Up to date
+              <span className="rounded-full bg-tone-emerald-soft px-2 py-0.5 text-xs font-medium text-tone-emerald">
+                Current
               </span>
             )}
-            {snapshot?.folder && (
-              <span className="text-xs text-muted-foreground">Snapshot folder: {snapshot.folder}</span>
-            )}
-            {canEdit && stale && (
-              <Button size="sm" variant="outline" className="gap-2" onClick={refreshSnapshot} disabled={refreshing}>
-                <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh now
-              </Button>
-            )}
           </div>
+          {canEdit && (
+            <Button size="sm" variant="ghost" className="gap-1.5 rounded-full" onClick={refreshSnapshot} disabled={refreshing}>
+              <RefreshCw className={`size-3.5 ${refreshing ? "animate-spin" : ""}`} /> Refresh
+            </Button>
+          )}
         </div>
 
         {/* ---- Question box ---- */}
