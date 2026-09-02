@@ -176,6 +176,9 @@ export type LetterSearchParams = {
   closing?: string;
   signature?: string;
   starred?: boolean;
+  /** Postal service value; "paid" also matches airmail. */
+  postal?: string;
+  forwarded?: boolean;
   sort?: string;
   dir?: "asc" | "desc";
   limit?: number;
@@ -214,6 +217,8 @@ export async function searchLetters(p: LetterSearchParams): Promise<LetterPage> 
     p_closing: p.closing || null,
     p_signature: p.signature || null,
     p_starred: p.starred ?? false,
+    p_postal: p.postal || null,
+    p_forwarded: p.forwarded ?? false,
     p_sort: p.sort ?? "fh_seq",
     p_dir: p.dir ?? "asc",
     p_limit: p.limit ?? 100,
