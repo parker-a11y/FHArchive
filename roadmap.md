@@ -13,3 +13,8 @@
 - [x] Universal Related Records / cross-references (any record ↔ any record, bidirectional, optional note)
 
 - [x] Weekly Francis Files Recap: Sunday 2AM auto-generation, admin "Generate now"/regenerate/edit/publish, archived at /recaps with linked FH/DS records
+
+- [x] PDF masters: render each page to viewing JPEG + thumbnail (web viewable, AI transcribable), with Render/Re-render pages button
+- [x] Tech debt: drop duplicate Postgres indexes on junction tables
+- [x] Tech debt: gitignore .env, add .env.example placeholders
+- [x] Tech debt: document storage buckets (scans, ds-files) in AGENTS.md
