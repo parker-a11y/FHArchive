@@ -72,9 +72,9 @@ export function unnamedFiles(files: DigitalFileWithDerivatives[]) {
   return files.filter((f) => !isNamed(f));
 }
 
-/** Masters still missing a complete JPEG or thumbnail. */
+/** Masters still missing a complete JPEG or thumbnail (PDFs are never pending). */
 export function pendingFiles(files: DigitalFileWithDerivatives[]) {
-  return files.filter((f) => !hasJpeg(f) || !hasThumb(f));
+  return files.filter((f) => needsDerivatives(f) && (!hasJpeg(f) || !hasThumb(f)));
 }
 
 export function scanStatus(
