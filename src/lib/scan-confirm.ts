@@ -59,6 +59,7 @@ export function hasThumb(f: DigitalFileWithDerivatives) {
   return f.derivatives.some((d) => d.kind === "thumbnail" && d.status === "complete");
 }
 export function derivativeFailed(f: DigitalFileWithDerivatives) {
+  if (!needsDerivatives(f)) return false; // PDFs never needed one
   return f.derivatives.some((d) => d.status === "failed");
 }
 
