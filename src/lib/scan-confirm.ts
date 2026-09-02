@@ -89,7 +89,8 @@ export function scanStatus(
   if (!pending.length) return files.some(derivativeFailed) ? "error" : "complete";
   if (pending.some(derivativeFailed)) return "error";
   // Some masters already processed → this is a later addition to the record.
-  return files.length > pending.length ? "updated_needs_confirmation" : "ready_to_confirm";
+  const derivable = files.filter(needsDerivatives);
+  return derivable.length > pending.length ? "updated_needs_confirmation" : "ready_to_confirm";
 }
 
 async function masterAsFile(file: DigitalFileWithDerivatives): Promise<File> {
