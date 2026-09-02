@@ -8,6 +8,7 @@ export type Letter = {
   normalized_date: string | null;
   date_precision: string;
   date_certainty: string;
+  date_from_postmark: boolean;
   author: string | null;
   recipient: string | null;
   origin: string | null;
