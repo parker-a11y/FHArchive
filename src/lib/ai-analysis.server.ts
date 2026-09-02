@@ -58,7 +58,7 @@ export async function buildAnalysisContext(
   const { data: letter, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, record_type, subtype, title, date_as_written, normalized_date, period, author, recipient, origin, destination, primary_person, physical_description, notes, transcription_verified, transcription_raw_ai, ocr_text",
+      "id, archive_id, record_type, subtype, title, date_as_written, normalized_date, period, author, recipient, origin, destination, primary_person, date_from_postmark, physical_description, notes, transcription_verified, transcription_raw_ai, ocr_text",
     )
     .eq("id", letterId)
     .maybeSingle();
@@ -95,6 +95,11 @@ export async function buildAnalysisContext(
     letter.title ? `Title: ${letter.title}` : "",
     letter.date_as_written ? `Date as written: ${letter.date_as_written}` : "",
     letter.normalized_date ? `Normalized date: ${letter.normalized_date}` : "",
+    letter.normalized_date
+      ? letter.date_from_postmark
+        ? "Date source: POSTMARK — this date comes from the envelope postmark, not from a date written on the document. Never state that the letter was written on this date unless the text itself establishes it; say it was postmarked on this date."
+        : "Date source: written on the document"
+      : "",
     letter.period ? `Period: ${letter.period}` : "",
     letter.author ? `Author: ${letter.author}` : "",
     letter.recipient ? `Recipient: ${letter.recipient}` : "",

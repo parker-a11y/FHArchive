@@ -332,6 +332,7 @@ function recordMarkdown(r: ComposedRecord): string {
     ["Date as written", r["date_as_written"]],
     ["Normalized date", r["normalized_date"]],
     ["Date precision", r["date_precision"]],
+    ["Date source", r["date_from_postmark"] ? "Postmark (not written on document)" : null],
     ["Date certainty", r["date_certainty"]],
     ["Period", r["period"]],
     ["Author", r["author"]],
