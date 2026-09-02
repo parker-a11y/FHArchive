@@ -166,21 +166,29 @@ function EnvelopeReview() {
     if (!current) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const payload = {
+        origin: origin.trim() || null,
+        destination: destination.trim() || null,
+        forwarded: postal.forwarded,
+        forwarded_to: postal.forwarded ? postal.forwarded_to.trim() || null : null,
+        postal_service: postal.postal_service || null,
+        postal_notes: postal.postal_notes.trim() || null,
+      };
+      const { data, error } = await supabase
         .from("letters")
-        .update({
-          origin: origin.trim() || null,
-          destination: destination.trim() || null,
-          forwarded: postal.forwarded,
-          forwarded_to: postal.forwarded ? postal.forwarded_to.trim() || null : null,
-          postal_service: postal.postal_service || null,
-          postal_notes: postal.postal_notes.trim() || null,
-        } as never)
-        .eq("id", current.id);
+        .update(payload as never)
+        .eq("id", current.id)
+        .select("id, origin, destination, postal_service")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Nothing was saved — you may not have permission to edit this record.");
+      if ((data.origin ?? null) !== payload.origin || (data.destination ?? null) !== payload.destination) {
+        throw new Error("Mailing origin/destination did not persist. Please try again.");
+      }
       toast.success(`${current.archive_id} saved`);
       await qc.invalidateQueries({ queryKey: ["envelope-records"] });
       await qc.invalidateQueries({ queryKey: ["letters"] });
+      await qc.invalidateQueries({ queryKey: ["letter", current.archive_id] });
       if (advance) go(1);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save");
@@ -188,6 +196,7 @@ function EnvelopeReview() {
       setSaving(false);
     }
   };
+
 
   return (
     <>
