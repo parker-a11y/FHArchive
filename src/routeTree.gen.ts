@@ -22,6 +22,7 @@ import { Route as AuthenticatedBackupsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
 import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
+import { Route as AuthenticatedEnvelopesRouteImport } from './routes/_authenticated/envelopes'
 import { Route as AuthenticatedFffRouteImport } from './routes/_authenticated/fff'
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
@@ -120,6 +121,11 @@ const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
 const AuthenticatedEmailsRoute = AuthenticatedEmailsRouteImport.update({
   id: '/emails',
   path: '/emails',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEnvelopesRoute = AuthenticatedEnvelopesRouteImport.update({
+  id: '/envelopes',
+  path: '/envelopes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFffRoute = AuthenticatedFffRouteImport.update({
@@ -321,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
   '/emails': typeof AuthenticatedEmailsRoute
+  '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/fff': typeof AuthenticatedFffRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
@@ -367,6 +374,7 @@ export interface FileRoutesByTo {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
   '/emails': typeof AuthenticatedEmailsRoute
+  '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/fff': typeof AuthenticatedFffRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
@@ -416,6 +424,7 @@ export interface FileRoutesById {
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
   '/_authenticated/emails': typeof AuthenticatedEmailsRoute
+  '/_authenticated/envelopes': typeof AuthenticatedEnvelopesRoute
   '/_authenticated/fff': typeof AuthenticatedFffRoute
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
@@ -466,6 +475,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/categories'
     | '/emails'
+    | '/envelopes'
     | '/fff'
     | '/queues'
     | '/quotations'
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/categories'
     | '/emails'
+    | '/envelopes'
     | '/fff'
     | '/queues'
     | '/quotations'
@@ -560,6 +571,7 @@ export interface FileRouteTypes {
     | '/_authenticated/catalog'
     | '/_authenticated/categories'
     | '/_authenticated/emails'
+    | '/_authenticated/envelopes'
     | '/_authenticated/fff'
     | '/_authenticated/queues'
     | '/_authenticated/quotations'
@@ -707,6 +719,13 @@ declare module '@tanstack/react-router' {
       path: '/emails'
       fullPath: '/emails'
       preLoaderRoute: typeof AuthenticatedEmailsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/envelopes': {
+      id: '/_authenticated/envelopes'
+      path: '/envelopes'
+      fullPath: '/envelopes'
+      preLoaderRoute: typeof AuthenticatedEnvelopesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/fff': {
@@ -949,6 +968,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
   AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
+  AuthenticatedEnvelopesRoute: typeof AuthenticatedEnvelopesRoute
   AuthenticatedFffRoute: typeof AuthenticatedFffRoute
   AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
   AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
@@ -981,6 +1001,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
   AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
+  AuthenticatedEnvelopesRoute: AuthenticatedEnvelopesRoute,
   AuthenticatedFffRoute: AuthenticatedFffRoute,
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
