@@ -67,6 +67,7 @@ import {
 import { PostalFields } from "@/components/letter/PostalFields";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { fetchDigitalFiles } from "@/lib/digital-files";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
@@ -565,7 +566,29 @@ function LetterPage() {
               />
             </div>
             <div>
-              <label className="field-label">Title / short description</label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="field-label">Title / short description</label>
+                {isPersonalLetter(form.record_type as string, form.subtype as string) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      set(
+                        "title",
+                        shortLetterTitle({
+                          author: form.author as string,
+                          recipient: form.recipient as string,
+                          normalized_date: form.normalized_date as string,
+                          date_precision: form.date_precision as string,
+                        }),
+                      )
+                    }
+                  >
+                    Create Short Title
+                  </Button>
+                )}
+              </div>
               <Input
                 value={(form.title as string) ?? ""}
                 onChange={(e) => set("title", e.target.value)}

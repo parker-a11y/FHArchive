@@ -31,6 +31,7 @@ import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelec
 import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
 import { linkLetterPeople } from "@/lib/letter-people";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
   addRecordType,
@@ -384,13 +385,26 @@ function QuickEntry() {
             </div>
 
             <div className="col-span-full space-y-1.5">
-              <Label className="field-label">Title / short description</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="field-label">Title / short description</Label>
+                {isPersonalLetter(form.record_type, form.subtype) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => set("title", shortLetterTitle(form))}
+                  >
+                    Create Short Title
+                  </Button>
+                )}
+              </div>
               <Input
                 value={form.title}
                 onChange={(e) => set("title", e.target.value)}
                 placeholder="e.g. Discharge papers, Navy — or: portrait in dress blues"
               />
             </div>
+
 
             <div className="space-y-1.5">
               <Label className="field-label">
