@@ -237,6 +237,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   async function confirmUploadComplete() {
     // Naming is optional: anything left unidentified simply gets its sequence number.
     let current = [...files];
+    const renameErrors: string[] = [];
     if (unnamed.length) {
       for (const f of unnamed) {
         try {
@@ -250,18 +251,29 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           current = current.map((c) =>
             c.id === f.id ? { ...c, master_path: newPath, label: name } : c,
           );
-        } catch {
-          /* keep going — the master is untouched either way */
+        } catch (err) {
+          const msg = (err as Error).message || "unknown error";
+          renameErrors.push(`${basenameOf(f.master_path)}: ${msg}`);
         }
       }
-      toast.info(
-        `${unnamed.length} unidentified scan${unnamed.length === 1 ? "" : "s"} numbered sequentially.`,
-      );
+      if (renameErrors.length) {
+        toast.error(
+          `${renameErrors.length} scan${renameErrors.length === 1 ? "" : "s"} could not be renamed. Derivatives were not generated for those files.`,
+          { duration: 8000 },
+        );
+        renameErrors.forEach((e) => console.error("Rename failed:", e));
+      } else {
+        toast.info(
+          `${unnamed.length} unidentified scan${unnamed.length === 1 ? "" : "s"} numbered sequentially.`,
+        );
+      }
       refresh();
     }
     const todo = pendingFiles(current);
-    if (!todo.length) return toast.info("Every master already has a viewing JPEG and thumbnail.");
-
+    if (!todo.length) {
+      if (!renameErrors.length) toast.info("Every master already has a viewing JPEG and thumbnail.");
+      return;
+    }
 
     setGenerating({ done: 0, total: todo.length });
     let ok = 0;
@@ -273,9 +285,11 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         ok++;
       } catch (err) {
         failed++;
-        await recordDerivativeFailure(letter.id, todo[i].id, (err as Error).message);
+        const msg = (err as Error).message || "Unknown error";
+        await recordDerivativeFailure(letter.id, todo[i].id, msg);
         toast.error(
-          `${basenameOf(todo[i].master_path)}: derivative failed — the archival master is untouched.`,
+          `${basenameOf(todo[i].master_path)}: derivative failed — ${msg}`,
+          { duration: 8000 },
         );
       }
     }
