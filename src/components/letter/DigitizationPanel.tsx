@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Download,
+  FileText,
   FileWarning,
   GripVertical,
   ImageIcon,
