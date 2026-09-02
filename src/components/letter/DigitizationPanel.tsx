@@ -271,7 +271,14 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     }
     const todo = pendingFiles(current);
     if (!todo.length) {
-      if (!renameErrors.length) toast.info("Every master already has a viewing JPEG and thumbnail.");
+      if (current.length && (letter.digitization_status ?? "not_scanned") !== "complete") {
+        await patchLetter({
+          digitization_status: "complete",
+          digitization_completed_at: new Date().toISOString(),
+        });
+      }
+      if (!renameErrors.length)
+        toast.success("Processing complete — nothing left to generate for this record.");
       return;
     }
 
