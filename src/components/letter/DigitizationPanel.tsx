@@ -258,8 +258,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       }
       if (renameErrors.length) {
         toast.error(
-          `${renameErrors.length} scan${renameErrors.length === 1 ? "" : "s"} could not be renamed. Derivatives were not generated for those files.`,
-          { duration: 8000 },
+          `${renameErrors.length} scan${renameErrors.length === 1 ? "" : "s"} could not be renamed — ${renameErrors[0]}`,
+          { duration: 12000 },
         );
         renameErrors.forEach((e) => console.error("Rename failed:", e));
       } else {
@@ -981,14 +981,17 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                         </Button>
                         {isAdmin && (
                           <Button
-                            size="icon"
+                            size="sm"
                             variant="ghost"
-                            className="size-7 text-destructive"
+                            className="h-7 px-1.5 text-[11px] text-destructive hover:text-destructive"
+                            title="Permanently delete this scan (master + derivatives)"
                             onClick={() => remove(f)}
                           >
-                            <Trash2 className="size-3.5" />
+                            <Trash2 className="mr-1 size-3.5" />
+                            Delete
                           </Button>
                         )}
+
                       </>
                     )}
                   </div>
