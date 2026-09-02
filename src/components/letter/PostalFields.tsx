@@ -38,7 +38,6 @@ export function PostalFields({
           onChange={(v) => onChange("postal_service", v)}
           options={options}
           allowEmpty
-          placeholder="—"
           onCreate={async (label) => {
             const value = await addPostalService(label, options);
             await qc.invalidateQueries({ queryKey: ["postal-services"] });
@@ -66,17 +65,15 @@ export function PostalFields({
           <Input
             value={values.forwarded_to}
             onChange={(e) => onChange("forwarded_to", e.target.value)}
-            placeholder="Miami, Florida"
           />
         </div>
       )}
 
       <div className="space-y-1.5">
-        <Label className="field-label text-muted-foreground">Postal notes (optional)</Label>
+        <Label className="field-label">Postal notes</Label>
         <Input
           value={values.postal_notes}
           onChange={(e) => onChange("postal_notes", e.target.value)}
-          placeholder="Unusual postmark, censor marking…"
         />
       </div>
     </div>
