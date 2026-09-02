@@ -67,6 +67,7 @@ import {
 import { PostalFields } from "@/components/letter/PostalFields";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { fetchDigitalFiles } from "@/lib/digital-files";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
