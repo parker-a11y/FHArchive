@@ -1146,7 +1146,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         initialIndex={viewerIndex}
         open={viewerOpen}
         onClose={() => setViewerOpen(false)}
-        onRotationChange={(id, rotation) => patchFile(id, { rotation })}
+        onRotationChange={(id, rotation) => patchFile(fileIdOfViewerEntry(id), { rotation })}
         footerAction={
           viewerFile
             ? {
