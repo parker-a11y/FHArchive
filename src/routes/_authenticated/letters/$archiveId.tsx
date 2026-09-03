@@ -404,7 +404,7 @@ function LetterPage() {
               </span>
             </div>
           </div>
-          <div className="flex max-w-[55%] shrink-0 flex-wrap items-center justify-end gap-2 sm:max-w-none">
+          <div className="flex flex-wrap items-center gap-2 xl:max-w-[46%] xl:shrink-0 xl:justify-end">
             <ShareStatusBadge letter={letter} />
             <LabelDialog letter={letter} />
             <Button
