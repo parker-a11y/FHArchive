@@ -81,19 +81,27 @@ export async function fetchDigitalFiles(letterId: string): Promise<DigitalFileWi
       const jpegs = own
         .filter((d) => d.kind === "jpeg" && d.status === "complete" && d.storage_path)
         .sort(byPath);
-      const thumb = own
+      const thumbs = own
         .filter((d) => d.kind === "thumbnail" && d.status === "complete" && d.storage_path)
-        .sort(byPath)[0];
+        .sort(byPath);
+      const thumb = thumbs[0];
       const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
       const viewPath = jpegs[0]?.storage_path ?? (browserViewable ? f.master_path : null);
       const thumbPath = thumb?.storage_path ?? viewPath;
       const pdf = isPdfMaster(f);
-      const [viewUrl, thumbUrl, pdfUrl, pageUrls] = await Promise.all([
+      const [viewUrl, thumbUrl, pdfUrl, pageUrls, pageThumbs] = await Promise.all([
         viewPath ? signedScanUrl(viewPath) : Promise.resolve(""),
         thumbPath ? signedScanUrl(thumbPath) : Promise.resolve(""),
         pdf ? signedScanUrl(f.master_path) : Promise.resolve(""),
         Promise.all(jpegs.map((d) => signedScanUrl(d.storage_path as string))),
+        Promise.all(thumbs.map((d) => signedScanUrl(d.storage_path as string))),
       ]);
+      const pages = pageUrls.filter(Boolean).length
+        ? pageUrls.filter(Boolean)
+        : viewUrl
+          ? [viewUrl]
+          : [];
+      const pageThumbUrls = pages.map((_, i) => pageThumbs[i] || thumbUrl || pages[i]);
       return {
         ...f,
         derivatives: own,
@@ -101,11 +109,13 @@ export async function fetchDigitalFiles(letterId: string): Promise<DigitalFileWi
         thumbUrl,
         isPdf: pdf,
         pdfUrl,
-        pageUrls: pageUrls.filter(Boolean).length ? pageUrls.filter(Boolean) : viewUrl ? [viewUrl] : [],
+        pageUrls: pages,
+        pageThumbUrls,
       };
     }),
   );
 }
+
 
 /** Record-level derivatives (OCR text, combined PDF) not tied to one master. */
 export async function fetchRecordDerivatives(letterId: string): Promise<FileDerivative[]> {
