@@ -534,7 +534,10 @@ function LetterPage() {
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="digitization">Scans &amp; Files ({letter.image_count})</TabsTrigger>
-          <TabsTrigger value="transcription">Transcription</TabsTrigger>
+          {!(isPhotographType(form.record_type as string) &&
+            (form.transcription_status as string) === "not_required") && (
+            <TabsTrigger value="transcription">Transcription</TabsTrigger>
+          )}
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
           <TabsTrigger value="related">Related</TabsTrigger>
