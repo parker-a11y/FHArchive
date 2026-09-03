@@ -50,7 +50,7 @@ export function PersonCombobox({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
-  const { data: people = [] } = usePeopleNames();
+  const { data: people = [], refetch } = usePeopleNames();
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
 
   const options = useMemo(() => {
