@@ -878,7 +878,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   </div>
                   <button
                     onClick={() => {
-                      const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
+                      const idx = viewerEntries.findIndex((x) => x.fileId === f.id);
                       if (idx < 0) return;
                       setViewerIndex(idx);
                       setViewerOpen(true);
@@ -1091,7 +1091,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
               <button
                 key={f.id}
                 onClick={() => {
-                  const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
+                  const idx = viewerEntries.findIndex((x) => x.fileId === f.id);
                   if (idx < 0) return;
                   setViewerIndex(idx);
                   setViewerOpen(true);
