@@ -265,10 +265,14 @@ export async function rebuildRecordTranscription(
   const conflict = !force && !systemOwned;
 
   const patch: Record<string, unknown> = {};
-  if (combinedAi) patch['transcription_raw_ai'] = combinedAi;
+  // Keep any page-level corrections visible even before full verification.
+  if (combinedBest || combinedAi) patch['transcription_raw_ai'] = combinedBest || combinedAi;
+
 
   if (!conflict) {
-    patch['transcription_verified'] = combinedBest;
+    // Only genuinely human-checked page text may occupy the verified field — the
+    // "Human verified" badge, search labels and the research export all key off it.
+    patch['transcription_verified'] = allVerified ? combinedBest : null;
     patch['transcription_rollup_text'] = combinedBest;
     patch['transcription_status'] = allVerified
       ? "human_verified"
@@ -276,6 +280,7 @@ export async function rebuildRecordTranscription(
         ? "needs_review"
         : "ai_transcribed";
   }
+
 
   if (Object.keys(patch).length) {
     await supabase.from("letters").update(patch as never).eq("id", letterId);

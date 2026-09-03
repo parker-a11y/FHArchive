@@ -1,15 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/** Ask Francis: available to every account with archive read access (admins, archivists, guests). */
+/**
+ * Ask Francis: available to every account with archive read access (admins, archivists, guests).
+ * The middleware has already verified the caller's token, so the role lookup runs with the
+ * service client keyed by the verified user id — a dropped bearer header on the RPC would
+ * otherwise surface as "permission denied for function can_read_archive".
+ */
 async function assertResearchAccess(context: any) {
-  const [{ data: canEdit }, { data: canRead }] = await Promise.all([
-    context.supabase.rpc("can_edit_archive", { _user_id: context.userId }),
-    context.supabase.rpc("can_read_archive", { _user_id: context.userId }),
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [{ data: canEdit, error: editErr }, { data: canRead, error: readErr }] = await Promise.all([
+    supabaseAdmin.rpc("can_edit_archive", { _user_id: context.userId }),
+    supabaseAdmin.rpc("can_read_archive", { _user_id: context.userId }),
   ]);
+  if (editErr || readErr) throw new Error("Could not verify your archive access. Please try again.");
   if (!canRead && !canEdit) throw new Error("You do not have access to the archive.");
   return { canEdit: !!canEdit };
 }
+
 
 export const askFrancis = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -36,13 +44,12 @@ export const askFrancis = createServerFn({ method: "POST" })
 export const refreshResearchSnapshot = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: canEdit } = await context.supabase.rpc("can_edit_archive", {
-      _user_id: context.userId,
-    });
+    const { canEdit } = await assertResearchAccess(context);
     if (!canEdit) throw new Error("Only the archive owner or an archivist can refresh the snapshot.");
     const { runResearchSnapshot } = await import("@/lib/research/snapshot.server");
     return runResearchSnapshot("manual");
   });
+
 
 /** Research lenses: Timeline, People network, Map, Themes, Contradictions. */
 export const researchLens = createServerFn({ method: "POST" })
