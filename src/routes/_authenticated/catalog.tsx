@@ -761,6 +761,7 @@ function QuickEntry() {
             </Button>
           </div>
         </form>
+        )}
 
         <aside>
           <h2 className="field-label mb-2">
