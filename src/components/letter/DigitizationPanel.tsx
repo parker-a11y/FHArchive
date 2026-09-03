@@ -464,22 +464,24 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     }
   }
 
+  const viewerEntries = useMemo(() => pageViewerEntries(files), [files]);
   const lightboxItems: LightboxItem[] = useMemo(
     () =>
-      files
-        .filter((f) => f.viewUrl)
-        .map((f) => ({
-          id: f.id,
-          url: f.viewUrl,
-          type: "image" as const,
-          title: `${formatSeq(f.seq)} — ${f.label || f.original_filename}`,
-          subtitle: `${letter.archive_id} · viewing derivative`,
-          filename: f.original_filename,
-          rotation: f.rotation,
-        })),
-    [files, letter.archive_id],
+      viewerEntries.map((e) => ({
+        id: `${e.fileId}#${e.page}`,
+        url: e.url,
+        type: "image" as const,
+        title:
+          `${formatSeq(e.file.seq)} — ${e.file.label || e.file.original_filename}` +
+          (e.pageCount > 1 ? ` · page ${e.page} of ${e.pageCount}` : ""),
+        subtitle: `${letter.archive_id} · viewing derivative`,
+        filename: e.file.original_filename,
+        rotation: e.file.rotation,
+      })),
+    [viewerEntries, letter.archive_id],
   );
-  const viewerFile = files.filter((f) => f.viewUrl)[viewerIndex];
+  const viewerFile = viewerEntries[viewerIndex]?.file;
+
 
   /* ------------------------------- render -------------------------------- */
 
