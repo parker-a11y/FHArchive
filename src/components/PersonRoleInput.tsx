@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -13,21 +12,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { supabase } from "@/integrations/supabase/client";
 import { comparePeopleNames } from "@/lib/archive";
 import { cn } from "@/lib/utils";
 import { usePersonMatcher, type ResolvedPerson } from "@/components/MatchPersonDialog";
+import { usePeopleNames } from "@/components/PersonCombobox";
 
-export function usePeopleNames() {
-  return useQuery({
-    queryKey: ["people"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("people").select("id,name").order("name");
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
+// Single shared people list for every picker.
+export { usePeopleNames };
+
 
 export type PersonRoleValue = { id: string; name: string } | null;
 
