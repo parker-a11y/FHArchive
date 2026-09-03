@@ -1560,13 +1560,18 @@ export type Database = {
           original_order_notes: string | null
           owner_id: string
           period: string
+          photo_back_inscription: string | null
           photo_back_scanned: boolean
           photo_front_scanned: boolean
+          photo_medium: string | null
+          photo_occasion: string | null
+          photographer: string | null
           physical_condition: string | null
           physical_description: string | null
           postal_notes: string | null
           postal_service: string | null
           primary_person: string | null
+          print_size: string | null
           provenance: string | null
           publication_status: string
           recipient: string | null
@@ -1639,13 +1644,18 @@ export type Database = {
           original_order_notes?: string | null
           owner_id?: string
           period?: string
+          photo_back_inscription?: string | null
           photo_back_scanned?: boolean
           photo_front_scanned?: boolean
+          photo_medium?: string | null
+          photo_occasion?: string | null
+          photographer?: string | null
           physical_condition?: string | null
           physical_description?: string | null
           postal_notes?: string | null
           postal_service?: string | null
           primary_person?: string | null
+          print_size?: string | null
           provenance?: string | null
           publication_status?: string
           recipient?: string | null
@@ -1718,13 +1728,18 @@ export type Database = {
           original_order_notes?: string | null
           owner_id?: string
           period?: string
+          photo_back_inscription?: string | null
           photo_back_scanned?: boolean
           photo_front_scanned?: boolean
+          photo_medium?: string | null
+          photo_occasion?: string | null
+          photographer?: string | null
           physical_condition?: string | null
           physical_description?: string | null
           postal_notes?: string | null
           postal_service?: string | null
           primary_person?: string | null
+          print_size?: string | null
           provenance?: string | null
           publication_status?: string
           recipient?: string | null
