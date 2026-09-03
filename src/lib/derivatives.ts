@@ -87,6 +87,10 @@ async function decodeTiff(file: File): Promise<Source> {
 
 async function decodeBrowserImage(file: File): Promise<Source> {
   const bitmap = await createImageBitmap(file);
+  if (bitmap.width < 2 || bitmap.height < 2) {
+    bitmap.close?.();
+    throw new Error("Image could not be read (no usable pixel dimensions)");
+  }
   const canvas = document.createElement("canvas");
   canvas.width = bitmap.width;
   canvas.height = bitmap.height;
