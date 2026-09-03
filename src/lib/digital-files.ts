@@ -42,7 +42,10 @@ export type DigitalFileWithDerivatives = DigitalFile & {
   pdfUrl: string;
   /** Signed viewing URLs, one per rendered page (single entry for a scan). */
   pageUrls: string[];
+  /** Signed thumbnail URLs, aligned with pageUrls where available. */
+  pageThumbUrls: string[];
 };
+
 
 export function isPdfMaster(f: { master_mime: string | null; master_path: string }) {
   return /pdf/i.test(f.master_mime ?? "") || /\.pdf$/i.test(f.master_path);
