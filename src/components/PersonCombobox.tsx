@@ -17,17 +17,23 @@ import { comparePeopleNames } from "@/lib/archive";
 import { cn } from "@/lib/utils";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 
+/**
+ * Canonical people list used by every person picker. No stale window: a person
+ * added on the People page, by AI accept, or in another tab must appear the
+ * next time a picker mounts or opens.
+ */
 export function usePeopleNames() {
   return useQuery({
-    queryKey: ["people"],
+    queryKey: ["people", "names"],
     queryFn: async () => {
       const { data, error } = await supabase.from("people").select("id,name").order("name");
       if (error) throw error;
       return data ?? [];
     },
-    staleTime: 10 * 60_000,
+    refetchOnMount: "always",
   });
 }
+
 
 export function PersonCombobox({
   value,
@@ -44,7 +50,7 @@ export function PersonCombobox({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
-  const { data: people = [] } = usePeopleNames();
+  const { data: people = [], refetch } = usePeopleNames();
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
 
   const options = useMemo(() => {
@@ -85,7 +91,15 @@ export function PersonCombobox({
   return (
     <>
       {personDialog}
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        // Pull the current list each time the picker opens.
+        if (o) void refetch();
+      }}
+    >
+
       <PopoverTrigger asChild>
         <Button
           type="button"

@@ -41,7 +41,7 @@ export function PersonMultiSelect({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
-  const { data: people = [] } = usePeopleNames();
+  const { data: people = [], refetch } = usePeopleNames();
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
 
   const selectedIds = useMemo(() => new Set(value.map((v) => v.id)), [value]);
@@ -114,7 +114,14 @@ export function PersonMultiSelect({
             ))}
           </div>
         )}
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (o) void refetch();
+          }}
+        >
+
           <PopoverTrigger asChild>
             <Button
               type="button"
