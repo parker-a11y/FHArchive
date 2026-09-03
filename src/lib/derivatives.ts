@@ -91,14 +91,17 @@ async function decodeBrowserImage(file: File): Promise<Source> {
     bitmap.close?.();
     throw new Error("Image could not be read (no usable pixel dimensions)");
   }
+  // Read the dimensions before close(); a closed bitmap reports 0 × 0.
+  const width = bitmap.width;
+  const height = bitmap.height;
   const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is unavailable in this browser");
   ctx.drawImage(bitmap, 0, 0);
   bitmap.close?.();
-  return { canvas, width: bitmap.width, height: bitmap.height };
+  return { canvas, width, height };
 }
 
 function scaleTo(source: Source, max: number, quality: number): Promise<DerivedImage> {
