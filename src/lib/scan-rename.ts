@@ -136,10 +136,10 @@ export async function renameScanFile(opts: {
   const { data: existing } = await supabase.storage.from(BUCKET).list(`${archiveId}/masters`, {
     limit: 1000,
   });
-  const selfName = basenameOf(file.master_path).toLowerCase();
+  const selfFile = (file.master_path.split("/").pop() ?? "").toLowerCase();
   for (const obj of existing ?? []) {
     const nm = obj.name.toLowerCase();
-    if (nm !== selfName) taken.add(nm);
+    if (nm !== selfFile) taken.add(basenameOf(nm));
   }
 
   const base = uniqueBaseName(archiveId, label, taken);
