@@ -69,7 +69,7 @@ import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
-import { fetchDigitalFiles } from "@/lib/digital-files";
+import { fetchDigitalFiles, pageViewerEntries } from "@/lib/digital-files";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";

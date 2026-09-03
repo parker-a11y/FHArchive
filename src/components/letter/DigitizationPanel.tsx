@@ -52,6 +52,7 @@ import {
   fetchDigitalFiles,
   signedScanUrl,
   type DigitalFileWithDerivatives,
+  pageViewerEntries,
 } from "@/lib/digital-files";
 
 import {
