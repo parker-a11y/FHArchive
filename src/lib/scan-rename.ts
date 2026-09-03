@@ -147,7 +147,7 @@ export async function renameScanFile(opts: {
   const newMaster = `${archiveId}/masters/${base}.${ext}`;
 
   if (newMaster !== file.master_path) {
-    const present = (existing ?? []).some((o) => o.name.toLowerCase() === selfName);
+    const present = (existing ?? []).some((o) => o.name.toLowerCase() === selfFile);
     if (!present) {
       throw new Error(
         `Master not found in storage at "${file.master_path}". It may have failed to upload or been deleted.`,
