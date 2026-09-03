@@ -136,10 +136,10 @@ export async function renameScanFile(opts: {
   const { data: existing } = await supabase.storage.from(BUCKET).list(`${archiveId}/masters`, {
     limit: 1000,
   });
-  const selfName = basenameOf(file.master_path).toLowerCase();
+  const selfFile = (file.master_path.split("/").pop() ?? "").toLowerCase();
   for (const obj of existing ?? []) {
     const nm = obj.name.toLowerCase();
-    if (nm !== selfName) taken.add(nm);
+    if (nm !== selfFile) taken.add(basenameOf(nm));
   }
 
   const base = uniqueBaseName(archiveId, label, taken);
@@ -147,7 +147,7 @@ export async function renameScanFile(opts: {
   const newMaster = `${archiveId}/masters/${base}.${ext}`;
 
   if (newMaster !== file.master_path) {
-    const present = (existing ?? []).some((o) => o.name.toLowerCase() === selfName);
+    const present = (existing ?? []).some((o) => o.name.toLowerCase() === selfFile);
     if (!present) {
       throw new Error(
         `Master not found in storage at "${file.master_path}". It may have failed to upload or been deleted.`,
