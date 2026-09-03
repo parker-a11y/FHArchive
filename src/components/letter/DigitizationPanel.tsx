@@ -928,6 +928,36 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       </span>
                     </div>
                   )}
+                  {f.pageUrls.length > 1 && (
+                    <div className="mt-1 flex gap-1 overflow-x-auto pb-1">
+                      {f.pageUrls.map((_, p) => (
+                        <button
+                          key={p}
+                          title={`Page ${p + 1}`}
+                          onClick={() => {
+                            const idx = viewerEntries.findIndex(
+                              (x) => x.fileId === f.id && x.page === p + 1,
+                            );
+                            if (idx < 0) return;
+                            setViewerIndex(idx);
+                            setViewerOpen(true);
+                          }}
+                          className="relative shrink-0 overflow-hidden rounded border border-border bg-muted"
+                        >
+                          <img
+                            src={f.pageThumbUrls[p]}
+                            alt={`Page ${p + 1}`}
+                            loading="lazy"
+                            className="h-12 w-9 object-cover"
+                          />
+                          <span className="absolute bottom-0 right-0 bg-background/80 px-0.5 text-[9px] leading-none">
+                            {p + 1}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
 
 
 
