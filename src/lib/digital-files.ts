@@ -146,3 +146,26 @@ export async function countMasters(letterId: string) {
     .eq("letter_id", letterId);
   return count ?? 0;
 }
+
+/**
+ * Flattens masters into one viewer entry per page, so a multi-page PDF opens
+ * as discrete pages rather than only its first rendered page.
+ */
+export function pageViewerEntries(files: DigitalFileWithDerivatives[]) {
+  return files.flatMap((f) => {
+    const urls = f.pageUrls.length ? f.pageUrls : f.viewUrl ? [f.viewUrl] : [];
+    return urls.map((url, i) => ({
+      fileId: f.id,
+      page: i + 1,
+      pageCount: urls.length,
+      url,
+      thumbUrl: f.pageThumbUrls[i] || f.thumbUrl || url,
+      file: f,
+    }));
+  });
+}
+
+/** Strips the `#page` suffix used to key per-page viewer entries. */
+export function fileIdOfViewerEntry(id: string) {
+  return id.split("#")[0];
+}
