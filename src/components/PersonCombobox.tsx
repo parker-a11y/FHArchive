@@ -91,7 +91,15 @@ export function PersonCombobox({
   return (
     <>
       {personDialog}
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        // Pull the current list each time the picker opens.
+        if (o) void refetch();
+      }}
+    >
+
       <PopoverTrigger asChild>
         <Button
           type="button"
