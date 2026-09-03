@@ -535,11 +535,32 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
-          <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
+          {isPhotographType(form.record_type as string) ? (
+            <fieldset disabled={isGuestViewer} className="mb-6">
+              <PhotoRecordView
+                letterId={letter.id}
+                archiveId={letter.archive_id}
+                form={form}
+                set={set}
+              />
+              <button
+                type="button"
+                onClick={() => setShowAllFields((v) => !v)}
+                className="mt-6 text-sm text-primary underline"
+              >
+                {showAllFields ? "Hide archival fields" : "Show all archival fields"}
+              </button>
+            </fieldset>
+          ) : (
+            <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
+          )}
           {/* Guests browse in read-only mode — the disabled fieldset blocks edits
               in every input/button below without changing the layout. */}
           <fieldset disabled={isGuestViewer} className="contents">
-          <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            hidden={isPhotographType(form.record_type as string) && !showAllFields}
+          >
             <div>
               <label className="field-label">Record type</label>
               <CategorySelect
