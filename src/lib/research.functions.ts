@@ -44,13 +44,12 @@ export const askFrancis = createServerFn({ method: "POST" })
 export const refreshResearchSnapshot = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: canEdit } = await context.supabase.rpc("can_edit_archive", {
-      _user_id: context.userId,
-    });
+    const { canEdit } = await assertResearchAccess(context);
     if (!canEdit) throw new Error("Only the archive owner or an archivist can refresh the snapshot.");
     const { runResearchSnapshot } = await import("@/lib/research/snapshot.server");
     return runResearchSnapshot("manual");
   });
+
 
 /** Research lenses: Timeline, People network, Map, Themes, Contradictions. */
 export const researchLens = createServerFn({ method: "POST" })
