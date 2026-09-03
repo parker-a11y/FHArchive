@@ -265,7 +265,9 @@ export async function rebuildRecordTranscription(
   const conflict = !force && !systemOwned;
 
   const patch: Record<string, unknown> = {};
-  if (combinedAi) patch['transcription_raw_ai'] = combinedAi;
+  // Keep any page-level corrections visible even before full verification.
+  if (combinedBest || combinedAi) patch['transcription_raw_ai'] = combinedBest || combinedAi;
+
 
   if (!conflict) {
     // Only genuinely human-checked page text may occupy the verified field — the
