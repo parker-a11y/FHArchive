@@ -319,13 +319,15 @@ function LetterPage() {
 
   return (
     <>
-      <header className="no-print sticky top-0 z-20 border-b border-border bg-background/95 px-4 py-5 backdrop-blur sm:px-8">
-        <div className="flex items-start justify-between gap-6">
+      <header className="no-print sticky top-0 z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-8 sm:py-5">
+        <div className="flex items-start justify-between gap-3 sm:gap-6">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="archive-id font-display text-2xl leading-none sm:text-5xl">
+                {letter.archive_id}
+              </div>
               {!isGuestViewer && (
-                <Button onClick={save} disabled={!dirty && !authorRecipientDirty}>
+                <Button size="sm" onClick={save} disabled={!dirty && !authorRecipientDirty}>
                   {dirty || authorRecipientDirty ? "Save changes" : "Saved"}
                 </Button>
               )}
@@ -345,7 +347,7 @@ function LetterPage() {
               </span>
               {letter.title && <span className="ml-3 font-medium">{letter.title}</span>}
             </div>
-            <div className="mt-3 flex flex-wrap gap-x-8 gap-y-1 text-sm">
+            <div className="mt-3 hidden flex-wrap gap-x-8 gap-y-1 text-sm sm:flex">
 
               <span>
                 <span className="field-label mr-2">Date</span>
@@ -402,7 +404,7 @@ function LetterPage() {
               </span>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex max-w-[55%] shrink-0 flex-wrap items-center justify-end gap-2 sm:max-w-none">
             <ShareStatusBadge letter={letter} />
             <LabelDialog letter={letter} />
             <Button
