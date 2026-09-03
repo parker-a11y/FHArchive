@@ -320,7 +320,7 @@ function LetterPage() {
   return (
     <>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-8 sm:py-5">
-        <div className="flex items-start justify-between gap-3 sm:gap-6">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between xl:gap-6">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <div className="archive-id font-display text-2xl leading-none sm:text-5xl">
