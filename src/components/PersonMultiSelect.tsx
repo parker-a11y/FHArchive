@@ -114,7 +114,14 @@ export function PersonMultiSelect({
             ))}
           </div>
         )}
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover
+          open={open}
+          onOpenChange={(o) => {
+            setOpen(o);
+            if (o) void refetch();
+          }}
+        >
+
           <PopoverTrigger asChild>
             <Button
               type="button"
