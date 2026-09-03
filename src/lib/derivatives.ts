@@ -87,14 +87,21 @@ async function decodeTiff(file: File): Promise<Source> {
 
 async function decodeBrowserImage(file: File): Promise<Source> {
   const bitmap = await createImageBitmap(file);
+  if (bitmap.width < 2 || bitmap.height < 2) {
+    bitmap.close?.();
+    throw new Error("Image could not be read (no usable pixel dimensions)");
+  }
+  // Read the dimensions before close(); a closed bitmap reports 0 × 0.
+  const width = bitmap.width;
+  const height = bitmap.height;
   const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is unavailable in this browser");
   ctx.drawImage(bitmap, 0, 0);
   bitmap.close?.();
-  return { canvas, width: bitmap.width, height: bitmap.height };
+  return { canvas, width, height };
 }
 
 function scaleTo(source: Source, max: number, quality: number): Promise<DerivedImage> {
@@ -144,6 +151,9 @@ export async function makeDerivatives(file: File): Promise<DerivedSet> {
   const source = /\.tiff?$/i.test(file.name) || /tiff/i.test(file.type)
     ? await decodeTiff(file)
     : await decodeBrowserImage(file);
+  if (source.width < 2 || source.height < 2) {
+    throw new Error("Image decoded with no usable pixel dimensions — derivative not generated");
+  }
   const view = await scaleTo(source, VIEW_MAX, 0.88);
   const thumb = await scaleTo(source, THUMB_MAX, 0.8);
   source.canvas.width = 0;
