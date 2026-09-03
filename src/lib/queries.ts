@@ -46,6 +46,11 @@ export type Letter = {
   tones: string[] | null;
   starred?: boolean | null;
   physical_description: string | null;
+  photo_occasion: string | null;
+  photographer: string | null;
+  print_size: string | null;
+  photo_medium: string | null;
+  photo_back_inscription: string | null;
   original_copy: string;
   storage_location: string | null;
   storage_type: string | null;

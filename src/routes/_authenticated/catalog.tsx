@@ -33,6 +33,8 @@ import { linkLetterPeople } from "@/lib/letter-people";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { CategorySelect } from "@/components/CategorySelect";
+import { PhotoIntakeForm } from "@/components/photo/PhotoIntakeForm";
+import { isPhotographType } from "@/components/photo/photo-fields";
 import {
   addRecordType,
   addSubtype,
@@ -297,6 +299,32 @@ function QuickEntry() {
         description="Type, date, a short description — then Save & Create Next (⌘/Ctrl + Enter). Details can be added later."
       />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_16rem] gap-8 p-4 sm:p-8">
+        {isPhotographType(form.record_type) ? (
+        <PhotoIntakeForm
+          nextArchiveId={next?.archive_id ?? null}
+          recordType={form.record_type}
+          onRecordTypeChange={(v) => setForm((f) => ({ ...f, record_type: v, subtype: "" }))}
+          recordTypeOptions={recordTypeOptions}
+          onSaved={(created, ctx) => {
+            qc.invalidateQueries({ queryKey: ["letters"] });
+            toast.success(`${created.archive_id} cataloged`);
+            setSession((s) => [created.archive_id, ...s]);
+            if (ctx.mode === "open") {
+              navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
+              return;
+            }
+            if (ctx.mode === "label") {
+              setLabelFor({
+                archiveId: created.archive_id,
+                date: labelDate({ ...blank, normalized_date: ctx.date, date_precision: ctx.date ? "exact" : "undated" }),
+                title: labelTitle({ title: ctx.title }),
+                lines: labelLines({ ...blank, record_type: "photograph", title: ctx.title, sheets: null }),
+              });
+            }
+            loadNext();
+          }}
+        />
+        ) : (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -735,6 +763,7 @@ function QuickEntry() {
             </Button>
           </div>
         </form>
+        )}
 
         <aside>
           <h2 className="field-label mb-2">

@@ -58,7 +58,7 @@ export async function buildAnalysisContext(
   const { data: letter, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, record_type, subtype, title, date_as_written, normalized_date, period, author, recipient, origin, destination, primary_person, date_from_postmark, physical_description, notes, transcription_verified, transcription_raw_ai, ocr_text",
+      "id, archive_id, record_type, subtype, title, date_as_written, normalized_date, period, author, recipient, origin, destination, primary_person, date_from_postmark, physical_description, photo_occasion, photographer, print_size, photo_medium, photo_back_inscription, notes, transcription_verified, transcription_raw_ai, ocr_text",
     )
     .eq("id", letterId)
     .maybeSingle();
@@ -107,6 +107,13 @@ export async function buildAnalysisContext(
     letter.destination ? `Destination: ${letter.destination}` : "",
     letter.primary_person ? `Primary person: ${letter.primary_person}` : "",
     letter.physical_description ? `Physical description: ${letter.physical_description}` : "",
+    letter.photo_occasion ? `Occasion / event pictured: ${letter.photo_occasion}` : "",
+    letter.photographer ? `Photographer / studio: ${letter.photographer}` : "",
+    letter.print_size ? `Print size: ${letter.print_size}` : "",
+    letter.photo_medium ? `Photographic medium: ${letter.photo_medium}` : "",
+    letter.photo_back_inscription
+      ? `Inscription written on the back of the print: ${letter.photo_back_inscription}`
+      : "",
     letter.notes ? `Archivist notes: ${letter.notes}` : "",
   ].filter(Boolean);
 

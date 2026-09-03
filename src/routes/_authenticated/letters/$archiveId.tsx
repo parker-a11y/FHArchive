@@ -71,6 +71,8 @@ import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { fetchDigitalFiles, pageViewerEntries } from "@/lib/digital-files";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
+import { PhotoRecordView } from "@/components/photo/PhotoRecordView";
+import { isPhotographType } from "@/components/photo/photo-fields";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
@@ -151,6 +153,7 @@ function LetterPage() {
   const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
   const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
   const [authorRecipientDirty, setAuthorRecipientDirty] = useState(false);
+  const [showAllFields, setShowAllFields] = useState(false);
 
 
   useEffect(() => {
@@ -204,6 +207,11 @@ function LetterPage() {
       publication_status: letter.publication_status,
       research_needed: letter.research_needed,
       transcription_status: letter.transcription_status,
+      photo_occasion: letter.photo_occasion ?? "",
+      photographer: letter.photographer ?? "",
+      print_size: letter.print_size ?? "",
+      photo_medium: letter.photo_medium ?? "",
+      photo_back_inscription: letter.photo_back_inscription ?? "",
     });
     setTones(letter.tones ?? []);
     setDirty(false);
@@ -526,7 +534,10 @@ function LetterPage() {
         <TabsList className="no-print">
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
           <TabsTrigger value="digitization">Scans &amp; Files ({letter.image_count})</TabsTrigger>
-          <TabsTrigger value="transcription">Transcription</TabsTrigger>
+          {!(isPhotographType(form.record_type as string) &&
+            (form.transcription_status as string) === "not_required") && (
+            <TabsTrigger value="transcription">Transcription</TabsTrigger>
+          )}
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
           <TabsTrigger value="related">Related</TabsTrigger>
@@ -535,11 +546,35 @@ function LetterPage() {
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
-          <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
+          {isPhotographType(form.record_type as string) ? (
+            <fieldset disabled={isGuestViewer} className="mb-6">
+              <PhotoRecordView
+                letterId={letter.id}
+                archiveId={letter.archive_id}
+                form={form}
+                set={set}
+              />
+              <button
+                type="button"
+                onClick={() => setShowAllFields((v) => !v)}
+                className="mt-6 text-sm text-primary underline"
+              >
+                {showAllFields ? "Hide archival fields" : "Show all archival fields"}
+              </button>
+            </fieldset>
+          ) : (
+            <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
+          )}
           {/* Guests browse in read-only mode — the disabled fieldset blocks edits
               in every input/button below without changing the layout. */}
           <fieldset disabled={isGuestViewer} className="contents">
-          <div className="grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            className={
+              isPhotographType(form.record_type as string) && !showAllFields
+                ? "hidden"
+                : "grid max-w-5xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            }
+          >
             <div>
               <label className="field-label">Record type</label>
               <CategorySelect
