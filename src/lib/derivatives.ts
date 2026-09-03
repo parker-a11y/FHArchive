@@ -148,6 +148,9 @@ export async function makeDerivatives(file: File): Promise<DerivedSet> {
   const source = /\.tiff?$/i.test(file.name) || /tiff/i.test(file.type)
     ? await decodeTiff(file)
     : await decodeBrowserImage(file);
+  if (source.width < 2 || source.height < 2) {
+    throw new Error("Image decoded with no usable pixel dimensions — derivative not generated");
+  }
   const view = await scaleTo(source, VIEW_MAX, 0.88);
   const thumb = await scaleTo(source, THUMB_MAX, 0.8);
   source.canvas.width = 0;
