@@ -321,9 +321,14 @@ function LetterPage() {
     <>
       <header className="no-print sticky top-0 z-20 border-b border-border bg-background/95 px-4 py-5 backdrop-blur sm:px-8">
         <div className="flex items-start justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="archive-id font-display text-5xl leading-none">{letter.archive_id}</div>
+              {!isGuestViewer && (
+                <Button onClick={save} disabled={!dirty && !authorRecipientDirty}>
+                  {dirty || authorRecipientDirty ? "Save changes" : "Saved"}
+                </Button>
+              )}
               <StarToggle
                 table="letters"
                 id={letter.id}
@@ -461,9 +466,6 @@ function LetterPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Button onClick={save} disabled={!dirty && !authorRecipientDirty}>
-                  {dirty || authorRecipientDirty ? "Save changes" : "Saved"}
-                </Button>
               </>
             )}
           </div>
