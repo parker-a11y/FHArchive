@@ -52,6 +52,8 @@ import {
   fetchDigitalFiles,
   signedScanUrl,
   type DigitalFileWithDerivatives,
+  fileIdOfViewerEntry,
+  pageViewerEntries,
 } from "@/lib/digital-files";
 
 import {
@@ -464,22 +466,24 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     }
   }
 
+  const viewerEntries = useMemo(() => pageViewerEntries(files), [files]);
   const lightboxItems: LightboxItem[] = useMemo(
     () =>
-      files
-        .filter((f) => f.viewUrl)
-        .map((f) => ({
-          id: f.id,
-          url: f.viewUrl,
-          type: "image" as const,
-          title: `${formatSeq(f.seq)} — ${f.label || f.original_filename}`,
-          subtitle: `${letter.archive_id} · viewing derivative`,
-          filename: f.original_filename,
-          rotation: f.rotation,
-        })),
-    [files, letter.archive_id],
+      viewerEntries.map((e) => ({
+        id: `${e.fileId}#${e.page}`,
+        url: e.url,
+        type: "image" as const,
+        title:
+          `${formatSeq(e.file.seq)} — ${e.file.label || e.file.original_filename}` +
+          (e.pageCount > 1 ? ` · page ${e.page} of ${e.pageCount}` : ""),
+        subtitle: `${letter.archive_id} · viewing derivative`,
+        filename: e.file.original_filename,
+        rotation: e.file.rotation,
+      })),
+    [viewerEntries, letter.archive_id],
   );
-  const viewerFile = files.filter((f) => f.viewUrl)[viewerIndex];
+  const viewerFile = viewerEntries[viewerIndex]?.file;
+
 
   /* ------------------------------- render -------------------------------- */
 
@@ -874,7 +878,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   </div>
                   <button
                     onClick={() => {
-                      const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
+                      const idx = viewerEntries.findIndex((x) => x.fileId === f.id);
                       if (idx < 0) return;
                       setViewerIndex(idx);
                       setViewerOpen(true);
@@ -924,6 +928,36 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       </span>
                     </div>
                   )}
+                  {f.pageUrls.length > 1 && (
+                    <div className="mt-1 flex gap-1 overflow-x-auto pb-1">
+                      {f.pageUrls.map((_, p) => (
+                        <button
+                          key={p}
+                          title={`Page ${p + 1}`}
+                          onClick={() => {
+                            const idx = viewerEntries.findIndex(
+                              (x) => x.fileId === f.id && x.page === p + 1,
+                            );
+                            if (idx < 0) return;
+                            setViewerIndex(idx);
+                            setViewerOpen(true);
+                          }}
+                          className="relative shrink-0 overflow-hidden rounded border border-border bg-muted"
+                        >
+                          <img
+                            src={f.pageThumbUrls[p]}
+                            alt={`Page ${p + 1}`}
+                            loading="lazy"
+                            className="h-12 w-9 object-cover"
+                          />
+                          <span className="absolute bottom-0 right-0 bg-background/80 px-0.5 text-[9px] leading-none">
+                            {p + 1}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
 
 
 
@@ -1087,7 +1121,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
               <button
                 key={f.id}
                 onClick={() => {
-                  const idx = files.filter((x) => x.viewUrl).findIndex((x) => x.id === f.id);
+                  const idx = viewerEntries.findIndex((x) => x.fileId === f.id);
                   if (idx < 0) return;
                   setViewerIndex(idx);
                   setViewerOpen(true);
@@ -1143,7 +1177,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         initialIndex={viewerIndex}
         open={viewerOpen}
         onClose={() => setViewerOpen(false)}
-        onRotationChange={(id, rotation) => patchFile(id, { rotation })}
+        onRotationChange={(id, rotation) => patchFile(fileIdOfViewerEntry(id), { rotation })}
         footerAction={
           viewerFile
             ? {

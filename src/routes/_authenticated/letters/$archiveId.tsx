@@ -69,7 +69,7 @@ import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
-import { fetchDigitalFiles } from "@/lib/digital-files";
+import { fetchDigitalFiles, pageViewerEntries } from "@/lib/digital-files";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
@@ -1093,45 +1093,53 @@ function CatalogThumbnails({ letterId, archiveId }: { letterId: string; archiveI
   });
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const thumbs = (files ?? []).filter((f) => f.thumbUrl);
-  if (!thumbs.length) return null;
-  const lightboxItems: LightboxItem[] = thumbs
-    .filter((f) => f.viewUrl)
-    .map((f) => ({
-      id: f.id,
-      url: f.viewUrl as string,
-      type: "image" as const,
-      title: `${f.seq != null ? `Scan ${f.seq} — ` : ""}${f.label || f.original_filename}`,
-      subtitle: `${archiveId} · viewing derivative`,
-      filename: f.original_filename,
-      rotation: f.rotation ?? 0,
-    }));
+  const entries = pageViewerEntries(files ?? []).filter((e) => e.url);
+  if (!entries.length) return null;
+  const lightboxItems: LightboxItem[] = entries.map((e) => ({
+    id: `${e.fileId}#${e.page}`,
+    url: e.url,
+    type: "image" as const,
+    title:
+      `${e.file.seq != null ? `Scan ${e.file.seq} — ` : ""}${e.file.label || e.file.original_filename}` +
+      (e.pageCount > 1 ? ` · page ${e.page} of ${e.pageCount}` : ""),
+    subtitle: `${archiveId} · viewing derivative`,
+    filename: e.file.original_filename,
+    rotation: e.file.rotation ?? 0,
+  }));
   return (
     <div className="mb-6 max-w-5xl">
-      <div className="field-label mb-2">Scans ({thumbs.length}) — click to view</div>
+      <div className="field-label mb-2">Scans ({entries.length}) — click to view</div>
       <div className="flex gap-2 overflow-x-auto pb-1">
-        {thumbs.map((f) => (
+        {entries.map((e, i) => (
           <button
-            key={f.id}
+            key={`${e.fileId}#${e.page}`}
             type="button"
-            title={f.label ?? f.original_filename}
+            title={
+              e.pageCount > 1
+                ? `${e.file.label ?? e.file.original_filename} — page ${e.page}`
+                : (e.file.label ?? e.file.original_filename)
+            }
             onClick={() => {
-              const idx = lightboxItems.findIndex((i) => i.id === f.id);
-              if (idx < 0) return;
-              setViewerIndex(idx);
+              setViewerIndex(i);
               setViewerOpen(true);
             }}
-            className="shrink-0 overflow-hidden rounded-md border border-border bg-card shadow-sm transition hover:border-primary hover:shadow-md"
+            className="relative shrink-0 overflow-hidden rounded-md border border-border bg-card shadow-sm transition hover:border-primary hover:shadow-md"
           >
             <img
-              src={f.thumbUrl}
-              alt={f.label ?? f.original_filename}
+              src={e.thumbUrl}
+              alt={e.file.label ?? e.file.original_filename}
               className="h-28 w-auto object-cover"
               loading="lazy"
             />
+            {e.pageCount > 1 && (
+              <span className="absolute bottom-1 right-1 rounded bg-background/85 px-1 text-[10px] font-medium">
+                p{e.page}
+              </span>
+            )}
           </button>
         ))}
       </div>
+
       <MediaLightbox
         items={lightboxItems}
         initialIndex={viewerIndex}
