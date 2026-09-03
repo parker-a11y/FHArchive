@@ -33,6 +33,8 @@ import { linkLetterPeople } from "@/lib/letter-people";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { CategorySelect } from "@/components/CategorySelect";
+import { PhotoIntakeForm } from "@/components/photo/PhotoIntakeForm";
+import { isPhotographType } from "@/components/photo/photo-fields";
 import {
   addRecordType,
   addSubtype,
