@@ -34,6 +34,68 @@ export interface ArchiveRecordEmailProps {
   message?: string
   records?: EmailRecord[]
   senderName?: string
+  /** FH / DS number -> public share URL, so recipients can open cited records. */
+  shareLinks?: Record<string, string>
+}
+
+/** Renders **bold**, *italic*, and FH/DS record numbers as clickable links. */
+function renderInline(text: string, shareLinks: Record<string, string>) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|FH-?\d{3,}|DS-?\d{3,})/g)
+  return parts.map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part))
+      return <strong key={i}>{renderInline(part.slice(2, -2), shareLinks)}</strong>
+    if (/^\*[^*]+\*$/.test(part))
+      return <em key={i}>{renderInline(part.slice(1, -1), shareLinks)}</em>
+    if (/^(FH|DS)-?\d{3,}$/.test(part)) {
+      const url = shareLinks[part.toUpperCase()] ?? shareLinks[part.toUpperCase().replace(/-/g, '')]
+      if (url)
+        return (
+          <Link key={i} href={url} style={recordLink}>
+            {part}
+          </Link>
+        )
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>
+  })
+}
+
+/** Message paragraphs with light markdown: headings, bullets, hr, bold/italic, record links. */
+function MessageBody({ message, shareLinks }: { message: string; shareLinks: Record<string, string> }) {
+  const blocks = message.trim().split(/\n{2,}/)
+  return (
+    <>
+      {blocks.map((block, i) => {
+        const lines = block.split('\n').filter((l) => l.trim())
+        if (!lines.length) return null
+
+        if (lines.every((l) => /^\s*-{3,}\s*$/.test(l))) return <Hr key={i} style={hr} />
+
+        if (/^#{1,4}\s/.test(lines[0]!) && lines.length === 1)
+          return (
+            <Text key={i} style={msgHeading}>
+              {renderInline(lines[0]!.replace(/^#{1,4}\s*/, ''), shareLinks)}
+            </Text>
+          )
+
+        if (lines.every((l) => /^\s*[-*]\s+/.test(l)))
+          return (
+            <Text key={i} style={body}>
+              {lines.map((l, j) => (
+                <React.Fragment key={j}>
+                  {j > 0 ? <br /> : null}• {renderInline(l.replace(/^\s*[-*]\s+/, ''), shareLinks)}
+                </React.Fragment>
+              ))}
+            </Text>
+          )
+
+        return (
+          <Text key={i} style={body}>
+            {renderInline(lines.join(' '), shareLinks)}
+          </Text>
+        )
+      })}
+    </>
+  )
 }
 
 const ArchiveRecordEmail = ({
