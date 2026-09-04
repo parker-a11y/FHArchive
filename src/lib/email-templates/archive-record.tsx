@@ -104,6 +104,7 @@ const ArchiveRecordEmail = ({
   message,
   records = [],
   senderName,
+  shareLinks = {},
 }: ArchiveRecordEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -123,15 +124,7 @@ const ArchiveRecordEmail = ({
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}
         </Section>
 
-        {message
-          ? message
-              .split(/\n{2,}/)
-              .map((para, i) => (
-                <Text key={i} style={body}>
-                  {para}
-                </Text>
-              ))
-          : null}
+        {message ? <MessageBody message={message} shareLinks={shareLinks} /> : null}
 
         {records.map((r, i) => (
           <Section key={i} style={card}>
