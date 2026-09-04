@@ -629,6 +629,30 @@ function QuickEntry() {
                     }}
                     placeholder="Select or add sender…"
                   />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setAuthorPerson, (v) => set("author", v), "Francis A. Harrington")
+                      }
+                    >
+                      Fran
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setAuthorPerson, (v) => set("author", v), "Jaquelyn Harrington")
+                      }
+                    >
+                      Jaq
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="field-label">To (recipient)</Label>
@@ -640,6 +664,30 @@ function QuickEntry() {
                     }}
                     placeholder="Select or add recipient…"
                   />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setRecipientPerson, (v) => set("recipient", v), "Francis A. Harrington")
+                      }
+                    >
+                      Fran
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setRecipientPerson, (v) => set("recipient", v), "Jaquelyn Harrington")
+                      }
+                    >
+                      Jaq
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="field-label">Mailing destination</Label>
@@ -648,6 +696,17 @@ function QuickEntry() {
                     onChange={(e) => set("destination", e.target.value)}
                     placeholder="Worcester, Massachusetts"
                   />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() => set("destination", "Worcester, Massachusetts")}
+                    >
+                      Worcester
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
