@@ -215,8 +215,22 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         continue;
       }
       added++;
-      // Derivatives are intentionally NOT generated here — they are produced
+      // A quick preview thumbnail is made now so the scan is recognisable while
+      // labelling. The full viewing JPEG (and a renamed thumbnail) are produced
       // only after "Confirm Upload Complete".
+      try {
+        step("Making preview thumbnail…");
+        await generatePreviewThumbnail(
+          letter.archive_id,
+          letter.id,
+          inserted.id as string,
+          masterPath,
+          file,
+        );
+        refresh();
+      } catch (err) {
+        console.warn("Preview thumbnail failed:", (err as Error).message);
+      }
     }
 
     setProgress(null);
