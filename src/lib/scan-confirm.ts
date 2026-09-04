@@ -270,3 +270,42 @@ export async function recordDerivativeFailure(
     error: message,
   } as never);
 }
+
+/**
+ * Makes a small preview thumbnail straight from the file being uploaded, so a
+ * master is recognisable in the identification grid before the batch is
+ * confirmed. The full derivative pass on confirm replaces it (and renames it to
+ * match the final archival filename).
+ */
+export async function generatePreviewThumbnail(
+  archiveId: string,
+  letterId: string,
+  fileId: string,
+  masterPath: string,
+  source: File,
+) {
+  if (!canDerive(source)) return;
+  const thumb = await makeThumbnail(source);
+  const thumbPath = `${archiveId}/derivatives/${basenameOf(masterPath)}_thumb.jpg`;
+  const { error: upErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(thumbPath, thumb.blob, { upsert: true, contentType: "image/jpeg" });
+  if (upErr) throw new Error(upErr.message);
+  await supabase
+    .from("file_derivatives")
+    .delete()
+    .eq("file_id", fileId)
+    .eq("kind", "thumbnail");
+  const { error } = await supabase.from("file_derivatives").insert({
+    letter_id: letterId,
+    file_id: fileId,
+    kind: "thumbnail",
+    status: "complete",
+    storage_path: thumbPath,
+    mime_type: "image/jpeg",
+    file_size: thumb.blob.size,
+    width: thumb.width,
+    height: thumb.height,
+  } as never);
+  if (error) throw error;
+}
