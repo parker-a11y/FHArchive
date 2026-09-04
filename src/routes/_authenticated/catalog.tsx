@@ -167,6 +167,20 @@ function QuickEntry() {
   }, []);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+  function pickPerson(
+    roleSetter: (p: PersonRoleValue) => void,
+    fieldSetter: (v: string) => void,
+    name: string,
+  ) {
+    const match = people.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    if (match) {
+      roleSetter({ id: match.id, name: match.name });
+      fieldSetter(match.name);
+    } else {
+      roleSetter(null);
+      fieldSetter(name);
+    }
+  }
   const isLetter = isLetterType(form.record_type);
   const recordTypeOptions = useRecordTypeOptions();
   const subtypeOptions = useSubtypeOptions(form.record_type);
