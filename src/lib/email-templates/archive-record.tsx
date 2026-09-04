@@ -34,6 +34,68 @@ export interface ArchiveRecordEmailProps {
   message?: string
   records?: EmailRecord[]
   senderName?: string
+  /** FH / DS number -> public share URL, so recipients can open cited records. */
+  shareLinks?: Record<string, string>
+}
+
+/** Renders **bold**, *italic*, and FH/DS record numbers as clickable links. */
+function renderInline(text: string, shareLinks: Record<string, string>) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|FH-?\d{3,}|DS-?\d{3,})/g)
+  return parts.map((part, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(part))
+      return <strong key={i}>{renderInline(part.slice(2, -2), shareLinks)}</strong>
+    if (/^\*[^*]+\*$/.test(part))
+      return <em key={i}>{renderInline(part.slice(1, -1), shareLinks)}</em>
+    if (/^(FH|DS)-?\d{3,}$/.test(part)) {
+      const url = shareLinks[part.toUpperCase()] ?? shareLinks[part.toUpperCase().replace(/-/g, '')]
+      if (url)
+        return (
+          <Link key={i} href={url} style={recordLink}>
+            {part}
+          </Link>
+        )
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>
+  })
+}
+
+/** Message paragraphs with light markdown: headings, bullets, hr, bold/italic, record links. */
+function MessageBody({ message, shareLinks }: { message: string; shareLinks: Record<string, string> }) {
+  const blocks = message.trim().split(/\n{2,}/)
+  return (
+    <>
+      {blocks.map((block, i) => {
+        const lines = block.split('\n').filter((l) => l.trim())
+        if (!lines.length) return null
+
+        if (lines.every((l) => /^\s*-{3,}\s*$/.test(l))) return <Hr key={i} style={hr} />
+
+        if (/^#{1,4}\s/.test(lines[0]!) && lines.length === 1)
+          return (
+            <Text key={i} style={msgHeading}>
+              {renderInline(lines[0]!.replace(/^#{1,4}\s*/, ''), shareLinks)}
+            </Text>
+          )
+
+        if (lines.every((l) => /^\s*[-*]\s+/.test(l)))
+          return (
+            <Text key={i} style={body}>
+              {lines.map((l, j) => (
+                <React.Fragment key={j}>
+                  {j > 0 ? <br /> : null}• {renderInline(l.replace(/^\s*[-*]\s+/, ''), shareLinks)}
+                </React.Fragment>
+              ))}
+            </Text>
+          )
+
+        return (
+          <Text key={i} style={body}>
+            {renderInline(lines.join(' '), shareLinks)}
+          </Text>
+        )
+      })}
+    </>
+  )
 }
 
 const ArchiveRecordEmail = ({
@@ -42,6 +104,7 @@ const ArchiveRecordEmail = ({
   message,
   records = [],
   senderName,
+  shareLinks = {},
 }: ArchiveRecordEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -61,15 +124,7 @@ const ArchiveRecordEmail = ({
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}
         </Section>
 
-        {message
-          ? message
-              .split(/\n{2,}/)
-              .map((para, i) => (
-                <Text key={i} style={body}>
-                  {para}
-                </Text>
-              ))
-          : null}
+        {message ? <MessageBody message={message} shareLinks={shareLinks} /> : null}
 
         {records.map((r, i) => (
           <Section key={i} style={card}>
@@ -115,6 +170,11 @@ const ArchiveRecordEmail = ({
             ? `Sent by ${senderName} from The Francis Files.`
             : 'Sent by The Francis Files.'}
         </Text>
+        {Object.keys(shareLinks).length ? (
+          <Text style={footer}>
+            Record links above open a private, read-only view of that item — no account needed.
+          </Text>
+        ) : null}
         {records[0]?.url ? (
           <Text style={footer}>
             <Link href={records[0].url} style={{ color: '#7a6a3f' }}>
@@ -178,6 +238,14 @@ const eyebrow = {
 const h1 = { margin: '0', fontSize: '24px', lineHeight: '32px', color: '#2f3327' }
 const subtitle = { margin: '8px 0 0', fontSize: '14px', color: '#6b7060' }
 const body = { fontSize: '15px', lineHeight: '24px', color: '#33372b' }
+const msgHeading = {
+  fontSize: '17px',
+  lineHeight: '26px',
+  color: '#2f3327',
+  fontWeight: 'bold' as const,
+  margin: '22px 0 6px',
+}
+const recordLink = { color: '#8a6a1f', textDecoration: 'underline', fontWeight: 'bold' as const }
 const card = {
   backgroundColor: '#faf7f0',
   border: '1px solid #e4dcc7',

@@ -47,13 +47,31 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     if (data.recipients.length === 0) throw new Error("Add at least one valid email address.");
     if (!data.subject) throw new Error("A subject is required.");
 
-    const { buildRecords, rememberContacts } = await import("@/lib/archive-email.server");
+    const { buildRecords, rememberContacts, ensureShareLinksForRefs } = await import(
+      "@/lib/archive-email.server"
+    );
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
 
     const records = await buildRecords(db as never, context.userId, data.records, {
       includeTranscription: data.includeTranscription,
       includeImages: data.includeImages,
     });
+
+    /**
+     * Any FH / DS number written in the message body (e.g. Ask Francis
+     * citations) becomes a clickable public link in the email — the same
+     * unlisted share tokens the weekly recap uses.
+     */
+    const mentionedRefs = data.message.match(/(FH|DS)-?\d{3,}/gi) ?? [];
+    const shareLinks =
+      mentionedRefs.length > 0
+        ? await ensureShareLinksForRefs(
+            db as never,
+            context.userId,
+            mentionedRefs,
+            data.includeTranscription,
+          )
+        : {};
 
     const { data: logRow } = await db
       .from("archive_emails")
@@ -95,6 +113,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
             headerTitle: data.headerTitle || data.subject,
             headerSubtitle: data.headerSubtitle || undefined,
             message: data.message || undefined,
+            shareLinks,
             senderName: "The Francis Files",
             records: records.map((r) => ({
               identifier: r.identifier,
