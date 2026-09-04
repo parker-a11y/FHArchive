@@ -86,7 +86,11 @@ export async function fetchDigitalFiles(letterId: string): Promise<DigitalFileWi
         .sort(byPath);
       const thumb = thumbs[0];
       const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
-      const viewPath = jpegs[0]?.storage_path ?? (browserViewable ? f.master_path : null);
+      const viewPath =
+        jpegs[0]?.storage_path ??
+        (browserViewable ? f.master_path : null) ??
+        thumb?.storage_path ??
+        null;
       const thumbPath = thumb?.storage_path ?? viewPath;
       const pdf = isPdfMaster(f);
       const [viewUrl, thumbUrl, pdfUrl, pageUrls, pageThumbs] = await Promise.all([
