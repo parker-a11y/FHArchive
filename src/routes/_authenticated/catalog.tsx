@@ -26,7 +26,7 @@ import {
   labelDate,
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
-import { PersonCombobox } from "@/components/PersonCombobox";
+import { PersonCombobox, usePeopleNames } from "@/components/PersonCombobox";
 import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
 import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
 import { linkLetterPeople } from "@/lib/letter-people";
@@ -148,6 +148,7 @@ function QuickEntry() {
   const dateRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { data: people = [] } = usePeopleNames();
 
   async function loadNext() {
     try {
@@ -166,6 +167,20 @@ function QuickEntry() {
   }, []);
 
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+  function pickPerson(
+    roleSetter: (p: PersonRoleValue) => void,
+    fieldSetter: (v: string) => void,
+    name: string,
+  ) {
+    const match = people.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    if (match) {
+      roleSetter({ id: match.id, name: match.name });
+      fieldSetter(match.name);
+    } else {
+      roleSetter(null);
+      fieldSetter(name);
+    }
+  }
   const isLetter = isLetterType(form.record_type);
   const recordTypeOptions = useRecordTypeOptions();
   const subtypeOptions = useSubtypeOptions(form.record_type);
@@ -614,6 +629,30 @@ function QuickEntry() {
                     }}
                     placeholder="Select or add sender…"
                   />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setAuthorPerson, (v) => set("author", v), "Francis A. Harrington")
+                      }
+                    >
+                      Fran
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setAuthorPerson, (v) => set("author", v), "Jaquelyn Harrington")
+                      }
+                    >
+                      Jaq
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="field-label">To (recipient)</Label>
@@ -625,6 +664,30 @@ function QuickEntry() {
                     }}
                     placeholder="Select or add recipient…"
                   />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setRecipientPerson, (v) => set("recipient", v), "Francis A. Harrington")
+                      }
+                    >
+                      Fran
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() =>
+                        pickPerson(setRecipientPerson, (v) => set("recipient", v), "Jaquelyn Harrington")
+                      }
+                    >
+                      Jaq
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="field-label">Mailing destination</Label>
@@ -633,6 +696,17 @@ function QuickEntry() {
                     onChange={(e) => set("destination", e.target.value)}
                     placeholder="Worcester, Massachusetts"
                   />
+                  <div className="flex gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs"
+                      onClick={() => set("destination", "Worcester, Massachusetts")}
+                    >
+                      Worcester
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
