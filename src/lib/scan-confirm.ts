@@ -8,7 +8,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
-import { canDerive, makeDerivatives } from "@/lib/derivatives";
+import { canDerive, makeDerivatives, makeThumbnail } from "@/lib/derivatives";
 import { rotateBlob } from "@/lib/rotate";
 import { basenameOf, extensionOf } from "@/lib/scan-rename";
 import type { DigitalFileWithDerivatives } from "@/lib/digital-files";
