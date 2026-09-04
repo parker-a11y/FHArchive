@@ -217,6 +217,12 @@ export async function generateDerivatives(
   ]);
   if (v.error || t.error) throw new Error(v.error?.message ?? t.error?.message ?? "Upload failed");
 
+  // Drop any earlier preview thumbnail stored under the pre-rename filename.
+  const stale = file.derivatives
+    .map((d) => d.storage_path)
+    .filter((p): p is string => !!p && p !== viewPath && p !== thumbPath);
+  if (stale.length) await supabase.storage.from(BUCKET).remove(stale);
+
   // Replace any previous derivative rows for this master (paths are upserted).
   await supabase
     .from("file_derivatives")
