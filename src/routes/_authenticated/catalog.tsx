@@ -388,6 +388,26 @@ function QuickEntry() {
                 value={form.primary_person}
                 onChange={(v) => set("primary_person", v)}
               />
+              <div className="flex gap-1.5 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => set("primary_person", "Francis A. Harrington")}
+                >
+                  Fran
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => set("primary_person", "Jaquelyn Harrington")}
+                >
+                  Jaq
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 The single main subject of this record — add everyone else under People with roles.
               </p>
