@@ -27,6 +27,7 @@ import {
   derivativeFailed,
   generateDerivatives,
   generatePdfPageDerivatives,
+  generatePreviewThumbnail,
   hasJpeg,
   hasThumb,
   isNamed,
