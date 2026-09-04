@@ -170,6 +170,11 @@ const ArchiveRecordEmail = ({
             ? `Sent by ${senderName} from The Francis Files.`
             : 'Sent by The Francis Files.'}
         </Text>
+        {Object.keys(shareLinks).length ? (
+          <Text style={footer}>
+            Record links above open a private, read-only view of that item — no account needed.
+          </Text>
+        ) : null}
         {records[0]?.url ? (
           <Text style={footer}>
             <Link href={records[0].url} style={{ color: '#7a6a3f' }}>
@@ -233,6 +238,14 @@ const eyebrow = {
 const h1 = { margin: '0', fontSize: '24px', lineHeight: '32px', color: '#2f3327' }
 const subtitle = { margin: '8px 0 0', fontSize: '14px', color: '#6b7060' }
 const body = { fontSize: '15px', lineHeight: '24px', color: '#33372b' }
+const msgHeading = {
+  fontSize: '17px',
+  lineHeight: '26px',
+  color: '#2f3327',
+  fontWeight: 'bold' as const,
+  margin: '22px 0 6px',
+}
+const recordLink = { color: '#8a6a1f', textDecoration: 'underline', fontWeight: 'bold' as const }
 const card = {
   backgroundColor: '#faf7f0',
   border: '1px solid #e4dcc7',
