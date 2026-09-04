@@ -146,6 +146,20 @@ export function canDerive(file: File) {
   );
 }
 
+/** Reads a master and returns just the small gallery thumbnail. */
+export async function makeThumbnail(file: File): Promise<DerivedImage> {
+  const source = /\.tiff?$/i.test(file.name) || /tiff/i.test(file.type)
+    ? await decodeTiff(file)
+    : await decodeBrowserImage(file);
+  if (source.width < 2 || source.height < 2) {
+    throw new Error("Image decoded with no usable pixel dimensions");
+  }
+  const thumb = await scaleTo(source, THUMB_MAX, 0.8);
+  source.canvas.width = 0;
+  source.canvas.height = 0;
+  return thumb;
+}
+
 /** Reads the master and returns a JPEG viewing copy plus a gallery thumbnail. */
 export async function makeDerivatives(file: File): Promise<DerivedSet> {
   const source = /\.tiff?$/i.test(file.name) || /tiff/i.test(file.type)
