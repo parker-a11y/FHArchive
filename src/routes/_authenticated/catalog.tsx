@@ -148,6 +148,7 @@ function QuickEntry() {
   const dateRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { data: people = [] } = usePeopleNames();
 
   async function loadNext() {
     try {
