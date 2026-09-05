@@ -34,6 +34,7 @@ import {
 
   type LucideIcon,
   Star,
+  Eye,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
