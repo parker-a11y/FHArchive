@@ -547,13 +547,15 @@ function LetterPage() {
 
         <TabsContent value="catalog" className="mt-6">
           {isPhotographType(form.record_type as string) ? (
-            <fieldset disabled={isGuestViewer} className="mb-6">
-              <PhotoRecordView
-                letterId={letter.id}
-                archiveId={letter.archive_id}
-                form={form}
-                set={set}
-              />
+            <div className="mb-6">
+              <fieldset disabled={isGuestViewer} className="contents">
+                <PhotoRecordView
+                  letterId={letter.id}
+                  archiveId={letter.archive_id}
+                  form={form}
+                  set={set}
+                />
+              </fieldset>
               <button
                 type="button"
                 onClick={() => setShowAllFields((v) => !v)}
@@ -561,7 +563,7 @@ function LetterPage() {
               >
                 {showAllFields ? "Hide archival fields" : "Show all archival fields"}
               </button>
-            </fieldset>
+            </div>
           ) : (
             <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
           )}
