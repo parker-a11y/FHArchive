@@ -46,6 +46,7 @@ import { StarToggle } from "@/components/StarToggle";
 import { usePostalServiceOptions } from "@/lib/postal";
 import { FffBadge } from "@/components/FffBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -54,6 +55,7 @@ const searchSchema = z.object({
   tstatus: z.string().optional(),
   review: z.string().optional(),
   scan: z.string().optional(), // "has" | "none"
+  health: z.string().optional(), // "green" | "yellow" | "red" | "needs_attention"
 
   uncertain: z.coerce.string().optional(), // "1"
   starred: z.coerce.string().optional(), // "1"
@@ -174,8 +176,16 @@ function LettersTable() {
   const [rType, setRType] = useState(search.type ?? "");
   const [review, setReview] = useState(search.review ?? "");
   const [scanF, setScanF] = useState(search.scan ?? "");
+  const [health, setHealth] = useState<
+    "" | "green" | "yellow" | "red" | "needs_attention"
+  >(
+    (search.health as "" | "green" | "yellow" | "red" | "needs_attention") ??
+      "",
+  );
   const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
   const [starredOnly, setStarredOnly] = useState(search.starred === "1");
+  const [showCorrespondence, setShowCorrespondence] = useState(false);
+  const [compact, setCompact] = useState(false);
 
   // Keep filters in sync when arriving from a dashboard stat link.
   useEffect(() => {
@@ -184,6 +194,10 @@ function LettersTable() {
     setTStatus(search.tstatus ?? "");
     setReview(search.review ?? "");
     setScanF(search.scan ?? "");
+    setHealth(
+      (search.health as "" | "green" | "yellow" | "red" | "needs_attention") ??
+        "",
+    );
     setUncertainOnly(search.uncertain === "1");
     setStarredOnly(search.starred === "1");
   }, [search]);
@@ -225,7 +239,29 @@ function LettersTable() {
   // Any filter change goes back to page 1.
   useEffect(() => {
     setPage(0);
-  }, [postal, forwardedOnly, debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort, debouncedSalutation, debouncedAddressee, debouncedClosing, debouncedSignature]);
+  }, [
+    postal,
+    forwardedOnly,
+    debouncedQ,
+    period,
+    tStatus,
+    rType,
+    review,
+    scanF,
+    health,
+    uncertainOnly,
+    starredOnly,
+    idStatus,
+    dStatus,
+    digStatus,
+    tones,
+    view,
+    sort,
+    debouncedSalutation,
+    debouncedAddressee,
+    debouncedClosing,
+    debouncedSignature,
+  ]);
 
   const params: LetterSearchParams = {
     q: debouncedQ,
@@ -234,6 +270,7 @@ function LettersTable() {
     tstatus: tStatus,
     review,
     scan: scanF as "" | "has" | "none",
+    health,
     uncertain: uncertainOnly,
     starred: starredOnly,
     idStatus,
@@ -365,6 +402,7 @@ function LettersTable() {
     setRType("");
     setReview("");
     setScanF("");
+    setHealth("");
     setUncertainOnly(false);
     setIdStatus("");
     setDStatus("");
@@ -390,6 +428,7 @@ function LettersTable() {
     rType,
     review,
     scanF,
+    health,
     idStatus,
     dStatus,
     digStatus,
@@ -538,8 +577,6 @@ function LettersTable() {
             </option>
           ))}
         </select>
-
-
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
           value={period}
@@ -589,6 +626,26 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={health}
+          onChange={(e) =>
+            setHealth(
+              e.target.value as
+                | ""
+                | "green"
+                | "yellow"
+                | "red"
+                | "needs_attention",
+            )
+          }
+        >
+          <option value="">All health</option>
+          <option value="green">Green — ready</option>
+          <option value="yellow">Yellow — scans, transcription pending</option>
+          <option value="red">Red — no scans or problem</option>
+          <option value="needs_attention">Needs attention (yellow + red)</option>
+        </select>
         <div className="w-60">
           <ToneMultiSelect
             value={tones}
@@ -596,33 +653,6 @@ function LettersTable() {
             placeholder="All tones / sentiments"
           />
         </div>
-
-
-
-        <Input
-          className="h-9 w-40"
-          placeholder="Salutation…"
-          value={salutation}
-          onChange={(e) => setSalutation(e.target.value)}
-        />
-        <Input
-          className="h-9 w-40"
-          placeholder="Addressee…"
-          value={addressee}
-          onChange={(e) => setAddressee(e.target.value)}
-        />
-        <Input
-          className="h-9 w-36"
-          placeholder="Closing…"
-          value={closing}
-          onChange={(e) => setClosing(e.target.value)}
-        />
-        <Input
-          className="h-9 w-36"
-          placeholder="Signature…"
-          value={signature}
-          onChange={(e) => setSignature(e.target.value)}
-        />
 
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
@@ -643,17 +673,6 @@ function LettersTable() {
           onClick={() => setForwardedOnly((v) => !v)}
         >
           Forwarded only
-        </Button>
-
-        <Button
-          variant={starredOnly ? "default" : "outline"}
-          size="sm"
-          className="gap-2"
-          aria-pressed={starredOnly}
-          onClick={() => setStarredOnly((v) => !v)}
-        >
-          <FffBadge size={16} muted={!starredOnly} />
-          FFF only
         </Button>
 
         <Button
@@ -690,6 +709,94 @@ function LettersTable() {
           ))}
         </div>
       </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 sm:px-8 py-2">
+        <span className="text-xs text-muted-foreground">Quick filters:</span>
+        {[
+          {
+            key: "needs_attention",
+            label: "Needs attention",
+            active: health === "needs_attention",
+            onClick: () =>
+              setHealth((h) => (h === "needs_attention" ? "" : "needs_attention")),
+          },
+          {
+            key: "pending_transcription",
+            label: "Pending transcription",
+            active: health === "yellow",
+            onClick: () => setHealth((h) => (h === "yellow" ? "" : "yellow")),
+          },
+          {
+            key: "no_scans",
+            label: "No scans",
+            active: health === "red",
+            onClick: () => setHealth((h) => (h === "red" ? "" : "red")),
+          },
+          {
+            key: "starred",
+            label: "Starred",
+            active: starredOnly,
+            onClick: () => setStarredOnly((v) => !v),
+          },
+        ].map((chip) => (
+          <Button
+            key={chip.key}
+            variant={chip.active ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={chip.onClick}
+          >
+            {chip.label}
+          </Button>
+        ))}
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant={showCorrespondence ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setShowCorrespondence((v) => !v)}
+          >
+            Correspondence filters
+          </Button>
+          <Button
+            variant={compact ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setCompact((v) => !v)}
+          >
+            Compact
+          </Button>
+        </div>
+      </div>
+
+      {showCorrespondence && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 sm:px-8 py-2">
+          <Input
+            className="h-8 w-40"
+            placeholder="Salutation…"
+            value={salutation}
+            onChange={(e) => setSalutation(e.target.value)}
+          />
+          <Input
+            className="h-8 w-40"
+            placeholder="Addressee…"
+            value={addressee}
+            onChange={(e) => setAddressee(e.target.value)}
+          />
+          <Input
+            className="h-8 w-36"
+            placeholder="Closing…"
+            value={closing}
+            onChange={(e) => setClosing(e.target.value)}
+          />
+          <Input
+            className="h-8 w-36"
+            placeholder="Signature…"
+            value={signature}
+            onChange={(e) => setSignature(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-3 border-b border-border px-4 sm:px-8 py-2 text-sm">
         <Button
@@ -790,8 +897,19 @@ function LettersTable() {
           </thead>
           <tbody>
             {rows.map((l) => (
-              <tr key={l.id} className="border-b border-border hover:bg-muted/50">
-                <td className="px-2 py-1.5 align-top">
+              <tr
+                key={l.id}
+                className={cn(
+                  "border-b border-border hover:bg-muted/50",
+                  compact && "leading-tight",
+                )}
+              >
+                <td
+                  className={cn(
+                    "px-2 align-top",
+                    compact ? "py-0.5" : "py-1.5",
+                  )}
+                >
                   {isAdmin && (
                     <Checkbox
                       aria-label={`Select ${l.archive_id}`}
@@ -805,7 +923,10 @@ function LettersTable() {
                   return (
                     <td
                       key={c.key}
-                      className="truncate px-3 py-1.5 align-top"
+                      className={cn(
+                        "truncate align-top",
+                        compact ? "px-2 py-0.5" : "px-3 py-1.5",
+                      )}
                       style={{ maxWidth: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
                       onDoubleClick={() =>
                         c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
