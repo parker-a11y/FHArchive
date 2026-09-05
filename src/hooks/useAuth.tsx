@@ -34,11 +34,31 @@ const AuthContext = createContext<AuthState>({
   canEdit: false,
   isGuestViewer: false,
   canReadArchive: false,
+  guestPreview: false,
+  canEditForReal: false,
+  setGuestPreview: () => {},
 });
+
+const GUEST_PREVIEW_KEY = "fh-guest-preview";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guestPreview, setGuestPreviewState] = useState(false);
+
+  // Read the saved preference after hydration so SSR markup stays stable.
+  useEffect(() => {
+    setGuestPreviewState(localStorage.getItem(GUEST_PREVIEW_KEY) === "1");
+  }, []);
+
+  function setGuestPreview(v: boolean) {
+    setGuestPreviewState(v);
+    try {
+      localStorage.setItem(GUEST_PREVIEW_KEY, v ? "1" : "0");
+    } catch {
+      /* storage unavailable — preview still applies for this session */
+    }
+  }
   const [access, setAccess] = useState({
     isAdmin: false,
     isApprovedGuest: false,
