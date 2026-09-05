@@ -395,6 +395,7 @@ function LettersTable() {
     setRType("");
     setReview("");
     setScanF("");
+    setHealth("");
     setUncertainOnly(false);
     setIdStatus("");
     setDStatus("");
@@ -420,6 +421,7 @@ function LettersTable() {
     rType,
     review,
     scanF,
+    health,
     idStatus,
     dStatus,
     digStatus,
