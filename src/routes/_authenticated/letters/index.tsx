@@ -194,7 +194,10 @@ function LettersTable() {
     setTStatus(search.tstatus ?? "");
     setReview(search.review ?? "");
     setScanF(search.scan ?? "");
-    setHealth((search.health as "" | "green" | "yellow" | "red") ?? "");
+    setHealth(
+      (search.health as "" | "green" | "yellow" | "red" | "needs_attention") ??
+        "",
+    );
     setUncertainOnly(search.uncertain === "1");
     setStarredOnly(search.starred === "1");
   }, [search]);
