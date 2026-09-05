@@ -627,13 +627,21 @@ function LettersTable() {
           className="h-8 rounded border border-input bg-background px-2 text-sm"
           value={health}
           onChange={(e) =>
-            setHealth(e.target.value as "" | "green" | "yellow" | "red")
+            setHealth(
+              e.target.value as
+                | ""
+                | "green"
+                | "yellow"
+                | "red"
+                | "needs_attention",
+            )
           }
         >
           <option value="">All health</option>
           <option value="green">Green — ready</option>
           <option value="yellow">Yellow — scans, transcription pending</option>
           <option value="red">Red — no scans or problem</option>
+          <option value="needs_attention">Needs attention (yellow + red)</option>
         </select>
         <div className="w-60">
           <ToneMultiSelect
