@@ -564,8 +564,8 @@ function LetterPage() {
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
           <TabsTrigger value="related">Related</TabsTrigger>
-          <TabsTrigger value="ai">AI Analysis</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          {!isGuestViewer && <TabsTrigger value="ai">AI Analysis</TabsTrigger>}
+          {!isGuestViewer && <TabsTrigger value="history">History</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
@@ -579,20 +579,25 @@ function LetterPage() {
                   set={set}
                 />
               </fieldset>
-              <button
-                type="button"
-                onClick={() => setShowAllFields((v) => !v)}
-                className="mt-6 text-sm text-primary underline"
-              >
-                {showAllFields ? "Hide archival fields" : "Show all archival fields"}
-              </button>
+              {!isGuestViewer && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllFields((v) => !v)}
+                  className="mt-6 text-sm text-primary underline"
+                >
+                  {showAllFields ? "Hide archival fields" : "Show all archival fields"}
+                </button>
+              )}
             </div>
           ) : (
             <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
           )}
-          {/* Guests browse in read-only mode — the disabled fieldset blocks edits
-              in every input/button below without changing the layout. */}
-          <fieldset disabled={isGuestViewer} className="contents">
+          {/* View-only accounts get a clean read-only catalog instead of the
+              editing form: no inputs, no empty fields, no workflow metadata. */}
+          {isGuestViewer ? (
+            <ReadOnlyCatalog letter={letter} />
+          ) : (
+          <fieldset className="contents">
           <div
             className={
               isPhotographType(form.record_type as string) && !showAllFields
