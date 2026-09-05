@@ -121,7 +121,7 @@ function OnThisDate() {
       <PageHeader
         title="On This Date"
         description={prettyDate(date)}
-        action={
+        actions={
           <Button variant="outline" size="sm" onClick={() => router.history.back()}>
             <ArrowLeft className="mr-1 size-4" /> Back
           </Button>
