@@ -570,8 +570,6 @@ function LettersTable() {
             </option>
           ))}
         </select>
-
-
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
           value={period}
@@ -621,6 +619,18 @@ function LettersTable() {
             </option>
           ))}
         </select>
+        <select
+          className="h-8 rounded border border-input bg-background px-2 text-sm"
+          value={health}
+          onChange={(e) =>
+            setHealth(e.target.value as "" | "green" | "yellow" | "red")
+          }
+        >
+          <option value="">All health</option>
+          <option value="green">Green — ready</option>
+          <option value="yellow">Yellow — scans, transcription pending</option>
+          <option value="red">Red — no scans or problem</option>
+        </select>
         <div className="w-60">
           <ToneMultiSelect
             value={tones}
@@ -628,33 +638,6 @@ function LettersTable() {
             placeholder="All tones / sentiments"
           />
         </div>
-
-
-
-        <Input
-          className="h-9 w-40"
-          placeholder="Salutation…"
-          value={salutation}
-          onChange={(e) => setSalutation(e.target.value)}
-        />
-        <Input
-          className="h-9 w-40"
-          placeholder="Addressee…"
-          value={addressee}
-          onChange={(e) => setAddressee(e.target.value)}
-        />
-        <Input
-          className="h-9 w-36"
-          placeholder="Closing…"
-          value={closing}
-          onChange={(e) => setClosing(e.target.value)}
-        />
-        <Input
-          className="h-9 w-36"
-          placeholder="Signature…"
-          value={signature}
-          onChange={(e) => setSignature(e.target.value)}
-        />
 
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
@@ -675,17 +658,6 @@ function LettersTable() {
           onClick={() => setForwardedOnly((v) => !v)}
         >
           Forwarded only
-        </Button>
-
-        <Button
-          variant={starredOnly ? "default" : "outline"}
-          size="sm"
-          className="gap-2"
-          aria-pressed={starredOnly}
-          onClick={() => setStarredOnly((v) => !v)}
-        >
-          <FffBadge size={16} muted={!starredOnly} />
-          FFF only
         </Button>
 
         <Button
@@ -722,6 +694,96 @@ function LettersTable() {
           ))}
         </div>
       </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 sm:px-8 py-2">
+        <span className="text-xs text-muted-foreground">Quick filters:</span>
+        {[
+          {
+            key: "needs_attention",
+            label: "Needs attention",
+            active: health === "yellow" || health === "red",
+            onClick: () =>
+              setHealth((h) =>
+                h === "yellow" || h === "red" ? "" : "yellow",
+              ),
+          },
+          {
+            key: "pending_transcription",
+            label: "Pending transcription",
+            active: health === "yellow",
+            onClick: () => setHealth((h) => (h === "yellow" ? "" : "yellow")),
+          },
+          {
+            key: "no_scans",
+            label: "No scans",
+            active: health === "red",
+            onClick: () => setHealth((h) => (h === "red" ? "" : "red")),
+          },
+          {
+            key: "starred",
+            label: "Starred",
+            active: starredOnly,
+            onClick: () => setStarredOnly((v) => !v),
+          },
+        ].map((chip) => (
+          <Button
+            key={chip.key}
+            variant={chip.active ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={chip.onClick}
+          >
+            {chip.label}
+          </Button>
+        ))}
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant={showCorrespondence ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setShowCorrespondence((v) => !v)}
+          >
+            Correspondence filters
+          </Button>
+          <Button
+            variant={compact ? "default" : "outline"}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => setCompact((v) => !v)}
+          >
+            Compact
+          </Button>
+        </div>
+      </div>
+
+      {showCorrespondence && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 sm:px-8 py-2">
+          <Input
+            className="h-8 w-40"
+            placeholder="Salutation…"
+            value={salutation}
+            onChange={(e) => setSalutation(e.target.value)}
+          />
+          <Input
+            className="h-8 w-40"
+            placeholder="Addressee…"
+            value={addressee}
+            onChange={(e) => setAddressee(e.target.value)}
+          />
+          <Input
+            className="h-8 w-36"
+            placeholder="Closing…"
+            value={closing}
+            onChange={(e) => setClosing(e.target.value)}
+          />
+          <Input
+            className="h-8 w-36"
+            placeholder="Signature…"
+            value={signature}
+            onChange={(e) => setSignature(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="flex items-center gap-3 border-b border-border px-4 sm:px-8 py-2 text-sm">
         <Button
