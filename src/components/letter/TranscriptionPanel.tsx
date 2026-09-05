@@ -156,7 +156,7 @@ function PageEditor({
                 </Button>
               </>
             )}
-            {record?.ai_text && (
+            {record?.ai_text && !readOnly && (
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer">Original AI transcription</summary>
                 <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded border border-archive-ai/40 bg-archive-ai-surface p-2 text-[11px]">

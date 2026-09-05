@@ -16,6 +16,11 @@ type AuthState = {
   /** Approved guest without admin rights — view-only experience. */
   isGuestViewer: boolean;
   canReadArchive: boolean;
+  /** True when an admin/archivist is previewing the read-only guest experience. */
+  guestPreview: boolean;
+  /** True when the real account may edit, regardless of guest preview. */
+  canEditForReal: boolean;
+  setGuestPreview: (v: boolean) => void;
 };
 
 const AuthContext = createContext<AuthState>({
@@ -29,11 +34,31 @@ const AuthContext = createContext<AuthState>({
   canEdit: false,
   isGuestViewer: false,
   canReadArchive: false,
+  guestPreview: false,
+  canEditForReal: false,
+  setGuestPreview: () => {},
 });
+
+const GUEST_PREVIEW_KEY = "fh-guest-preview";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guestPreview, setGuestPreviewState] = useState(false);
+
+  // Read the saved preference after hydration so SSR markup stays stable.
+  useEffect(() => {
+    setGuestPreviewState(localStorage.getItem(GUEST_PREVIEW_KEY) === "1");
+  }, []);
+
+  function setGuestPreview(v: boolean) {
+    setGuestPreviewState(v);
+    try {
+      localStorage.setItem(GUEST_PREVIEW_KEY, v ? "1" : "0");
+    } catch {
+      /* storage unavailable — preview still applies for this session */
+    }
+  }
   const [access, setAccess] = useState({
     isAdmin: false,
     isApprovedGuest: false,
@@ -114,9 +139,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         ...access,
-        canEdit: access.isAdmin || access.isArchivist,
+        // While previewing as a guest, staff see exactly the guest experience.
+        isAdmin: access.isAdmin && !guestPreview,
+        isArchivist: access.isArchivist && !guestPreview,
+        canEdit: (access.isAdmin || access.isArchivist) && !guestPreview,
         // Read-only viewers: approved guests without editing rights.
-        isGuestViewer: access.canReadArchive && !access.isAdmin && !access.isArchivist,
+        isGuestViewer:
+          access.canReadArchive && (guestPreview || (!access.isAdmin && !access.isArchivist)),
+        guestPreview,
+        canEditForReal: access.isAdmin || access.isArchivist,
+        setGuestPreview,
       }}
     >
       {children}
