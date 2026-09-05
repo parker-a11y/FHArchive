@@ -46,6 +46,7 @@ import { StarToggle } from "@/components/StarToggle";
 import { usePostalServiceOptions } from "@/lib/postal";
 import { FffBadge } from "@/components/FffBadge";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
