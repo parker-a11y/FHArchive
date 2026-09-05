@@ -175,8 +175,13 @@ function LettersTable() {
   const [rType, setRType] = useState(search.type ?? "");
   const [review, setReview] = useState(search.review ?? "");
   const [scanF, setScanF] = useState(search.scan ?? "");
+  const [health, setHealth] = useState<"" | "green" | "yellow" | "red">(
+    (search.health as "" | "green" | "yellow" | "red") ?? "",
+  );
   const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
   const [starredOnly, setStarredOnly] = useState(search.starred === "1");
+  const [showCorrespondence, setShowCorrespondence] = useState(false);
+  const [compact, setCompact] = useState(false);
 
   // Keep filters in sync when arriving from a dashboard stat link.
   useEffect(() => {
@@ -185,6 +190,7 @@ function LettersTable() {
     setTStatus(search.tstatus ?? "");
     setReview(search.review ?? "");
     setScanF(search.scan ?? "");
+    setHealth((search.health as "" | "green" | "yellow" | "red") ?? "");
     setUncertainOnly(search.uncertain === "1");
     setStarredOnly(search.starred === "1");
   }, [search]);
