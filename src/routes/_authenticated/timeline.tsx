@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
+import { DateLink } from "@/components/DateLink";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -115,7 +116,9 @@ function Timeline() {
               >
                 <div className="flex items-baseline gap-4">
                   <span className="archive-id text-sm text-primary">{l.archive_id}</span>
-                  <span className="text-sm font-medium">{displayDate(l)}</span>
+                  <span className="text-sm font-medium">
+                    <DateLink date={l.normalized_date}>{displayDate(l)}</DateLink>
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     {l.author || "—"} → {l.recipient || "—"}
                   </span>
