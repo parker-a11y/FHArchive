@@ -212,7 +212,7 @@ function Stat({
 
 function Dashboard() {
   const navigate = useNavigate();
-  const { isGuestViewer } = useAuth();
+  const { isGuestViewer, canEditForReal, guestPreview, setGuestPreview } = useAuth();
   // All aggregate counts come from one database-side call — no table downloads.
   const { data: stats0, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
