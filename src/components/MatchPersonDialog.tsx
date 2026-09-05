@@ -51,8 +51,18 @@ export function usePersonMatcher() {
   const [remember, setRemember] = useState(true);
   const [matchingBusy, setMatchingBusy] = useState(false);
   const [creatingBusy, setCreatingBusy] = useState(false);
+  const [allPeople, setAllPeople] = useState<{ id: string; name: string }[]>([]);
+  const [browse, setBrowse] = useState("");
   const pendingRef = useRef<Pending | null>(null);
   const pendingCreateRef = useRef<PendingCreate | null>(null);
+
+  const filteredPeople = useMemo(() => {
+    const q = browse.trim().toLowerCase();
+    const list = q
+      ? allPeople.filter((p) => p.name.toLowerCase().includes(q))
+      : allPeople;
+    return [...list].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 50);
+  }, [allPeople, browse]);
 
   /** Ask for explicit confirmation before inserting a new person record. */
   const confirmCreate = useCallback(
