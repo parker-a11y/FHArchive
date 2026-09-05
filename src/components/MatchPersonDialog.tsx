@@ -83,6 +83,15 @@ export function usePersonMatcher() {
       if (result.kind === "exact") return result.person;
       if (result.kind === "new") return await confirmCreate(name);
 
+      // Load the full people list so the user can match to ANY record, not
+      // just the fuzzy candidates.
+      const { data: everyone } = await supabase
+        .from("people")
+        .select("id,name")
+        .order("name");
+      setAllPeople((everyone ?? []) as { id: string; name: string }[]);
+      setBrowse("");
+
       return await new Promise<ResolvedPerson>((resolve) => {
         const next: Pending = { proposed: name, candidates: result.candidates, resolve };
         pendingRef.current = next;
@@ -123,7 +132,9 @@ export function usePersonMatcher() {
 
     setMatchingBusy(true);
     try {
-      const match = current.candidates.find((c) => c.id === choice);
+      const match =
+        current.candidates.find((c) => c.id === choice) ??
+        allPeople.find((p) => p.id === choice);
       if (!match) return;
       if (remember) await addPersonAlias(match.id, current.proposed);
       finish({ id: match.id, name: match.name });
