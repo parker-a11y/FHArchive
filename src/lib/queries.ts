@@ -228,6 +228,7 @@ export async function searchLetters(p: LetterSearchParams): Promise<LetterPage> 
     p_starred: p.starred ?? false,
     p_postal: p.postal || null,
     p_forwarded: p.forwarded ?? false,
+    p_health: p.health || null,
     p_sort: p.sort ?? "fh_seq",
     p_dir: p.dir ?? "asc",
     p_limit: p.limit ?? 100,
