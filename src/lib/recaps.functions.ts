@@ -8,10 +8,24 @@ async function assertAdmin(context: any) {
     _user_id: context.userId,
     _role: "admin",
   });
-  if (!isAdmin) throw new Error("Only an administrator can generate Weekly Recaps.");
+  if (!isAdmin) throw new Error("Only an administrator can do that.");
+  return true;
 }
 
-/** "Generate Weekly Recap now" / regenerate a past week — admins only. */
+/** Anyone with archive access — admins, archivists and view-only guests. */
+async function assertArchiveAccess(context: any) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [{ data: canRead }, { data: canEdit }] = await Promise.all([
+    supabaseAdmin.rpc("can_read_archive", { _user_id: context.userId }),
+    supabaseAdmin.rpc("can_edit_archive", { _user_id: context.userId }),
+  ]);
+  if (!canRead && !canEdit) throw new Error("You do not have access to the archive.");
+}
+
+/**
+ * "Generate Weekly Recap now". Any approved account may generate the recap for
+ * a week that has none; replacing an existing week's recap stays with admins.
+ */
 export const generateWeeklyRecap = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { weekStart?: string; mode?: "current" | "scheduled" } | undefined) => ({
@@ -19,11 +33,15 @@ export const generateWeeklyRecap = createServerFn({ method: "POST" })
     mode: data?.mode === "scheduled" ? ("scheduled" as const) : ("current" as const),
   }))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertArchiveAccess(context);
+    if (data.weekStart) {
+      await assertAdmin(context);
+      return (await import("@/lib/recaps/weekly.server")).runWeeklyRecap("week", {
+        weekStart: data.weekStart,
+      });
+    }
     const { runWeeklyRecap } = await import("@/lib/recaps/weekly.server");
-    return data.weekStart
-      ? runWeeklyRecap("week", { weekStart: data.weekStart })
-      : runWeeklyRecap(data.mode);
+    return runWeeklyRecap(data.mode);
   });
 
 /** Apply plain-language additions to an existing recap without regenerating it. */
