@@ -41,6 +41,7 @@ import { Route as AuthenticatedKeywordsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedKeywordsKeywordIdRouteImport } from './routes/_authenticated/keywords/$keywordId'
 import { Route as AuthenticatedLettersIndexRouteImport } from './routes/_authenticated/letters/index'
 import { Route as AuthenticatedLettersArchiveIdRouteImport } from './routes/_authenticated/letters/$archiveId'
+import { Route as AuthenticatedOnThisDateDateRouteImport } from './routes/_authenticated/on-this-date/$date'
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated/organizations/index'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
@@ -226,6 +227,12 @@ const AuthenticatedLettersArchiveIdRoute =
     path: '/letters/$archiveId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedOnThisDateDateRoute =
+  AuthenticatedOnThisDateDateRouteImport.update({
+    id: '/on-this-date/$date',
+    path: '/on-this-date/$date',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedOrganizationsIndexRoute =
   AuthenticatedOrganizationsIndexRouteImport.update({
     id: '/organizations/',
@@ -342,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
+  '/on-this-date/$date': typeof AuthenticatedOnThisDateDateRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
@@ -390,6 +398,7 @@ export interface FileRoutesByTo {
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
+  '/on-this-date/$date': typeof AuthenticatedOnThisDateDateRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
@@ -440,6 +449,7 @@ export interface FileRoutesById {
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/_authenticated/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
+  '/_authenticated/on-this-date/$date': typeof AuthenticatedOnThisDateDateRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/_authenticated/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/_authenticated/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
+    | '/on-this-date/$date'
     | '/people/$personId'
     | '/places/$placeId'
     | '/recaps/$weekStart'
@@ -538,6 +549,7 @@ export interface FileRouteTypes {
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
+    | '/on-this-date/$date'
     | '/people/$personId'
     | '/places/$placeId'
     | '/recaps/$weekStart'
@@ -587,6 +599,7 @@ export interface FileRouteTypes {
     | '/_authenticated/containers/$boxId'
     | '/_authenticated/keywords/$keywordId'
     | '/_authenticated/letters/$archiveId'
+    | '/_authenticated/on-this-date/$date'
     | '/_authenticated/people/$personId'
     | '/_authenticated/places/$placeId'
     | '/_authenticated/recaps/$weekStart'
@@ -854,6 +867,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLettersArchiveIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/on-this-date/$date': {
+      id: '/_authenticated/on-this-date/$date'
+      path: '/on-this-date/$date'
+      fullPath: '/on-this-date/$date'
+      preLoaderRoute: typeof AuthenticatedOnThisDateDateRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/organizations/': {
       id: '/_authenticated/organizations/'
       path: '/organizations'
@@ -979,6 +999,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
   AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
+  AuthenticatedOnThisDateDateRoute: typeof AuthenticatedOnThisDateDateRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
   AuthenticatedPlacesPlaceIdRoute: typeof AuthenticatedPlacesPlaceIdRoute
   AuthenticatedRecapsWeekStartRoute: typeof AuthenticatedRecapsWeekStartRoute
@@ -1012,6 +1033,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,
   AuthenticatedKeywordsKeywordIdRoute: AuthenticatedKeywordsKeywordIdRoute,
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,
+  AuthenticatedOnThisDateDateRoute: AuthenticatedOnThisDateDateRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
   AuthenticatedPlacesPlaceIdRoute: AuthenticatedPlacesPlaceIdRoute,
   AuthenticatedRecapsWeekStartRoute: AuthenticatedRecapsWeekStartRoute,
