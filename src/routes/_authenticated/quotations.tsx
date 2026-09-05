@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { displayDate } from "@/lib/archive";
+import { DateLink } from "@/components/DateLink";
 import { HighlightedText } from "@/lib/highlight";
 import {
   fetchQuotations,

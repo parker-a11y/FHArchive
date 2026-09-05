@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Search as SearchIcon } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { DateLink } from "@/components/DateLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchLetters, type Letter } from "@/lib/queries";
