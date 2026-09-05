@@ -55,7 +55,7 @@ const searchSchema = z.object({
   tstatus: z.string().optional(),
   review: z.string().optional(),
   scan: z.string().optional(), // "has" | "none"
-  health: z.string().optional(), // "green" | "yellow" | "red"
+  health: z.string().optional(), // "green" | "yellow" | "red" | "needs_attention"
 
   uncertain: z.coerce.string().optional(), // "1"
   starred: z.coerce.string().optional(), // "1"
