@@ -201,6 +201,35 @@ export function usePersonMatcher() {
             </div>
           </RadioGroup>
 
+          <div className="rounded border border-border p-2.5">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Or match to any person in the archive
+            </p>
+            <Input
+              placeholder="Search all people…"
+              value={browse}
+              onChange={(e) => setBrowse(e.target.value)}
+              className="mb-2 h-8 text-sm"
+            />
+            <div className="max-h-40 overflow-y-auto divide-y divide-border">
+              {filteredPeople.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setChoice(p.id)}
+                  className={`block w-full px-2 py-1.5 text-left text-sm hover:bg-muted/60 ${
+                    choice === p.id ? "bg-muted font-medium" : ""
+                  }`}
+                >
+                  {p.name}
+                </button>
+              ))}
+              {filteredPeople.length === 0 && (
+                <p className="px-2 py-2 text-xs text-muted-foreground">No people found.</p>
+              )}
+            </div>
+          </div>
+
           {choice !== "__new__" && (
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
               <Checkbox checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
