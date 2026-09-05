@@ -232,7 +232,29 @@ function LettersTable() {
   // Any filter change goes back to page 1.
   useEffect(() => {
     setPage(0);
-  }, [postal, forwardedOnly, debouncedQ, period, tStatus, rType, review, scanF, uncertainOnly, starredOnly, idStatus, dStatus, digStatus, tones, view, sort, debouncedSalutation, debouncedAddressee, debouncedClosing, debouncedSignature]);
+  }, [
+    postal,
+    forwardedOnly,
+    debouncedQ,
+    period,
+    tStatus,
+    rType,
+    review,
+    scanF,
+    health,
+    uncertainOnly,
+    starredOnly,
+    idStatus,
+    dStatus,
+    digStatus,
+    tones,
+    view,
+    sort,
+    debouncedSalutation,
+    debouncedAddressee,
+    debouncedClosing,
+    debouncedSignature,
+  ]);
 
   const params: LetterSearchParams = {
     q: debouncedQ,
@@ -241,6 +263,7 @@ function LettersTable() {
     tstatus: tStatus,
     review,
     scan: scanF as "" | "has" | "none",
+    health,
     uncertain: uncertainOnly,
     starred: starredOnly,
     idStatus,
