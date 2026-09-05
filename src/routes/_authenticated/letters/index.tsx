@@ -176,8 +176,11 @@ function LettersTable() {
   const [rType, setRType] = useState(search.type ?? "");
   const [review, setReview] = useState(search.review ?? "");
   const [scanF, setScanF] = useState(search.scan ?? "");
-  const [health, setHealth] = useState<"" | "green" | "yellow" | "red">(
-    (search.health as "" | "green" | "yellow" | "red") ?? "",
+  const [health, setHealth] = useState<
+    "" | "green" | "yellow" | "red" | "needs_attention"
+  >(
+    (search.health as "" | "green" | "yellow" | "red" | "needs_attention") ??
+      "",
   );
   const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
   const [starredOnly, setStarredOnly] = useState(search.starred === "1");
