@@ -16,6 +16,11 @@ type AuthState = {
   /** Approved guest without admin rights — view-only experience. */
   isGuestViewer: boolean;
   canReadArchive: boolean;
+  /** True when an admin/archivist is previewing the read-only guest experience. */
+  guestPreview: boolean;
+  /** True when the real account may edit, regardless of guest preview. */
+  canEditForReal: boolean;
+  setGuestPreview: (v: boolean) => void;
 };
 
 const AuthContext = createContext<AuthState>({
