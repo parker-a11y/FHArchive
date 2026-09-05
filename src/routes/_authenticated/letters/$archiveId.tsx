@@ -1106,6 +1106,7 @@ function LetterPage() {
             </div>
           </div>
           </fieldset>
+          )}
         </TabsContent>
 
         <TabsContent value="digitization" className="mt-6">
@@ -1133,14 +1134,16 @@ function LetterPage() {
           </fieldset>
         </TabsContent>
 
-        <TabsContent value="ai" className="mt-6">
-          <fieldset disabled={isGuestViewer} className="contents">
+        {!isGuestViewer && (
+          <TabsContent value="ai" className="mt-6">
             <AiPanel letter={letter} />
-          </fieldset>
-        </TabsContent>
-        <TabsContent value="history" className="mt-6">
-          <HistoryPanel letter={letter} />
-        </TabsContent>
+          </TabsContent>
+        )}
+        {!isGuestViewer && (
+          <TabsContent value="history" className="mt-6">
+            <HistoryPanel letter={letter} />
+          </TabsContent>
+        )}
       </Tabs>
       <div className="px-4 sm:px-8 pb-10 text-xs text-muted-foreground">
         Record created {new Date(letter.created_at).toLocaleDateString()} · modified{" "}
