@@ -139,9 +139,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         loading,
         ...access,
-        canEdit: access.isAdmin || access.isArchivist,
+        // While previewing as a guest, staff see exactly the guest experience.
+        isAdmin: access.isAdmin && !guestPreview,
+        isArchivist: access.isArchivist && !guestPreview,
+        canEdit: (access.isAdmin || access.isArchivist) && !guestPreview,
         // Read-only viewers: approved guests without editing rights.
-        isGuestViewer: access.canReadArchive && !access.isAdmin && !access.isArchivist,
+        isGuestViewer:
+          access.canReadArchive && (guestPreview || (!access.isAdmin && !access.isArchivist)),
+        guestPreview,
+        canEditForReal: access.isAdmin || access.isArchivist,
+        setGuestPreview,
       }}
     >
       {children}
