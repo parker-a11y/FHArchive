@@ -884,8 +884,19 @@ function LettersTable() {
           </thead>
           <tbody>
             {rows.map((l) => (
-              <tr key={l.id} className="border-b border-border hover:bg-muted/50">
-                <td className="px-2 py-1.5 align-top">
+              <tr
+                key={l.id}
+                className={cn(
+                  "border-b border-border hover:bg-muted/50",
+                  compact && "leading-tight",
+                )}
+              >
+                <td
+                  className={cn(
+                    "px-2 align-top",
+                    compact ? "py-0.5" : "py-1.5",
+                  )}
+                >
                   {isAdmin && (
                     <Checkbox
                       aria-label={`Select ${l.archive_id}`}
@@ -899,7 +910,10 @@ function LettersTable() {
                   return (
                     <td
                       key={c.key}
-                      className="truncate px-3 py-1.5 align-top"
+                      className={cn(
+                        "truncate align-top",
+                        compact ? "px-2 py-0.5" : "px-3 py-1.5",
+                      )}
                       style={{ maxWidth: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
                       onDoubleClick={() =>
                         c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
