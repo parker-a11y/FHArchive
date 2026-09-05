@@ -35,7 +35,8 @@ export const Route = createFileRoute("/_authenticated/recaps/")({
 });
 
 function RecapsIndex() {
-  const { isAdmin } = useAuth();
+  // Everyone with archive access — including view-only guests — may generate a recap.
+  const { canReadArchive } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const generate = useServerFn(generateWeeklyRecap);
