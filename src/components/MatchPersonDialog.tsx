@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import {
@@ -11,8 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { supabase } from "@/integrations/supabase/client";
 import {
   addPersonAlias,
   createPerson,
@@ -49,8 +51,18 @@ export function usePersonMatcher() {
   const [remember, setRemember] = useState(true);
   const [matchingBusy, setMatchingBusy] = useState(false);
   const [creatingBusy, setCreatingBusy] = useState(false);
+  const [allPeople, setAllPeople] = useState<{ id: string; name: string }[]>([]);
+  const [browse, setBrowse] = useState("");
   const pendingRef = useRef<Pending | null>(null);
   const pendingCreateRef = useRef<PendingCreate | null>(null);
+
+  const filteredPeople = useMemo(() => {
+    const q = browse.trim().toLowerCase();
+    const list = q
+      ? allPeople.filter((p) => p.name.toLowerCase().includes(q))
+      : allPeople;
+    return [...list].sort((a, b) => a.name.localeCompare(b.name)).slice(0, 50);
+  }, [allPeople, browse]);
 
   /** Ask for explicit confirmation before inserting a new person record. */
   const confirmCreate = useCallback(
@@ -70,6 +82,15 @@ export function usePersonMatcher() {
       const result = await lookupPerson(name);
       if (result.kind === "exact") return result.person;
       if (result.kind === "new") return await confirmCreate(name);
+
+      // Load the full people list so the user can match to ANY record, not
+      // just the fuzzy candidates.
+      const { data: everyone } = await supabase
+        .from("people")
+        .select("id,name")
+        .order("name");
+      setAllPeople((everyone ?? []) as { id: string; name: string }[]);
+      setBrowse("");
 
       return await new Promise<ResolvedPerson>((resolve) => {
         const next: Pending = { proposed: name, candidates: result.candidates, resolve };
@@ -111,7 +132,9 @@ export function usePersonMatcher() {
 
     setMatchingBusy(true);
     try {
-      const match = current.candidates.find((c) => c.id === choice);
+      const match =
+        current.candidates.find((c) => c.id === choice) ??
+        allPeople.find((p) => p.id === choice);
       if (!match) return;
       if (remember) await addPersonAlias(match.id, current.proposed);
       finish({ id: match.id, name: match.name });
@@ -177,6 +200,35 @@ export function usePersonMatcher() {
               </Label>
             </div>
           </RadioGroup>
+
+          <div className="rounded border border-border p-2.5">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Or match to any person in the archive
+            </p>
+            <Input
+              placeholder="Search all people…"
+              value={browse}
+              onChange={(e) => setBrowse(e.target.value)}
+              className="mb-2 h-8 text-sm"
+            />
+            <div className="max-h-40 overflow-y-auto divide-y divide-border">
+              {filteredPeople.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setChoice(p.id)}
+                  className={`block w-full px-2 py-1.5 text-left text-sm hover:bg-muted/60 ${
+                    choice === p.id ? "bg-muted font-medium" : ""
+                  }`}
+                >
+                  {p.name}
+                </button>
+              ))}
+              {filteredPeople.length === 0 && (
+                <p className="px-2 py-2 text-xs text-muted-foreground">No people found.</p>
+              )}
+            </div>
+          </div>
 
           {choice !== "__new__" && (
             <label className="flex items-center gap-2 text-sm text-muted-foreground">
