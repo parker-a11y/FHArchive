@@ -76,6 +76,7 @@ import { PhotoRecordView } from "@/components/photo/PhotoRecordView";
 import { isPhotographType } from "@/components/photo/photo-fields";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
+import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
@@ -436,8 +437,8 @@ function LetterPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 xl:max-w-[46%] xl:shrink-0 xl:justify-end">
-            <ShareStatusBadge letter={letter} />
-            <LabelDialog letter={letter} />
+            {!isGuestViewer && <ShareStatusBadge letter={letter} />}
+            {!isGuestViewer && <LabelDialog letter={letter} />}
             <Button
               variant="outline"
               size="sm"
