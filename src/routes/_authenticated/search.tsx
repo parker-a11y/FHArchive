@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Search as SearchIcon } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
+import { DateLink } from "@/components/DateLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchLetters, type Letter } from "@/lib/queries";
@@ -56,7 +57,7 @@ function ResultCard({
   snippets: Snippet[];
   tags: string[];
   hits: number;
-  meta: string;
+  meta: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -461,7 +462,12 @@ function SearchPage() {
                   snippets={snippets}
                   tags={tags}
                   hits={hitCount(l)}
-                  meta={`${displayDate(l)} · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                  meta={
+                    <>
+                      <DateLink date={l.normalized_date}>{displayDate(l)}</DateLink>
+                      {` · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                    </>
+                  }
                 />
               );
             })}

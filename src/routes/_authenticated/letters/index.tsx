@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { DateLink } from "@/components/DateLink";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -986,7 +987,13 @@ function LettersTable() {
                           }}
                         />
                       ) : (
-                        <span className={c.editable ? "cursor-text" : ""}>{cellValue(l, c.key)}</span>
+                        <span className={c.editable ? "cursor-text" : ""}>
+                          {c.key === "date" ? (
+                            <DateLink date={l.normalized_date}>{cellValue(l, c.key)}</DateLink>
+                          ) : (
+                            cellValue(l, c.key)
+                          )}
+                        </span>
                       )}
                     </td>
                   );
