@@ -986,7 +986,13 @@ function LettersTable() {
                           }}
                         />
                       ) : (
-                        <span className={c.editable ? "cursor-text" : ""}>{cellValue(l, c.key)}</span>
+                        <span className={c.editable ? "cursor-text" : ""}>
+                          {c.key === "date" ? (
+                            <DateLink date={l.normalized_date}>{cellValue(l, c.key)}</DateLink>
+                          ) : (
+                            cellValue(l, c.key)
+                          )}
+                        </span>
                       )}
                     </td>
                   );

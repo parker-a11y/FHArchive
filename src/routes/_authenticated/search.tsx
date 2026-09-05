@@ -56,7 +56,7 @@ function ResultCard({
   snippets: Snippet[];
   tags: string[];
   hits: number;
-  meta: string;
+  meta: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -461,7 +461,12 @@ function SearchPage() {
                   snippets={snippets}
                   tags={tags}
                   hits={hitCount(l)}
-                  meta={`${displayDate(l)} · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                  meta={
+                    <>
+                      <DateLink date={l.normalized_date}>{displayDate(l)}</DateLink>
+                      {` · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                    </>
+                  }
                 />
               );
             })}

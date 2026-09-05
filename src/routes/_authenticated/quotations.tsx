@@ -162,7 +162,9 @@ function QuotationsPage() {
                       </p>
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span className="archive-id text-sm">{row.archive_id}</span>
-                        <span>{displayDate(row)}</span>
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <DateLink date={row.normalized_date}>{displayDate(row)}</DateLink>
+                        </span>
                         <span className="truncate">
                           {row.title || `${row.author || "—"} → ${row.recipient || "—"}`}
                         </span>
@@ -249,7 +251,8 @@ function QuoteDetailDialog({ quote, onClose }: { quote: Quotation | null; onClos
       <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {quote?.archive_id} — {quote ? displayDate(quote) : ""}
+            {quote?.archive_id} —{" "}
+            {quote ? <DateLink date={quote.normalized_date}>{displayDate(quote)}</DateLink> : ""}
           </DialogTitle>
         </DialogHeader>
         {quote && (
