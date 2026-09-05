@@ -383,17 +383,36 @@ function Dashboard() {
           />
         }
         actions={
-          isGuestViewer ? undefined : (
-            <Button
-              size="lg"
-              className="w-full justify-center gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95 sm:w-auto"
-              onClick={() => navigate({ to: "/catalog" })}
-            >
-              <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
-            </Button>
-          )
+          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
+            {!isGuestViewer && (
+              <Button
+                size="lg"
+                className="w-full justify-center gap-2 rounded-full px-6 shadow-lg transition-all hover:shadow-xl active:scale-95 sm:w-auto"
+                onClick={() => navigate({ to: "/catalog" })}
+              >
+                <Plus className="size-4 text-archive-gold" /> ADD NEXT ARCHIVE ITEM
+              </Button>
+            )}
+            {canEditForReal && (
+              <Button
+                size="sm"
+                variant={guestPreview ? "default" : "outline"}
+                className="w-full justify-center gap-2 rounded-full sm:w-auto"
+                onClick={() => setGuestPreview(!guestPreview)}
+              >
+                <Eye className="size-4" />
+                {guestPreview ? "Exit guest view" : "View as guest"}
+              </Button>
+            )}
+          </div>
         }
       />
+      {guestPreview && canEditForReal && (
+        <div className="border-b border-border bg-muted/50 px-4 py-2 text-center text-sm sm:px-8">
+          You are viewing the archive as a guest would see it — editing is hidden until you exit
+          guest view.
+        </div>
+      )}
       <div className="p-4 sm:p-8">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
