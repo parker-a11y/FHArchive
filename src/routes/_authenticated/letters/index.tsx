@@ -705,11 +705,9 @@ function LettersTable() {
           {
             key: "needs_attention",
             label: "Needs attention",
-            active: health === "yellow" || health === "red",
+            active: health === "needs_attention",
             onClick: () =>
-              setHealth((h) =>
-                h === "yellow" || h === "red" ? "" : "yellow",
-              ),
+              setHealth((h) => (h === "needs_attention" ? "" : "needs_attention")),
           },
           {
             key: "pending_transcription",
