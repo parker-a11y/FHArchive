@@ -54,7 +54,10 @@ const NAV = [
   { to: "/backups", label: "Backups", icon: ShieldCheck, adminOnly: true },
 ];
 
-const ADMIN_NAV = [{ to: "/admin/users", label: "Account Control", icon: UserCog }];
+const ADMIN_NAV = [
+  { to: "/admin/users", label: "Account Control", icon: UserCog },
+  { to: "/admin/on-this-date", label: "On This Date Review", icon: CalendarDays },
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { session, loading, isAdmin } = useAuth();

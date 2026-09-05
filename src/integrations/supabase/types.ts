@@ -441,6 +441,63 @@ export type Database = {
           },
         ]
       }
+      date_contexts: {
+        Row: {
+          created_at: string
+          generated_at: string
+          id: string
+          last_edited_at: string | null
+          last_viewed_at: string | null
+          manually_edited: boolean
+          model: string | null
+          narrative_md: string
+          on_date: string
+          regenerated_count: number
+          reviewed: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sources: Json
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          last_edited_at?: string | null
+          last_viewed_at?: string | null
+          manually_edited?: boolean
+          model?: string | null
+          narrative_md?: string
+          on_date: string
+          regenerated_count?: number
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sources?: Json
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          id?: string
+          last_edited_at?: string | null
+          last_viewed_at?: string | null
+          manually_edited?: boolean
+          model?: string | null
+          narrative_md?: string
+          on_date?: string
+          regenerated_count?: number
+          reviewed?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sources?: Json
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       digital_files: {
         Row: {
           created_at: string

@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, FileText, Trash2 } from "lucide-react";
 import { StarToggle } from "@/components/StarToggle";
+import { DateLink } from "@/components/DateLink";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import {
@@ -359,7 +360,16 @@ function LetterPage() {
 
               <span>
                 <span className="field-label mr-2">Date</span>
-                {displayDate(letter)}
+                <DateLink date={letter.normalized_date}>{displayDate(letter)}</DateLink>
+                {letter.normalized_date && (
+                  <Link
+                    to="/on-this-date/$date"
+                    params={{ date: letter.normalized_date.slice(0, 10) }}
+                    className="ml-2 text-xs text-muted-foreground hover:text-primary hover:underline"
+                  >
+                    · What was happening this day?
+                  </Link>
+                )}
               </span>
               <span>
                 <span className="field-label mr-2">From</span>

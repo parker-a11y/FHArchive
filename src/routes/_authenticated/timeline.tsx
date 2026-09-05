@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
+import { DateLink } from "@/components/DateLink";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -108,23 +109,37 @@ function Timeline() {
                   {year}
                 </h2>
               )}
-              <Link
-                to="/letters/$archiveId"
-                params={{ archiveId: l.archive_id }}
-                className="block border-l-2 border-border py-2 pl-4 hover:border-primary hover:bg-muted/50"
-              >
-                <div className="flex items-baseline gap-4">
-                  <span className="archive-id text-sm text-primary">{l.archive_id}</span>
-                  <span className="text-sm font-medium">{displayDate(l)}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {l.author || "—"} → {l.recipient || "—"}
+              <div className="border-l-2 border-border py-2 pl-4 hover:border-primary hover:bg-muted/50">
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: l.archive_id }}
+                    className="archive-id text-sm text-primary hover:underline"
+                  >
+                    {l.archive_id}
+                  </Link>
+                  <span className="text-sm font-medium">
+                    <DateLink date={l.normalized_date}>{displayDate(l)}</DateLink>
                   </span>
-                  {l.origin && <span className="text-sm text-muted-foreground">· {l.origin}</span>}
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: l.archive_id }}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {l.author || "—"} → {l.recipient || "—"}
+                    {l.origin ? ` · ${l.origin}` : ""}
+                  </Link>
                 </div>
                 {l.summary_short && (
-                  <p className="mt-1 text-sm text-muted-foreground">{l.summary_short}</p>
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: l.archive_id }}
+                    className="mt-1 block text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {l.summary_short}
+                  </Link>
                 )}
-              </Link>
+              </div>
             </div>
           );
         })}
