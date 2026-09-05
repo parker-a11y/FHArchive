@@ -76,6 +76,7 @@ import { PhotoRecordView } from "@/components/photo/PhotoRecordView";
 import { isPhotographType } from "@/components/photo/photo-fields";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
+import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
@@ -436,8 +437,8 @@ function LetterPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 xl:max-w-[46%] xl:shrink-0 xl:justify-end">
-            <ShareStatusBadge letter={letter} />
-            <LabelDialog letter={letter} />
+            {!isGuestViewer && <ShareStatusBadge letter={letter} />}
+            {!isGuestViewer && <LabelDialog letter={letter} />}
             <Button
               variant="outline"
               size="sm"
@@ -564,8 +565,8 @@ function LetterPage() {
           <TabsTrigger value="links">People · Places · Keywords</TabsTrigger>
           <TabsTrigger value="references">Research</TabsTrigger>
           <TabsTrigger value="related">Related</TabsTrigger>
-          <TabsTrigger value="ai">AI Analysis</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+          {!isGuestViewer && <TabsTrigger value="ai">AI Analysis</TabsTrigger>}
+          {!isGuestViewer && <TabsTrigger value="history">History</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="catalog" className="mt-6">
@@ -579,20 +580,25 @@ function LetterPage() {
                   set={set}
                 />
               </fieldset>
-              <button
-                type="button"
-                onClick={() => setShowAllFields((v) => !v)}
-                className="mt-6 text-sm text-primary underline"
-              >
-                {showAllFields ? "Hide archival fields" : "Show all archival fields"}
-              </button>
+              {!isGuestViewer && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllFields((v) => !v)}
+                  className="mt-6 text-sm text-primary underline"
+                >
+                  {showAllFields ? "Hide archival fields" : "Show all archival fields"}
+                </button>
+              )}
             </div>
           ) : (
             <CatalogThumbnails letterId={letter.id} archiveId={letter.archive_id} />
           )}
-          {/* Guests browse in read-only mode — the disabled fieldset blocks edits
-              in every input/button below without changing the layout. */}
-          <fieldset disabled={isGuestViewer} className="contents">
+          {/* View-only accounts get a clean read-only catalog instead of the
+              editing form: no inputs, no empty fields, no workflow metadata. */}
+          {isGuestViewer ? (
+            <ReadOnlyCatalog letter={letter} />
+          ) : (
+          <fieldset className="contents">
           <div
             className={
               isPhotographType(form.record_type as string) && !showAllFields
@@ -1101,6 +1107,7 @@ function LetterPage() {
             </div>
           </div>
           </fieldset>
+          )}
         </TabsContent>
 
         <TabsContent value="digitization" className="mt-6">
@@ -1128,14 +1135,16 @@ function LetterPage() {
           </fieldset>
         </TabsContent>
 
-        <TabsContent value="ai" className="mt-6">
-          <fieldset disabled={isGuestViewer} className="contents">
+        {!isGuestViewer && (
+          <TabsContent value="ai" className="mt-6">
             <AiPanel letter={letter} />
-          </fieldset>
-        </TabsContent>
-        <TabsContent value="history" className="mt-6">
-          <HistoryPanel letter={letter} />
-        </TabsContent>
+          </TabsContent>
+        )}
+        {!isGuestViewer && (
+          <TabsContent value="history" className="mt-6">
+            <HistoryPanel letter={letter} />
+          </TabsContent>
+        )}
       </Tabs>
       <div className="px-4 sm:px-8 pb-10 text-xs text-muted-foreground">
         Record created {new Date(letter.created_at).toLocaleDateString()} · modified{" "}

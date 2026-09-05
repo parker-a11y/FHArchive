@@ -35,7 +35,8 @@ export const Route = createFileRoute("/_authenticated/recaps/")({
 });
 
 function RecapsIndex() {
-  const { isAdmin } = useAuth();
+  // Everyone with archive access — including view-only guests — may generate a recap.
+  const { canReadArchive } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const generate = useServerFn(generateWeeklyRecap);
@@ -58,7 +59,7 @@ function RecapsIndex() {
         title="Weekly Recaps"
         description="What the archive uncovered, week by week — the story behind the records."
         actions={
-          isAdmin ? (
+          canReadArchive ? (
             <Button className="gap-2" onClick={() => run.mutate()} disabled={run.isPending}>
               {run.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-archive-gold" />}
               GENERATE WEEKLY RECAP NOW
