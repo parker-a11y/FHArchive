@@ -35,6 +35,7 @@ import { Route as NotesSlugRouteImport } from './routes/notes/$slug'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedAdminAskHistoryRouteImport } from './routes/_authenticated/admin/ask-history'
 import { Route as AuthenticatedAdminNumberingRouteImport } from './routes/_authenticated/admin/numbering'
 import { Route as AuthenticatedAdminOnThisDateRouteImport } from './routes/_authenticated/admin/on-this-date'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
@@ -195,6 +196,12 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     id: '/.mcp/invoke-tool/$tool',
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminAskHistoryRoute =
+  AuthenticatedAdminAskHistoryRouteImport.update({
+    id: '/admin/ask-history',
+    path: '/admin/ask-history',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminNumberingRoute =
   AuthenticatedAdminNumberingRouteImport.update({
@@ -387,6 +394,7 @@ export interface FileRoutesByFullPath {
   '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/ask-history': typeof AuthenticatedAdminAskHistoryRoute
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -442,6 +450,7 @@ export interface FileRoutesByTo {
   '/notes': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/ask-history': typeof AuthenticatedAdminAskHistoryRoute
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -499,6 +508,7 @@ export interface FileRoutesById {
   '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/ask-history': typeof AuthenticatedAdminAskHistoryRoute
   '/_authenticated/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/_authenticated/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -556,6 +566,7 @@ export interface FileRouteTypes {
     | '/notes/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/ask-history'
     | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
@@ -611,6 +622,7 @@ export interface FileRouteTypes {
     | '/notes'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/ask-history'
     | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
@@ -667,6 +679,7 @@ export interface FileRouteTypes {
     | '/notes/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/ask-history'
     | '/_authenticated/admin/numbering'
     | '/_authenticated/admin/on-this-date'
     | '/_authenticated/admin/users'
@@ -903,6 +916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/ask-history': {
+      id: '/_authenticated/admin/ask-history'
+      path: '/admin/ask-history'
+      fullPath: '/admin/ask-history'
+      preLoaderRoute: typeof AuthenticatedAdminAskHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/numbering': {
       id: '/_authenticated/admin/numbering'
       path: '/admin/numbering'
@@ -1115,6 +1135,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminAskHistoryRoute: typeof AuthenticatedAdminAskHistoryRoute
   AuthenticatedAdminNumberingRoute: typeof AuthenticatedAdminNumberingRoute
   AuthenticatedAdminOnThisDateRoute: typeof AuthenticatedAdminOnThisDateRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -1153,6 +1174,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminAskHistoryRoute: AuthenticatedAdminAskHistoryRoute,
   AuthenticatedAdminNumberingRoute: AuthenticatedAdminNumberingRoute,
   AuthenticatedAdminOnThisDateRoute: AuthenticatedAdminOnThisDateRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,

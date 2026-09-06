@@ -319,6 +319,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ask_francis_queries: {
+        Row: {
+          answer: string | null
+          citations: Json
+          confidence: string | null
+          created_at: string
+          error: string | null
+          id: string
+          model: string | null
+          question: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          answer?: string | null
+          citations?: Json
+          confidence?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          question: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          answer?: string | null
+          citations?: Json
+          confidence?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          question?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       backup_files: {
         Row: {
           backed_up_at: string

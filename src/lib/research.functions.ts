@@ -37,7 +37,39 @@ export const askFrancis = createServerFn({ method: "POST" })
     // Retrieval and generation run with a read-only view of the research index.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { answerResearchQuestion } = await import("@/lib/research/agent.server");
-    return answerResearchQuestion(supabaseAdmin, data.question, data.history);
+
+    // History log (admin-visible). Never let logging break the answer.
+    async function logQuery(answer: any, error?: string) {
+      try {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", context.userId)
+          .maybeSingle();
+        await supabaseAdmin.from("ask_francis_queries").insert({
+          user_id: context.userId,
+          user_email: profile?.email ?? null,
+          user_name: profile?.full_name ?? null,
+          question: data.question,
+          answer: answer?.answer ?? null,
+          confidence: answer?.confidence ?? null,
+          citations: answer?.citations ?? [],
+          model: answer?.model ?? null,
+          error: error ?? null,
+        });
+      } catch (e) {
+        console.error("ask_francis_queries log failed:", e);
+      }
+    }
+
+    try {
+      const answer = await answerResearchQuestion(supabaseAdmin, data.question, data.history);
+      await logQuery(answer);
+      return answer;
+    } catch (err) {
+      await logQuery(null, err instanceof Error ? err.message : String(err));
+      throw err;
+    }
   });
 
 /** Manual "Refresh Research Snapshot" — editors and admins only. */
