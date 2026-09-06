@@ -1,0 +1,1 @@
+CREATE POLICY "readers read" ON public.ai_suggestions FOR SELECT TO authenticated USING (public.can_read_archive(auth.uid()));
