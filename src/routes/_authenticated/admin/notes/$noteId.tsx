@@ -18,11 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
+import { useFfnImageUrls } from "@/lib/ffn-images";
 import { useServerFn } from "@tanstack/react-start";
-import { draftFrancisFileNote, suggestNoteImages } from "@/lib/ffn.functions";
+import { draftFrancisFileNote, importNoteImages, suggestNoteImages } from "@/lib/ffn.functions";
 import {
   addAlias,
-  addImage,
   deleteNote,
   fetchAliases,
   fetchImages,
@@ -90,6 +90,7 @@ function NoteEditor() {
     queryKey: ["ffn-images", noteId],
     queryFn: () => fetchImages(noteId),
   });
+  const imageUrl = useFfnImageUrls(images);
   const { data: related = [] } = useQuery({
     queryKey: ["ffn-related", noteId],
     queryFn: () => fetchRelatedNotes(noteId),
@@ -116,11 +117,61 @@ function NoteEditor() {
     auto_link: true,
     status: "draft" as "draft" | "published",
   });
+  const [saving, setSaving] = useState(false);
+
+  // Load the saved note into the form once it arrives.
+  useEffect(() => {
+    if (!note) return;
+    setForm({
+      term: note.term ?? "",
+      title: note.title ?? "",
+      expanded_name: note.expanded_name ?? "",
+      category: note.category ?? "other",
+      short_definition: note.short_definition ?? "",
+      background: note.background ?? "",
+      archive_context: note.archive_context ?? "",
+      sources: note.sources ?? "",
+      slug: note.slug ?? "",
+      auto_link: note.auto_link ?? true,
+      status: (note.status === "published" ? "published" : "draft") as "draft" | "published",
+    });
+  }, [note]);
+
+  function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function save(patch?: Partial<typeof form>) {
+    setSaving(true);
+    try {
+      const next = { ...form, ...patch };
+      await updateNote(noteId, {
+        ...next,
+        title: next.title.trim() || null,
+        expanded_name: next.expanded_name.trim() || null,
+        short_definition: next.short_definition.trim() || null,
+        background: next.background.trim() || null,
+        archive_context: next.archive_context.trim() || null,
+        sources: next.sources.trim() || null,
+        slug: next.slug.trim() || slugify(next.term),
+      });
+      qc.invalidateQueries({ queryKey: ["ffn-note", noteId] });
+      qc.invalidateQueries({ queryKey: ["ffn-notes"] });
+      qc.invalidateQueries({ queryKey: ["ffn-alias-index"] });
+      toast.success("Saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const [newAlias, setNewAlias] = useState("");
   const [imgUrl, setImgUrl] = useState("");
   const [imgCaption, setImgCaption] = useState("");
   const [imgCredit, setImgCredit] = useState("");
   const findImages = useServerFn(suggestNoteImages);
+  const importImages = useServerFn(importNoteImages);
   const [imgQuery, setImgQuery] = useState("");
   const [imgResults, setImgResults] = useState<
     { url: string; thumb: string; title: string; credit: string; rights: string; sourceUrl: string }[]
@@ -150,71 +201,33 @@ function NoteEditor() {
     if (!chosen.length) return;
     setImgAdding(true);
     try {
-      let count = images.length;
-      for (const r of chosen) {
-        await addImage(noteId, {
-          image_url: r.url,
-          caption: r.title || null,
-          credit: r.credit || null,
-          rights_note: [r.rights, r.sourceUrl].filter(Boolean).join(" · ") || null,
-          is_primary: count === 0,
-          sort_order: count,
-        });
-        count += 1;
-      }
+      // Copies each picture into the archive's own storage so it never
+      // depends on the original website staying online.
+      const { saved } = await importImages({
+        data: {
+          noteId,
+          images: chosen.map((r) => ({
+            url: r.url,
+            caption: r.title,
+            credit: r.credit,
+            rights: r.rights,
+          })),
+        },
+      });
       setImgPicked([]);
       qc.invalidateQueries({ queryKey: ["ffn-images", noteId] });
-      toast.success(`Added ${chosen.length} picture${chosen.length > 1 ? "s" : ""}`);
+      toast.success(`Saved ${saved} picture${saved > 1 ? "s" : ""} into the archive`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not add the pictures");
+      toast.error(e instanceof Error ? e.message : "Could not save the pictures");
     } finally {
       setImgAdding(false);
     }
   }
+
   const [aiBusy, setAiBusy] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [matches, setMatches] = useState<ArchiveMatch[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [scanning, setScanning] = useState(false);
-
-  useEffect(() => {
-    if (!note) return;
-    setForm({
-      term: note.term,
-      title: note.title ?? "",
-      expanded_name: note.expanded_name ?? "",
-      category: note.category,
-      short_definition: note.short_definition ?? "",
-      background: note.background ?? "",
-      archive_context: note.archive_context ?? "",
-      sources: note.sources ?? "",
-      slug: note.slug,
-      auto_link: note.auto_link,
-      status: note.status,
-    });
-  }, [note]);
-
-  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
-    setForm((f) => ({ ...f, [k]: v }));
-
-  async function save(extra: Partial<typeof form> = {}) {
-    setSaving(true);
-    try {
-      const next = { ...form, ...extra };
-      await updateNote(noteId, {
-        ...next,
-        slug: slugify(next.slug || next.title || next.term),
-      });
-      qc.invalidateQueries({ queryKey: ["ffn-note", noteId] });
-      qc.invalidateQueries({ queryKey: ["ffn-notes"] });
-      qc.invalidateQueries({ queryKey: ["ffn-alias-index"] });
-      toast.success("Saved");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function generate(section?: string) {
     setAiBusy(true);
@@ -478,9 +491,9 @@ function NoteEditor() {
         <div className="grid gap-3 sm:grid-cols-3">
           {images.map((img) => (
             <figure key={img.id} className="space-y-1">
-              {img.image_url && (
+              {imageUrl(img) && (
                 <img
-                  src={img.image_url}
+                  src={imageUrl(img)}
                   alt={img.caption ?? form.term}
                   className="w-full rounded border"
                 />
@@ -584,11 +597,13 @@ function NoteEditor() {
           size="sm"
           onClick={async () => {
             if (!imgUrl.trim()) return;
-            await addImage(noteId, {
-              image_url: imgUrl.trim(),
-              caption: imgCaption.trim() || null,
-              credit: imgCredit.trim() || null,
-              is_primary: images.length === 0,
+            await importImages({
+              data: {
+                noteId,
+                images: [
+                  { url: imgUrl.trim(), caption: imgCaption.trim(), credit: imgCredit.trim() },
+                ],
+              },
             });
             setImgUrl("");
             setImgCaption("");
