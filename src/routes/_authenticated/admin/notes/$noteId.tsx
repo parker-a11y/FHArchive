@@ -23,7 +23,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { draftFrancisFileNote, importNoteImages, suggestNoteImages } from "@/lib/ffn.functions";
 import {
   addAlias,
-  addImage,
   deleteNote,
   fetchAliases,
   fetchImages,
