@@ -103,6 +103,9 @@
   --archive-flag: oklch(0.52 0.15 45);
   --archive-ai: oklch(0.47 0.1 300);
   --archive-ai-surface: oklch(0.955 0.02 300);
+  /* Francis File Note terms: barely-there cream wash, slightly warmer on hover */
+  --archive-note: oklch(0.965 0.035 95);
+  --archive-note-hover: oklch(0.935 0.055 95);
 
   /* Stat/category accent tones (bar + soft chip) */
   --tone-blue: oklch(0.55 0.14 255);
@@ -137,6 +140,8 @@
   --color-archive-ai-surface: var(--archive-ai-surface);
   --color-tone-blue: var(--tone-blue);
   --color-tone-blue-soft: var(--tone-blue-soft);
+  --color-archive-note: var(--archive-note);
+  --color-archive-note-hover: var(--archive-note-hover);
   --color-tone-emerald: var(--tone-emerald);
   --color-tone-emerald-soft: var(--tone-emerald-soft);
   --color-tone-amber: var(--tone-amber);

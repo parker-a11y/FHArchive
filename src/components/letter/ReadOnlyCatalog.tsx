@@ -1,3 +1,4 @@
+import { FfnText } from "@/components/ffn/FfnText";
 import { Link } from "@tanstack/react-router";
 import { DateLink } from "@/components/DateLink";
 import {
@@ -173,7 +174,9 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
           {narrative.map((d) => (
             <div key={d.label}>
               <div className="field-label">{d.label}</div>
-              <p className="mt-1 text-sm whitespace-pre-wrap">{d.value}</p>
+              <p className="mt-1 text-sm whitespace-pre-wrap">
+                <FfnText text={String(d.value)} />
+              </p>
             </div>
           ))}
         </Section>

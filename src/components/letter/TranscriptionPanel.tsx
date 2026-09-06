@@ -5,6 +5,7 @@ import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { FfnText } from "@/components/ffn/FfnText";
 import { Textarea } from "@/components/ui/textarea";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
 import { logEdits, type Letter } from "@/lib/queries";
@@ -134,17 +135,26 @@ function PageEditor({
               </div>
             </details>
           )}
-          <Textarea
-            rows={16}
-            className="font-mono text-sm"
-            placeholder="Transcription — AI output appears here and can be corrected."
-            value={text}
-            readOnly={readOnly}
-            onChange={(e) => {
-              setText(e.target.value);
-              setDirty(true);
-            }}
-          />
+          {readOnly ? (
+            <div className="max-h-[28rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
+              {text ? (
+                <FfnText text={text} />
+              ) : (
+                <span className="text-muted-foreground">No transcription yet.</span>
+              )}
+            </div>
+          ) : (
+            <Textarea
+              rows={16}
+              className="font-mono text-sm"
+              placeholder="Transcription — AI output appears here and can be corrected."
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                setDirty(true);
+              }}
+            />
+          )}
           <div className="flex flex-wrap items-center gap-2">
             {!readOnly && (
               <>
@@ -455,13 +465,22 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                 </div>
               </details>
             )}
-            <Textarea
-              rows={14}
-              className="mt-1.5 font-mono text-sm"
-              value={verified}
-              readOnly={isGuestViewer}
-              onChange={(e) => setVerified(e.target.value)}
-            />
+            {isGuestViewer ? (
+              <div className="mt-1.5 max-h-[26rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
+                {verified ? (
+                  <FfnText text={verified} />
+                ) : (
+                  <span className="text-muted-foreground">No verified transcription yet.</span>
+                )}
+              </div>
+            ) : (
+              <Textarea
+                rows={14}
+                className="mt-1.5 font-mono text-sm"
+                value={verified}
+                onChange={(e) => setVerified(e.target.value)}
+              />
+            )}
             {!isGuestViewer && (
               <div className="mt-3 flex items-center gap-3">
                 <select

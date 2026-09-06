@@ -30,6 +30,8 @@ import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
 import { Route as DTokenRouteImport } from './routes/d.$token'
+import { Route as NotesIndexRouteImport } from './routes/notes/index'
+import { Route as NotesSlugRouteImport } from './routes/notes/$slug'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -58,6 +60,8 @@ import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/publi
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
 import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
+import { Route as AuthenticatedAdminNotesIndexRouteImport } from './routes/_authenticated/admin/notes/index'
+import { Route as AuthenticatedAdminNotesNoteIdRouteImport } from './routes/_authenticated/admin/notes/$noteId'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -164,6 +168,16 @@ const ApiSendSampleEmailRoute = ApiSendSampleEmailRouteImport.update({
 const DTokenRoute = DTokenRouteImport.update({
   id: '/d/$token',
   path: '/d/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesIndexRoute = NotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesSlugRoute = NotesSlugRouteImport.update({
+  id: '/notes/$slug',
+  path: '/notes/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const STokenRoute = STokenRouteImport.update({
@@ -328,6 +342,18 @@ const ApiPublicWeeklyRecapRoute = ApiPublicWeeklyRecapRouteImport.update({
   path: '/api/public/weekly-recap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminNotesIndexRoute =
+  AuthenticatedAdminNotesIndexRouteImport.update({
+    id: '/admin/notes/',
+    path: '/admin/notes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminNotesNoteIdRoute =
+  AuthenticatedAdminNotesNoteIdRouteImport.update({
+    id: '/admin/notes/$noteId',
+    path: '/admin/notes/$noteId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -356,7 +382,9 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof AuthenticatedTimelineRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
+  '/notes/$slug': typeof NotesSlugRoute
   '/s/$token': typeof STokenRoute
+  '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
@@ -384,7 +412,9 @@ export interface FileRoutesByFullPath {
   '/places/': typeof AuthenticatedPlacesIndexRoute
   '/recaps/': typeof AuthenticatedRecapsIndexRoute
   '/sources/': typeof AuthenticatedSourcesIndexRoute
+  '/admin/notes/$noteId': typeof AuthenticatedAdminNotesNoteIdRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/admin/notes/': typeof AuthenticatedAdminNotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -406,8 +436,10 @@ export interface FileRoutesByTo {
   '/timeline': typeof AuthenticatedTimelineRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
+  '/notes/$slug': typeof NotesSlugRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
+  '/notes': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
@@ -435,7 +467,9 @@ export interface FileRoutesByTo {
   '/places': typeof AuthenticatedPlacesIndexRoute
   '/recaps': typeof AuthenticatedRecapsIndexRoute
   '/sources': typeof AuthenticatedSourcesIndexRoute
+  '/admin/notes/$noteId': typeof AuthenticatedAdminNotesNoteIdRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/admin/notes': typeof AuthenticatedAdminNotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -459,8 +493,10 @@ export interface FileRoutesById {
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
+  '/notes/$slug': typeof NotesSlugRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/numbering': typeof AuthenticatedAdminNumberingRoute
@@ -488,7 +524,9 @@ export interface FileRoutesById {
   '/_authenticated/places/': typeof AuthenticatedPlacesIndexRoute
   '/_authenticated/recaps/': typeof AuthenticatedRecapsIndexRoute
   '/_authenticated/sources/': typeof AuthenticatedSourcesIndexRoute
+  '/_authenticated/admin/notes/$noteId': typeof AuthenticatedAdminNotesNoteIdRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/_authenticated/admin/notes/': typeof AuthenticatedAdminNotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -513,7 +551,9 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/api/send-sample-email'
     | '/d/$token'
+    | '/notes/$slug'
     | '/s/$token'
+    | '/notes/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/numbering'
@@ -541,7 +581,9 @@ export interface FileRouteTypes {
     | '/places/'
     | '/recaps/'
     | '/sources/'
+    | '/admin/notes/$noteId'
     | '/lovable/email/transactional/preview'
+    | '/admin/notes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -563,8 +605,10 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/api/send-sample-email'
     | '/d/$token'
+    | '/notes/$slug'
     | '/s/$token'
     | '/'
+    | '/notes'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/numbering'
@@ -592,7 +636,9 @@ export interface FileRouteTypes {
     | '/places'
     | '/recaps'
     | '/sources'
+    | '/admin/notes/$noteId'
     | '/lovable/email/transactional/preview'
+    | '/admin/notes'
   id:
     | '__root__'
     | '/_authenticated'
@@ -615,8 +661,10 @@ export interface FileRouteTypes {
     | '/_authenticated/timeline'
     | '/api/send-sample-email'
     | '/d/$token'
+    | '/notes/$slug'
     | '/s/$token'
     | '/_authenticated/'
+    | '/notes/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/numbering'
@@ -644,7 +692,9 @@ export interface FileRouteTypes {
     | '/_authenticated/places/'
     | '/_authenticated/recaps/'
     | '/_authenticated/sources/'
+    | '/_authenticated/admin/notes/$noteId'
     | '/lovable/email/transactional/preview'
+    | '/_authenticated/admin/notes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -657,7 +707,9 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiSendSampleEmailRoute: typeof ApiSendSampleEmailRoute
   DTokenRoute: typeof DTokenRoute
+  NotesSlugRoute: typeof NotesSlugRoute
   STokenRoute: typeof STokenRoute
+  NotesIndexRoute: typeof NotesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
@@ -814,6 +866,20 @@ declare module '@tanstack/react-router' {
       path: '/d/$token'
       fullPath: '/d/$token'
       preLoaderRoute: typeof DTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes/': {
+      id: '/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof NotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes/$slug': {
+      id: '/notes/$slug'
+      path: '/notes/$slug'
+      fullPath: '/notes/$slug'
+      preLoaderRoute: typeof NotesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$token': {
@@ -1012,6 +1078,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWeeklyRecapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/notes/': {
+      id: '/_authenticated/admin/notes/'
+      path: '/admin/notes'
+      fullPath: '/admin/notes/'
+      preLoaderRoute: typeof AuthenticatedAdminNotesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/notes/$noteId': {
+      id: '/_authenticated/admin/notes/$noteId'
+      path: '/admin/notes/$noteId'
+      fullPath: '/admin/notes/$noteId'
+      preLoaderRoute: typeof AuthenticatedAdminNotesNoteIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -1056,6 +1136,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlacesIndexRoute: typeof AuthenticatedPlacesIndexRoute
   AuthenticatedRecapsIndexRoute: typeof AuthenticatedRecapsIndexRoute
   AuthenticatedSourcesIndexRoute: typeof AuthenticatedSourcesIndexRoute
+  AuthenticatedAdminNotesNoteIdRoute: typeof AuthenticatedAdminNotesNoteIdRoute
+  AuthenticatedAdminNotesIndexRoute: typeof AuthenticatedAdminNotesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1092,6 +1174,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlacesIndexRoute: AuthenticatedPlacesIndexRoute,
   AuthenticatedRecapsIndexRoute: AuthenticatedRecapsIndexRoute,
   AuthenticatedSourcesIndexRoute: AuthenticatedSourcesIndexRoute,
+  AuthenticatedAdminNotesNoteIdRoute: AuthenticatedAdminNotesNoteIdRoute,
+  AuthenticatedAdminNotesIndexRoute: AuthenticatedAdminNotesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1108,7 +1192,9 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiSendSampleEmailRoute: ApiSendSampleEmailRoute,
   DTokenRoute: DTokenRoute,
+  NotesSlugRoute: NotesSlugRoute,
   STokenRoute: STokenRoute,
+  NotesIndexRoute: NotesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
