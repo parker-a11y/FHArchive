@@ -196,6 +196,22 @@ function QuickEntry() {
         : form.date_precision;
     let created: { id: string; archive_id: string };
     const followUpErrors: string[] = [];
+    const extras = {
+      identification_status: form.identification_status,
+      date_from_postmark: form.date_from_postmark,
+      forwarded: isLetter ? form.forwarded : false,
+      forwarded_to: isLetter && form.forwarded ? form.forwarded_to || null : null,
+      postal_service: isLetter ? form.postal_service || null : null,
+      postal_notes: isLetter ? form.postal_notes || null : null,
+      censor_mark: isLetter ? form.censor_mark : false,
+      storage_type: form.storage_type || null,
+      storage_folder: form.storage_folder || null,
+      source_container_id: form.source_container_id || null,
+      original_order_notes: form.original_order_notes || null,
+      tones: form.tones,
+      starred: form.starred,
+      transcription_status: form.transcription_not_required ? "not_required" : "not_started",
+    };
     try {
       created = await createRecord({
         p_record_type: form.record_type,
@@ -219,22 +235,6 @@ function QuickEntry() {
         p_original_copy: "original",
         p_notes: form.notes,
       });
-      const extras = {
-        identification_status: form.identification_status,
-        date_from_postmark: form.date_from_postmark,
-        forwarded: isLetter ? form.forwarded : false,
-        forwarded_to: isLetter && form.forwarded ? form.forwarded_to || null : null,
-        postal_service: isLetter ? form.postal_service || null : null,
-        postal_notes: isLetter ? form.postal_notes || null : null,
-        censor_mark: isLetter ? form.censor_mark : false,
-        storage_type: form.storage_type || null,
-        storage_folder: form.storage_folder || null,
-        source_container_id: form.source_container_id || null,
-        original_order_notes: form.original_order_notes || null,
-        tones: form.tones,
-        starred: form.starred,
-        transcription_status: form.transcription_not_required ? "not_required" : "not_started",
-      };
     } catch (e) {
       setBusy(false);
       return toast.error((e as Error).message);
