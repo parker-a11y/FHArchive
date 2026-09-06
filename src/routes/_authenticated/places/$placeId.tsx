@@ -129,12 +129,14 @@ function PlacePage() {
             <div key={f.key} className={f.area ? "col-span-full" : ""}>
               <label className="field-label">{f.label}</label>
               {f.area ? (
-                <Textarea
-                  rows={4}
-                  value={form[f.key] ?? ""}
-                  onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                />
-                <FfnPreview text={form[f.key] ?? ""} />
+                <>
+                  <Textarea
+                    rows={4}
+                    value={form[f.key] ?? ""}
+                    onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+                  />
+                  <FfnPreview text={form[f.key] ?? ""} />
+                </>
               ) : (
                 <Input
                   value={form[f.key] ?? ""}
