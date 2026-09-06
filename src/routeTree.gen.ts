@@ -30,6 +30,8 @@ import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
 import { Route as DTokenRouteImport } from './routes/d.$token'
+import { Route as NotesIndexRouteImport } from './routes/notes/index'
+import { Route as NotesSlugRouteImport } from './routes/notes/$slug'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -164,6 +166,16 @@ const ApiSendSampleEmailRoute = ApiSendSampleEmailRouteImport.update({
 const DTokenRoute = DTokenRouteImport.update({
   id: '/d/$token',
   path: '/d/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesIndexRoute = NotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesSlugRoute = NotesSlugRouteImport.update({
+  id: '/notes/$slug',
+  path: '/notes/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const STokenRoute = STokenRouteImport.update({
@@ -356,7 +368,9 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof AuthenticatedTimelineRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
+  '/notes/$slug': typeof NotesSlugRoute
   '/s/$token': typeof STokenRoute
+  '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
@@ -406,8 +420,10 @@ export interface FileRoutesByTo {
   '/timeline': typeof AuthenticatedTimelineRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
+  '/notes/$slug': typeof NotesSlugRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
+  '/notes': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
@@ -459,8 +475,10 @@ export interface FileRoutesById {
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
+  '/notes/$slug': typeof NotesSlugRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/admin/numbering': typeof AuthenticatedAdminNumberingRoute
@@ -513,7 +531,9 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/api/send-sample-email'
     | '/d/$token'
+    | '/notes/$slug'
     | '/s/$token'
+    | '/notes/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/numbering'
@@ -563,8 +583,10 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/api/send-sample-email'
     | '/d/$token'
+    | '/notes/$slug'
     | '/s/$token'
     | '/'
+    | '/notes'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/admin/numbering'
@@ -615,8 +637,10 @@ export interface FileRouteTypes {
     | '/_authenticated/timeline'
     | '/api/send-sample-email'
     | '/d/$token'
+    | '/notes/$slug'
     | '/s/$token'
     | '/_authenticated/'
+    | '/notes/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/admin/numbering'
@@ -657,7 +681,9 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApiSendSampleEmailRoute: typeof ApiSendSampleEmailRoute
   DTokenRoute: typeof DTokenRoute
+  NotesSlugRoute: typeof NotesSlugRoute
   STokenRoute: typeof STokenRoute
+  NotesIndexRoute: typeof NotesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
@@ -814,6 +840,20 @@ declare module '@tanstack/react-router' {
       path: '/d/$token'
       fullPath: '/d/$token'
       preLoaderRoute: typeof DTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes/': {
+      id: '/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof NotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes/$slug': {
+      id: '/notes/$slug'
+      path: '/notes/$slug'
+      fullPath: '/notes/$slug'
+      preLoaderRoute: typeof NotesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$token': {
@@ -1108,7 +1148,9 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApiSendSampleEmailRoute: ApiSendSampleEmailRoute,
   DTokenRoute: DTokenRoute,
+  NotesSlugRoute: NotesSlugRoute,
   STokenRoute: STokenRoute,
+  NotesIndexRoute: NotesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
