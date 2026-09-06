@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { FfnText } from "@/components/ffn/FfnText";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Loader2, MessageSquareText, AlertTriangle } from "lucide-react";
 import { AppShell, AdminOnly, PageHeader } from "@/components/AppShell";
@@ -143,7 +144,7 @@ function AskHistory() {
                         </p>
                       ) : (
                         <>
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed">{r.answer}</p>
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={r.answer ?? ""} /></p>
                           {r.citations.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               {r.citations.map((c) =>

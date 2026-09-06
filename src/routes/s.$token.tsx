@@ -4,6 +4,7 @@ import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSharedRecord } from "@/lib/shares.functions";
 import { RECORD_TYPES, labelOf } from "@/lib/archive";
+import { FfnText } from "@/components/ffn/FfnText";
 
 export const Route = createFileRoute("/s/$token")({
   loader: ({ params }) => getSharedRecord({ data: { token: params.token } }),
@@ -31,7 +32,7 @@ function Meta({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <div className="field-label">{label}</div>
-      <div className="text-sm">{value}</div>
+      <div className="text-sm"><FfnText text={value} /></div>
     </div>
   );
 }
@@ -166,7 +167,7 @@ function SharedRecordPage() {
             <section id="shared-record-transcription" className="mt-8 scroll-mt-6">
               <h2 className="font-display text-lg">Transcription</h2>
               <div className="mt-2 max-h-[70vh] overflow-y-auto whitespace-pre-wrap rounded border border-border bg-card p-4 text-sm leading-relaxed">
-                {record.transcription}
+                <FfnText text={record.transcription} />
               </div>
             </section>
           )}
