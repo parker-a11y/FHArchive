@@ -47,6 +47,31 @@ export type DigitalFileWithDerivatives = DigitalFile & {
 };
 
 
+/**
+ * Envelopes read horizontally. When a scan is labelled as an envelope but was
+ * stored taller than it is wide, add a quarter turn for display only — the
+ * stored file and its saved rotation are untouched.
+ */
+export function autoEnvelopeRotation(
+  f: Pick<DigitalFile, "label" | "original_filename"> & { derivatives?: FileDerivative[] },
+): number {
+  if (!/envelope/i.test(`${f.label ?? ""} ${f.original_filename}`)) return 0;
+  const d = (f.derivatives ?? []).find(
+    (x) => (x.kind === "jpeg" || x.kind === "thumbnail") && x.width && x.height,
+  );
+  if (!d?.width || !d?.height) return 0;
+  return d.height > d.width ? 90 : 0;
+}
+
+/** Saved rotation plus any automatic envelope orientation. */
+export function displayRotation(
+  f: Pick<DigitalFile, "label" | "original_filename" | "rotation"> & {
+    derivatives?: FileDerivative[];
+  },
+): number {
+  return (((f.rotation ?? 0) + autoEnvelopeRotation(f)) % 360 + 360) % 360;
+}
+
 export function isPdfMaster(f: { master_mime: string | null; master_path: string }) {
   return /pdf/i.test(f.master_mime ?? "") || /\.pdf$/i.test(f.master_path);
 }
