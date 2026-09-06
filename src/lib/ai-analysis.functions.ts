@@ -38,7 +38,7 @@ export const analyzeRecord = createServerFn({ method: "POST" })
     if (!keys.length) return { suggestions: 0 };
 
     // Replace only pending rows; accepted/rejected review history is preserved.
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
       .from("ai_suggestions")
       .select("field_key, status")
       .eq("letter_id", data.letterId);
