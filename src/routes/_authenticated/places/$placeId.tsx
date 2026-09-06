@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
+import { FfnPreview } from "@/components/ffn/FfnText";
 
 export const Route = createFileRoute("/_authenticated/places/$placeId")({
   head: () => ({
@@ -133,6 +134,7 @@ function PlacePage() {
                   value={form[f.key] ?? ""}
                   onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                 />
+                <FfnPreview text={form[f.key] ?? ""} />
               ) : (
                 <Input
                   value={form[f.key] ?? ""}

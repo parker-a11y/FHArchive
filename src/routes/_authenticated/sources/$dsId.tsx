@@ -48,7 +48,7 @@ import {
 } from "@/components/sources/ShareSourceDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
-import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
+import { FfnPreview } from "@/components/ffn/FfnText";
 
 
 export const Route = createFileRoute("/_authenticated/sources/$dsId")({

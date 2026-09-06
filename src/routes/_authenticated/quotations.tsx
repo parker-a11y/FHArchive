@@ -20,7 +20,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
-import { HighlightedText } from "@/lib/highlight";
 import { FfnText } from "@/components/ffn/FfnText";
 import {
   fetchQuotations,
