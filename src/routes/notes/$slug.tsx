@@ -71,6 +71,8 @@ function NotePage() {
     enabled: !!note?.id,
   });
 
+  const imageUrl = useFfnImageUrls(images);
+
   if (isLoading) return <p className="p-8 text-sm text-muted-foreground">Loading…</p>;
   if (!note)
     return (
