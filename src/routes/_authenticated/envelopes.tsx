@@ -16,7 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchDigitalFiles, type DigitalFileWithDerivatives } from "@/lib/digital-files";
+import {
+  displayRotation,
+  fetchDigitalFiles,
+  type DigitalFileWithDerivatives,
+} from "@/lib/digital-files";
 import {
   Dialog,
   DialogContent,
@@ -165,6 +169,9 @@ function EnvelopeReview() {
   const front = envelopes.find((f) => !isBack(f)) ?? envelopes[0];
   const back = envelopes.find((f) => isBack(f));
   const shown = side === "back" ? (back ?? front) : front;
+  // Envelopes always read horizontally; manual rotation stacks on top.
+  const shownRotation = shown ? (rotation + displayRotation(shown)) % 360 : rotation;
+
 
   const go = (delta: number) => {
     const next = list[index + delta];
@@ -331,7 +338,7 @@ function EnvelopeReview() {
                       <img
                         src={shown.viewUrl}
                         alt={shown.label ?? "Envelope scan"}
-                        style={{ transform: `rotate(${rotation}deg)` }}
+                        style={{ transform: `rotate(${shownRotation}deg)` }}
                         className="max-h-[62vh] w-auto object-contain transition-transform"
                       />
                     </button>
@@ -359,7 +366,7 @@ function EnvelopeReview() {
                         <img
                           src={shown.viewUrl}
                           alt={shown.label ?? "Envelope scan"}
-                          style={{ transform: `rotate(${rotation}deg)` }}
+                          style={{ transform: `rotate(${shownRotation}deg)` }}
                           className="max-h-[70vh] w-auto object-contain transition-transform"
                         />
                       </div>

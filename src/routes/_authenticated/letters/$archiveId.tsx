@@ -70,7 +70,7 @@ import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
-import { fetchDigitalFiles, pageViewerEntries } from "@/lib/digital-files";
+import { displayRotation, fetchDigitalFiles, pageViewerEntries } from "@/lib/digital-files";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { PhotoRecordView } from "@/components/photo/PhotoRecordView";
 import { isPhotographType } from "@/components/photo/photo-fields";
@@ -1201,7 +1201,7 @@ function CatalogThumbnails({ letterId, archiveId }: { letterId: string; archiveI
       (e.pageCount > 1 ? ` · page ${e.page} of ${e.pageCount}` : ""),
     subtitle: `${archiveId} · viewing derivative`,
     filename: e.file.original_filename,
-    rotation: e.file.rotation ?? 0,
+    rotation: displayRotation(e.file),
   }));
   return (
     <div className="mb-6 max-w-5xl">

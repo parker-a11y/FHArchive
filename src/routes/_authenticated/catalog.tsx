@@ -95,11 +95,11 @@ const blank = {
   has_enclosures: false,
   starred: false,
   transcription_not_required: false,
-  storage_type: "",
+  storage_type: "file_jacket",
   storage_folder: "",
   source_container_id: "",
   original_order_notes: "",
-  identification_status: "",
+  identification_status: "identified",
   notes: "",
 };
 
@@ -132,6 +132,40 @@ function Select_({
   );
 }
 
+/** Storage choices are carried over between records for faster intake. */
+const STORAGE_MEMORY_KEY = "fh.quickentry.storage";
+
+type StorageMemory = {
+  storage_type: string;
+  source_container_id: string;
+  original_order_notes: string;
+};
+
+function readLastStorage(): Partial<StorageMemory> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(STORAGE_MEMORY_KEY);
+    if (!raw) return {};
+    const p = JSON.parse(raw) as Partial<StorageMemory>;
+    return {
+      storage_type: p.storage_type || "file_jacket",
+      source_container_id: p.source_container_id ?? "",
+      original_order_notes: p.original_order_notes ?? "",
+    };
+  } catch {
+    return {};
+  }
+}
+
+function rememberStorage(m: StorageMemory) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_MEMORY_KEY, JSON.stringify(m));
+  } catch {
+    /* storage unavailable — defaults still apply */
+  }
+}
+
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
@@ -155,7 +189,9 @@ function QuickEntry() {
       const n = await previewNextArchiveId();
       setNext(n);
       // Folder / jacket defaults to the FH number; still editable.
-      setForm((f) => ({ ...f, storage_folder: n.archive_id }));
+      // Storage choices carry over from the last record entered.
+      const remembered = readLastStorage();
+      setForm((f) => ({ ...f, ...remembered, storage_folder: n.archive_id }));
       setTimeout(() => dateRef.current?.focus(), 30);
     } catch (e) {
       toast.error((e as Error).message);
@@ -274,7 +310,13 @@ function QuickEntry() {
     }
 
     setBusy(false);
+    rememberStorage({
+      storage_type: form.storage_type,
+      source_container_id: form.source_container_id,
+      original_order_notes: form.original_order_notes,
+    });
     qc.invalidateQueries({ queryKey: ["letters"] });
+
     if (followUpErrors.length) {
       toast.warning(`${created.archive_id} was created, but some details need attention`, {
         description: followUpErrors.join("; "),
@@ -606,6 +648,20 @@ function QuickEntry() {
                 onChange={(e) => set("date_as_written", e.target.value)}
                 placeholder="Mon. eve — June 14"
               />
+              <div className="flex gap-1.5 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => {
+                    set("date_as_written", "NONE");
+                    if (!form.normalized_date) set("date_precision", "undated");
+                  }}
+                >
+                  NONE
+                </Button>
+              </div>
             </div>
             <Select_
               label="Date status"
@@ -744,6 +800,15 @@ function QuickEntry() {
                     onClick={() => set("origin", "FPO - San Francisco")}
                   >
                     FPO - San Francisco
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => set("origin", "Ft Schuyler")}
+                  >
+                    Ft Schuyler
                   </Button>
                 </div>
               )}

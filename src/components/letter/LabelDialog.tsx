@@ -74,9 +74,21 @@ function LabelFace({ archiveId, dateText, title = "", lines = [] }: LabelProps) 
   );
 }
 
-function PrintButton() {
+function PrintButton({ onDone }: { onDone: () => void }) {
   return (
-    <Button className="no-print gap-2" onClick={() => window.print()}>
+    <Button
+      className="no-print gap-2"
+      onClick={() => {
+        // Printing blocks; close once the browser's print dialog is dismissed.
+        const close = () => onDone();
+        window.addEventListener("afterprint", close, { once: true });
+        window.print();
+        setTimeout(() => {
+          window.removeEventListener("afterprint", close);
+          onDone();
+        }, 300);
+      }}
+    >
       <Printer className="size-4" /> Print to label printer
     </Button>
   );
@@ -152,7 +164,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           lines={labelLines(letter)}
         />
 
-        <PrintButton />
+        <PrintButton onDone={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -204,7 +216,7 @@ export function EntryLabelDialog({
           lines={lines}
         />
 
-        <PrintButton />
+        <PrintButton onDone={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
