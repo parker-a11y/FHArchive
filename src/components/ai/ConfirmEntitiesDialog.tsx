@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
+import { lookupPerson } from "@/lib/person-match";
+
 
 export type EntityKind = "person" | "place" | "organization" | "event";
 
@@ -72,15 +74,36 @@ export function useEntityConfirmer() {
     const fresh: EntityRef[] = [];
     for (const u of unique) {
       if (rejectedSet.has(`${u.kind}::${norm(u.name)}`)) continue;
+
+      // People carry nicknames/aliases ("Fran" -> Francis A. Harrington), so use the
+      // archive's alias-aware matcher instead of an exact name comparison. Anything
+      // that matches — exactly or closely — is handled by the person match dialog
+      // later in the accept flow, so it must not be offered here as a new record.
+      if (u.kind === "person") {
+        try {
+          const resolution = await lookupPerson(u.name);
+          if (resolution.kind !== "new") {
+            allowed.add(entityKey(u.kind, u.name));
+            continue;
+          }
+        } catch {
+          // Fall through to the plain existence check below.
+        }
+      }
+
       const { table, column } = KIND_TABLE[u.kind];
-      const { data: found } = await (supabase.from(table as "people") as any)
-        .select("id")
-        .ilike(column, u.name)
-        .limit(1)
-        .maybeSingle();
+      const { data: rowsFound } = await (supabase.from(table as "people") as any)
+        .select(`id,${column}`)
+        .ilike(column, `%${u.name.replace(/[%_]/g, "")}%`)
+        .limit(20);
+      const target = norm(u.name);
+      const found = (rowsFound ?? []).find(
+        (r: Record<string, string>) => norm(r[column] ?? "") === target,
+      );
       if (found?.id) allowed.add(entityKey(u.kind, u.name));
       else fresh.push(u);
     }
+
 
     if (!fresh.length) return allowed;
 
