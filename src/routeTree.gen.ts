@@ -33,6 +33,7 @@ import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedAdminNumberingRouteImport } from './routes/_authenticated/admin/numbering'
 import { Route as AuthenticatedAdminOnThisDateRouteImport } from './routes/_authenticated/admin/on-this-date'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
@@ -180,6 +181,12 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     id: '/.mcp/invoke-tool/$tool',
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminNumberingRoute =
+  AuthenticatedAdminNumberingRouteImport.update({
+    id: '/admin/numbering',
+    path: '/admin/numbering',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminOnThisDateRoute =
   AuthenticatedAdminOnThisDateRouteImport.update({
@@ -352,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/s/$token': typeof STokenRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
@@ -454,6 +463,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/_authenticated/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/s/$token'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
     | '/containers/$boxId'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
     | '/containers/$boxId'
@@ -607,6 +619,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/admin/numbering'
     | '/_authenticated/admin/on-this-date'
     | '/_authenticated/admin/users'
     | '/_authenticated/containers/$boxId'
@@ -824,6 +837,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/numbering': {
+      id: '/_authenticated/admin/numbering'
+      path: '/admin/numbering'
+      fullPath: '/admin/numbering'
+      preLoaderRoute: typeof AuthenticatedAdminNumberingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/on-this-date': {
       id: '/_authenticated/admin/on-this-date'
       path: '/admin/on-this-date'
@@ -1015,6 +1035,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAdminNumberingRoute: typeof AuthenticatedAdminNumberingRoute
   AuthenticatedAdminOnThisDateRoute: typeof AuthenticatedAdminOnThisDateRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
@@ -1050,6 +1071,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAdminNumberingRoute: AuthenticatedAdminNumberingRoute,
   AuthenticatedAdminOnThisDateRoute: AuthenticatedAdminOnThisDateRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,

@@ -256,6 +256,39 @@ export type Database = {
         }
         Relationships: []
       }
+      archive_id_retirements: {
+        Row: {
+          archive_id: string
+          created_at: string
+          fh_seq: number
+          id: string
+          reason: string
+          retired_at: string
+          retired_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          archive_id: string
+          created_at?: string
+          fh_seq: number
+          id?: string
+          reason: string
+          retired_at?: string
+          retired_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archive_id?: string
+          created_at?: string
+          fh_seq?: number
+          id?: string
+          reason?: string
+          retired_at?: string
+          retired_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       archive_notes: {
         Row: {
           author_id: string
