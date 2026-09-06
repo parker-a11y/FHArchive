@@ -52,6 +52,8 @@ import {
   deleteDigitalFile,
   fetchDigitalFiles,
   signedScanUrl,
+  displayRotation,
+
   type DigitalFileWithDerivatives,
   fileIdOfViewerEntry,
   pageViewerEntries,
