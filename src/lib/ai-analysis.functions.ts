@@ -49,7 +49,7 @@ export const analyzeRecord = createServerFn({ method: "POST" })
     const rows = keys
       .filter((k) => !locked.has(k))
       .map((k) => ({
-        owner_id: userId,
+        owner_id: context.userId,
         letter_id: data.letterId,
         field_key: k,
         content: fields[k]!,
@@ -58,7 +58,7 @@ export const analyzeRecord = createServerFn({ method: "POST" })
       }));
 
     if (rows.length) {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from("ai_suggestions")
         .upsert(rows, { onConflict: "letter_id,field_key" });
       if (error) throw new Error(error.message);
