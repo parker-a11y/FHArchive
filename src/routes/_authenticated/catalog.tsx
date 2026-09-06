@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
+import { EditorOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,11 +60,11 @@ export const Route = createFileRoute("/_authenticated/catalog")({
     ],
   }),
   component: () => (
-    <AdminOnly>
+    <EditorOnly>
       <AppShell>
         <QuickEntry />
       </AppShell>
-    </AdminOnly>
+    </EditorOnly>
   ),
 });
 
@@ -195,6 +195,7 @@ function QuickEntry() {
         ? "undated"
         : form.date_precision;
     let created: { id: string; archive_id: string };
+    const followUpErrors: string[] = [];
     try {
       created = await createRecord({
         p_record_type: form.record_type,
@@ -234,39 +235,54 @@ function QuickEntry() {
         starred: form.starred,
         transcription_status: form.transcription_not_required ? "not_required" : "not_started",
       };
-      await supabase.from("letters").update(extras as never).eq("id", created.id);
+    } catch (e) {
+      setBusy(false);
+      return toast.error((e as Error).message);
+    }
+
+    const { error: extrasError } = await supabase
+      .from("letters")
+      .update(extras as never)
+      .eq("id", created.id);
+    if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
+
+    try {
       const { data: auth } = await supabase.auth.getUser();
       const ownerId = auth.user?.id;
       if (ownerId) {
         const roleLinks: { personId: string; role: "author" | "recipient" | "mentioned" }[] = [];
         if (isLetter && authorPerson?.id) roleLinks.push({ personId: authorPerson.id, role: "author" });
         if (isLetter && recipientPerson?.id) roleLinks.push({ personId: recipientPerson.id, role: "recipient" });
-        if (mentions.length) {
-          for (const p of mentions) roleLinks.push({ personId: p.id, role: "mentioned" });
-        }
-        if (roleLinks.length) {
-          await linkLetterPeople(created.id, roleLinks, ownerId);
-        }
+        for (const p of mentions) roleLinks.push({ personId: p.id, role: "mentioned" });
+        if (roleLinks.length) await linkLetterPeople(created.id, roleLinks, ownerId);
       }
-      // Cross-references are intellectual links only — provenance untouched.
-      for (const r of relations) {
-        try {
-          await addRecordLink(
-            { kind: "letter", id: created.id },
-            { kind: r.record.kind, id: r.record.id },
-            r.note,
-          );
-        } catch (err) {
-          toast.error(`Could not link ${r.record.ref}: ${(err as Error).message}`);
-        }
-      }
-    } catch (e) {
-      setBusy(false);
-      return toast.error((e as Error).message);
+    } catch (error) {
+      followUpErrors.push(`people links: ${(error as Error).message}`);
     }
+
+    // Cross-references are intellectual links only — provenance untouched.
+    for (const relation of relations) {
+      try {
+        await addRecordLink(
+          { kind: "letter", id: created.id },
+          { kind: relation.record.kind, id: relation.record.id },
+          relation.note,
+        );
+      } catch (error) {
+        followUpErrors.push(`link to ${relation.record.ref}: ${(error as Error).message}`);
+      }
+    }
+
     setBusy(false);
     qc.invalidateQueries({ queryKey: ["letters"] });
-    toast.success(`${created.archive_id} cataloged`);
+    if (followUpErrors.length) {
+      toast.warning(`${created.archive_id} was created, but some details need attention`, {
+        description: followUpErrors.join("; "),
+        duration: 12000,
+      });
+    } else {
+      toast.success(`${created.archive_id} cataloged`);
+    }
     setSession((s) => [created.archive_id, ...s]);
     if (form.starred) {
       setStarNoteFor(`${created.archive_id}${form.title ? ` — ${form.title}` : ""}`);
