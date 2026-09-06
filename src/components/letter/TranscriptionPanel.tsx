@@ -5,7 +5,7 @@ import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { FfnText } from "@/components/ffn/FfnText";
+import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
 import { Textarea } from "@/components/ui/textarea";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
 import { logEdits, type Letter } from "@/lib/queries";
@@ -144,16 +144,19 @@ function PageEditor({
               )}
             </div>
           ) : (
-            <Textarea
-              rows={16}
-              className="font-mono text-sm"
-              placeholder="Transcription — AI output appears here and can be corrected."
-              value={text}
-              onChange={(e) => {
-                setText(e.target.value);
-                setDirty(true);
-              }}
-            />
+            <>
+              <Textarea
+                rows={16}
+                className="font-mono text-sm"
+                placeholder="Transcription — AI output appears here and can be corrected."
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setDirty(true);
+                }}
+              />
+              <FfnPreview text={text} />
+            </>
           )}
           <div className="flex flex-wrap items-center gap-2">
             {!readOnly && (
@@ -440,7 +443,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
               {letter.transcription_raw_ai ? (
-                <HighlightedText text={letter.transcription_raw_ai} term={highlight} />
+                <FfnText text={letter.transcription_raw_ai} searchTerm={highlight} />
               ) : (
                 <span className="text-muted-foreground">
                   None yet. “Transcribe Entire Record” assembles the letter pages here in scan
@@ -474,12 +477,15 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                 )}
               </div>
             ) : (
-              <Textarea
-                rows={14}
-                className="mt-1.5 font-mono text-sm"
-                value={verified}
-                onChange={(e) => setVerified(e.target.value)}
-              />
+              <>
+                <Textarea
+                  rows={14}
+                  className="mt-1.5 font-mono text-sm"
+                  value={verified}
+                  onChange={(e) => setVerified(e.target.value)}
+                />
+                <FfnPreview text={verified} />
+              </>
             )}
             {!isGuestViewer && (
               <div className="mt-3 flex items-center gap-3">

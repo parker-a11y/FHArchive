@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { getSharedSource } from "@/lib/source-shares.functions";
 import { dsTypeLabel } from "@/lib/sources";
+import { FfnText } from "@/components/ffn/FfnText";
 
 export const Route = createFileRoute("/d/$token")({
   loader: ({ params }) => getSharedSource({ data: { token: params.token } }),
@@ -29,7 +30,7 @@ function Meta({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <div className="field-label">{label}</div>
-      <div className="text-sm break-words">{value}</div>
+      <div className="text-sm break-words"><FfnText text={value} /></div>
     </div>
   );
 }
@@ -168,7 +169,7 @@ function SharedSourcePage() {
             <section className="mt-8">
               <h2 className="font-display text-lg">Description</h2>
               <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
-                {source.description}
+                <FfnText text={source.description} />
               </p>
             </section>
           )}
@@ -176,7 +177,7 @@ function SharedSourcePage() {
           {source.transcript && (
             <section className="mt-8">
               <h2 className="font-display text-lg">Transcript</h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{source.transcript}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={source.transcript} /></p>
             </section>
           )}
         </section>

@@ -20,7 +20,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
-import { HighlightedText } from "@/lib/highlight";
+import { FfnText } from "@/components/ffn/FfnText";
 import {
   fetchQuotations,
   findQuoteSource,
@@ -159,7 +159,7 @@ function QuotationsPage() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm leading-relaxed">
-                        <HighlightedText text={`“${row.quote}”`} term={q.trim() || undefined} />
+                        <FfnText text={`“${row.quote}”`} searchTerm={q.trim() || undefined} />
                       </p>
                       <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span className="archive-id text-sm">{row.archive_id}</span>
@@ -259,7 +259,7 @@ function QuoteDetailDialog({ quote, onClose }: { quote: Quotation | null; onClos
         {quote && (
           <div className="space-y-4">
             <blockquote className="rounded-xl border-l-4 border-archive-gold bg-muted/40 px-4 py-3 text-base leading-relaxed italic">
-              “{quote.quote}”
+              “<FfnText text={quote.quote} />”
             </blockquote>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -289,7 +289,7 @@ function QuoteDetailDialog({ quote, onClose }: { quote: Quotation | null; onClos
                   <p className="text-sm text-muted-foreground">Loading…</p>
                 ) : source?.text ? (
                   <div className="max-h-96 overflow-y-auto rounded-lg border border-border bg-card p-3 text-sm leading-relaxed whitespace-pre-wrap">
-                    <HighlightedText text={source.text} term={quote.quote} />
+                    <FfnText text={source.text} searchTerm={quote.quote} />
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No transcription text found.</p>

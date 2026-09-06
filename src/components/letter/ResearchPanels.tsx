@@ -22,6 +22,7 @@ import { useToneOptions } from "@/components/ToneMultiSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { FfnPreview } from "@/components/ffn/FfnText";
 import {
   AI_FIELDS,
   REFERENCE_TYPES,
@@ -425,6 +426,7 @@ export function ReferencesPanel({ letter }: { letter: Letter }) {
             value={draft.notes}
             onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
           />
+          <FfnPreview text={draft.notes} />
         </div>
         <div>
           <Button onClick={add}>Add reference</Button>
@@ -781,6 +783,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
                   value={editing[row.id] ?? row.content ?? ""}
                   onChange={(e) => setEditing({ ...editing, [row.id]: e.target.value })}
                 />
+                <FfnPreview text={editing[row.id] ?? row.content ?? ""} />
                 <div className="mt-2 flex gap-2">
                   <Button size="sm" onClick={() => setStatus(row.id, "accepted")}>
                     Accept

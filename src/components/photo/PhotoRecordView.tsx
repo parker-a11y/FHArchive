@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import { fetchDigitalFiles, pageViewerEntries } from "@/lib/digital-files";
 import { PHOTO_MEDIUMS } from "./photo-fields";
+import { FfnPreview } from "@/components/ffn/FfnText";
 
 type FormValue = string | boolean;
 
@@ -151,6 +152,7 @@ export function PhotoRecordView({
               value={s("photo_back_inscription")}
               onChange={(e) => set("photo_back_inscription", e.target.value)}
             />
+            <FfnPreview text={s("photo_back_inscription")} />
             <p className="text-xs text-muted-foreground">
               People pictured and places are managed under People · Places · Keywords.
             </p>

@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { postArchiveNote } from "@/lib/archive-notes";
 import { FffBadge } from "@/components/FffBadge";
+import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -123,7 +124,7 @@ export function ArchiveNotes() {
                 </p>
               </div>
             </div>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">{latest.body}</p>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={latest.body} /></p>
           </>
         ) : (
           <p className="text-sm text-muted-foreground">
@@ -148,7 +149,7 @@ export function ArchiveNotes() {
                     {when(n.created_at)}
                     {n.author_name ? ` · ${n.author_name}` : ""}
                   </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{n.body}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={n.body} /></p>
                 </div>
                 {isAdmin && (
                   <Button
@@ -184,6 +185,7 @@ export function ArchiveNotes() {
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
+            <FfnPreview text={body} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setComposeOpen(false)}>

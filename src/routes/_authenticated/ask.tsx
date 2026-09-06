@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import askIcon from "@/assets/ask-francis.png";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { FfnText } from "@/components/ffn/FfnText";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -170,7 +171,7 @@ function Inline({ text }: { text: string }) {
               {part}
             </Link>
           );
-        return <span key={i}>{part}</span>;
+        return <span key={i}><FfnText text={part} /></span>;
       })}
     </>
   );

@@ -5,7 +5,7 @@
  * against the published alias index. Only the first occurrence of each note
  * inside one block is marked so a paragraph never looks heavily annotated.
  */
-import { type ReactNode, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useFfnImageUrls } from "@/lib/ffn-images";
 import { Link } from "@tanstack/react-router";
@@ -38,8 +38,26 @@ function annotate(
   text: string,
   entries: { alias: string; noteId: string }[],
   notes: Record<string, FfnNote>,
+  searchTerm?: string,
 ): ReactNode[] {
-  if (!text || !entries.length) return [text];
+  const plain = (value: string, key: string): ReactNode => {
+    if (!searchTerm?.trim()) return value;
+    const pieces = value.split(new RegExp(`(${escapeRe(searchTerm.trim())})`, "gi"));
+    return (
+      <Fragment key={key}>
+        {pieces.map((piece, index) =>
+          index % 2 ? (
+            <mark key={index} className="rounded bg-yellow-200 px-0.5 text-foreground">
+              {piece}
+            </mark>
+          ) : (
+            <Fragment key={index}>{piece}</Fragment>
+          ),
+        )}
+      </Fragment>
+    );
+  };
+  if (!text || !entries.length) return [plain(text, "plain")];
   // Longest aliases first so "USS Doyle C. Barnes" wins over "Barnes".
   const pattern = [...entries]
     .sort((a, b) => b.alias.length - a.alias.length)
@@ -62,22 +80,44 @@ function annotate(
     const note = noteId ? notes[noteId] : undefined;
     if (!note || used.has(note.id)) continue;
     used.add(note.id);
-    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m.index > last) out.push(plain(text.slice(last, m.index), `plain-${key}`));
     out.push(<FfnTerm key={`ffn-${key++}`} note={note} label={m[0]} />);
     last = m.index + m[0].length;
   }
-  if (last < text.length) out.push(text.slice(last));
+  if (last < text.length) out.push(plain(text.slice(last), `plain-${key}`));
   return out;
 }
 
 /** Plain archive text with Francis File Note terms made interactive. */
-export function FfnText({ text }: { text: string }) {
+export function FfnText({ text, searchTerm }: { text: string; searchTerm?: string }) {
   const { data } = useAliasIndex();
   const nodes = useMemo(
-    () => annotate(text, data?.entries ?? [], data?.notes ?? {}),
-    [text, data],
+    () => annotate(text, data?.entries ?? [], data?.notes ?? {}, searchTerm),
+    [text, data, searchTerm],
   );
   return <>{nodes}</>;
+}
+
+/** Linked reading preview for plain-text editing fields. Hidden when no published term matches. */
+export function FfnPreview({ text }: { text: string }) {
+  const { data } = useAliasIndex();
+  const hasMatch = useMemo(() => {
+    if (!text.trim() || !data?.entries.length) return false;
+    return data.entries.some(({ alias }) => {
+      try {
+        return new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(alias)}(?![\\p{L}\\p{N}])`, "iu").test(text);
+      } catch {
+        return false;
+      }
+    });
+  }, [data, text]);
+  if (!hasMatch) return null;
+  return (
+    <div className="mt-2 rounded border border-archive-gold/30 bg-archive-note/40 p-3 text-sm leading-relaxed whitespace-pre-wrap">
+      <div className="field-label mb-1.5">Published Notes preview</div>
+      <FfnText text={text} />
+    </div>
+  );
 }
 
 function FfnTerm({ note, label }: { note: FfnNote; label: string }) {

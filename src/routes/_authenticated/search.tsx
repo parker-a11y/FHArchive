@@ -19,6 +19,7 @@ import {
 } from "@/lib/archive";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { HighlightedText, buildSnippets, countMatches, type Snippet } from "@/lib/highlight";
+import { FfnText } from "@/components/ffn/FfnText";
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
@@ -109,7 +110,7 @@ function ResultCard({
                 {s.label}
               </span>
               <span className="text-muted-foreground">
-                <HighlightedText text={expanded ? s.full : s.text} term={term} />
+                <FfnText text={expanded ? s.full : s.text} searchTerm={term} />
               </span>
             </Link>
           ))}
