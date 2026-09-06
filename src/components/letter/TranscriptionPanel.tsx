@@ -464,13 +464,22 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                 </div>
               </details>
             )}
-            <Textarea
-              rows={14}
-              className="mt-1.5 font-mono text-sm"
-              value={verified}
-              readOnly={isGuestViewer}
-              onChange={(e) => setVerified(e.target.value)}
-            />
+            {isGuestViewer ? (
+              <div className="mt-1.5 max-h-[26rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
+                {verified ? (
+                  <FfnText text={verified} />
+                ) : (
+                  <span className="text-muted-foreground">No verified transcription yet.</span>
+                )}
+              </div>
+            ) : (
+              <Textarea
+                rows={14}
+                className="mt-1.5 font-mono text-sm"
+                value={verified}
+                onChange={(e) => setVerified(e.target.value)}
+              />
+            )}
             {!isGuestViewer && (
               <div className="mt-3 flex items-center gap-3">
                 <select
