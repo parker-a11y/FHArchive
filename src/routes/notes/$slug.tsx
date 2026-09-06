@@ -85,7 +85,6 @@ function NotePage() {
     );
 
   const primary = images.find((i) => i.is_primary) ?? images[0];
-  const imageUrl = useFfnImageUrls(images);
   const gallery = images.filter((i) => i.id !== primary?.id);
 
   return (
