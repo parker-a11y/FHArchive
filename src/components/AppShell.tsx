@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { FfnSelectionMenu } from "@/components/ffn/FfnSelectionMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -210,6 +211,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display text-base font-semibold">The Francis Files</span>
         </div>
         <main className="min-w-0 flex-1">{children}</main>
+        <FfnSelectionMenu />
       </div>
     </div>
   );

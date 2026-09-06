@@ -158,6 +158,11 @@ function useDebounced<T>(value: T, ms = 400): T {
 function SearchPage() {
   const recordTypeOptions = useRecordTypeOptions();
   const [q, setQ] = useState("");
+  // Seed from ?q= so "Search the archive" from the right-click menu lands here.
+  useEffect(() => {
+    const initial = new URLSearchParams(window.location.search).get("q");
+    if (initial) setQ(initial);
+  }, []);
   const debouncedQ = useDebounced(q);
   const [author, setAuthor] = useState("");
   const [recipient, setRecipient] = useState("");
