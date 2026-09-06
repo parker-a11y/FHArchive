@@ -61,6 +61,7 @@ import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
 import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
 import { Route as AuthenticatedAdminNotesIndexRouteImport } from './routes/_authenticated/admin/notes/index'
+import { Route as AuthenticatedAdminNotesNoteIdRouteImport } from './routes/_authenticated/admin/notes/$noteId'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -347,6 +348,12 @@ const AuthenticatedAdminNotesIndexRoute =
     path: '/admin/notes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminNotesNoteIdRoute =
+  AuthenticatedAdminNotesNoteIdRouteImport.update({
+    id: '/admin/notes/$noteId',
+    path: '/admin/notes/$noteId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
@@ -405,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/places/': typeof AuthenticatedPlacesIndexRoute
   '/recaps/': typeof AuthenticatedRecapsIndexRoute
   '/sources/': typeof AuthenticatedSourcesIndexRoute
+  '/admin/notes/$noteId': typeof AuthenticatedAdminNotesNoteIdRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/admin/notes/': typeof AuthenticatedAdminNotesIndexRoute
 }
@@ -459,6 +467,7 @@ export interface FileRoutesByTo {
   '/places': typeof AuthenticatedPlacesIndexRoute
   '/recaps': typeof AuthenticatedRecapsIndexRoute
   '/sources': typeof AuthenticatedSourcesIndexRoute
+  '/admin/notes/$noteId': typeof AuthenticatedAdminNotesNoteIdRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/admin/notes': typeof AuthenticatedAdminNotesIndexRoute
 }
@@ -515,6 +524,7 @@ export interface FileRoutesById {
   '/_authenticated/places/': typeof AuthenticatedPlacesIndexRoute
   '/_authenticated/recaps/': typeof AuthenticatedRecapsIndexRoute
   '/_authenticated/sources/': typeof AuthenticatedSourcesIndexRoute
+  '/_authenticated/admin/notes/$noteId': typeof AuthenticatedAdminNotesNoteIdRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/admin/notes/': typeof AuthenticatedAdminNotesIndexRoute
 }
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/places/'
     | '/recaps/'
     | '/sources/'
+    | '/admin/notes/$noteId'
     | '/lovable/email/transactional/preview'
     | '/admin/notes/'
   fileRoutesByTo: FileRoutesByTo
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/places'
     | '/recaps'
     | '/sources'
+    | '/admin/notes/$noteId'
     | '/lovable/email/transactional/preview'
     | '/admin/notes'
   id:
@@ -680,6 +692,7 @@ export interface FileRouteTypes {
     | '/_authenticated/places/'
     | '/_authenticated/recaps/'
     | '/_authenticated/sources/'
+    | '/_authenticated/admin/notes/$noteId'
     | '/lovable/email/transactional/preview'
     | '/_authenticated/admin/notes/'
   fileRoutesById: FileRoutesById
@@ -1072,6 +1085,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminNotesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/notes/$noteId': {
+      id: '/_authenticated/admin/notes/$noteId'
+      path: '/admin/notes/$noteId'
+      fullPath: '/admin/notes/$noteId'
+      preLoaderRoute: typeof AuthenticatedAdminNotesNoteIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
@@ -1116,6 +1136,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlacesIndexRoute: typeof AuthenticatedPlacesIndexRoute
   AuthenticatedRecapsIndexRoute: typeof AuthenticatedRecapsIndexRoute
   AuthenticatedSourcesIndexRoute: typeof AuthenticatedSourcesIndexRoute
+  AuthenticatedAdminNotesNoteIdRoute: typeof AuthenticatedAdminNotesNoteIdRoute
   AuthenticatedAdminNotesIndexRoute: typeof AuthenticatedAdminNotesIndexRoute
 }
 
@@ -1153,6 +1174,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlacesIndexRoute: AuthenticatedPlacesIndexRoute,
   AuthenticatedRecapsIndexRoute: AuthenticatedRecapsIndexRoute,
   AuthenticatedSourcesIndexRoute: AuthenticatedSourcesIndexRoute,
+  AuthenticatedAdminNotesNoteIdRoute: AuthenticatedAdminNotesNoteIdRoute,
   AuthenticatedAdminNotesIndexRoute: AuthenticatedAdminNotesIndexRoute,
 }
 
