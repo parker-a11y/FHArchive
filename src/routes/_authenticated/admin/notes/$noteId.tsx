@@ -176,6 +176,10 @@ function NoteEditor() {
     }
   }
 
+  const [aiBusy, setAiBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [matches, setMatches] = useState<ArchiveMatch[] | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
 
   async function generate(section?: string) {
     setAiBusy(true);
