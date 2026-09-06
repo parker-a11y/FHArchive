@@ -141,6 +141,12 @@ function LetterPage() {
     queryKey: ["letter", archiveId],
     queryFn: () => fetchLetterByArchiveId(archiveId),
   });
+  const { data: retirement } = useQuery({
+    queryKey: ["retirement", archiveId],
+    queryFn: () => fetchRetirement(archiveId),
+    enabled: !isLoading && !letter,
+  });
+
   const { data: all = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
   const { data: containers = [] } = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
