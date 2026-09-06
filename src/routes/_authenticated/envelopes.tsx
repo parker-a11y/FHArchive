@@ -165,6 +165,9 @@ function EnvelopeReview() {
   const front = envelopes.find((f) => !isBack(f)) ?? envelopes[0];
   const back = envelopes.find((f) => isBack(f));
   const shown = side === "back" ? (back ?? front) : front;
+  // Envelopes always read horizontally; manual rotation stacks on top.
+  const shownRotation = shown ? (rotation + displayRotation(shown)) % 360 : rotation;
+
 
   const go = (delta: number) => {
     const next = list[index + delta];
