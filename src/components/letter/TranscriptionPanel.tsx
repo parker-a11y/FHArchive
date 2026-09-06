@@ -134,17 +134,26 @@ function PageEditor({
               </div>
             </details>
           )}
-          <Textarea
-            rows={16}
-            className="font-mono text-sm"
-            placeholder="Transcription — AI output appears here and can be corrected."
-            value={text}
-            readOnly={readOnly}
-            onChange={(e) => {
-              setText(e.target.value);
-              setDirty(true);
-            }}
-          />
+          {readOnly ? (
+            <div className="max-h-[28rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
+              {text ? (
+                <FfnText text={text} />
+              ) : (
+                <span className="text-muted-foreground">No transcription yet.</span>
+              )}
+            </div>
+          ) : (
+            <Textarea
+              rows={16}
+              className="font-mono text-sm"
+              placeholder="Transcription — AI output appears here and can be corrected."
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                setDirty(true);
+              }}
+            />
+          )}
           <div className="flex flex-wrap items-center gap-2">
             {!readOnly && (
               <>
