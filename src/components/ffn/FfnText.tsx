@@ -39,7 +39,11 @@ function annotate(
   notes: Record<string, FfnNote>,
 ): ReactNode[] {
   if (!text || !entries.length) return [text];
-  const pattern = entries.map((e) => escapeRe(e.alias)).join("|");
+  // Longest aliases first so "USS Doyle C. Barnes" wins over "Barnes".
+  const pattern = [...entries]
+    .sort((a, b) => b.alias.length - a.alias.length)
+    .map((e) => escapeRe(e.alias))
+    .join("|");
   let re: RegExp;
   try {
     re = new RegExp(`(?<![\\p{L}\\p{N}])(${pattern})(?![\\p{L}\\p{N}])`, "giu");
