@@ -6,6 +6,7 @@
  * never rewritten, so the source text stays historically faithful.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { searchLetters } from "@/lib/queries";
 
 export type FfnStatus = "draft" | "published";
 
@@ -306,13 +307,9 @@ export type ArchiveMatch = {
 export async function findArchiveMatches(terms: string[]): Promise<ArchiveMatch[]> {
   const out = new Map<string, ArchiveMatch>();
   for (const term of terms.filter((t) => t.trim())) {
-    const { data } = await supabase.rpc("search_letters", {
-      p_q: term,
-      p_limit: 200,
-    } as never);
-    for (const row of (data ?? []) as { letter: any }[]) {
-      const l = row.letter;
-      if (!l || out.has(l.id)) continue;
+    const { rows } = await searchLetters({ q: term, limit: 200 });
+    for (const l of rows) {
+      if (out.has(l.id)) continue;
       const text =
         l.transcription_verified || l.transcription_raw_ai || l.summary_short || l.notes || "";
       out.set(l.id, {
