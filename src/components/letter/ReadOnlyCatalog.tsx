@@ -50,6 +50,7 @@ const has = (v: unknown) => v !== null && v !== undefined && String(v).trim() !=
 
 export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
   const isLetter = isLetterType(letter.record_type);
+  const transcription = letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim();
 
   const details: { label: string; value: React.ReactNode }[] = [];
   const push = (label: string, value: unknown, node?: React.ReactNode) => {
@@ -179,6 +180,14 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
               </p>
             </div>
           ))}
+        </Section>
+      )}
+
+      {transcription && (
+        <Section title="Transcription" columns={false}>
+          <article className="max-w-3xl font-display text-lg leading-8 whitespace-pre-wrap sm:text-xl sm:leading-9">
+            <FfnText text={transcription} />
+          </article>
         </Section>
       )}
 
