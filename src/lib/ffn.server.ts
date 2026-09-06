@@ -147,9 +147,7 @@ export async function searchNoteImages(query: string): Promise<ImageSuggestion[]
     .map((p) => {
       const info = (p["imageinfo"] as Array<Record<string, unknown>> | undefined)?.[0];
       if (!info) return null;
-      const meta = (info["extmetadata"] as Record<{ toString(): string }, never> | undefined) as
-        | Record<string, { value?: unknown }>
-        | undefined;
+      const meta = info["extmetadata"] as Record<string, { value?: unknown }> | undefined;
       const url = String(info["url"] ?? "");
       if (!url) return null;
       return {
