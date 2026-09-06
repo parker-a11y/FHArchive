@@ -242,11 +242,18 @@ function LetterPage() {
     return (
       <div className="p-4 sm:p-8">
         <p className="text-sm">No record found for {archiveId}.</p>
+        {retirement && (
+          <p className="mt-2 max-w-prose rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+            {archiveId} is a retired number — it was never part of the collection.{" "}
+            {retirement.reason}
+          </p>
+        )}
         <Link to="/letters" className="text-sm text-primary underline">
           Back to letters
         </Link>
       </div>
     );
+
 
   const set = (k: string, v: string | boolean) => {
     setForm((f) => ({ ...f, [k]: v }));
