@@ -16,7 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchDigitalFiles, type DigitalFileWithDerivatives } from "@/lib/digital-files";
+import {
+  displayRotation,
+  fetchDigitalFiles,
+  type DigitalFileWithDerivatives,
+} from "@/lib/digital-files";
 import {
   Dialog,
   DialogContent,
@@ -334,7 +338,7 @@ function EnvelopeReview() {
                       <img
                         src={shown.viewUrl}
                         alt={shown.label ?? "Envelope scan"}
-                        style={{ transform: `rotate(${rotation}deg)` }}
+                        style={{ transform: `rotate(${shownRotation}deg)` }}
                         className="max-h-[62vh] w-auto object-contain transition-transform"
                       />
                     </button>
@@ -362,7 +366,7 @@ function EnvelopeReview() {
                         <img
                           src={shown.viewUrl}
                           alt={shown.label ?? "Envelope scan"}
-                          style={{ transform: `rotate(${rotation}deg)` }}
+                          style={{ transform: `rotate(${shownRotation}deg)` }}
                           className="max-h-[70vh] w-auto object-contain transition-transform"
                         />
                       </div>
