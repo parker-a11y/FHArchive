@@ -734,6 +734,19 @@ function QuickEntry() {
                 onChange={(e) => set("origin", e.target.value)}
                 placeholder={isLetter ? "FPO San Francisco" : undefined}
               />
+              {isLetter && (
+                <div className="flex gap-1.5 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => set("origin", "FPO - San Francisco")}
+                  >
+                    FPO - San Francisco
+                  </Button>
+                </div>
+              )}
             </div>
             {isLetter && (
               <PostalFields
