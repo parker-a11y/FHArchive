@@ -71,6 +71,8 @@ function NotePage() {
     enabled: !!note?.id,
   });
 
+  const imageUrl = useFfnImageUrls(images);
+
   if (isLoading) return <p className="p-8 text-sm text-muted-foreground">Loading…</p>;
   if (!note)
     return (
@@ -83,7 +85,6 @@ function NotePage() {
     );
 
   const primary = images.find((i) => i.is_primary) ?? images[0];
-  const imageUrl = useFfnImageUrls(images);
   const gallery = images.filter((i) => i.id !== primary?.id);
 
   return (
