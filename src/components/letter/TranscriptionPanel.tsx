@@ -144,17 +144,19 @@ function PageEditor({
               )}
             </div>
           ) : (
-            <Textarea
-              rows={16}
-              className="font-mono text-sm"
-              placeholder="Transcription — AI output appears here and can be corrected."
-              value={text}
-              onChange={(e) => {
-                setText(e.target.value);
-                setDirty(true);
-              }}
-            />
-            <FfnPreview text={text} />
+            <>
+              <Textarea
+                rows={16}
+                className="font-mono text-sm"
+                placeholder="Transcription — AI output appears here and can be corrected."
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  setDirty(true);
+                }}
+              />
+              <FfnPreview text={text} />
+            </>
           )}
           <div className="flex flex-wrap items-center gap-2">
             {!readOnly && (
@@ -475,13 +477,15 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                 )}
               </div>
             ) : (
-              <Textarea
-                rows={14}
-                className="mt-1.5 font-mono text-sm"
-                value={verified}
-                onChange={(e) => setVerified(e.target.value)}
-              />
-              <FfnPreview text={verified} />
+              <>
+                <Textarea
+                  rows={14}
+                  className="mt-1.5 font-mono text-sm"
+                  value={verified}
+                  onChange={(e) => setVerified(e.target.value)}
+                />
+                <FfnPreview text={verified} />
+              </>
             )}
             {!isGuestViewer && (
               <div className="mt-3 flex items-center gap-3">

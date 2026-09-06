@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ExternalLink, Link2, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FfnText } from "@/components/ffn/FfnText";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -110,7 +111,7 @@ export function SegmentsPanel({ source }: { source: DigitalSource }) {
                 )}
               </div>
               {seg.description && (
-                <p className="mt-0.5 text-sm text-muted-foreground">{seg.description}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground"><FfnText text={seg.description} /></p>
               )}
               {seg.keywords && (
                 <p className="mt-1 text-xs text-muted-foreground">Tags: {seg.keywords}</p>
@@ -207,7 +208,7 @@ export function SourceLettersPanel({ source }: { source: DigitalSource }) {
                   `${l.letters?.author ?? "—"} → ${l.letters?.recipient ?? "—"}`}
               </span>
               {l.explanation && (
-                <span className="block text-sm text-muted-foreground">{l.explanation}</span>
+                <span className="block text-sm text-muted-foreground"><FfnText text={l.explanation} /></span>
               )}
             </div>
             <Button variant="ghost" size="icon" onClick={() => unlink(l.id)}>

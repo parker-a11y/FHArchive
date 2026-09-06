@@ -48,6 +48,7 @@ import {
 } from "@/components/sources/ShareSourceDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
+import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
 
 
 export const Route = createFileRoute("/_authenticated/sources/$dsId")({
@@ -280,6 +281,7 @@ function SourcePage() {
 
               <Field label="Description">
                 <Textarea rows={3} value={v("description")} onChange={(e) => set("description", e.target.value)} />
+                <FfnPreview text={v("description")} />
               </Field>
               <Field label="Transcription / AI status">
                 <Select
@@ -300,15 +302,18 @@ function SourcePage() {
               </Field>
               <Field label="Transcript / extracted text">
                 <Textarea rows={5} value={v("transcript")} onChange={(e) => set("transcript", e.target.value)} />
+                <FfnPreview text={v("transcript")} />
               </Field>
               <Field label="Citation">
                 <Textarea rows={2} value={v("citation")} onChange={(e) => set("citation", e.target.value)} />
+                <FfnPreview text={v("citation")} />
               </Field>
               <Field label="Rights / usage notes">
                 <Input value={v("rights_notes")} onChange={(e) => set("rights_notes", e.target.value)} />
               </Field>
               <Field label="Notes">
                 <Textarea rows={2} value={v("notes")} onChange={(e) => set("notes", e.target.value)} />
+                <FfnPreview text={v("notes")} />
               </Field>
               {!isGuestViewer && (
                 <Button size="lg" disabled={!draft || saving} onClick={save}>
