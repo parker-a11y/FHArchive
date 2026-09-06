@@ -114,9 +114,11 @@ export function NoteCard({ slug, onClose }: { slug: string; onClose: () => void 
     enabled: !!note?.id,
   });
 
+  const imageUrl = useFfnImageUrls(images);
+
   if (!note) return <div className="p-4 text-sm text-muted-foreground">Loading…</div>;
   const primary = images.find((i) => i.is_primary) ?? images[0];
-  const imageUrl = useFfnImageUrls(images);
+
 
   return (
     <div className="max-h-[70vh] overflow-y-auto">
