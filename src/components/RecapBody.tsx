@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { FfnText } from "@/components/ffn/FfnText";
 
 /** Turns FH / DS record numbers into links into the archive. */
 export function RecapInline({ text }: { text: string }) {
@@ -40,7 +41,11 @@ export function RecapInline({ text }: { text: string }) {
               {part}
             </Link>
           );
-        return <span key={i}>{part}</span>;
+        return (
+          <span key={i}>
+            <FfnText text={part} />
+          </span>
+        );
       })}
     </>
   );
