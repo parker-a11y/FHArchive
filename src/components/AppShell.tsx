@@ -57,7 +57,9 @@ const NAV = [
 const ADMIN_NAV = [
   { to: "/admin/users", label: "Account Control", icon: UserCog },
   { to: "/admin/on-this-date", label: "On This Date Review", icon: CalendarDays },
+  { to: "/admin/numbering", label: "Numbering & Gaps", icon: ListChecks },
 ];
+
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { session, loading, isAdmin, canEdit } = useAuth();
