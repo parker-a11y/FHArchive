@@ -12,12 +12,21 @@ export const analyzeRecord = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    // Same dropped-bearer-header pitfall as Ask Francis: verify access and write
+    // with the service client keyed by the verified user id, or PostgREST sees
+    // auth.uid() as null and RLS rejects the insert.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: canEdit, error: accessErr } = await supabaseAdmin.rpc("can_edit_archive", {
+      _user_id: context.userId,
+    });
+    if (accessErr) throw new Error("Could not verify your archive access. Please try again.");
+    if (!canEdit) throw new Error("You do not have permission to run AI analysis.");
+
     const { buildAnalysisContext, analyzeRecordText, ANALYSIS_MODEL } = await import(
       "./ai-analysis.server"
     );
 
-    const ctx = await buildAnalysisContext(supabase, data.letterId);
+    const ctx = await buildAnalysisContext(supabaseAdmin, data.letterId);
     if (!ctx.transcript) {
       throw new Error(
         "This record has no transcription yet. Transcribe the scans first, then run analysis.",
