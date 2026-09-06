@@ -105,3 +105,59 @@ Return a single JSON object. ${fields}
     sources: str(parsed.sources),
   };
 }
+
+export type ImageSuggestion = {
+  url: string;
+  thumb: string;
+  title: string;
+  credit: string;
+  rights: string;
+  sourceUrl: string;
+};
+
+/**
+ * Finds candidate historical images on Wikimedia Commons (public, credited,
+ * rights-labelled) for a note term. No API key needed.
+ */
+export async function searchNoteImages(query: string): Promise<ImageSuggestion[]> {
+  const params = new URLSearchParams({
+    action: "query",
+    format: "json",
+    origin: "*",
+    generator: "search",
+    gsrsearch: `${query} filetype:bitmap`,
+    gsrnamespace: "6",
+    gsrlimit: "24",
+    prop: "imageinfo",
+    iiprop: "url|extmetadata",
+    iiurlwidth: "500",
+  });
+  const res = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, {
+    headers: { "User-Agent": "FrancisFilesArchive/1.0" },
+  });
+  if (!res.ok) throw new Error("Image search is unavailable right now");
+  const json = (await res.json()) as {
+    query?: { pages?: Record<string, Record<string, unknown>> };
+  };
+  const pages = Object.values(json.query?.pages ?? {});
+  const plain = (v: unknown) =>
+    typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim() : "";
+
+  return pages
+    .map((p) => {
+      const info = (p["imageinfo"] as Array<Record<string, unknown>> | undefined)?.[0];
+      if (!info) return null;
+      const meta = info["extmetadata"] as Record<string, { value?: unknown }> | undefined;
+      const url = String(info["url"] ?? "");
+      if (!url) return null;
+      return {
+        url,
+        thumb: String(info["thumburl"] ?? url),
+        title: String(p["title"] ?? "").replace(/^File:/, "").replace(/\.[a-z]+$/i, ""),
+        credit: plain(meta?.["Artist"]?.value) || "Wikimedia Commons",
+        rights: plain(meta?.["LicenseShortName"]?.value),
+        sourceUrl: String(info["descriptionurl"] ?? ""),
+      };
+    })
+    .filter((x): x is ImageSuggestion => !!x);
+}
