@@ -81,6 +81,8 @@ import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
+import { fetchRetirement } from "@/lib/numbering";
+
 import {
   AiPanel,
   HistoryPanel,
