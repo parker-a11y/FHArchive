@@ -41,6 +41,7 @@ import {
   unlinkNotes,
   updateNote,
   FFN_CATEGORIES,
+  categoryLabel,
   type ArchiveMatch,
 } from "@/lib/ffn";
 
@@ -207,7 +208,7 @@ function NoteEditor() {
       const terms = [form.term, form.expanded_name, ...aliases.map((a) => a.alias)].filter(Boolean);
       const found = await findArchiveMatches(terms);
       setMatches(found);
-      setPicked(new Set(found.map((m) => `${m.kind}:${m.refId}`)));
+      setPicked(new Set(found.map((m) => m.letter_id)));
       if (!found.length) toast.info("No archive mentions found");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Search failed");
@@ -218,7 +219,7 @@ function NoteEditor() {
 
   async function confirmMatches() {
     if (!matches) return;
-    const keep = matches.filter((m) => picked.has(`${m.kind}:${m.refId}`));
+    const keep = matches.filter((m) => picked.has(m.letter_id));
     await saveArchiveMatches(noteId, keep);
     setMatches(null);
     qc.invalidateQueries({ queryKey: ["ffn-occurrences", noteId] });
@@ -281,8 +282,8 @@ function NoteEditor() {
             </SelectTrigger>
             <SelectContent>
               {FFN_CATEGORIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
+                <SelectItem key={c} value={c}>
+                  {categoryLabel(c)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -543,7 +544,7 @@ function NoteEditor() {
             <p className="text-sm font-medium">{matches.length} possible mentions — confirm</p>
             <ul className="max-h-72 space-y-1 overflow-y-auto">
               {matches.map((m) => {
-                const key = `${m.kind}:${m.refId}`;
+                const key = m.letter_id;
                 return (
                   <li key={key} className="flex items-start gap-2 text-sm">
                     <Checkbox
