@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Sparkles, Trash2 } from "lucide-react";
+import { Check, Search, Sparkles, Trash2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useServerFn } from "@tanstack/react-start";
-import { draftFrancisFileNote } from "@/lib/ffn.functions";
+import { draftFrancisFileNote, suggestNoteImages } from "@/lib/ffn.functions";
 import {
   addAlias,
   addImage,
@@ -120,6 +120,57 @@ function NoteEditor() {
   const [imgUrl, setImgUrl] = useState("");
   const [imgCaption, setImgCaption] = useState("");
   const [imgCredit, setImgCredit] = useState("");
+  const findImages = useServerFn(suggestNoteImages);
+  const [imgQuery, setImgQuery] = useState("");
+  const [imgResults, setImgResults] = useState<
+    { url: string; thumb: string; title: string; credit: string; rights: string; sourceUrl: string }[]
+  >([]);
+  const [imgPicked, setImgPicked] = useState<string[]>([]);
+  const [imgSearching, setImgSearching] = useState(false);
+  const [imgAdding, setImgAdding] = useState(false);
+
+  async function runImageSearch() {
+    const q = (imgQuery || form.term).trim();
+    if (!q) return;
+    setImgSearching(true);
+    try {
+      const results = await findImages({ data: { query: q } });
+      setImgResults(results);
+      setImgPicked([]);
+      if (!results.length) toast.info("No pictures found for that search");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Picture search failed");
+    } finally {
+      setImgSearching(false);
+    }
+  }
+
+  async function addPickedImages() {
+    const chosen = imgResults.filter((r) => imgPicked.includes(r.url));
+    if (!chosen.length) return;
+    setImgAdding(true);
+    try {
+      let count = images.length;
+      for (const r of chosen) {
+        await addImage(noteId, {
+          image_url: r.url,
+          caption: r.title || null,
+          credit: r.credit || null,
+          rights_note: [r.rights, r.sourceUrl].filter(Boolean).join(" · ") || null,
+          is_primary: count === 0,
+          sort_order: count,
+        });
+        count += 1;
+      }
+      setImgPicked([]);
+      qc.invalidateQueries({ queryKey: ["ffn-images", noteId] });
+      toast.success(`Added ${chosen.length} picture${chosen.length > 1 ? "s" : ""}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not add the pictures");
+    } finally {
+      setImgAdding(false);
+    }
+  }
   const [aiBusy, setAiBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [matches, setMatches] = useState<ArchiveMatch[] | null>(null);
@@ -450,6 +501,71 @@ function NoteEditor() {
             </figure>
           ))}
         </div>
+        <div className="space-y-3 rounded-md border border-dashed p-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              value={imgQuery}
+              onChange={(e) => setImgQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void runImageSearch();
+                }
+              }}
+              placeholder={form.term ? `Search pictures for “${form.term}”` : "Search pictures"}
+            />
+            <Button variant="outline" disabled={imgSearching} onClick={() => void runImageSearch()}>
+              <Search className="mr-1.5 size-4" />
+              {imgSearching ? "Searching…" : "Find pictures"}
+            </Button>
+          </div>
+
+          {imgResults.length > 0 && (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Tap any pictures you want — you can pick as many as you like.
+              </p>
+              <div className="grid max-h-96 gap-2 overflow-y-auto sm:grid-cols-4">
+                {imgResults.map((r) => {
+                  const picked = imgPicked.includes(r.url);
+                  return (
+                    <button
+                      key={r.url}
+                      type="button"
+                      onClick={() =>
+                        setImgPicked((p) =>
+                          p.includes(r.url) ? p.filter((u) => u !== r.url) : [...p, r.url],
+                        )
+                      }
+                      className={`relative overflow-hidden rounded border text-left transition ${
+                        picked ? "border-archive-gold ring-2 ring-archive-gold" : "border-border"
+                      }`}
+                    >
+                      <img
+                        src={r.thumb}
+                        alt={r.title}
+                        loading="lazy"
+                        className="h-28 w-full bg-muted object-cover"
+                      />
+                      {picked && (
+                        <span className="absolute top-1 right-1 rounded-full bg-archive-gold p-1 text-background">
+                          <Check className="size-3" />
+                        </span>
+                      )}
+                      <span className="block truncate px-1.5 py-1 text-[11px] text-muted-foreground">
+                        {r.title}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <Button size="sm" disabled={!imgPicked.length || imgAdding} onClick={addPickedImages}>
+                {imgAdding ? "Adding…" : `Add ${imgPicked.length || ""} selected`.trim()}
+              </Button>
+            </>
+          )}
+        </div>
+
         <div className="grid gap-2 sm:grid-cols-3">
           <Input value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} placeholder="Image link" />
           <Input
