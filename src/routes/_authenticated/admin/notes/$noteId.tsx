@@ -25,7 +25,6 @@ import {
   addImage,
   deleteNote,
   fetchAliases,
-  fetchArchiveMatchesCached,
   fetchImages,
   fetchNote,
   fetchNotes,
