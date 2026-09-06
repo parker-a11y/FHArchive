@@ -118,6 +118,55 @@ function NoteEditor() {
     auto_link: true,
     status: "draft" as "draft" | "published",
   });
+  const [saving, setSaving] = useState(false);
+
+  // Load the saved note into the form once it arrives.
+  useEffect(() => {
+    if (!note) return;
+    setForm({
+      term: note.term ?? "",
+      title: note.title ?? "",
+      expanded_name: note.expanded_name ?? "",
+      category: note.category ?? "other",
+      short_definition: note.short_definition ?? "",
+      background: note.background ?? "",
+      archive_context: note.archive_context ?? "",
+      sources: note.sources ?? "",
+      slug: note.slug ?? "",
+      auto_link: note.auto_link ?? true,
+      status: (note.status === "published" ? "published" : "draft") as "draft" | "published",
+    });
+  }, [note]);
+
+  function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function save(patch?: Partial<typeof form>) {
+    setSaving(true);
+    try {
+      const next = { ...form, ...patch };
+      await updateNote(noteId, {
+        ...next,
+        title: next.title.trim() || null,
+        expanded_name: next.expanded_name.trim() || null,
+        short_definition: next.short_definition.trim() || null,
+        background: next.background.trim() || null,
+        archive_context: next.archive_context.trim() || null,
+        sources: next.sources.trim() || null,
+        slug: next.slug.trim() || slugify(next.term),
+      });
+      qc.invalidateQueries({ queryKey: ["ffn-note", noteId] });
+      qc.invalidateQueries({ queryKey: ["ffn-notes"] });
+      qc.invalidateQueries({ queryKey: ["ffn-alias-index"] });
+      toast.success("Saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const [newAlias, setNewAlias] = useState("");
   const [imgUrl, setImgUrl] = useState("");
   const [imgCaption, setImgCaption] = useState("");
