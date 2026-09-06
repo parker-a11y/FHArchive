@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useFfnImageUrls } from "@/lib/ffn-images";
 import { ArrowLeft } from "lucide-react";
 import {
   categoryLabel,
@@ -82,6 +83,7 @@ function NotePage() {
     );
 
   const primary = images.find((i) => i.is_primary) ?? images[0];
+  const imageUrl = useFfnImageUrls(images);
   const gallery = images.filter((i) => i.id !== primary?.id);
 
   return (
@@ -106,10 +108,10 @@ function NotePage() {
         {note.short_definition && <p className="mt-3 text-[15px]">{note.short_definition}</p>}
       </header>
 
-      {primary?.image_url && (
+      {primary && imageUrl(primary) && (
         <figure className="mt-6 space-y-1">
           <img
-            src={primary.image_url}
+            src={imageUrl(primary)}
             alt={primary.caption ?? noteTitle(note)}
             className="w-full rounded border border-border"
           />
@@ -151,10 +153,10 @@ function NotePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {gallery.map(
               (img) =>
-                img.image_url && (
+                imageUrl(img) && (
                   <figure key={img.id} className="space-y-1">
                     <img
-                      src={img.image_url}
+                      src={imageUrl(img)}
                       alt={img.caption ?? noteTitle(note)}
                       loading="lazy"
                       className="w-full rounded border border-border"

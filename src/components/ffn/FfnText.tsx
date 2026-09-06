@@ -7,6 +7,7 @@
  */
 import { type ReactNode, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useFfnImageUrls } from "@/lib/ffn-images";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import {
@@ -115,6 +116,7 @@ export function NoteCard({ slug, onClose }: { slug: string; onClose: () => void 
 
   if (!note) return <div className="p-4 text-sm text-muted-foreground">Loading…</div>;
   const primary = images.find((i) => i.is_primary) ?? images[0];
+  const imageUrl = useFfnImageUrls(images);
 
   return (
     <div className="max-h-[70vh] overflow-y-auto">
@@ -144,10 +146,10 @@ export function NoteCard({ slug, onClose }: { slug: string; onClose: () => void 
             {note.archive_context}
           </p>
         )}
-        {primary?.image_url && (
+        {primary && imageUrl(primary) && (
           <figure className="space-y-1">
             <img
-              src={primary.image_url}
+              src={imageUrl(primary)}
               alt={primary.caption ?? noteTitle(note)}
               loading="lazy"
               className="w-full rounded border border-border object-cover"
