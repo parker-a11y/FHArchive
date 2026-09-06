@@ -493,7 +493,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           (e.pageCount > 1 ? ` · page ${e.page} of ${e.pageCount}` : ""),
         subtitle: `${letter.archive_id} · viewing derivative`,
         filename: e.file.original_filename,
-        rotation: e.file.rotation,
+        rotation: displayRotation(e.file),
       })),
     [viewerEntries, letter.archive_id],
   );
@@ -904,7 +904,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                       <img
                         src={f.thumbUrl}
                         alt={f.label || f.original_filename}
-                        style={{ transform: `rotate(${f.rotation}deg)` }}
+                        style={{ transform: `rotate(${displayRotation(f)}deg)` }}
                         className="h-full w-full object-contain"
                       />
                     ) : (
@@ -1147,7 +1147,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   src={f.viewUrl}
                   alt={f.label || f.original_filename}
                   loading="lazy"
-                  style={{ transform: `rotate(${f.rotation}deg)` }}
+                  style={{ transform: `rotate(${displayRotation(f)}deg)` }}
                   className="h-24 w-full rounded bg-muted object-contain"
                 />
                 <p className="mt-1 truncate text-[10px]">{basenameOf(f.master_path)}.jpg</p>
@@ -1175,7 +1175,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                   src={f.thumbUrl}
                   alt={f.label || f.original_filename}
                   loading="lazy"
-                  style={{ transform: `rotate(${f.rotation}deg)` }}
+                  style={{ transform: `rotate(${displayRotation(f)}deg)` }}
                   className="h-16 w-24 rounded border border-border bg-muted object-contain"
                 />
                 <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
