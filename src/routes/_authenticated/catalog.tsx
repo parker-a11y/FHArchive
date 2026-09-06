@@ -310,7 +310,13 @@ function QuickEntry() {
     }
 
     setBusy(false);
+    rememberStorage({
+      storage_type: form.storage_type,
+      source_container_id: form.source_container_id,
+      original_order_notes: form.original_order_notes,
+    });
     qc.invalidateQueries({ queryKey: ["letters"] });
+
     if (followUpErrors.length) {
       toast.warning(`${created.archive_id} was created, but some details need attention`, {
         description: followUpErrors.join("; "),
