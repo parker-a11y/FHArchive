@@ -1097,6 +1097,281 @@ export type Database = {
         }
         Relationships: []
       }
+      ffn_aliases: {
+        Row: {
+          alias: string
+          alias_norm: string
+          auto_link: boolean
+          created_at: string
+          id: string
+          note_id: string
+        }
+        Insert: {
+          alias: string
+          alias_norm: string
+          auto_link?: boolean
+          created_at?: string
+          id?: string
+          note_id: string
+        }
+        Update: {
+          alias?: string
+          alias_norm?: string
+          auto_link?: boolean
+          created_at?: string
+          id?: string
+          note_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffn_aliases_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "ffn_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ffn_entity_links: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          note_id: string
+          ref_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          note_id: string
+          ref_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          note_id?: string
+          ref_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffn_entity_links_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "ffn_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ffn_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          credit: string | null
+          id: string
+          image_url: string | null
+          is_primary: boolean
+          note_id: string
+          rights_note: string | null
+          sort_order: number
+          storage_bucket: string | null
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          credit?: string | null
+          id?: string
+          image_url?: string | null
+          is_primary?: boolean
+          note_id: string
+          rights_note?: string | null
+          sort_order?: number
+          storage_bucket?: string | null
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          credit?: string | null
+          id?: string
+          image_url?: string | null
+          is_primary?: boolean
+          note_id?: string
+          rights_note?: string | null
+          sort_order?: number
+          storage_bucket?: string | null
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffn_images_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "ffn_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ffn_notes: {
+        Row: {
+          ai_assisted: boolean
+          ai_generated_at: string | null
+          appearance_count: number
+          appearances_updated_at: string | null
+          archive_context: string | null
+          auto_link: boolean
+          background: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          expanded_name: string | null
+          id: string
+          short_definition: string | null
+          slug: string
+          sources: string | null
+          status: string
+          term: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_assisted?: boolean
+          ai_generated_at?: string | null
+          appearance_count?: number
+          appearances_updated_at?: string | null
+          archive_context?: string | null
+          auto_link?: boolean
+          background?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          expanded_name?: string | null
+          id?: string
+          short_definition?: string | null
+          slug: string
+          sources?: string | null
+          status?: string
+          term: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_assisted?: boolean
+          ai_generated_at?: string | null
+          appearance_count?: number
+          appearances_updated_at?: string | null
+          archive_context?: string | null
+          auto_link?: boolean
+          background?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          expanded_name?: string | null
+          id?: string
+          short_definition?: string | null
+          slug?: string
+          sources?: string | null
+          status?: string
+          term?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ffn_occurrences: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          id: string
+          kind: string
+          note_id: string
+          ref_id: string | null
+          ref_label: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          kind?: string
+          note_id: string
+          ref_id?: string | null
+          ref_label?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          kind?: string
+          note_id?: string
+          ref_id?: string | null
+          ref_label?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffn_occurrences_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "ffn_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ffn_relations: {
+        Row: {
+          a_id: string
+          b_id: string
+          created_at: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          a_id: string
+          b_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          a_id?: string
+          b_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ffn_relations_a_id_fkey"
+            columns: ["a_id"]
+            isOneToOne: false
+            referencedRelation: "ffn_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ffn_relations_b_id_fkey"
+            columns: ["b_id"]
+            isOneToOne: false
+            referencedRelation: "ffn_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       file_derivatives: {
         Row: {
           created_at: string
