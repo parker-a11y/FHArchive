@@ -33,7 +33,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/catalog", label: "Quick Entry", icon: PlusSquare, adminOnly: true },
+  { to: "/catalog", label: "Quick Entry", icon: PlusSquare, editorOnly: true },
   { to: "/letters", label: "All Records", icon: Files },
   { to: "/ask", label: "Ask Francis", icon: FileSearch },
   { to: "/recaps", label: "Weekly Recaps", icon: Newspaper },
@@ -60,7 +60,7 @@ const ADMIN_NAV = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const { session, loading, isAdmin } = useAuth();
+  const { session, loading, isAdmin, canEdit } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -78,9 +78,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   if (!session) return null;
 
-  const navItems = isAdmin
-    ? NAV
-    : NAV.filter((item) => !(item as { adminOnly?: boolean }).adminOnly);
+  const navItems = NAV.filter((item) => {
+    const access = item as { adminOnly?: boolean; editorOnly?: boolean };
+    if (access.adminOnly && !isAdmin) return false;
+    if (access.editorOnly && !canEdit) return false;
+    return true;
+  });
 
 
   const nav = (onNavigate?: () => void) => (
