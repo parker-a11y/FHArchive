@@ -518,7 +518,10 @@ function QuickEntry() {
               <CategorySelect
                 value={form.subtype}
                 allowEmpty
-                onChange={(v) => set("subtype", v)}
+                onChange={(v) => {
+                  set("subtype", v);
+                  rememberTypes(form.record_type, v);
+                }}
                 options={subtypeOptions.map((s) => ({ value: s, label: s }))}
                 onCreate={async (label) => {
                   const v = await addSubtype(form.record_type, label, subtypeOptions);
