@@ -171,13 +171,19 @@ function rememberStorage(m: StorageMemory) {
 
 /** Type + subtype are remembered as soon as they are chosen, not only on save. */
 function rememberTypes(record_type: string, subtype: string) {
+  rememberField({ record_type, subtype });
+}
+
+/** Persist any subset of the storage memory immediately, keeping the rest. */
+function rememberField(patch: Partial<StorageMemory>) {
   const prev = readLastStorage();
   rememberStorage({
+    record_type: prev.record_type || "letter",
+    subtype: prev.subtype ?? "",
     storage_type: prev.storage_type || "file_jacket",
     source_container_id: prev.source_container_id ?? "",
     original_order_notes: prev.original_order_notes ?? "",
-    record_type,
-    subtype,
+    ...patch,
   });
 }
 
@@ -206,7 +212,12 @@ function QuickEntry() {
       // Folder / jacket defaults to the FH number; still editable.
       // Storage choices carry over from the last record entered.
       const remembered = readLastStorage();
-      setForm((f) => ({ ...f, ...remembered, storage_folder: n.archive_id }));
+      // Only apply remembered values that are non-empty so a blank memory
+      // never wipes a selection already carried forward from the last save.
+      const nonEmpty = Object.fromEntries(
+        Object.entries(remembered).filter(([, v]) => v !== "" && v !== undefined && v !== null),
+      );
+      setForm((f) => ({ ...f, ...nonEmpty, storage_folder: n.archive_id }));
       setTimeout(() => dateRef.current?.focus(), 30);
     } catch (e) {
       toast.error((e as Error).message);
@@ -926,7 +937,10 @@ function QuickEntry() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
-                  onChange={(v) => set("source_container_id", v)}
+                  onChange={(v) => {
+                    set("source_container_id", v);
+                    rememberField({ source_container_id: v });
+                  }}
                 />
                 <div className="space-y-1.5">
                   <Label className="field-label">Original order / position notes</Label>
