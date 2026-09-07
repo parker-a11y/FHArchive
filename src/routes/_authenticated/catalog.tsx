@@ -250,17 +250,66 @@ function QuickEntry() {
   const subtypeOptions = useSubtypeOptions(form.record_type);
   const invalidateCategories = useInvalidateCategories();
 
-  async function save(mode: "next" | "open" | "label") {
-    if (busy) return;
-    setBusy(true);
-    // A record never needs a date: fall back to "undated" rather than blocking entry.
-    const precision =
-      !form.normalized_date && !["undated", "not_applicable", "unknown"].includes(form.date_precision)
-        ? "undated"
-        : form.date_precision;
-    let created: { id: string; archive_id: string };
-    const followUpErrors: string[] = [];
-    const extras = {
+  /** A date is never required: fall back to "undated" rather than blocking entry. */
+  function datePrecision() {
+    return !form.normalized_date &&
+      !["undated", "not_applicable", "unknown"].includes(form.date_precision)
+      ? "undated"
+      : form.date_precision;
+  }
+
+  /** Core fields, shared by the create RPC and the update of a started record. */
+  function coreArgs(precision: string) {
+    return {
+      p_record_type: form.record_type,
+      p_subtype: form.subtype,
+      p_title: form.title,
+      p_date_as_written: form.date_as_written,
+      p_normalized_date: form.normalized_date,
+      p_date_end: form.date_end,
+      p_date_precision: precision,
+      p_date_certainty: form.date_certainty,
+      p_primary_person: form.primary_person,
+      p_author: isLetter ? form.author : null,
+      p_recipient: isLetter ? form.recipient : null,
+      p_origin: form.origin,
+      p_destination: isLetter ? form.destination : null,
+      p_period: form.period,
+      p_sheets: form.sheets ? Number(form.sheets) : null,
+      p_has_envelope: isLetter ? form.has_envelope : false,
+      p_has_enclosures: form.has_enclosures,
+      p_storage_location: null,
+      p_original_copy: "original",
+      p_notes: form.notes,
+    };
+  }
+
+  function coreColumns(precision: string) {
+    const a = coreArgs(precision);
+    return {
+      record_type: a.p_record_type,
+      subtype: a.p_subtype || null,
+      title: a.p_title || null,
+      date_as_written: a.p_date_as_written || null,
+      normalized_date: a.p_normalized_date || null,
+      date_end: a.p_date_end || null,
+      date_precision: a.p_date_precision,
+      date_certainty: a.p_date_certainty,
+      primary_person: a.p_primary_person || null,
+      author: a.p_author || null,
+      recipient: a.p_recipient || null,
+      origin: a.p_origin || null,
+      destination: a.p_destination || null,
+      period: a.p_period,
+      sheets: a.p_sheets,
+      has_envelope: a.p_has_envelope,
+      has_enclosures: a.p_has_enclosures,
+      notes: a.p_notes || null,
+    };
+  }
+
+  function extrasColumns() {
+    return {
       identification_status: form.identification_status,
       date_from_postmark: form.date_from_postmark,
       forwarded: isLetter ? form.forwarded : false,
@@ -276,74 +325,64 @@ function QuickEntry() {
       starred: form.starred,
       transcription_status: form.transcription_not_required ? "not_required" : "not_started",
     };
+  }
+
+  /**
+   * Claims the FH number now so the full scan panel (thumbnails, naming,
+   * rotation, viewer, confirm) can be used before the rest of the form is done.
+   */
+  async function startRecord() {
+    if (starting || startedLetter) return;
+    setStarting(true);
     try {
-      created = await createRecord({
-        p_record_type: form.record_type,
-        p_subtype: form.subtype,
-        p_title: form.title,
-        p_date_as_written: form.date_as_written,
-        p_normalized_date: form.normalized_date,
-        p_date_end: form.date_end,
-        p_date_precision: precision,
-        p_date_certainty: form.date_certainty,
-        p_primary_person: form.primary_person,
-        p_author: isLetter ? form.author : null,
-        p_recipient: isLetter ? form.recipient : null,
-        p_origin: form.origin,
-        p_destination: isLetter ? form.destination : null,
-        p_period: form.period,
-        p_sheets: form.sheets ? Number(form.sheets) : null,
-        p_has_envelope: isLetter ? form.has_envelope : false,
-        p_has_enclosures: form.has_enclosures,
-        p_storage_location: null,
-        p_original_copy: "original",
-        p_notes: form.notes,
-      });
-    } catch (e) {
-      setBusy(false);
-      return toast.error((e as Error).message);
-    }
-
-    const { error: extrasError } = await supabase
-      .from("letters")
-      .update(extras as never)
-      .eq("id", created.id);
-    if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
-
-    if (scans.length) {
-      const chosen = scans;
-      for (let i = 0; i < chosen.length; i++) {
-        const item = chosen[i];
-        setUploading(`Uploading ${i + 1} of ${chosen.length} — ${item.file.name}`);
-        setScans((s) =>
-          s.map((x) => (x.key === item.key ? { ...x, status: "uploading", message: "Storing…" } : x)),
-        );
-        try {
-          await uploadScanMaster({
-            archiveId: created.archive_id,
-            letterId: created.id,
-            file: item.file,
-            sortOrder: i + 1,
-            label: item.label,
-            onStage: (stage) =>
-              setScans((s) => s.map((x) => (x.key === item.key ? { ...x, message: stage } : x))),
-          });
-          setScans((s) =>
-            s.map((x) => (x.key === item.key ? { ...x, status: "done", message: "Attached" } : x)),
-          );
-        } catch (error) {
-          const msg = (error as Error).message;
-          followUpErrors.push(msg);
-          setScans((s) => s.map((x) => (x.key === item.key ? { ...x, status: "error", message: msg } : x)));
-        }
-      }
-      setUploading(null);
-      await supabase
+      const created = await createRecord(coreArgs(datePrecision()));
+      await supabase.from("letters").update(extrasColumns() as never).eq("id", created.id);
+      const { data, error } = await supabase
         .from("letters")
-        .update({ digitization_status: "in_progress" } as never)
-        .eq("id", created.id);
+        .select("*")
+        .eq("id", created.id)
+        .single();
+      if (error) throw error;
+      setStartedLetter(data as unknown as Letter);
+      qc.invalidateQueries({ queryKey: ["letters"] });
+      toast.success(`${created.archive_id} started — add scans below`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setStarting(false);
     }
+  }
 
+  async function save(mode: "next" | "open" | "label") {
+    if (busy) return;
+    setBusy(true);
+    const precision = datePrecision();
+    let created: { id: string; archive_id: string };
+    const followUpErrors: string[] = [];
+    const extras = extrasColumns();
+    if (startedLetter) {
+      created = { id: startedLetter.id, archive_id: startedLetter.archive_id };
+      const { error } = await supabase
+        .from("letters")
+        .update({ ...coreColumns(precision), ...extras } as never)
+        .eq("id", created.id);
+      if (error) {
+        setBusy(false);
+        return toast.error(error.message);
+      }
+    } else {
+      try {
+        created = await createRecord(coreArgs(precision));
+      } catch (e) {
+        setBusy(false);
+        return toast.error((e as Error).message);
+      }
+      const { error: extrasError } = await supabase
+        .from("letters")
+        .update(extras as never)
+        .eq("id", created.id);
+      if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
+    }
 
     try {
       const { data: auth } = await supabase.auth.getUser();
@@ -369,7 +408,7 @@ function QuickEntry() {
     qc.invalidateQueries({ queryKey: ["letters"] });
 
     if (followUpErrors.length) {
-      toast.warning(`${created.archive_id} was created, but some details need attention`, {
+      toast.warning(`${created.archive_id} was saved, but some details need attention`, {
         description: followUpErrors.join("; "),
         duration: 12000,
       });
@@ -407,15 +446,13 @@ function QuickEntry() {
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
-    setScans((s) => {
-      s.forEach((x) => x.preview && URL.revokeObjectURL(x.preview));
-      return [];
-    });
+    setStartedLetter(null);
     // Preserve author/recipient people links for batch entry of similar records.
     setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
     setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
     loadNext();
   }
+
 
 
   return (
