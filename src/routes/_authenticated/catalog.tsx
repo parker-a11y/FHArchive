@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
-import { createRecord, previewNextArchiveId } from "@/lib/queries";
-import { uploadScanMaster } from "@/lib/scan-confirm";
-import { MASTER_ACCEPT, sortByFilename, suggestedLabels } from "@/lib/digitization";
-import { UploadCloud, X, ArrowUp, ArrowDown, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { createRecord, previewNextArchiveId, type Letter } from "@/lib/queries";
+import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
+import { FilePlus2 } from "lucide-react";
+
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
 import { PostalFields } from "@/components/letter/PostalFields";
