@@ -22,9 +22,8 @@ export const analyzeRecord = createServerFn({ method: "POST" })
     if (accessErr) throw new Error("Could not verify your archive access. Please try again.");
     if (!canEdit) throw new Error("You do not have permission to run AI analysis.");
 
-    const { buildAnalysisContext, analyzeRecordText, ANALYSIS_MODEL } = await import(
-      "./ai-analysis.server"
-    );
+    const { buildAnalysisContext, analyzeRecordText, ANALYSIS_MODEL, ANALYSIS_FIELDS } =
+      await import("./ai-analysis.server");
 
     const ctx = await buildAnalysisContext(supabaseAdmin, data.letterId);
     if (!ctx.transcript) {
@@ -35,16 +34,30 @@ export const analyzeRecord = createServerFn({ method: "POST" })
 
     const fields = await analyzeRecordText(ctx);
     const keys = Object.keys(fields);
-    if (!keys.length) return { suggestions: 0 };
 
-    // Replace only pending rows; accepted/rejected review history is preserved.
-    const { data: existing } = await supabaseAdmin
-      .from("ai_suggestions")
-      .select("field_key, status")
-      .eq("letter_id", data.letterId);
-    const locked = new Set(
-      (existing ?? []).filter((r) => r.status !== "pending").map((r) => r.field_key),
-    );
+    // Anything the model no longer flags is dropped, so a superseded note (for
+    // example an uncertain passage the archivist has since corrected) does not
+    // linger on the record after a re-run.
+    const stale = ANALYSIS_FIELDS.map(([k]) => k).filter((k) => !keys.includes(k));
+    if (stale.length) {
+      await supabaseAdmin
+        .from("ai_suggestions")
+        .delete()
+        .eq("letter_id", data.letterId)
+        .in("field_key", stale);
+    }
+
+    if (!keys.length) return { suggestions: 0, skipped: 0, cleared: stale.length };
+
+    // "new" keeps reviewed rows untouched; "all" replaces everything.
+    const locked = new Set<string>();
+    if (data.mode === "new") {
+      const { data: existing } = await supabaseAdmin
+        .from("ai_suggestions")
+        .select("field_key, status")
+        .eq("letter_id", data.letterId);
+      for (const r of existing ?? []) if (r.status !== "pending") locked.add(r.field_key);
+    }
 
     const rows = keys
       .filter((k) => !locked.has(k))
@@ -64,5 +77,9 @@ export const analyzeRecord = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     }
 
-    return { suggestions: rows.length, skipped: keys.length - rows.length };
+    return {
+      suggestions: rows.length,
+      skipped: keys.length - rows.length,
+      cleared: stale.length,
+    };
   });
