@@ -937,7 +937,10 @@ function QuickEntry() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
-                  onChange={(v) => set("source_container_id", v)}
+                  onChange={(v) => {
+                    set("source_container_id", v);
+                    rememberField({ source_container_id: v });
+                  }}
                 />
                 <div className="space-y-1.5">
                   <Label className="field-label">Original order / position notes</Label>
