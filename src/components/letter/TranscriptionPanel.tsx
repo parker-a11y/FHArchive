@@ -391,6 +391,11 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
               )}
               Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
             </Button>
+            {dirtyPageCount > 0 && (
+              <span className="text-xs text-amber-600 dark:text-amber-400">
+                {dirtyPageCount} page{dirtyPageCount === 1 ? "" : "s"} with unsaved corrections
+              </span>
+            )}
             <Button
               variant="ghost"
               size="sm"
