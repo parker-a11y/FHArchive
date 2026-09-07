@@ -743,9 +743,20 @@ export function AiPanel({ letter }: { letter: Letter }) {
                 Suggest tone / sentiment
               </Button>
             )}
-            <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
-              {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
+            <Button size="sm" onClick={() => analyze("new")} disabled={busy || !hasTranscript}>
+              {busy ? "Analyzing…" : rows.length ? "Re-analyze new fields" : "Run AI analysis"}
             </Button>
+            {rows.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => analyze("all")}
+                disabled={busy || !hasTranscript}
+                title="Replaces every suggestion with a fresh read, including ones you already accepted or rejected. Metadata already saved on the record is not changed."
+              >
+                Re-analyze everything
+              </Button>
+            )}
           </div>
         </div>
         {!hasTranscript && (
