@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { canDerive, makeDerivatives, makeThumbnail } from "@/lib/derivatives";
 import { rotateBlob } from "@/lib/rotate";
 import { basenameOf, extensionOf } from "@/lib/scan-rename";
+import { normalizeFh, parseScanFilename } from "@/lib/digitization";
 import type { DigitalFileWithDerivatives } from "@/lib/digital-files";
 
 const BUCKET = "scans";
@@ -314,4 +315,54 @@ export async function generatePreviewThumbnail(
     height: thumb.height,
   } as never);
   if (error) throw error;
+}
+
+/**
+ * Store one archival master and record it against a letter, then make a quick
+ * preview thumbnail. Shared by the record Digitization panel and Quick Entry so
+ * scans added at intake go through exactly the same path.
+ */
+export async function uploadScanMaster(opts: {
+  archiveId: string;
+  letterId: string;
+  file: File;
+  sortOrder: number;
+  onStage?: (stage: string) => void;
+}): Promise<string> {
+  const { archiveId, letterId, file, sortOrder, onStage } = opts;
+  onStage?.("Storing archival master…");
+  const safe = file.name.replace(/[^\w.\-]+/g, "_");
+  const masterPath = `${archiveId}/masters/${Date.now()}_${safe}`;
+  const { error: upErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(masterPath, file, { upsert: false, contentType: file.type || undefined });
+  if (upErr) throw new Error(`${file.name}: master not stored — ${upErr.message}`);
+
+  const parsed = parseScanFilename(file.name);
+  const matches = parsed.fh === null ? true : parsed.fh === normalizeFh(archiveId);
+  const seq = parsed.seq ?? null;
+
+  const { data: inserted, error: insErr } = await supabase
+    .from("digital_files")
+    .insert({
+      letter_id: letterId,
+      seq,
+      sort_order: seq ?? sortOrder,
+      original_filename: file.name,
+      master_path: masterPath,
+      master_mime: file.type || null,
+      master_size: file.size,
+      filename_matches: matches,
+    } as never)
+    .select("id")
+    .single();
+  if (insErr || !inserted) throw new Error(`${file.name}: ${insErr?.message ?? "could not be recorded"}`);
+
+  try {
+    onStage?.("Making preview thumbnail…");
+    await generatePreviewThumbnail(archiveId, letterId, inserted.id as string, masterPath, file);
+  } catch (err) {
+    console.warn("Preview thumbnail failed:", (err as Error).message);
+  }
+  return inserted.id as string;
 }
