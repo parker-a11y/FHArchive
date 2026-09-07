@@ -7,9 +7,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const analyzeRecord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { letterId: string }) => {
+  .inputValidator((input: { letterId: string; mode?: "new" | "all" }) => {
     if (!input?.letterId) throw new Error("letterId is required");
-    return input;
+    return { letterId: input.letterId, mode: input.mode === "all" ? "all" : "new" } as const;
   })
   .handler(async ({ data, context }) => {
     // Same dropped-bearer-header pitfall as Ask Francis: verify access and write
