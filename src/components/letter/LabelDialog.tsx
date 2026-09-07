@@ -164,7 +164,9 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           lines={labelLines(letter)}
         />
 
-        <PrintButton onDone={() => setOpen(false)} />
+        <div className="no-print flex justify-end">
+          <PrintButton onDone={() => setOpen(false)} />
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -216,7 +218,9 @@ export function EntryLabelDialog({
           lines={lines}
         />
 
-        <PrintButton onDone={() => onOpenChange(false)} />
+        <div className="no-print flex justify-end">
+          <PrintButton onDone={() => onOpenChange(false)} />
+        </div>
       </DialogContent>
     </Dialog>
   );
