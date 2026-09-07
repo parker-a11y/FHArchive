@@ -212,7 +212,12 @@ function QuickEntry() {
       // Folder / jacket defaults to the FH number; still editable.
       // Storage choices carry over from the last record entered.
       const remembered = readLastStorage();
-      setForm((f) => ({ ...f, ...remembered, storage_folder: n.archive_id }));
+      // Only apply remembered values that are non-empty so a blank memory
+      // never wipes a selection already carried forward from the last save.
+      const nonEmpty = Object.fromEntries(
+        Object.entries(remembered).filter(([, v]) => v !== "" && v !== undefined && v !== null),
+      );
+      setForm((f) => ({ ...f, ...nonEmpty, storage_folder: n.archive_id }));
       setTimeout(() => dateRef.current?.focus(), 30);
     } catch (e) {
       toast.error((e as Error).message);
