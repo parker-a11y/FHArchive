@@ -74,10 +74,11 @@ function LabelFace({ archiveId, dateText, title = "", lines = [] }: LabelProps) 
   );
 }
 
-function PrintButton({ onDone }: { onDone: () => void }) {
+function PrintButton({ onDone, size = "default" }: { onDone: () => void; size?: "default" | "large" }) {
+  const isLarge = size === "large";
   return (
     <Button
-      className="no-print gap-2"
+      className={`no-print gap-2 ${isLarge ? "h-40 w-48 flex-col text-xl" : ""}`}
       onClick={() => {
         // Printing blocks; close once the browser's print dialog is dismissed.
         const close = () => onDone();
@@ -89,7 +90,12 @@ function PrintButton({ onDone }: { onDone: () => void }) {
         }, 300);
       }}
     >
-      <Printer className="size-4" /> Print to label printer
+      <Printer className={isLarge ? "size-10" : "size-4"} />
+      <span className="text-center leading-tight">
+        Print to
+        <br />
+        label printer
+      </span>
     </Button>
   );
 }
@@ -141,7 +147,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           <Printer className="size-4" /> Print Folder Label
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-3xl">
         <DialogTitle>4 × 6 Folder Label</DialogTitle>
         <div className="no-print space-y-2">
           <label className="field-label">Title / short description</label>
@@ -157,15 +163,18 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           </p>
         </div>
 
-        <LabelCard
-          archiveId={letter.archive_id}
-          dateText={dateText}
-          title={titleText}
-          lines={labelLines(letter)}
-        />
-
-        <div className="no-print flex justify-end">
-          <PrintButton onDone={() => setOpen(false)} />
+        <div className="no-print flex flex-col items-start gap-6 sm:flex-row">
+          <div className="flex-1">
+            <LabelCard
+              archiveId={letter.archive_id}
+              dateText={dateText}
+              title={titleText}
+              lines={labelLines(letter)}
+            />
+          </div>
+          <div className="flex shrink-0 items-center self-center sm:self-stretch">
+            <PrintButton onDone={() => setOpen(false)} size="large" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -202,7 +211,7 @@ export function EntryLabelDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-3xl">
         <DialogTitle>4 × 6 Folder Label — {archiveId}</DialogTitle>
         <div className="no-print space-y-2">
           <label className="field-label">Title / short description</label>
@@ -211,15 +220,18 @@ export function EntryLabelDialog({
           <Input value={dateText} onChange={(e) => setDateText(e.target.value.toUpperCase())} />
         </div>
 
-        <LabelCard
-          archiveId={archiveId}
-          dateText={dateText}
-          title={titleText}
-          lines={lines}
-        />
-
-        <div className="no-print flex justify-end">
-          <PrintButton onDone={() => onOpenChange(false)} />
+        <div className="no-print flex flex-col items-start gap-6 sm:flex-row">
+          <div className="flex-1">
+            <LabelCard
+              archiveId={archiveId}
+              dateText={dateText}
+              title={titleText}
+              lines={lines}
+            />
+          </div>
+          <div className="flex shrink-0 items-center self-center sm:self-stretch">
+            <PrintButton onDone={() => onOpenChange(false)} size="large" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
