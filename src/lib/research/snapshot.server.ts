@@ -263,9 +263,6 @@ function composeRecords(dump: Dump) {
       source_container: container
         ? { box_id: container["box_id"], title: container["title"] }
         : null,
-      research_questions: (suggestionsByLetter.get(l["id"]) ?? [])
-        .filter((s) => s["field_key"] === "questions" && s["content"])
-        .flatMap((s) => String(s["content"]).split("\n").map((x) => x.trim()).filter(Boolean)),
       historical_references: (refsByLetter.get(l["id"]) ?? []).map((r) => ({
         reference: r["reference"],
         ref_type: r["ref_type"],
@@ -395,10 +392,6 @@ function recordMarkdown(r: ComposedRecord): string {
   block("Digitization notes", r["digitization_notes"]);
   block("Original order notes", r["original_order_notes"]);
 
-  if ((r["research_questions"] ?? []).length) {
-    lines.push("", "## Research questions", "");
-    for (const q of r["research_questions"]) lines.push(`- ${q}`);
-  }
   if ((r["historical_references"] ?? []).length) {
     lines.push("", "## Historical references", "");
     for (const h of r["historical_references"])
@@ -645,7 +638,6 @@ export async function runResearchSnapshot(
       pages: undefined,
       files: (r["files"] ?? []).length,
       historical_references: undefined,
-      research_questions: (r["research_questions"] ?? []).join(" | "),
       source_container: r["source_container"]?.box_id ?? "",
     }));
     await upload("csv/records.csv", toCsv(flatRecords), "text/csv");
@@ -853,7 +845,6 @@ async function rebuildResearchIndex(
         (r["organizations"] ?? []).join(", "),
         (r["keywords"] ?? []).join(", "),
         (r["tones"] ?? []).join(", "),
-        (r["research_questions"] ?? []).join("\n"),
       ]
         .filter((x) => x && String(x).trim())
         .join("\n\n")

@@ -440,7 +440,6 @@ export const AI_FIELDS = [
   { key: "events", label: "Historical events" },
   { key: "quotations", label: "Important quotations" },
   { key: "uncertain", label: "Uncertain transcription passages" },
-  { key: "questions", label: "Potential research questions" },
   { key: "related", label: "Related letters" },
 ] as const;
 
