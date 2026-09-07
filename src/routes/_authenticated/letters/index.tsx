@@ -335,6 +335,13 @@ function LettersTable() {
     queryFn: () => fetchKeywordsForLetters(pageIds),
   });
 
+  // AI-analysis review state drives the purple/green distinction.
+  const { data: aiByLetter = {} } = useQuery({
+    queryKey: ["letters-page-ai-state", pageIds],
+    enabled: pageIds.length > 0,
+    queryFn: () => fetchAiStateForLetters(pageIds),
+  });
+
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
 
   type SelectedRecord = { kind: "letter"; id: string; identifier: string; title: string | null };
@@ -347,6 +354,40 @@ function LettersTable() {
       return next;
     });
   const allSelected = rows.length > 0 && rows.every((l) => selected.has(l.id));
+
+  /** Selected records that are scanned but still awaiting transcription (yellow). */
+  const transcribableSelected = rows.filter(
+    (l) =>
+      selected.has(l.id) &&
+      recordHealth(l, aiByLetter[l.id]).stage === "yellow",
+  );
+  const [bulkTranscribe, setBulkTranscribe] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+
+  /** Queues each eligible record for AI transcription — never accepts or verifies. */
+  async function transcribeSelected() {
+    const targets = transcribableSelected;
+    if (!targets.length) return;
+    setBulkTranscribe({ done: 0, total: targets.length });
+    let ok = 0;
+    let failed = 0;
+    for (const [i, l] of targets.entries()) {
+      try {
+        const r = await transcribeRecord({ data: { letterId: l.id } });
+        if (r?.error) failed++;
+        else ok++;
+      } catch {
+        failed++;
+      }
+      setBulkTranscribe({ done: i + 1, total: targets.length });
+    }
+    setBulkTranscribe(null);
+    if (ok) toast.success(`${ok} record${ok === 1 ? "" : "s"} transcribed — review and verify`);
+    if (failed) toast.error(`${failed} record${failed === 1 ? "" : "s"} could not be transcribed`);
+    qc.invalidateQueries({ queryKey: ["letters-page"] });
+  }
+
 
   /** Export every record matching the current filters (all pages). */
   async function buildExportRows() {
