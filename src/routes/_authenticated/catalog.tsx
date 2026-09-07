@@ -169,6 +169,18 @@ function rememberStorage(m: StorageMemory) {
   }
 }
 
+/** Type + subtype are remembered as soon as they are chosen, not only on save. */
+function rememberTypes(record_type: string, subtype: string) {
+  const prev = readLastStorage();
+  rememberStorage({
+    storage_type: prev.storage_type || "file_jacket",
+    source_container_id: prev.source_container_id ?? "",
+    original_order_notes: prev.original_order_notes ?? "",
+    record_type,
+    subtype,
+  });
+}
+
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
@@ -501,7 +513,10 @@ function QuickEntry() {
               <Label className="field-label">Record type *</Label>
               <CategorySelect
                 value={form.record_type}
-                onChange={(v) => setForm((f) => ({ ...f, record_type: v, subtype: "" }))}
+                onChange={(v) => {
+                  setForm((f) => ({ ...f, record_type: v, subtype: "" }));
+                  rememberTypes(v, "");
+                }}
                 options={recordTypeOptions}
                 onCreate={async (label) => {
                   const v = await addRecordType(label, recordTypeOptions);
@@ -515,7 +530,10 @@ function QuickEntry() {
               <CategorySelect
                 value={form.subtype}
                 allowEmpty
-                onChange={(v) => set("subtype", v)}
+                onChange={(v) => {
+                  set("subtype", v);
+                  rememberTypes(form.record_type, v);
+                }}
                 options={subtypeOptions.map((s) => ({ value: s, label: s }))}
                 onCreate={async (label) => {
                   const v = await addSubtype(form.record_type, label, subtypeOptions);
