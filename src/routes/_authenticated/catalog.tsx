@@ -353,6 +353,21 @@ function QuickEntry() {
     }
   }
 
+  /** Print a label for what's on screen — saves first if the record doesn't exist yet. */
+  function printLabel() {
+    if (busy) return;
+    if (startedLetter) {
+      setLabelFor({
+        archiveId: startedLetter.archive_id,
+        date: labelDate({ ...form, date_precision: datePrecision() }),
+        title: labelTitle({ title: form.title }),
+        lines: labelLines({ ...form, sheets: form.sheets ? Number(form.sheets) : null }),
+      });
+    } else {
+      void save("label");
+    }
+  }
+
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
