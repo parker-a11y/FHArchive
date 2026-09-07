@@ -74,10 +74,11 @@ function LabelFace({ archiveId, dateText, title = "", lines = [] }: LabelProps) 
   );
 }
 
-function PrintButton({ onDone }: { onDone: () => void }) {
+function PrintButton({ onDone, size = "default" }: { onDone: () => void; size?: "default" | "large" }) {
+  const isLarge = size === "large";
   return (
     <Button
-      className="no-print gap-2"
+      className={`no-print gap-2 ${isLarge ? "h-40 w-48 flex-col text-xl" : ""}`}
       onClick={() => {
         // Printing blocks; close once the browser's print dialog is dismissed.
         const close = () => onDone();
@@ -89,7 +90,12 @@ function PrintButton({ onDone }: { onDone: () => void }) {
         }, 300);
       }}
     >
-      <Printer className="size-4" /> Print to label printer
+      <Printer className={isLarge ? "size-10" : "size-4"} />
+      <span className="text-center leading-tight">
+        Print to
+        <br />
+        label printer
+      </span>
     </Button>
   );
 }
