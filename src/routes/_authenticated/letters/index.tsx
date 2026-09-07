@@ -817,11 +817,24 @@ function LettersTable() {
             onClick: () => setHealth((h) => (h === "red" ? "" : "red")),
           },
           {
+            key: "needs_verify",
+            label: "Needs verifying",
+            active: health === "blue",
+            onClick: () => setHealth((h) => (h === "blue" ? "" : "blue")),
+          },
+          {
+            key: "needs_ai_review",
+            label: "Needs AI review",
+            active: health === "purple",
+            onClick: () => setHealth((h) => (h === "purple" ? "" : "purple")),
+          },
+          {
             key: "starred",
             label: "Starred",
             active: starredOnly,
             onClick: () => setStarredOnly((v) => !v),
           },
+
         ].map((chip) => (
           <Button
             key={chip.key}
