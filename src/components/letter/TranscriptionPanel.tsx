@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +48,7 @@ function PageEditor({
   onSaved,
   highlight,
   readOnly,
+  onTextState,
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
@@ -58,6 +59,8 @@ function PageEditor({
   onSaved: () => void;
   highlight?: string;
   readOnly?: boolean;
+  /** Reports the editor's live text/dirty state so panel actions (Verify All) see unsaved edits. */
+  onTextState?: (fileId: string, state: { text: string; dirty: boolean }) => void;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -66,6 +69,11 @@ function PageEditor({
     if (!dirty) setText(record?.verified_text ?? record?.ai_text ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record?.verified_text, record?.ai_text]);
+
+  useEffect(() => {
+    onTextState?.(file.id, { text, dirty });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, dirty]);
 
   async function save(verify: boolean) {
     if (!record) return toast.error("Transcribe this scan first.");
@@ -303,21 +311,39 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   );
   const unverifiedCount = unverified.length;
 
+  /** Live editor text per file id, reported up by each PageEditor — includes unsaved edits. */
+  const pageEdits = useRef(new Map<string, { text: string; dirty: boolean }>());
+  const [dirtyPageCount, setDirtyPageCount] = useState(0);
+
+  const handleTextState = (fileId: string, state: { text: string; dirty: boolean }) => {
+    pageEdits.current.set(fileId, state);
+    const count = [...pageEdits.current.values()].filter((s) => s.dirty).length;
+    setDirtyPageCount((prev) => (prev === count ? prev : count));
+  };
+
   async function verifyAll() {
     if (!unverified.length) return;
-    if (!confirm(`Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified using their current text?`)) return;
+    const pending = unverified.filter((t) => pageEdits.current.get(t.file_id)?.dirty).length;
+    const msg = pending
+      ? `Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified? This will first save your unsaved corrections on ${pending} page${pending === 1 ? "" : "s"}.`
+      : `Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified using their current text?`;
+    if (!confirm(msg)) return;
     setVerifyAllBusy(true);
     let ok = 0;
     let failed = 0;
     for (const t of unverified) {
       try {
-        await saveCorrections(t.id, bestText(t) ?? "", true);
+        const edit = pageEdits.current.get(t.file_id);
+        const text = edit?.dirty ? edit.text : (bestText(t) ?? "");
+        await saveCorrections(t.id, text, true);
+        pageEdits.current.set(t.file_id, { text, dirty: false });
         ok++;
       } catch {
         failed++;
       }
     }
     setVerifyAllBusy(false);
+    setDirtyPageCount([...pageEdits.current.values()].filter((s) => s.dirty).length);
     if (ok) toast.success(`${ok} page${ok === 1 ? "" : "s"} marked human verified`);
     if (failed) toast.error(`${failed} page${failed === 1 ? "" : "s"} failed to verify`);
     refetch();
@@ -365,6 +391,11 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
               )}
               Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
             </Button>
+            {dirtyPageCount > 0 && (
+              <span className="text-xs text-amber-600 dark:text-amber-400">
+                {dirtyPageCount} page{dirtyPageCount === 1 ? "" : "s"} with unsaved corrections
+              </span>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -403,6 +434,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             }}
             highlight={highlight}
             readOnly={isGuestViewer}
+            onTextState={handleTextState}
           />
         ))}
       </div>
