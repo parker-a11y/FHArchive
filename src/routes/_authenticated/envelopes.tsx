@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PostalFields, type PostalValues } from "@/components/letter/PostalFields";
+import { EnvelopeEntities } from "@/components/letter/EnvelopeEntities";
 import { displayDate } from "@/lib/archive";
 
 type EnvelopeRecord = {
@@ -414,6 +415,8 @@ function EnvelopeReview() {
                     }
                   />
                 </div>
+
+                <EnvelopeEntities key={current.id} letterId={current.id} />
 
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button onClick={() => save(true)} disabled={saving}>

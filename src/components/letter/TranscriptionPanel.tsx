@@ -95,11 +95,6 @@ function PageEditor({
         )}
         <span className="text-sm font-medium">{file.label || file.original_filename}</span>
         <StatusPill status={record?.status} />
-        {isEnvelopePage(file.label, file.original_filename) && (
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            envelope — kept out of combined text
-          </span>
-        )}
         {!readOnly && (
           <Button size="sm" variant="outline" className="ml-auto" onClick={onTranscribe} disabled={busy}>
             {busy ? (
@@ -207,14 +202,25 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     setStatus(letter.transcription_status);
   }, [letter.id, letter.transcription_verified, letter.transcription_status]);
 
-  const { data: files = [] } = useQuery({
+  const { data: allFiles = [] } = useQuery({
     queryKey: ["digital-files", letter.id],
     queryFn: () => fetchDigitalFiles(letter.id),
   });
-  const { data: transcripts = [], refetch } = useQuery({
+  // Envelopes are never transcribed — they are reviewed by eye in Envelope Review.
+  const files = useMemo(
+    () => allFiles.filter((f) => !isEnvelopePage(f.label, f.original_filename)),
+    [allFiles],
+  );
+  const envelopeCount = allFiles.length - files.length;
+  const { data: allTranscripts = [], refetch } = useQuery({
     queryKey: ["scan-transcriptions", letter.id],
     queryFn: () => fetchScanTranscriptions(letter.id),
   });
+
+  const transcripts = useMemo(
+    () => allTranscripts.filter((t) => files.some((f) => f.id === t.file_id)),
+    [allTranscripts, files],
+  );
 
   const byFile = useMemo(() => {
     const m: Record<string, ScanTranscription> = {};
@@ -407,6 +413,9 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         )}
         <span className="ml-auto text-xs text-muted-foreground">
           {pageCoverage} of {files.length} scans transcribed · masters are never altered
+          {envelopeCount
+            ? ` · ${envelopeCount} envelope scan${envelopeCount === 1 ? "" : "s"} not transcribed`
+            : ""}
         </span>
       </div>
 

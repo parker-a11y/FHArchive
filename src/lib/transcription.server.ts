@@ -65,6 +65,8 @@ export async function resolveScanTargets(
 
   const targets: ScanTarget[] = [];
   for (const f of files ?? []) {
+    // Envelopes are read by eye in Envelope Review — never transcribed.
+    if (isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`)) continue;
     // A PDF master renders to one JPEG per page — transcribe all of them together.
     const jpegs = (derivatives ?? [])
       .filter(
