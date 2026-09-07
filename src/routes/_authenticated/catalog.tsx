@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
-import { createRecord, previewNextArchiveId } from "@/lib/queries";
-import { uploadScanMaster } from "@/lib/scan-confirm";
-import { MASTER_ACCEPT, sortByFilename, suggestedLabels } from "@/lib/digitization";
-import { UploadCloud, X, ArrowUp, ArrowDown, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { createRecord, previewNextArchiveId, type Letter } from "@/lib/queries";
+import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
+import { FilePlus2 } from "lucide-react";
+
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
 import { PostalFields } from "@/components/letter/PostalFields";
@@ -187,33 +187,13 @@ function rememberField(patch: Partial<StorageMemory>) {
   });
 }
 
-/** One scan queued at intake: the file, its archival label, and its upload state. */
-type ScanItem = {
-  key: string;
-  file: File;
-  label: string;
-  status: "queued" | "uploading" | "done" | "error";
-  message?: string;
-  preview?: string;
-};
-
-function toScanItems(files: File[], startIndex: number): ScanItem[] {
-  return sortByFilename(files).map((file, i) => ({
-    key: `${Date.now()}-${startIndex + i}-${file.name}`,
-    file,
-    label: "",
-    status: "queued" as const,
-    preview: /^image\//i.test(file.type) ? URL.createObjectURL(file) : undefined,
-  }));
-}
-
-
-
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
-  const [scans, setScans] = useState<ScanItem[]>([]);
-  const [uploading, setUploading] = useState<string | null>(null);
+  /** Set once "Start record" claims the FH number, so scans can be worked on here. */
+  const [startedLetter, setStartedLetter] = useState<Letter | null>(null);
+  const [starting, setStarting] = useState(false);
+
   const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
   const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
   const [busy, setBusy] = useState(false);
@@ -270,17 +250,66 @@ function QuickEntry() {
   const subtypeOptions = useSubtypeOptions(form.record_type);
   const invalidateCategories = useInvalidateCategories();
 
-  async function save(mode: "next" | "open" | "label") {
-    if (busy) return;
-    setBusy(true);
-    // A record never needs a date: fall back to "undated" rather than blocking entry.
-    const precision =
-      !form.normalized_date && !["undated", "not_applicable", "unknown"].includes(form.date_precision)
-        ? "undated"
-        : form.date_precision;
-    let created: { id: string; archive_id: string };
-    const followUpErrors: string[] = [];
-    const extras = {
+  /** A date is never required: fall back to "undated" rather than blocking entry. */
+  function datePrecision() {
+    return !form.normalized_date &&
+      !["undated", "not_applicable", "unknown"].includes(form.date_precision)
+      ? "undated"
+      : form.date_precision;
+  }
+
+  /** Core fields, shared by the create RPC and the update of a started record. */
+  function coreArgs(precision: string) {
+    return {
+      p_record_type: form.record_type,
+      p_subtype: form.subtype,
+      p_title: form.title,
+      p_date_as_written: form.date_as_written,
+      p_normalized_date: form.normalized_date,
+      p_date_end: form.date_end,
+      p_date_precision: precision,
+      p_date_certainty: form.date_certainty,
+      p_primary_person: form.primary_person,
+      p_author: isLetter ? form.author : null,
+      p_recipient: isLetter ? form.recipient : null,
+      p_origin: form.origin,
+      p_destination: isLetter ? form.destination : null,
+      p_period: form.period,
+      p_sheets: form.sheets ? Number(form.sheets) : null,
+      p_has_envelope: isLetter ? form.has_envelope : false,
+      p_has_enclosures: form.has_enclosures,
+      p_storage_location: null,
+      p_original_copy: "original",
+      p_notes: form.notes,
+    };
+  }
+
+  function coreColumns(precision: string) {
+    const a = coreArgs(precision);
+    return {
+      record_type: a.p_record_type,
+      subtype: a.p_subtype || null,
+      title: a.p_title || null,
+      date_as_written: a.p_date_as_written || null,
+      normalized_date: a.p_normalized_date || null,
+      date_end: a.p_date_end || null,
+      date_precision: a.p_date_precision,
+      date_certainty: a.p_date_certainty,
+      primary_person: a.p_primary_person || null,
+      author: a.p_author || null,
+      recipient: a.p_recipient || null,
+      origin: a.p_origin || null,
+      destination: a.p_destination || null,
+      period: a.p_period,
+      sheets: a.p_sheets,
+      has_envelope: a.p_has_envelope,
+      has_enclosures: a.p_has_enclosures,
+      notes: a.p_notes || null,
+    };
+  }
+
+  function extrasColumns() {
+    return {
       identification_status: form.identification_status,
       date_from_postmark: form.date_from_postmark,
       forwarded: isLetter ? form.forwarded : false,
@@ -296,74 +325,64 @@ function QuickEntry() {
       starred: form.starred,
       transcription_status: form.transcription_not_required ? "not_required" : "not_started",
     };
+  }
+
+  /**
+   * Claims the FH number now so the full scan panel (thumbnails, naming,
+   * rotation, viewer, confirm) can be used before the rest of the form is done.
+   */
+  async function startRecord() {
+    if (starting || startedLetter) return;
+    setStarting(true);
     try {
-      created = await createRecord({
-        p_record_type: form.record_type,
-        p_subtype: form.subtype,
-        p_title: form.title,
-        p_date_as_written: form.date_as_written,
-        p_normalized_date: form.normalized_date,
-        p_date_end: form.date_end,
-        p_date_precision: precision,
-        p_date_certainty: form.date_certainty,
-        p_primary_person: form.primary_person,
-        p_author: isLetter ? form.author : null,
-        p_recipient: isLetter ? form.recipient : null,
-        p_origin: form.origin,
-        p_destination: isLetter ? form.destination : null,
-        p_period: form.period,
-        p_sheets: form.sheets ? Number(form.sheets) : null,
-        p_has_envelope: isLetter ? form.has_envelope : false,
-        p_has_enclosures: form.has_enclosures,
-        p_storage_location: null,
-        p_original_copy: "original",
-        p_notes: form.notes,
-      });
-    } catch (e) {
-      setBusy(false);
-      return toast.error((e as Error).message);
-    }
-
-    const { error: extrasError } = await supabase
-      .from("letters")
-      .update(extras as never)
-      .eq("id", created.id);
-    if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
-
-    if (scans.length) {
-      const chosen = scans;
-      for (let i = 0; i < chosen.length; i++) {
-        const item = chosen[i];
-        setUploading(`Uploading ${i + 1} of ${chosen.length} — ${item.file.name}`);
-        setScans((s) =>
-          s.map((x) => (x.key === item.key ? { ...x, status: "uploading", message: "Storing…" } : x)),
-        );
-        try {
-          await uploadScanMaster({
-            archiveId: created.archive_id,
-            letterId: created.id,
-            file: item.file,
-            sortOrder: i + 1,
-            label: item.label,
-            onStage: (stage) =>
-              setScans((s) => s.map((x) => (x.key === item.key ? { ...x, message: stage } : x))),
-          });
-          setScans((s) =>
-            s.map((x) => (x.key === item.key ? { ...x, status: "done", message: "Attached" } : x)),
-          );
-        } catch (error) {
-          const msg = (error as Error).message;
-          followUpErrors.push(msg);
-          setScans((s) => s.map((x) => (x.key === item.key ? { ...x, status: "error", message: msg } : x)));
-        }
-      }
-      setUploading(null);
-      await supabase
+      const created = await createRecord(coreArgs(datePrecision()));
+      await supabase.from("letters").update(extrasColumns() as never).eq("id", created.id);
+      const { data, error } = await supabase
         .from("letters")
-        .update({ digitization_status: "in_progress" } as never)
-        .eq("id", created.id);
+        .select("*")
+        .eq("id", created.id)
+        .single();
+      if (error) throw error;
+      setStartedLetter(data as unknown as Letter);
+      qc.invalidateQueries({ queryKey: ["letters"] });
+      toast.success(`${created.archive_id} started — add scans below`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setStarting(false);
     }
+  }
 
+  async function save(mode: "next" | "open" | "label") {
+    if (busy) return;
+    setBusy(true);
+    const precision = datePrecision();
+    let created: { id: string; archive_id: string };
+    const followUpErrors: string[] = [];
+    const extras = extrasColumns();
+    if (startedLetter) {
+      created = { id: startedLetter.id, archive_id: startedLetter.archive_id };
+      const { error } = await supabase
+        .from("letters")
+        .update({ ...coreColumns(precision), ...extras } as never)
+        .eq("id", created.id);
+      if (error) {
+        setBusy(false);
+        return toast.error(error.message);
+      }
+    } else {
+      try {
+        created = await createRecord(coreArgs(precision));
+      } catch (e) {
+        setBusy(false);
+        return toast.error((e as Error).message);
+      }
+      const { error: extrasError } = await supabase
+        .from("letters")
+        .update(extras as never)
+        .eq("id", created.id);
+      if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
+    }
 
     try {
       const { data: auth } = await supabase.auth.getUser();
@@ -389,7 +408,7 @@ function QuickEntry() {
     qc.invalidateQueries({ queryKey: ["letters"] });
 
     if (followUpErrors.length) {
-      toast.warning(`${created.archive_id} was created, but some details need attention`, {
+      toast.warning(`${created.archive_id} was saved, but some details need attention`, {
         description: followUpErrors.join("; "),
         duration: 12000,
       });
@@ -427,15 +446,13 @@ function QuickEntry() {
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
-    setScans((s) => {
-      s.forEach((x) => x.preview && URL.revokeObjectURL(x.preview));
-      return [];
-    });
+    setStartedLetter(null);
     // Preserve author/recipient people links for batch entry of similar records.
     setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
     setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
     loadNext();
   }
+
 
 
   return (
@@ -490,157 +507,45 @@ function QuickEntry() {
         >
           <div className="mb-6 rounded border border-border bg-card px-5 py-4">
             <div className="flex items-baseline justify-between gap-3">
-              <div className="field-label">Next archive ID (assigned on save)</div>
+              <div className="field-label">
+                {startedLetter ? "Archive ID (record started)" : "Next archive ID (assigned on save)"}
+              </div>
               <div className="hidden text-[11px] text-muted-foreground sm:block">
                 ⌘/Ctrl + ↵ save &amp; next · ⌘/Ctrl + ⇧ + ↵ save &amp; open · ⌘/Ctrl + L save &amp; label
               </div>
             </div>
-            <div className="archive-id font-display mt-1 text-4xl">
-              {next?.archive_id ?? "……"}
-            </div>
-          </div>
-
-
-
-          <div className="mb-6 space-y-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <Label className="field-label">Scans (optional)</Label>
-              {scans.length > 0 && (
-                <span className="text-[11px] text-muted-foreground">
-                  {scans.filter((s) => s.status === "done").length} of {scans.length} attached
-                </span>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+              <div className="archive-id font-display text-4xl">
+                {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
+              </div>
+              {!startedLetter && (
+                <Button type="button" variant="outline" onClick={startRecord} disabled={starting}>
+                  <FilePlus2 className="mr-2 size-4" />
+                  {starting ? "Starting…" : "Start record & add scans"}
+                </Button>
               )}
             </div>
-            <label
-              className="flex cursor-pointer items-center gap-3 rounded border border-dashed border-border bg-card px-4 py-4 text-sm text-muted-foreground hover:border-primary"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const dropped = Array.from(e.dataTransfer.files ?? []);
-                if (dropped.length) setScans((s) => [...s, ...toScanItems(dropped, s.length)]);
-              }}
-            >
-              <UploadCloud className="size-5" />
-              <span>
-                Drop images or PDFs here, or click to choose. Label them below — they attach to this
-                record, in this order, when you save.
-              </span>
-              <input
-                type="file"
-                multiple
-                accept={MASTER_ACCEPT}
-                className="hidden"
-                onChange={(e) => {
-                  const picked = Array.from(e.target.files ?? []);
-                  if (picked.length) setScans((s) => [...s, ...toScanItems(picked, s.length)]);
-                  e.target.value = "";
+            {!startedLetter && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Start the record to claim this number and work on its scans right here — thumbnails,
+                names, rotation and the confirm step. Everything else keeps saving as usual.
+              </p>
+            )}
+          </div>
+
+          {startedLetter && (
+            <div className="mb-6">
+              <DigitizationPanel
+                letter={{
+                  ...startedLetter,
+                  record_type: form.record_type,
+                  sheets: form.sheets ? Number(form.sheets) : null,
+                  has_envelope: isLetter ? form.has_envelope : false,
                 }}
               />
-            </label>
+            </div>
+          )}
 
-            <datalist id="quick-entry-scan-labels">
-              {suggestedLabels(form.record_type).map((l) => (
-                <option key={l} value={l} />
-              ))}
-            </datalist>
-
-            {scans.length > 0 && (
-              <ul className="space-y-2">
-                {scans.map((item, i) => (
-                  <li
-                    key={item.key}
-                    className="flex items-center gap-3 rounded border border-border bg-card px-3 py-2"
-                  >
-                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-                      {item.preview ? (
-                        <img src={item.preview} alt="" className="size-full object-cover" />
-                      ) : (
-                        <span className="text-[10px] uppercase text-muted-foreground">
-                          {item.file.name.split(".").pop()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="truncate text-xs text-muted-foreground">{item.file.name}</div>
-                      <Input
-                        list="quick-entry-scan-labels"
-                        className="h-8"
-                        placeholder="Label (e.g. Page 1 Front)"
-                        value={item.label}
-                        disabled={item.status === "done"}
-                        onChange={(e) =>
-                          setScans((s) =>
-                            s.map((x) => (x.key === item.key ? { ...x, label: e.target.value } : x)),
-                          )
-                        }
-                      />
-                      {item.message && (
-                        <div
-                          className={`flex items-center gap-1 text-[11px] ${
-                            item.status === "error" ? "text-destructive" : "text-muted-foreground"
-                          }`}
-                        >
-                          {item.status === "uploading" && <Loader2 className="size-3 animate-spin" />}
-                          {item.status === "done" && <Check className="size-3" />}
-                          {item.status === "error" && <AlertTriangle className="size-3" />}
-                          <span className="truncate">{item.message}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        disabled={i === 0}
-                        onClick={() =>
-                          setScans((s) => {
-                            const n = [...s];
-                            [n[i - 1], n[i]] = [n[i], n[i - 1]];
-                            return n;
-                          })
-                        }
-                      >
-                        <ArrowUp className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        disabled={i === scans.length - 1}
-                        onClick={() =>
-                          setScans((s) => {
-                            const n = [...s];
-                            [n[i], n[i + 1]] = [n[i + 1], n[i]];
-                            return n;
-                          })
-                        }
-                      >
-                        <ArrowDown className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        onClick={() =>
-                          setScans((s) => {
-                            if (item.preview) URL.revokeObjectURL(item.preview);
-                            return s.filter((x) => x.key !== item.key);
-                          })
-                        }
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {uploading && <p className="text-xs text-muted-foreground">{uploading}</p>}
-          </div>
 
 
 
