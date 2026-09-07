@@ -171,13 +171,19 @@ function rememberStorage(m: StorageMemory) {
 
 /** Type + subtype are remembered as soon as they are chosen, not only on save. */
 function rememberTypes(record_type: string, subtype: string) {
+  rememberField({ record_type, subtype });
+}
+
+/** Persist any subset of the storage memory immediately, keeping the rest. */
+function rememberField(patch: Partial<StorageMemory>) {
   const prev = readLastStorage();
   rememberStorage({
+    record_type: prev.record_type || "letter",
+    subtype: prev.subtype ?? "",
     storage_type: prev.storage_type || "file_jacket",
     source_container_id: prev.source_container_id ?? "",
     original_order_notes: prev.original_order_notes ?? "",
-    record_type,
-    subtype,
+    ...patch,
   });
 }
 
