@@ -121,7 +121,9 @@ function EnvelopeReview() {
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [side, setSide] = useState<"front" | "back">("front");
-  const [rotation, setRotation] = useState(0);
+  // Manual quarter-turns per scan, applied on top of the saved orientation
+  // until the record is saved (which writes them to the scan itself).
+  const [rotations, setRotations] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
