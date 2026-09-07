@@ -211,7 +211,7 @@ export function EntryLabelDialog({
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-3xl">
         <DialogTitle>4 × 6 Folder Label — {archiveId}</DialogTitle>
         <div className="no-print space-y-2">
           <label className="field-label">Title / short description</label>
@@ -220,15 +220,18 @@ export function EntryLabelDialog({
           <Input value={dateText} onChange={(e) => setDateText(e.target.value.toUpperCase())} />
         </div>
 
-        <LabelCard
-          archiveId={archiveId}
-          dateText={dateText}
-          title={titleText}
-          lines={lines}
-        />
-
-        <div className="no-print flex justify-end">
-          <PrintButton onDone={() => onOpenChange(false)} />
+        <div className="no-print flex flex-col items-start gap-6 sm:flex-row">
+          <div className="flex-1">
+            <LabelCard
+              archiveId={archiveId}
+              dateText={dateText}
+              title={titleText}
+              lines={lines}
+            />
+          </div>
+          <div className="flex shrink-0 items-center self-center sm:self-stretch">
+            <PrintButton onDone={() => onOpenChange(false)} size="large" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
