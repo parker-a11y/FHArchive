@@ -577,6 +577,8 @@ export function AiPanel({ letter }: { letter: Letter }) {
     },
   });
   const [editing, setEditing] = useState<Record<string, string>>({});
+  const [showRejected, setShowRejected] = useState(false);
+  const rejectedCount = rows.filter((r) => r.status === "rejected").length;
 
   const hasTranscript = Boolean(
     (letter.transcription_verified ?? "").trim() || (letter.transcription_raw_ai ?? "").trim(),
