@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -429,6 +429,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             }}
             highlight={highlight}
             readOnly={isGuestViewer}
+            onTextState={handleTextState}
           />
         ))}
       </div>
