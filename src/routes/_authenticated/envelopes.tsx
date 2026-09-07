@@ -173,7 +173,12 @@ function EnvelopeReview() {
   const back = envelopes.find((f) => isBack(f));
   const shown = side === "back" ? (back ?? front) : front;
   // Envelopes always read horizontally; manual rotation stacks on top.
-  const shownRotation = shown ? (rotation + displayRotation(shown)) % 360 : rotation;
+  const manual = shown ? (rotations[shown.id] ?? 0) : 0;
+  const shownRotation = shown ? (manual + displayRotation(shown)) % 360 : 0;
+  const rotateShown = () => {
+    if (!shown) return;
+    setRotations((r) => ({ ...r, [shown.id]: ((r[shown.id] ?? 0) + 90) % 360 }));
+  };
 
 
   const go = (delta: number) => {
