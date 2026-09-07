@@ -327,9 +327,10 @@ export async function uploadScanMaster(opts: {
   letterId: string;
   file: File;
   sortOrder: number;
+  label?: string | null;
   onStage?: (stage: string) => void;
 }): Promise<string> {
-  const { archiveId, letterId, file, sortOrder, onStage } = opts;
+  const { archiveId, letterId, file, sortOrder, label, onStage } = opts;
   onStage?.("Storing archival master…");
   const safe = file.name.replace(/[^\w.\-]+/g, "_");
   const masterPath = `${archiveId}/masters/${Date.now()}_${safe}`;
@@ -353,10 +354,12 @@ export async function uploadScanMaster(opts: {
       master_mime: file.type || null,
       master_size: file.size,
       filename_matches: matches,
+      label: label?.trim() ? label.trim() : null,
     } as never)
     .select("id")
     .single();
   if (insErr || !inserted) throw new Error(`${file.name}: ${insErr?.message ?? "could not be recorded"}`);
+
 
   try {
     onStage?.("Making preview thumbnail…");
