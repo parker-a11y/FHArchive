@@ -463,8 +463,9 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             busy={busyIds.includes(f.id)}
             onSaved={() => {
               refetch();
-              void rollup();
+              void rollup().then(() => maybeAutoAnalyze());
             }}
+
             highlight={highlight}
             readOnly={isGuestViewer}
             onTextState={handleTextState}
