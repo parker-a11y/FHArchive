@@ -147,7 +147,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           <Printer className="size-4" /> Print Folder Label
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-3xl">
         <DialogTitle>4 × 6 Folder Label</DialogTitle>
         <div className="no-print space-y-2">
           <label className="field-label">Title / short description</label>
@@ -163,15 +163,18 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           </p>
         </div>
 
-        <LabelCard
-          archiveId={letter.archive_id}
-          dateText={dateText}
-          title={titleText}
-          lines={labelLines(letter)}
-        />
-
-        <div className="no-print flex justify-end">
-          <PrintButton onDone={() => setOpen(false)} />
+        <div className="no-print flex flex-col items-start gap-6 sm:flex-row">
+          <div className="flex-1">
+            <LabelCard
+              archiveId={letter.archive_id}
+              dateText={dateText}
+              title={titleText}
+              lines={labelLines(letter)}
+            />
+          </div>
+          <div className="flex shrink-0 items-center self-center sm:self-stretch">
+            <PrintButton onDone={() => setOpen(false)} size="large" />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
