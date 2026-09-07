@@ -48,6 +48,7 @@ function PageEditor({
   onSaved,
   highlight,
   readOnly,
+  onTextState,
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
@@ -58,6 +59,8 @@ function PageEditor({
   onSaved: () => void;
   highlight?: string;
   readOnly?: boolean;
+  /** Reports the editor's live text/dirty state so panel actions (Verify All) see unsaved edits. */
+  onTextState?: (fileId: string, state: { text: string; dirty: boolean }) => void;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -66,6 +69,11 @@ function PageEditor({
     if (!dirty) setText(record?.verified_text ?? record?.ai_text ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record?.verified_text, record?.ai_text]);
+
+  useEffect(() => {
+    onTextState?.(file.id, { text, dirty });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, dirty]);
 
   async function save(verify: boolean) {
     if (!record) return toast.error("Transcribe this scan first.");
