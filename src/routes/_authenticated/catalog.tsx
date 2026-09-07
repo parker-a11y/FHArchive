@@ -187,6 +187,28 @@ function rememberField(patch: Partial<StorageMemory>) {
   });
 }
 
+/** One scan queued at intake: the file, its archival label, and its upload state. */
+type ScanItem = {
+  key: string;
+  file: File;
+  label: string;
+  status: "queued" | "uploading" | "done" | "error";
+  message?: string;
+  preview?: string;
+};
+
+function toScanItems(files: File[], startIndex: number): ScanItem[] {
+  return sortByFilename(files).map((file, i) => ({
+    key: `${Date.now()}-${startIndex + i}-${file.name}`,
+    file,
+    label: "",
+    status: "queued" as const,
+    preview: /^image\//i.test(file.type) ? URL.createObjectURL(file) : undefined,
+  }));
+}
+
+
+
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
