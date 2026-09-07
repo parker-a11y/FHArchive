@@ -233,6 +233,26 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     qc.invalidateQueries({ queryKey: ["letters"] });
   };
 
+  /**
+   * Once a record's transcription is human verified, queue AI analysis in the
+   * background. Suggestions stay pending — a person still reviews them.
+   */
+  async function maybeAutoAnalyze() {
+    try {
+      const { data } = await supabase
+        .from("letters")
+        .select("transcription_status")
+        .eq("id", letter.id)
+        .maybeSingle();
+      if (data?.transcription_status !== "human_verified") return;
+      await analyzeRecord({ data: { letterId: letter.id, mode: "new" } });
+      qc.invalidateQueries({ queryKey: ["ai-suggestions", letter.id] });
+      toast.message("AI analysis run — review the suggestions when you're ready.");
+    } catch {
+      /* non-fatal: analysis can be re-run from the research panel */
+    }
+  }
+
   /** Keeps the record-level transcription in step with the page transcriptions. */
   async function rollup(force = false) {
     try {
@@ -244,6 +264,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     }
     refreshLetter();
   }
+
 
   async function runScans(ids: string[]) {
     if (!ids.length) return;
