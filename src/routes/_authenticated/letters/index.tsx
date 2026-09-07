@@ -1047,10 +1047,11 @@ function LettersTable() {
                             {l.archive_id}
                           </Link>
                           <span
-                            title={recordHealth(l).label}
-                            aria-label={recordHealth(l).label}
+                            title={recordHealth(l, aiByLetter[l.id]).label}
+                            aria-label={recordHealth(l, aiByLetter[l.id]).label}
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
-                            style={{ backgroundColor: recordHealth(l).color }}
+                            style={{ backgroundColor: recordHealth(l, aiByLetter[l.id]).color }}
+
                           />
                           {isAdmin && (
                             <EmailArchiveDialog
