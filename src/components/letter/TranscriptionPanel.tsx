@@ -413,6 +413,9 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         )}
         <span className="ml-auto text-xs text-muted-foreground">
           {pageCoverage} of {files.length} scans transcribed · masters are never altered
+          {envelopeCount
+            ? ` · ${envelopeCount} envelope scan${envelopeCount === 1 ? "" : "s"} not transcribed`
+            : ""}
         </span>
       </div>
 
