@@ -311,21 +311,39 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   );
   const unverifiedCount = unverified.length;
 
+  /** Live editor text per file id, reported up by each PageEditor — includes unsaved edits. */
+  const pageEdits = useRef(new Map<string, { text: string; dirty: boolean }>());
+  const [dirtyPageCount, setDirtyPageCount] = useState(0);
+
+  const handleTextState = (fileId: string, state: { text: string; dirty: boolean }) => {
+    pageEdits.current.set(fileId, state);
+    const count = [...pageEdits.current.values()].filter((s) => s.dirty).length;
+    setDirtyPageCount((prev) => (prev === count ? prev : count));
+  };
+
   async function verifyAll() {
     if (!unverified.length) return;
-    if (!confirm(`Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified using their current text?`)) return;
+    const pending = unverified.filter((t) => pageEdits.current.get(t.file_id)?.dirty).length;
+    const msg = pending
+      ? `Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified? This will first save your unsaved corrections on ${pending} page${pending === 1 ? "" : "s"}.`
+      : `Mark all ${unverified.length} transcribed page${unverified.length === 1 ? "" : "s"} as human verified using their current text?`;
+    if (!confirm(msg)) return;
     setVerifyAllBusy(true);
     let ok = 0;
     let failed = 0;
     for (const t of unverified) {
       try {
-        await saveCorrections(t.id, bestText(t) ?? "", true);
+        const edit = pageEdits.current.get(t.file_id);
+        const text = edit?.dirty ? edit.text : (bestText(t) ?? "");
+        await saveCorrections(t.id, text, true);
+        pageEdits.current.set(t.file_id, { text, dirty: false });
         ok++;
       } catch {
         failed++;
       }
     }
     setVerifyAllBusy(false);
+    setDirtyPageCount([...pageEdits.current.values()].filter((s) => s.dirty).length);
     if (ok) toast.success(`${ok} page${ok === 1 ? "" : "s"} marked human verified`);
     if (failed) toast.error(`${failed} page${failed === 1 ? "" : "s"} failed to verify`);
     refetch();
