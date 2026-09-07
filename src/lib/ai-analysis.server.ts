@@ -40,7 +40,6 @@ export const ANALYSIS_FIELDS = [
   ["events", "Comma-separated historical or family events referenced."],
   ["quotations", "Notable quotations, one per line, quoted verbatim."],
   ["uncertain", "Passages that appear misread or illegible, one per line."],
-  ["questions", "Research questions this record raises, one per line."],
   ["related", "Other records or correspondence this one appears to relate to, one per line."],
 ] as const;
 
