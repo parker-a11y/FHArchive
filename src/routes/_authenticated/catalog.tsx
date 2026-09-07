@@ -323,6 +323,8 @@ function QuickEntry() {
 
     setBusy(false);
     rememberStorage({
+      record_type: form.record_type,
+      subtype: form.subtype,
       storage_type: form.storage_type,
       source_container_id: form.source_container_id,
       original_order_notes: form.original_order_notes,
