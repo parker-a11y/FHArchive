@@ -25,6 +25,7 @@ import {
   transcribeScans,
 } from "@/lib/transcription.functions";
 import { HighlightedText, countMatches } from "@/lib/highlight";
+import { analyzeRecord } from "@/lib/ai-analysis.functions";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
   return (
@@ -233,6 +234,27 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     qc.invalidateQueries({ queryKey: ["letters"] });
   };
 
+  /**
+   * Once a record's transcription is human verified, queue AI analysis in the
+   * background. Suggestions stay pending — a person still reviews them.
+   */
+  async function maybeAutoAnalyze() {
+    try {
+      const { data } = await supabase
+        .from("letters")
+        .select("transcription_status")
+        .eq("id", letter.id)
+        .maybeSingle();
+      if (data?.transcription_status !== "human_verified") return;
+      await analyzeRecord({ data: { letterId: letter.id, mode: "new" } });
+      qc.invalidateQueries({ queryKey: ["ai", letter.id] });
+      qc.invalidateQueries({ queryKey: ["ai_pending"] });
+      toast.message("AI analysis run — review the suggestions when you're ready.");
+    } catch {
+      /* non-fatal: analysis can be re-run from the research panel */
+    }
+  }
+
   /** Keeps the record-level transcription in step with the page transcriptions. */
   async function rollup(force = false) {
     try {
@@ -244,6 +266,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     }
     refreshLetter();
   }
+
 
   async function runScans(ids: string[]) {
     if (!ids.length) return;
@@ -354,6 +377,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     if (failed) toast.error(`${failed} page${failed === 1 ? "" : "s"} failed to verify`);
     refetch();
     await rollup();
+    await maybeAutoAnalyze();
   }
 
   return (
@@ -439,8 +463,9 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             busy={busyIds.includes(f.id)}
             onSaved={() => {
               refetch();
-              void rollup();
+              void rollup().then(() => maybeAutoAnalyze());
             }}
+
             highlight={highlight}
             readOnly={isGuestViewer}
             onTextState={handleTextState}

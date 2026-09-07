@@ -817,11 +817,24 @@ function LettersTable() {
             onClick: () => setHealth((h) => (h === "red" ? "" : "red")),
           },
           {
+            key: "needs_verify",
+            label: "Needs verifying",
+            active: health === "blue",
+            onClick: () => setHealth((h) => (h === "blue" ? "" : "blue")),
+          },
+          {
+            key: "needs_ai_review",
+            label: "Needs AI review",
+            active: health === "purple",
+            onClick: () => setHealth((h) => (h === "purple" ? "" : "purple")),
+          },
+          {
             key: "starred",
             label: "Starred",
             active: starredOnly,
             onClick: () => setStarredOnly((v) => !v),
           },
+
         ].map((chip) => (
           <Button
             key={chip.key}
@@ -1034,10 +1047,11 @@ function LettersTable() {
                             {l.archive_id}
                           </Link>
                           <span
-                            title={recordHealth(l).label}
-                            aria-label={recordHealth(l).label}
+                            title={recordHealth(l, aiByLetter[l.id]).label}
+                            aria-label={recordHealth(l, aiByLetter[l.id]).label}
                             className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
-                            style={{ backgroundColor: recordHealth(l).color }}
+                            style={{ backgroundColor: recordHealth(l, aiByLetter[l.id]).color }}
+
                           />
                           {isAdmin && (
                             <EmailArchiveDialog
@@ -1089,9 +1103,12 @@ function LettersTable() {
           <p className="px-4 sm:px-8 py-6 sm:py-8 text-sm text-muted-foreground">No matching records.</p>
         )}
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 sm:px-8 pt-3 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} /> Transcribed &amp; human checked</span>
-          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} /> Scanned, transcription pending</span>
-          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} /> No scans or problem detected</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.green }} /> Complete — verified &amp; AI reviewed</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.purple }} /> Verified — AI review pending</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.blue }} /> AI transcribed — needs verifying</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.yellow }} /> Scanned, transcription pending</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.red }} /> No scans or problem detected</span>
+
         </p>
         <p className="px-4 sm:px-8 py-3 text-xs text-muted-foreground">
           Double-click an editable cell (From, To, Origin, Sheets, Notes) to edit inline. Changes
