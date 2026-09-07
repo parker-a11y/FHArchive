@@ -533,12 +533,18 @@ function QuickEntry() {
               <div className="archive-id font-display text-4xl">
                 {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
               </div>
-              {!startedLetter && (
-                <Button type="button" variant="outline" onClick={startRecord} disabled={starting}>
-                  <FilePlus2 className="mr-2 size-4" />
-                  {starting ? "Starting…" : "Start record & add scans"}
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={printLabel} disabled={busy}>
+                  <Printer className="mr-2 size-4" />
+                  Print label
                 </Button>
-              )}
+                {!startedLetter && (
+                  <Button type="button" variant="outline" onClick={startRecord} disabled={starting}>
+                    <FilePlus2 className="mr-2 size-4" />
+                    {starting ? "Starting…" : "Start record & add scans"}
+                  </Button>
+                )}
+              </div>
             </div>
             {!startedLetter && (
               <p className="mt-2 text-xs text-muted-foreground">
