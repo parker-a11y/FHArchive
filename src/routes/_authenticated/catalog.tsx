@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId, type Letter } from "@/lib/queries";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
-import { FilePlus2 } from "lucide-react";
+import { FilePlus2, Printer } from "lucide-react";
 
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
