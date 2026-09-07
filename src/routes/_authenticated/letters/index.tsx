@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Eye, Mail, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -86,7 +86,9 @@ export const Route = createFileRoute("/_authenticated/letters/")({
   ),
 });
 
-import { recordHealth } from "@/lib/record-health";
+import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
+import { transcribeRecord } from "@/lib/transcription.functions";
+
 
 type Col = { key: string; label: string; width: number; minWidth?: number; editable?: boolean };
 
@@ -162,6 +164,37 @@ async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, st
   return groupKeywords(all);
 }
 
+type HealthFilter =
+  | ""
+  | "green"
+  | "purple"
+  | "blue"
+  | "yellow"
+  | "red"
+  | "needs_attention";
+
+/** Pending / total AI suggestion counts for the records on the current page. */
+async function fetchAiStateForLetters(
+  ids: string[],
+): Promise<Record<string, { total: number; pending: number }>> {
+  const out: Record<string, { total: number; pending: number }> = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await supabase
+      .from("ai_suggestions")
+      .select("letter_id, status")
+      .in("letter_id", ids.slice(i, i + 200));
+    if (error) throw error;
+    for (const r of (data ?? []) as { letter_id: string; status: string }[]) {
+      const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
+      s.total += 1;
+      if (r.status === "pending") s.pending += 1;
+    }
+  }
+  return out;
+}
+
+
+
 function LettersTable() {
   const { isGuestViewer, isAdmin } = useAuth();
   const navigate = useNavigate({ from: "/letters/" });
@@ -177,12 +210,10 @@ function LettersTable() {
   const [rType, setRType] = useState(search.type ?? "");
   const [review, setReview] = useState(search.review ?? "");
   const [scanF, setScanF] = useState(search.scan ?? "");
-  const [health, setHealth] = useState<
-    "" | "green" | "yellow" | "red" | "needs_attention"
-  >(
-    (search.health as "" | "green" | "yellow" | "red" | "needs_attention") ??
-      "",
+  const [health, setHealth] = useState<HealthFilter>(
+    (search.health as HealthFilter) ?? "",
   );
+
   const [uncertainOnly, setUncertainOnly] = useState(search.uncertain === "1");
   const [starredOnly, setStarredOnly] = useState(search.starred === "1");
   const [showCorrespondence, setShowCorrespondence] = useState(false);
@@ -195,10 +226,8 @@ function LettersTable() {
     setTStatus(search.tstatus ?? "");
     setReview(search.review ?? "");
     setScanF(search.scan ?? "");
-    setHealth(
-      (search.health as "" | "green" | "yellow" | "red" | "needs_attention") ??
-        "",
-    );
+    setHealth((search.health as HealthFilter) ?? "");
+
     setUncertainOnly(search.uncertain === "1");
     setStarredOnly(search.starred === "1");
   }, [search]);
@@ -306,6 +335,13 @@ function LettersTable() {
     queryFn: () => fetchKeywordsForLetters(pageIds),
   });
 
+  // AI-analysis review state drives the purple/green distinction.
+  const { data: aiByLetter = {} } = useQuery({
+    queryKey: ["letters-page-ai-state", pageIds],
+    enabled: pageIds.length > 0,
+    queryFn: () => fetchAiStateForLetters(pageIds),
+  });
+
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
 
   type SelectedRecord = { kind: "letter"; id: string; identifier: string; title: string | null };
@@ -318,6 +354,40 @@ function LettersTable() {
       return next;
     });
   const allSelected = rows.length > 0 && rows.every((l) => selected.has(l.id));
+
+  /** Selected records that are scanned but still awaiting transcription (yellow). */
+  const transcribableSelected = rows.filter(
+    (l) =>
+      selected.has(l.id) &&
+      recordHealth(l, aiByLetter[l.id]).stage === "yellow",
+  );
+  const [bulkTranscribe, setBulkTranscribe] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+
+  /** Queues each eligible record for AI transcription — never accepts or verifies. */
+  async function transcribeSelected() {
+    const targets = transcribableSelected;
+    if (!targets.length) return;
+    setBulkTranscribe({ done: 0, total: targets.length });
+    let ok = 0;
+    let failed = 0;
+    for (const [i, l] of targets.entries()) {
+      try {
+        const r = await transcribeRecord({ data: { letterId: l.id } });
+        if (r?.error) failed++;
+        else ok++;
+      } catch {
+        failed++;
+      }
+      setBulkTranscribe({ done: i + 1, total: targets.length });
+    }
+    setBulkTranscribe(null);
+    if (ok) toast.success(`${ok} record${ok === 1 ? "" : "s"} transcribed — review and verify`);
+    if (failed) toast.error(`${failed} record${failed === 1 ? "" : "s"} could not be transcribed`);
+    qc.invalidateQueries({ queryKey: ["letters-page"] });
+  }
+
 
   /** Export every record matching the current filters (all pages). */
   async function buildExportRows() {
@@ -505,6 +575,25 @@ function LettersTable() {
                 }
               />
             )}
+            {!isGuestViewer && transcribableSelected.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={Boolean(bulkTranscribe)}
+                onClick={transcribeSelected}
+              >
+                {bulkTranscribe ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4" />
+                )}
+                {bulkTranscribe
+                  ? `Transcribing ${bulkTranscribe.done}/${bulkTranscribe.total}…`
+                  : `Transcribe selected (${transcribableSelected.length})`}
+              </Button>
+            )}
+
             <Button
               variant="outline"
               size="sm"
@@ -630,23 +719,17 @@ function LettersTable() {
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
           value={health}
-          onChange={(e) =>
-            setHealth(
-              e.target.value as
-                | ""
-                | "green"
-                | "yellow"
-                | "red"
-                | "needs_attention",
-            )
-          }
+          onChange={(e) => setHealth(e.target.value as HealthFilter)}
         >
-          <option value="">All health</option>
-          <option value="green">Green — ready</option>
+          <option value="">All status</option>
+          <option value="green">Green — complete</option>
+          <option value="purple">Purple — verified, AI review pending</option>
+          <option value="blue">Blue — AI transcribed, not verified</option>
           <option value="yellow">Yellow — scans, transcription pending</option>
           <option value="red">Red — no scans or problem</option>
-          <option value="needs_attention">Needs attention (yellow + red)</option>
+          <option value="needs_attention">Needs attention (anything not green)</option>
         </select>
+
         <div className="w-60">
           <ToneMultiSelect
             value={tones}
