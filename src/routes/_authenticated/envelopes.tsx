@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PostalFields, type PostalValues } from "@/components/letter/PostalFields";
+import { EnvelopeEntities } from "@/components/letter/EnvelopeEntities";
 import { displayDate } from "@/lib/archive";
 
 type EnvelopeRecord = {
