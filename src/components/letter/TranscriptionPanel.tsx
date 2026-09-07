@@ -25,6 +25,7 @@ import {
   transcribeScans,
 } from "@/lib/transcription.functions";
 import { HighlightedText, countMatches } from "@/lib/highlight";
+import { analyzeRecord } from "@/lib/ai-analysis.functions";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
   return (
@@ -246,7 +247,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         .maybeSingle();
       if (data?.transcription_status !== "human_verified") return;
       await analyzeRecord({ data: { letterId: letter.id, mode: "new" } });
-      qc.invalidateQueries({ queryKey: ["ai-suggestions", letter.id] });
+      qc.invalidateQueries({ queryKey: ["ai", letter.id] });
+      qc.invalidateQueries({ queryKey: ["ai_pending"] });
       toast.message("AI analysis run — review the suggestions when you're ready.");
     } catch {
       /* non-fatal: analysis can be re-run from the research panel */
@@ -375,6 +377,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     if (failed) toast.error(`${failed} page${failed === 1 ? "" : "s"} failed to verify`);
     refetch();
     await rollup();
+    await maybeAutoAnalyze();
   }
 
   return (
