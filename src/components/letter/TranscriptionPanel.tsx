@@ -95,11 +95,6 @@ function PageEditor({
         )}
         <span className="text-sm font-medium">{file.label || file.original_filename}</span>
         <StatusPill status={record?.status} />
-        {isEnvelopePage(file.label, file.original_filename) && (
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            envelope — kept out of combined text
-          </span>
-        )}
         {!readOnly && (
           <Button size="sm" variant="outline" className="ml-auto" onClick={onTranscribe} disabled={busy}>
             {busy ? (
