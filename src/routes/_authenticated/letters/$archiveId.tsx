@@ -1135,10 +1135,20 @@ function LetterPage() {
         </TabsContent>
 
         <TabsContent value="digitization" className="mt-6">
+          {!isGuestViewer && (
+            <div className="mb-4 flex justify-end">
+              <LabelDialog letter={letter} />
+            </div>
+          )}
           <DigitizationPanel letter={letter} />
         </TabsContent>
 
         <TabsContent value="transcription" className="mt-6">
+          {!isGuestViewer && (
+            <div className="mb-4 flex justify-end">
+              <LabelDialog letter={letter} />
+            </div>
+          )}
           <TranscriptionPanel letter={letter} highlight={hl} />
         </TabsContent>
         <TabsContent value="links" className="mt-6">
@@ -1161,6 +1171,9 @@ function LetterPage() {
 
         {!isGuestViewer && (
           <TabsContent value="ai" className="mt-6">
+            <div className="mb-4 flex justify-end">
+              <LabelDialog letter={letter} />
+            </div>
             <AiPanel letter={letter} />
           </TabsContent>
         )}

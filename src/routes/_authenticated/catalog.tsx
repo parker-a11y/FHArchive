@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId, type Letter } from "@/lib/queries";
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
-import { FilePlus2 } from "lucide-react";
+import { FilePlus2, Printer } from "lucide-react";
 
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
@@ -353,6 +353,21 @@ function QuickEntry() {
     }
   }
 
+  /** Print a label for what's on screen — saves first if the record doesn't exist yet. */
+  function printLabel() {
+    if (busy) return;
+    if (startedLetter) {
+      setLabelFor({
+        archiveId: startedLetter.archive_id,
+        date: labelDate({ ...form, date_precision: datePrecision() }),
+        title: labelTitle({ title: form.title }),
+        lines: labelLines({ ...form, sheets: form.sheets ? Number(form.sheets) : null }),
+      });
+    } else {
+      void save("label");
+    }
+  }
+
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
     setBusy(true);
@@ -518,12 +533,18 @@ function QuickEntry() {
               <div className="archive-id font-display text-4xl">
                 {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
               </div>
-              {!startedLetter && (
-                <Button type="button" variant="outline" onClick={startRecord} disabled={starting}>
-                  <FilePlus2 className="mr-2 size-4" />
-                  {starting ? "Starting…" : "Start record & add scans"}
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={printLabel} disabled={busy}>
+                  <Printer className="mr-2 size-4" />
+                  Print label
                 </Button>
-              )}
+                {!startedLetter && (
+                  <Button type="button" variant="outline" onClick={startRecord} disabled={starting}>
+                    <FilePlus2 className="mr-2 size-4" />
+                    {starting ? "Starting…" : "Start record & add scans"}
+                  </Button>
+                )}
+              </div>
             </div>
             {!startedLetter && (
               <p className="mt-2 text-xs text-muted-foreground">
