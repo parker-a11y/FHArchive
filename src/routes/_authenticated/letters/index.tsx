@@ -162,6 +162,37 @@ async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, st
   return groupKeywords(all);
 }
 
+type HealthFilter =
+  | ""
+  | "green"
+  | "purple"
+  | "blue"
+  | "yellow"
+  | "red"
+  | "needs_attention";
+
+/** Pending / total AI suggestion counts for the records on the current page. */
+async function fetchAiStateForLetters(
+  ids: string[],
+): Promise<Record<string, { total: number; pending: number }>> {
+  const out: Record<string, { total: number; pending: number }> = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await supabase
+      .from("ai_suggestions")
+      .select("letter_id, status")
+      .in("letter_id", ids.slice(i, i + 200));
+    if (error) throw error;
+    for (const r of (data ?? []) as { letter_id: string; status: string }[]) {
+      const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
+      s.total += 1;
+      if (r.status === "pending") s.pending += 1;
+    }
+  }
+  return out;
+}
+
+
+
 function LettersTable() {
   const { isGuestViewer, isAdmin } = useAuth();
   const navigate = useNavigate({ from: "/letters/" });
