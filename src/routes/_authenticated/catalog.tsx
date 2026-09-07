@@ -331,19 +331,30 @@ function QuickEntry() {
     if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
 
     if (scans.length) {
-      const chosen = sortByFilename(scans);
+      const chosen = scans;
       for (let i = 0; i < chosen.length; i++) {
-        const file = chosen[i];
-        setUploading(`Uploading ${i + 1} of ${chosen.length} — ${file.name}`);
+        const item = chosen[i];
+        setUploading(`Uploading ${i + 1} of ${chosen.length} — ${item.file.name}`);
+        setScans((s) =>
+          s.map((x) => (x.key === item.key ? { ...x, status: "uploading", message: "Storing…" } : x)),
+        );
         try {
           await uploadScanMaster({
             archiveId: created.archive_id,
             letterId: created.id,
-            file,
+            file: item.file,
             sortOrder: i + 1,
+            label: item.label,
+            onStage: (stage) =>
+              setScans((s) => s.map((x) => (x.key === item.key ? { ...x, message: stage } : x))),
           });
+          setScans((s) =>
+            s.map((x) => (x.key === item.key ? { ...x, status: "done", message: "Attached" } : x)),
+          );
         } catch (error) {
-          followUpErrors.push((error as Error).message);
+          const msg = (error as Error).message;
+          followUpErrors.push(msg);
+          setScans((s) => s.map((x) => (x.key === item.key ? { ...x, status: "error", message: msg } : x)));
         }
       }
       setUploading(null);
@@ -352,6 +363,7 @@ function QuickEntry() {
         .update({ digitization_status: "in_progress" } as never)
         .eq("id", created.id);
     }
+
 
     try {
       const { data: auth } = await supabase.auth.getUser();
