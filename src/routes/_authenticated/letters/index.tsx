@@ -86,7 +86,9 @@ export const Route = createFileRoute("/_authenticated/letters/")({
   ),
 });
 
-import { recordHealth } from "@/lib/record-health";
+import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
+import { transcribeRecord } from "@/lib/transcription.functions";
+
 
 type Col = { key: string; label: string; width: number; minWidth?: number; editable?: boolean };
 
