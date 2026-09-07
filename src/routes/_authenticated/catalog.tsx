@@ -427,7 +427,10 @@ function QuickEntry() {
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
-    setScans([]);
+    setScans((s) => {
+      s.forEach((x) => x.preview && URL.revokeObjectURL(x.preview));
+      return [];
+    });
     // Preserve author/recipient people links for batch entry of similar records.
     setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
     setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
