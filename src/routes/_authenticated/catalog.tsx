@@ -169,6 +169,18 @@ function rememberStorage(m: StorageMemory) {
   }
 }
 
+/** Type + subtype are remembered as soon as they are chosen, not only on save. */
+function rememberTypes(record_type: string, subtype: string) {
+  const prev = readLastStorage();
+  rememberStorage({
+    storage_type: prev.storage_type || "file_jacket",
+    source_container_id: prev.source_container_id ?? "",
+    original_order_notes: prev.original_order_notes ?? "",
+    record_type,
+    subtype,
+  });
+}
+
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
