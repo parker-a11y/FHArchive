@@ -392,8 +392,6 @@ function recordMarkdown(r: ComposedRecord): string {
   block("Digitization notes", r["digitization_notes"]);
   block("Original order notes", r["original_order_notes"]);
 
-  if (false) {
-  }
   if ((r["historical_references"] ?? []).length) {
     lines.push("", "## Historical references", "");
     for (const h of r["historical_references"])
