@@ -329,7 +329,7 @@ function EnvelopeReview() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setRotation((r) => (r + 90) % 360)}
+                    onClick={rotateShown}
                     aria-label="Rotate view"
                   >
                     <RotateCw className="size-4" />
@@ -362,7 +362,7 @@ function EnvelopeReview() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setRotation((r) => (r + 90) % 360)}
+                          onClick={rotateShown}
                           aria-label="Rotate view"
                         >
                           <RotateCw className="size-4" />
