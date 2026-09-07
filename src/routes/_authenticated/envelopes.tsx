@@ -416,6 +416,8 @@ function EnvelopeReview() {
                   />
                 </div>
 
+                <EnvelopeEntities key={current.id} letterId={current.id} />
+
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button onClick={() => save(true)} disabled={saving}>
                     {saving && <Loader2 className="size-4 animate-spin" />} Save & next
