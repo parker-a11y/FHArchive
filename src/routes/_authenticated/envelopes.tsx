@@ -121,7 +121,9 @@ function EnvelopeReview() {
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [side, setSide] = useState<"front" | "back">("front");
-  const [rotation, setRotation] = useState(0);
+  // Manual quarter-turns per scan, applied on top of the saved orientation
+  // until the record is saved (which writes them to the scan itself).
+  const [rotations, setRotations] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
@@ -156,7 +158,7 @@ function EnvelopeReview() {
       censor_mark: !!current.censor_mark,
     });
     setSide("front");
-    setRotation(0);
+    setRotations({});
     setZoomed(false);
   }, [current?.id]);
 
@@ -171,7 +173,12 @@ function EnvelopeReview() {
   const back = envelopes.find((f) => isBack(f));
   const shown = side === "back" ? (back ?? front) : front;
   // Envelopes always read horizontally; manual rotation stacks on top.
-  const shownRotation = shown ? (rotation + displayRotation(shown)) % 360 : rotation;
+  const manual = shown ? (rotations[shown.id] ?? 0) : 0;
+  const shownRotation = shown ? (manual + displayRotation(shown)) % 360 : 0;
+  const rotateShown = () => {
+    if (!shown) return;
+    setRotations((r) => ({ ...r, [shown.id]: ((r[shown.id] ?? 0) + 90) % 360 }));
+  };
 
 
   const go = (delta: number) => {
@@ -208,8 +215,22 @@ function EnvelopeReview() {
       if ((data.origin ?? null) !== payload.origin || (data.destination ?? null) !== payload.destination) {
         throw new Error("Mailing origin/destination did not persist. Please try again.");
       }
+      // Any turns applied in the viewer become the scan's saved orientation,
+      // so every other viewer shows the envelope the same way.
+      const turned = envelopes.filter((f) => (rotations[f.id] ?? 0) % 360 !== 0);
+      for (const f of turned) {
+        const next = (((f.rotation ?? 0) + (rotations[f.id] ?? 0)) % 360 + 360) % 360;
+        const { error: rotErr } = await supabase
+          .from("digital_files")
+          .update({ rotation: next } as never)
+          .eq("id", f.id);
+        if (rotErr) throw new Error(`Orientation not saved — ${rotErr.message}`);
+      }
+      if (turned.length) setRotations({});
       toast.success(`${current.archive_id} saved`);
       await qc.invalidateQueries({ queryKey: ["envelope-records"] });
+      await qc.invalidateQueries({ queryKey: ["envelope-files", current.id] });
+      await qc.invalidateQueries({ queryKey: ["digital-files"] });
       await qc.invalidateQueries({ queryKey: ["letters"] });
       await qc.invalidateQueries({ queryKey: ["letter", current.archive_id] });
       if (advance) go(1);
@@ -301,10 +322,7 @@ function EnvelopeReview() {
                   <Button
                     size="sm"
                     variant={side === "front" ? "default" : "outline"}
-                    onClick={() => {
-                      setSide("front");
-                      setRotation(0);
-                    }}
+                    onClick={() => setSide("front")}
                   >
                     Front
                   </Button>
@@ -312,17 +330,14 @@ function EnvelopeReview() {
                     size="sm"
                     variant={side === "back" ? "default" : "outline"}
                     disabled={!back}
-                    onClick={() => {
-                      setSide("back");
-                      setRotation(0);
-                    }}
+                    onClick={() => setSide("back")}
                   >
                     Back
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => setRotation((r) => (r + 90) % 360)}
+                    onClick={rotateShown}
                     aria-label="Rotate view"
                   >
                     <RotateCw className="size-4" />
@@ -355,7 +370,7 @@ function EnvelopeReview() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setRotation((r) => (r + 90) % 360)}
+                          onClick={rotateShown}
                           aria-label="Rotate view"
                         >
                           <RotateCw className="size-4" />
