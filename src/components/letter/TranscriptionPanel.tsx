@@ -222,6 +222,11 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     queryFn: () => fetchScanTranscriptions(letter.id),
   });
 
+  const transcripts = useMemo(
+    () => allTranscripts.filter((t) => files.some((f) => f.id === t.file_id)),
+    [allTranscripts, files],
+  );
+
   const byFile = useMemo(() => {
     const m: Record<string, ScanTranscription> = {};
     transcripts.forEach((t) => (m[t.file_id] = t));
