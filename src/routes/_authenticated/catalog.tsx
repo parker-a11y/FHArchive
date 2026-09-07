@@ -501,7 +501,10 @@ function QuickEntry() {
               <Label className="field-label">Record type *</Label>
               <CategorySelect
                 value={form.record_type}
-                onChange={(v) => setForm((f) => ({ ...f, record_type: v, subtype: "" }))}
+                onChange={(v) => {
+                  setForm((f) => ({ ...f, record_type: v, subtype: "" }));
+                  rememberTypes(v, "");
+                }}
                 options={recordTypeOptions}
                 onCreate={async (label) => {
                   const v = await addRecordType(label, recordTypeOptions);
