@@ -577,19 +577,24 @@ export function AiPanel({ letter }: { letter: Letter }) {
     },
   });
   const [editing, setEditing] = useState<Record<string, string>>({});
+  const [showRejected, setShowRejected] = useState(false);
+  const rejectedCount = rows.filter((r) => r.status === "rejected").length;
 
   const hasTranscript = Boolean(
     (letter.transcription_verified ?? "").trim() || (letter.transcription_raw_ai ?? "").trim(),
   );
 
-  async function analyze() {
+  async function analyze(mode: "new" | "all" = "new") {
     setBusy(true);
     setError(null);
     try {
-      const res = await runAnalysis({ data: { letterId: letter.id } });
+      const res = await runAnalysis({ data: { letterId: letter.id, mode } });
       qc.invalidateQueries({ queryKey: ["ai", letter.id] });
       qc.invalidateQueries({ queryKey: ["ai_pending"] });
-      toast.success(`AI analysis complete — ${res.suggestions} suggestion(s) awaiting review`);
+      toast.success(
+        `AI analysis complete — ${res.suggestions} suggestion(s) awaiting review` +
+          (res.cleared ? `, ${res.cleared} superseded cleared` : ""),
+      );
       await proposeTones();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "AI analysis failed";
@@ -740,9 +745,20 @@ export function AiPanel({ letter }: { letter: Letter }) {
                 Suggest tone / sentiment
               </Button>
             )}
-            <Button size="sm" onClick={analyze} disabled={busy || !hasTranscript}>
-              {busy ? "Analyzing…" : rows.length ? "Re-analyze record" : "Run AI analysis"}
+            <Button size="sm" onClick={() => analyze("new")} disabled={busy || !hasTranscript}>
+              {busy ? "Analyzing…" : rows.length ? "Re-analyze new fields" : "Run AI analysis"}
             </Button>
+            {rows.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => analyze("all")}
+                disabled={busy || !hasTranscript}
+                title="Replaces every suggestion with a fresh read, including ones you already accepted or rejected. Metadata already saved on the record is not changed."
+              >
+                Re-analyze everything
+              </Button>
+            )}
           </div>
         </div>
         {!hasTranscript && (
@@ -753,8 +769,20 @@ export function AiPanel({ letter }: { letter: Letter }) {
         {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       </div>
 
+      {rejectedCount > 0 && (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline"
+          onClick={() => setShowRejected((v) => !v)}
+        >
+          {rejectedCount} rejected suggestion{rejectedCount === 1 ? "" : "s"} —{" "}
+          {showRejected ? "hide" : "show"}
+        </button>
+      )}
+
       {AI_FIELDS.map((f) => {
         const row = rows.find((r) => r.field_key === f.key);
+        if (row?.status === "rejected" && !showRejected) return null;
         return (
           <div key={f.key} className="rounded border border-border bg-card p-3">
             <div className="flex items-center justify-between">
