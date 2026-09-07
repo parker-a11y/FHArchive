@@ -575,6 +575,25 @@ function LettersTable() {
                 }
               />
             )}
+            {!isGuestViewer && transcribableSelected.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={Boolean(bulkTranscribe)}
+                onClick={transcribeSelected}
+              >
+                {bulkTranscribe ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4" />
+                )}
+                {bulkTranscribe
+                  ? `Transcribing ${bulkTranscribe.done}/${bulkTranscribe.total}…`
+                  : `Transcribe selected (${transcribableSelected.length})`}
+              </Button>
+            )}
+
             <Button
               variant="outline"
               size="sm"
