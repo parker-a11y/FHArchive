@@ -207,11 +207,17 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     setStatus(letter.transcription_status);
   }, [letter.id, letter.transcription_verified, letter.transcription_status]);
 
-  const { data: files = [] } = useQuery({
+  const { data: allFiles = [] } = useQuery({
     queryKey: ["digital-files", letter.id],
     queryFn: () => fetchDigitalFiles(letter.id),
   });
-  const { data: transcripts = [], refetch } = useQuery({
+  // Envelopes are never transcribed — they are reviewed by eye in Envelope Review.
+  const files = useMemo(
+    () => allFiles.filter((f) => !isEnvelopePage(f.label, f.original_filename)),
+    [allFiles],
+  );
+  const envelopeCount = allFiles.length - files.length;
+  const { data: allTranscripts = [], refetch } = useQuery({
     queryKey: ["scan-transcriptions", letter.id],
     queryFn: () => fetchScanTranscriptions(letter.id),
   });
