@@ -186,8 +186,9 @@ export type LetterSearchParams = {
   /** Postal service value; "paid" also matches airmail. */
   postal?: string;
   forwarded?: boolean;
-  /** Traffic-light health: green, yellow, red, needs_attention. */
-  health?: "" | "green" | "yellow" | "red" | "needs_attention";
+  /** Traffic-light health: green, purple, blue, yellow, red, needs_attention. */
+  health?: "" | "green" | "purple" | "blue" | "yellow" | "red" | "needs_attention";
+
   sort?: string;
   dir?: "asc" | "desc";
   limit?: number;
