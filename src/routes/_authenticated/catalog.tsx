@@ -437,7 +437,10 @@ function QuickEntry() {
             </div>
             <div className="archive-id font-display mt-1 text-4xl">
               {next?.archive_id ?? "……"}
+            </div>
           </div>
+
+
 
           <div className="mb-6 space-y-2">
             <Label className="field-label">Scans (optional)</Label>
