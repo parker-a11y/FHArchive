@@ -190,7 +190,7 @@ function rememberField(patch: Partial<StorageMemory>) {
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
-  const [scans, setScans] = useState<File[]>([]);
+  const [scans, setScans] = useState<ScanItem[]>([]);
   const [uploading, setUploading] = useState<string | null>(null);
   const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
   const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
