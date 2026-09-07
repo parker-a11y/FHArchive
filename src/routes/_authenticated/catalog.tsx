@@ -507,157 +507,45 @@ function QuickEntry() {
         >
           <div className="mb-6 rounded border border-border bg-card px-5 py-4">
             <div className="flex items-baseline justify-between gap-3">
-              <div className="field-label">Next archive ID (assigned on save)</div>
+              <div className="field-label">
+                {startedLetter ? "Archive ID (record started)" : "Next archive ID (assigned on save)"}
+              </div>
               <div className="hidden text-[11px] text-muted-foreground sm:block">
                 ⌘/Ctrl + ↵ save &amp; next · ⌘/Ctrl + ⇧ + ↵ save &amp; open · ⌘/Ctrl + L save &amp; label
               </div>
             </div>
-            <div className="archive-id font-display mt-1 text-4xl">
-              {next?.archive_id ?? "……"}
-            </div>
-          </div>
-
-
-
-          <div className="mb-6 space-y-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <Label className="field-label">Scans (optional)</Label>
-              {scans.length > 0 && (
-                <span className="text-[11px] text-muted-foreground">
-                  {scans.filter((s) => s.status === "done").length} of {scans.length} attached
-                </span>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+              <div className="archive-id font-display text-4xl">
+                {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
+              </div>
+              {!startedLetter && (
+                <Button type="button" variant="outline" onClick={startRecord} disabled={starting}>
+                  <FilePlus2 className="mr-2 size-4" />
+                  {starting ? "Starting…" : "Start record & add scans"}
+                </Button>
               )}
             </div>
-            <label
-              className="flex cursor-pointer items-center gap-3 rounded border border-dashed border-border bg-card px-4 py-4 text-sm text-muted-foreground hover:border-primary"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const dropped = Array.from(e.dataTransfer.files ?? []);
-                if (dropped.length) setScans((s) => [...s, ...toScanItems(dropped, s.length)]);
-              }}
-            >
-              <UploadCloud className="size-5" />
-              <span>
-                Drop images or PDFs here, or click to choose. Label them below — they attach to this
-                record, in this order, when you save.
-              </span>
-              <input
-                type="file"
-                multiple
-                accept={MASTER_ACCEPT}
-                className="hidden"
-                onChange={(e) => {
-                  const picked = Array.from(e.target.files ?? []);
-                  if (picked.length) setScans((s) => [...s, ...toScanItems(picked, s.length)]);
-                  e.target.value = "";
+            {!startedLetter && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Start the record to claim this number and work on its scans right here — thumbnails,
+                names, rotation and the confirm step. Everything else keeps saving as usual.
+              </p>
+            )}
+          </div>
+
+          {startedLetter && (
+            <div className="mb-6">
+              <DigitizationPanel
+                letter={{
+                  ...startedLetter,
+                  record_type: form.record_type,
+                  sheets: form.sheets ? Number(form.sheets) : null,
+                  has_envelope: isLetter ? form.has_envelope : false,
                 }}
               />
-            </label>
+            </div>
+          )}
 
-            <datalist id="quick-entry-scan-labels">
-              {suggestedLabels(form.record_type).map((l) => (
-                <option key={l} value={l} />
-              ))}
-            </datalist>
-
-            {scans.length > 0 && (
-              <ul className="space-y-2">
-                {scans.map((item, i) => (
-                  <li
-                    key={item.key}
-                    className="flex items-center gap-3 rounded border border-border bg-card px-3 py-2"
-                  >
-                    <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-                      {item.preview ? (
-                        <img src={item.preview} alt="" className="size-full object-cover" />
-                      ) : (
-                        <span className="text-[10px] uppercase text-muted-foreground">
-                          {item.file.name.split(".").pop()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="truncate text-xs text-muted-foreground">{item.file.name}</div>
-                      <Input
-                        list="quick-entry-scan-labels"
-                        className="h-8"
-                        placeholder="Label (e.g. Page 1 Front)"
-                        value={item.label}
-                        disabled={item.status === "done"}
-                        onChange={(e) =>
-                          setScans((s) =>
-                            s.map((x) => (x.key === item.key ? { ...x, label: e.target.value } : x)),
-                          )
-                        }
-                      />
-                      {item.message && (
-                        <div
-                          className={`flex items-center gap-1 text-[11px] ${
-                            item.status === "error" ? "text-destructive" : "text-muted-foreground"
-                          }`}
-                        >
-                          {item.status === "uploading" && <Loader2 className="size-3 animate-spin" />}
-                          {item.status === "done" && <Check className="size-3" />}
-                          {item.status === "error" && <AlertTriangle className="size-3" />}
-                          <span className="truncate">{item.message}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        disabled={i === 0}
-                        onClick={() =>
-                          setScans((s) => {
-                            const n = [...s];
-                            [n[i - 1], n[i]] = [n[i], n[i - 1]];
-                            return n;
-                          })
-                        }
-                      >
-                        <ArrowUp className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        disabled={i === scans.length - 1}
-                        onClick={() =>
-                          setScans((s) => {
-                            const n = [...s];
-                            [n[i], n[i + 1]] = [n[i + 1], n[i]];
-                            return n;
-                          })
-                        }
-                      >
-                        <ArrowDown className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2"
-                        onClick={() =>
-                          setScans((s) => {
-                            if (item.preview) URL.revokeObjectURL(item.preview);
-                            return s.filter((x) => x.key !== item.key);
-                          })
-                        }
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {uploading && <p className="text-xs text-muted-foreground">{uploading}</p>}
-          </div>
 
 
 
