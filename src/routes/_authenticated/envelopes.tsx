@@ -215,8 +215,22 @@ function EnvelopeReview() {
       if ((data.origin ?? null) !== payload.origin || (data.destination ?? null) !== payload.destination) {
         throw new Error("Mailing origin/destination did not persist. Please try again.");
       }
+      // Any turns applied in the viewer become the scan's saved orientation,
+      // so every other viewer shows the envelope the same way.
+      const turned = envelopes.filter((f) => (rotations[f.id] ?? 0) % 360 !== 0);
+      for (const f of turned) {
+        const next = (((f.rotation ?? 0) + (rotations[f.id] ?? 0)) % 360 + 360) % 360;
+        const { error: rotErr } = await supabase
+          .from("digital_files")
+          .update({ rotation: next } as never)
+          .eq("id", f.id);
+        if (rotErr) throw new Error(`Orientation not saved — ${rotErr.message}`);
+      }
+      if (turned.length) setRotations({});
       toast.success(`${current.archive_id} saved`);
       await qc.invalidateQueries({ queryKey: ["envelope-records"] });
+      await qc.invalidateQueries({ queryKey: ["envelope-files", current.id] });
+      await qc.invalidateQueries({ queryKey: ["digital-files"] });
       await qc.invalidateQueries({ queryKey: ["letters"] });
       await qc.invalidateQueries({ queryKey: ["letter", current.archive_id] });
       if (advance) go(1);
