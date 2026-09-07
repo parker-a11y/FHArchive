@@ -27,7 +27,7 @@ import {
   derivativeFailed,
   generateDerivatives,
   generatePdfPageDerivatives,
-  generatePreviewThumbnail,
+  uploadScanMaster,
   hasJpeg,
   hasThumb,
   isNamed,
@@ -42,8 +42,6 @@ import {
   digitizationHint,
   expectedScans,
   formatSeq,
-  normalizeFh,
-  parseScanFilename,
   sortByFilename,
   suggestedLabels,
   usesPhotoSides,
@@ -180,61 +178,21 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
     for (let i = 0; i < chosen.length; i++) {
       const file = chosen[i];
-      const step = (stage: string) =>
-        setProgress({ total: chosen.length, done: i, current: file.name, stage });
-
-      step("Storing archival master…");
-      const safe = file.name.replace(/[^\w.\-]+/g, "_");
-      const masterPath = `${letter.archive_id}/masters/${Date.now()}_${safe}`;
-      const { error: upErr } = await supabase.storage
-        .from("scans")
-        .upload(masterPath, file, { upsert: false, contentType: file.type || undefined });
-      if (upErr) {
-        toast.error(`${file.name}: master not stored — ${upErr.message}`);
-        continue;
-      }
-
-      const parsed = parseScanFilename(file.name);
-      const matches = parsed.fh === null ? true : parsed.fh === normalizeFh(letter.archive_id);
-      const seq = parsed.seq ?? null;
-      const sortOrder = seq ?? startOrder + i + 1;
-
-      const { data: inserted, error: insErr } = await supabase
-        .from("digital_files")
-        .insert({
-          letter_id: letter.id,
-          seq,
-          sort_order: sortOrder,
-          original_filename: file.name,
-          master_path: masterPath,
-          master_mime: file.type || null,
-          master_size: file.size,
-          filename_matches: matches,
-        } as never)
-        .select("id")
-        .single();
-      if (insErr || !inserted) {
-        toast.error(`${file.name}: ${insErr?.message ?? "could not be recorded"}`);
-        continue;
-      }
-      added++;
-      // A quick preview thumbnail is made now so the scan is recognisable while
-      // labelling. The full viewing JPEG (and a renamed thumbnail) are produced
-      // only after "Confirm Upload Complete".
       try {
-        step("Making preview thumbnail…");
-        await generatePreviewThumbnail(
-          letter.archive_id,
-          letter.id,
-          inserted.id as string,
-          masterPath,
+        await uploadScanMaster({
+          archiveId: letter.archive_id,
+          letterId: letter.id,
           file,
-        );
+          sortOrder: startOrder + i + 1,
+          onStage: (stage) => setProgress({ total: chosen.length, done: i, current: file.name, stage }),
+        });
+        added++;
         refresh();
       } catch (err) {
-        console.warn("Preview thumbnail failed:", (err as Error).message);
+        toast.error((err as Error).message);
       }
     }
+
 
     setProgress(null);
     refresh();

@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId } from "@/lib/queries";
-import { RelatedRecordsField, type PendingRelation } from "@/components/RelatedRecordsPanel";
-import { addRecordLink } from "@/lib/record-links";
+import { uploadScanMaster } from "@/lib/scan-confirm";
+import { MASTER_ACCEPT, sortByFilename } from "@/lib/digitization";
+import { UploadCloud, X } from "lucide-react";
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
 import { PostalFields } from "@/components/letter/PostalFields";
@@ -27,10 +28,8 @@ import {
 } from "@/lib/archive";
 import { EntryLabelDialog, labelLines, labelTitle } from "@/components/letter/LabelDialog";
 import { PersonCombobox, usePeopleNames } from "@/components/PersonCombobox";
-import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
 import { PersonRoleInput, type PersonRoleValue } from "@/components/PersonRoleInput";
 import { linkLetterPeople } from "@/lib/letter-people";
-import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
 import { CategorySelect } from "@/components/CategorySelect";
 import { PhotoIntakeForm } from "@/components/photo/PhotoIntakeForm";
@@ -136,6 +135,8 @@ function Select_({
 const STORAGE_MEMORY_KEY = "fh.quickentry.storage";
 
 type StorageMemory = {
+  record_type: string;
+  subtype: string;
   storage_type: string;
   source_container_id: string;
   original_order_notes: string;
@@ -148,6 +149,8 @@ function readLastStorage(): Partial<StorageMemory> {
     if (!raw) return {};
     const p = JSON.parse(raw) as Partial<StorageMemory>;
     return {
+      record_type: p.record_type || "letter",
+      subtype: p.subtype ?? "",
       storage_type: p.storage_type || "file_jacket",
       source_container_id: p.source_container_id ?? "",
       original_order_notes: p.original_order_notes ?? "",
@@ -169,8 +172,8 @@ function rememberStorage(m: StorageMemory) {
 function QuickEntry() {
   const [next, setNext] = useState<{ fh_seq: number; archive_id: string } | null>(null);
   const [form, setForm] = useState({ ...blank });
-  const [mentions, setMentions] = useState<PersonRef[]>([]);
-  const [relations, setRelations] = useState<PendingRelation[]>([]);
+  const [scans, setScans] = useState<File[]>([]);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [authorPerson, setAuthorPerson] = useState<PersonRoleValue>(null);
   const [recipientPerson, setRecipientPerson] = useState<PersonRoleValue>(null);
   const [busy, setBusy] = useState(false);
@@ -282,6 +285,29 @@ function QuickEntry() {
       .eq("id", created.id);
     if (extrasError) followUpErrors.push(`additional fields: ${extrasError.message}`);
 
+    if (scans.length) {
+      const chosen = sortByFilename(scans);
+      for (let i = 0; i < chosen.length; i++) {
+        const file = chosen[i];
+        setUploading(`Uploading ${i + 1} of ${chosen.length} — ${file.name}`);
+        try {
+          await uploadScanMaster({
+            archiveId: created.archive_id,
+            letterId: created.id,
+            file,
+            sortOrder: i + 1,
+          });
+        } catch (error) {
+          followUpErrors.push((error as Error).message);
+        }
+      }
+      setUploading(null);
+      await supabase
+        .from("letters")
+        .update({ digitization_status: "in_progress" } as never)
+        .eq("id", created.id);
+    }
+
     try {
       const { data: auth } = await supabase.auth.getUser();
       const ownerId = auth.user?.id;
@@ -289,28 +315,16 @@ function QuickEntry() {
         const roleLinks: { personId: string; role: "author" | "recipient" | "mentioned" }[] = [];
         if (isLetter && authorPerson?.id) roleLinks.push({ personId: authorPerson.id, role: "author" });
         if (isLetter && recipientPerson?.id) roleLinks.push({ personId: recipientPerson.id, role: "recipient" });
-        for (const p of mentions) roleLinks.push({ personId: p.id, role: "mentioned" });
         if (roleLinks.length) await linkLetterPeople(created.id, roleLinks, ownerId);
       }
     } catch (error) {
       followUpErrors.push(`people links: ${(error as Error).message}`);
     }
 
-    // Cross-references are intellectual links only — provenance untouched.
-    for (const relation of relations) {
-      try {
-        await addRecordLink(
-          { kind: "letter", id: created.id },
-          { kind: relation.record.kind, id: relation.record.id },
-          relation.note,
-        );
-      } catch (error) {
-        followUpErrors.push(`link to ${relation.record.ref}: ${(error as Error).message}`);
-      }
-    }
-
     setBusy(false);
     rememberStorage({
+      record_type: form.record_type,
+      subtype: form.subtype,
       storage_type: form.storage_type,
       source_container_id: form.source_container_id,
       original_order_notes: form.original_order_notes,
@@ -356,8 +370,7 @@ function QuickEntry() {
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
     }));
-    setMentions([]);
-    setRelations([]);
+    setScans([]);
     // Preserve author/recipient people links for batch entry of similar records.
     setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
     setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
@@ -427,6 +440,62 @@ function QuickEntry() {
             </div>
           </div>
 
+
+
+          <div className="mb-6 space-y-2">
+            <Label className="field-label">Scans (optional)</Label>
+            <label
+              className="flex cursor-pointer items-center gap-3 rounded border border-dashed border-border bg-card px-4 py-4 text-sm text-muted-foreground hover:border-primary"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const dropped = Array.from(e.dataTransfer.files ?? []);
+                if (dropped.length) setScans((s) => [...s, ...dropped]);
+              }}
+            >
+              <UploadCloud className="size-5" />
+              <span>
+                Drop images or PDFs here, or click to choose. They attach to this record on save —
+                name them on the record page.
+              </span>
+              <input
+                type="file"
+                multiple
+                accept={MASTER_ACCEPT}
+                className="hidden"
+                onChange={(e) => {
+                  const picked = Array.from(e.target.files ?? []);
+                  if (picked.length) setScans((s) => [...s, ...picked]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {scans.length > 0 && (
+              <ul className="space-y-1">
+                {sortByFilename(scans).map((f, i) => (
+                  <li
+                    key={`${f.name}-${i}`}
+                    className="flex items-center justify-between gap-2 rounded border border-border bg-card px-3 py-1.5 text-sm"
+                  >
+                    <span className="truncate">{f.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2"
+                      onClick={() => setScans((s) => s.filter((x) => x !== f))}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {uploading && <p className="text-xs text-muted-foreground">{uploading}</p>}
+          </div>
+
+
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label className="field-label">Record type *</Label>
@@ -455,82 +524,6 @@ function QuickEntry() {
                 }}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">Primary person</Label>
-              <PersonCombobox
-                value={form.primary_person}
-                onChange={(v) => set("primary_person", v)}
-              />
-              <div className="flex gap-1.5 pt-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs"
-                  onClick={() => set("primary_person", "Francis A. Harrington")}
-                >
-                  Fran
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs"
-                  onClick={() => set("primary_person", "Jaquelyn Harrington")}
-                >
-                  Jaq
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                The single main subject of this record — add everyone else under People with roles.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">Mentions</Label>
-              <PersonMultiSelect
-                value={mentions}
-                onAdd={(p) => setMentions((m) => (m.some((x) => x.id === p.id) ? m : [...m, p]))}
-                onRemove={(p) => setMentions((m) => m.filter((x) => x.id !== p.id))}
-              />
-              <p className="text-xs text-muted-foreground">
-                Other people named in this record — linked as “mentioned”.
-              </p>
-            </div>
-            <div className="col-span-full space-y-1.5">
-              <Label className="field-label">Related records (optional)</Label>
-              <RelatedRecordsField value={relations} onChange={setRelations} />
-              <p className="text-xs text-muted-foreground">
-                Historical connections to any other archive record — physical or digital. Links
-                work both ways and do not affect provenance or storage.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">Tone / sentiment (optional)</Label>
-              <ToneMultiSelect value={form.tones} onChange={(v) => set("tones", v)} />
-            </div>
-
-            <div className="col-span-full space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <Label className="field-label">Title / short description</Label>
-                {isPersonalLetter(form.record_type, form.subtype) && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => set("title", shortLetterTitle(form))}
-                  >
-                    Create Short Title
-                  </Button>
-                )}
-              </div>
-              <Input
-                value={form.title}
-                onChange={(e) => set("title", e.target.value)}
-                placeholder="e.g. Discharge papers, Navy — or: portrait in dress blues"
-              />
-            </div>
-
-
             <div className="space-y-1.5">
               <Label className="field-label">
                 {form.date_precision === "year"
@@ -687,6 +680,56 @@ function QuickEntry() {
               onChange={(v) => set("identification_status", v)}
               options={IDENTIFICATION_STATUS}
             />
+            <div className="space-y-1.5">
+              <Label className="field-label">Primary person</Label>
+              <PersonCombobox
+                value={form.primary_person}
+                onChange={(v) => set("primary_person", v)}
+              />
+              <div className="flex gap-1.5 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => set("primary_person", "Francis A. Harrington")}
+                >
+                  Fran
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => set("primary_person", "Jaquelyn Harrington")}
+                >
+                  Jaq
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The single main subject of this record — add everyone else under People with roles.
+              </p>
+            </div>
+            <div className="col-span-full space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="field-label">Title / short description</Label>
+                {isPersonalLetter(form.record_type, form.subtype) && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => set("title", shortLetterTitle(form))}
+                  >
+                    Create Short Title
+                  </Button>
+                )}
+              </div>
+              <Input
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                placeholder="e.g. Discharge papers, Navy — or: portrait in dress blues"
+              />
+            </div>
 
 
             {isLetter && (
