@@ -158,7 +158,7 @@ function EnvelopeReview() {
       censor_mark: !!current.censor_mark,
     });
     setSide("front");
-    setRotation(0);
+    setRotations({});
     setZoomed(false);
   }, [current?.id]);
 
