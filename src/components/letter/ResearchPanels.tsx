@@ -767,8 +767,20 @@ export function AiPanel({ letter }: { letter: Letter }) {
         {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       </div>
 
+      {rejectedCount > 0 && (
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline"
+          onClick={() => setShowRejected((v) => !v)}
+        >
+          {rejectedCount} rejected suggestion{rejectedCount === 1 ? "" : "s"} —{" "}
+          {showRejected ? "hide" : "show"}
+        </button>
+      )}
+
       {AI_FIELDS.map((f) => {
         const row = rows.find((r) => r.field_key === f.key);
+        if (row?.status === "rejected" && !showRejected) return null;
         return (
           <div key={f.key} className="rounded border border-border bg-card p-3">
             <div className="flex items-center justify-between">
