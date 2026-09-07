@@ -308,10 +308,7 @@ function EnvelopeReview() {
                   <Button
                     size="sm"
                     variant={side === "front" ? "default" : "outline"}
-                    onClick={() => {
-                      setSide("front");
-                      setRotation(0);
-                    }}
+                    onClick={() => setSide("front")}
                   >
                     Front
                   </Button>
@@ -319,10 +316,7 @@ function EnvelopeReview() {
                     size="sm"
                     variant={side === "back" ? "default" : "outline"}
                     disabled={!back}
-                    onClick={() => {
-                      setSide("back");
-                      setRotation(0);
-                    }}
+                    onClick={() => setSide("back")}
                   >
                     Back
                   </Button>
