@@ -57,6 +57,7 @@ export async function suggestLocationLine(
   } catch {
     value = "";
   }
+  value = value.replace(/\s*\n\s*/g, ", ").replace(/,\s*,/g, ",").trim();
   if (/^(none|n\/a|unknown|null)$/i.test(value)) value = "";
   return { suggestion: value, hasTranscript: true };
 }
