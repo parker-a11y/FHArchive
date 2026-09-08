@@ -168,6 +168,102 @@ export async function retrieveEvidence(
 
 // ----------------------------------------------------------------- generation
 
+// ------------------------------------------------- outside historical context
+
+export type WebSource = { title: string; url: string; note: string };
+
+/**
+ * Decides whether a question needs historical background beyond the archive, and
+ * what to search for. Archive-only questions skip the web entirely.
+ */
+async function planExternalResearch(question: string): Promise<string[]> {
+  try {
+    const raw = await callResearchModel(
+      `You triage research questions for a private family-history archive (mid-20th-century American family, WWII and postwar).
+Decide whether answering well would benefit from general historical background OUTSIDE the family's own papers — a place, hotel, ship, military unit, battle, product, custom, price, or period detail.
+Questions purely about what the family's records contain (who wrote what, when, where a record is) do NOT need outside research.
+Return JSON: {"needed": true|false, "queries": ["at most two short web search queries"]}`,
+      question,
+    );
+    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    const parsed = JSON.parse(cleaned.slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1));
+    if (!parsed?.needed) return [];
+    return (Array.isArray(parsed.queries) ? parsed.queries : [])
+      .map((q: any) => String(q).trim())
+      .filter(Boolean)
+      .slice(0, 2);
+  } catch {
+    return [];
+  }
+}
+
+/** Real web research via Perplexity. Returns [] when the connector is not linked. */
+async function searchOutsideHistory(
+  queries: string[],
+): Promise<{ text: string; sources: WebSource[] }> {
+  const key = process.env["PERPLEXITY_API_KEY"];
+  if (!key || !queries.length) return { text: "", sources: [] };
+
+  const runs = await Promise.all(
+    queries.map(async (query) => {
+      try {
+        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "sonar",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a historical reference desk. Answer factually and concisely, with dates and specifics. If sources disagree or are thin, say so. Never speculate.",
+              },
+              { role: "user", content: query },
+            ],
+          }),
+        });
+        if (!res.ok) {
+          console.error(`Perplexity request failed [${res.status}]: ${(await res.text()).slice(0, 300)}`);
+          return null;
+        }
+        const json: any = await res.json();
+        const content = String(json?.choices?.[0]?.message?.content ?? "").trim();
+        const urls: string[] = Array.isArray(json?.citations)
+          ? json.citations.map((c: any) => (typeof c === "string" ? c : c?.url)).filter(Boolean)
+          : (json?.search_results ?? []).map((r: any) => r?.url).filter(Boolean);
+        const titles: Record<string, string> = {};
+        for (const r of json?.search_results ?? []) if (r?.url) titles[r.url] = String(r.title ?? "");
+        return { query, content, urls: urls.slice(0, 6), titles };
+      } catch (e) {
+        console.error("Perplexity lookup failed:", e);
+        return null;
+      }
+    }),
+  );
+
+  const sources: WebSource[] = [];
+  const seen = new Set<string>();
+  const blocks: string[] = [];
+  for (const run of runs) {
+    if (!run || !run.content) continue;
+    blocks.push(`OUTSIDE RESEARCH — "${run.query}"\n${run.content}\nSOURCE URLS:\n${run.urls.join("\n")}`);
+    for (const url of run.urls) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      let host = url;
+      try {
+        host = new URL(url).hostname.replace(/^www\./, "");
+      } catch {
+        /* keep raw */
+      }
+      sources.push({ title: run.titles[url] || host, url, note: run.query });
+    }
+  }
+  return { text: blocks.join("\n\n---\n\n").slice(0, 30000), sources };
+}
+
+// ----------------------------------------------------------------- generation
+
 export const CONFIDENCE_LEVELS = [
   "confirmed",
   "highly likely",
@@ -180,6 +276,7 @@ export type ResearchAnswer = {
   answer: string;
   confidence: (typeof CONFIDENCE_LEVELS)[number];
   citations: { archive_id: string; note: string; confidence: string }[];
+  sources: WebSource[];
   follow_ups: string[];
   caveats: string;
   evidence: Evidence[];
@@ -188,17 +285,23 @@ export type ResearchAnswer = {
 
 const SYSTEM = `You are "Ask Francis", the research assistant for a private family history archive (The Francis Files: mid-20th-century American family, wartime and postwar material).
 
-You answer research questions using ONLY the archive evidence supplied to you.
+The archive is the foundation of every answer. You may also draw on the OUTSIDE RESEARCH supplied to you for general historical context, so long as it is sourced.
+
+Two tiers of evidence, never blurred:
+1. ARCHIVE EVIDENCE — what the family's records show. Cite FH record numbers (e.g. FH0042) inline for every archive statement. Never state an archive conclusion without at least one FH citation.
+2. HISTORICAL CONTEXT — general history from the supplied outside research. Mark each such statement inline as outside the archive, e.g. "(general history: the Hollywood Hotel's Thursday-night dinner dances drew studio crowds through the 1930s — [source])", and cite the source URL it came from.
 
 Absolute rules:
-- Cite FH record numbers (e.g. FH0042) inline in your answer for every factual statement. Never state an archive conclusion without at least one citation.
-- Never invent records, FH numbers, people, places, ships, dates or quotations.
-- Distinguish clearly between (a) what a document actually says, (b) what the catalog metadata records, and (c) your own inference. Label inferences in the prose, e.g. "probable — FH0048 was forwarded to Miami".
-- Use one of these confidence words when characterising a conclusion: confirmed, highly likely, probable, possible, uncertain.
-- If the evidence does not answer the question, say so plainly and suggest what would settle it. Do not fill gaps with plausible narrative.
+- Never invent quotations. Never invent records, FH numbers, people, places, ships, units, dates or events.
+- Never present historical background as if researched when no outside research was supplied. If none was supplied and the question needs it, say plainly that the archive alone cannot answer that part and what would settle it.
+- Only cite source URLs that appear in the supplied OUTSIDE RESEARCH. Never fabricate a link, publication or author.
+- Distinguish clearly between (a) what a document actually says, (b) what the catalog metadata records, (c) sourced outside history, and (d) your own inference. Label inferences in the prose, e.g. "probable — FH0048 was forwarded to Miami".
+- Do not build a narrative to cover a gap. A gap stated plainly is a better answer than a plausible story.
+- Use one of these confidence words when characterising a conclusion: confirmed, highly likely, probable, possible, uncertain. Confidence describes the ARCHIVE conclusion, not the background.
 - Be concise and archival in tone. Markdown is allowed: short paragraphs, bullets, bold for FH numbers where helpful.
 
 You are producing research findings, not catalog data. Nothing you say updates the archive.`;
+
 
 export async function answerResearchQuestion(
   admin: any,
