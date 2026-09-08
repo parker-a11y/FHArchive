@@ -28,6 +28,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PostalFields, type PostalValues } from "@/components/letter/PostalFields";
+import { LocationLineSuggestion } from "@/components/letter/LocationLineSuggestion";
+import { useServerFn } from "@tanstack/react-start";
+import { suggestLocationLines } from "@/lib/location-line.functions";
 import { EnvelopeEntities } from "@/components/letter/EnvelopeEntities";
 import { displayDate } from "@/lib/archive";
 
@@ -39,6 +42,7 @@ type EnvelopeRecord = {
   normalized_date: string | null;
   origin: string | null;
   dateline: string | null;
+  dateline_suggested: string | null;
   destination: string | null;
   forwarded: boolean;
   forwarded_to: string | null;
@@ -67,7 +71,7 @@ async function fetchEnvelopeRecords(): Promise<EnvelopeRecord[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, title, date_as_written, normalized_date, dateline, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
+      "id, archive_id, title, date_as_written, normalized_date, dateline, dateline_suggested, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
     )
     .in("id", ids)
     .order("archive_id", { ascending: true });
@@ -126,6 +130,32 @@ function EnvelopeReview() {
   // until the record is saved (which writes them to the scan itself).
   const [rotations, setRotations] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [backfill, setBackfill] = useState<string | null>(null);
+  const suggestFn = useServerFn(suggestLocationLines);
+
+  // Walks every record with no Location Line in small batches; results are
+  // stored as suggestions only — nothing is accepted automatically.
+  const runBackfill = async () => {
+    setBackfill("starting");
+    let done = 0;
+    let filled = 0;
+    try {
+      for (let i = 0; i < 200; i++) {
+        const r = await suggestFn({ data: { limit: 4 } });
+        done += r.processed;
+        filled += r.filled;
+        setBackfill(`${done} read, ${filled} found, ${r.remaining} left`);
+        if (!r.remaining || !r.processed) break;
+      }
+      toast.success(`Checked ${done} record${done === 1 ? "" : "s"}; ${filled} suggested location line${filled === 1 ? "" : "s"} ready to review.`);
+      await qc.invalidateQueries({ queryKey: ["envelope-records"] });
+      await qc.invalidateQueries({ queryKey: ["letters"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Suggestion run stopped");
+    } finally {
+      setBackfill(null);
+    }
+  };
   const [zoomed, setZoomed] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
   const originInputRef = useRef<HTMLInputElement>(null);
@@ -251,13 +281,24 @@ function EnvelopeReview() {
         title="Envelope Review"
         description="Work through scanned envelopes and complete the mailing and postal details."
         actions={
-          <Button
-            variant={onlyNeedsReview ? "default" : "outline"}
-            size="sm"
-            onClick={() => setOnlyNeedsReview((v) => !v)}
-          >
-            Needs review only
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!!backfill}
+              onClick={runBackfill}
+              title="Read every record without a Location Line and store an AI suggestion for review"
+            >
+              {backfill ? `Suggesting… ${backfill}` : "Suggest location lines (AI)"}
+            </Button>
+            <Button
+              variant={onlyNeedsReview ? "default" : "outline"}
+              size="sm"
+              onClick={() => setOnlyNeedsReview((v) => !v)}
+            >
+              Needs review only
+            </Button>
+          </div>
         }
       />
 
@@ -405,12 +446,22 @@ function EnvelopeReview() {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="field-label">Dateline — written at (from the letter)</Label>
+                  <Label className="field-label">Location Line — written at (from the letter)</Label>
                   <Input
                     key={`dateline-${current.id}`}
                     ref={datelineInputRef}
                     name="dateline"
                     defaultValue={current.dateline ?? ""}
+                  />
+                  <LocationLineSuggestion
+                    key={`dateline-sugg-${current.id}`}
+                    letterId={current.id}
+                    suggestion={current.dateline_suggested}
+                    current={current.dateline ?? ""}
+                    onAccept={(v) => {
+                      if (datelineInputRef.current) datelineInputRef.current.value = v;
+                      toast.message(`Location line set to “${v}” — save to keep it.`);
+                    }}
                   />
                   <p className="text-[11px] text-muted-foreground">
                     The place written on the letter itself, not the postmark.

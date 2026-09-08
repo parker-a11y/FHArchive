@@ -66,6 +66,7 @@ import {
   type LetterPersonLink,
 } from "@/lib/letter-people";
 import { PostalFields } from "@/components/letter/PostalFields";
+import { LocationLineSuggestion } from "@/components/letter/LocationLineSuggestion";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
@@ -120,7 +121,7 @@ export const Route = createFileRoute("/_authenticated/letters/$archiveId")({
 
 const TEXT_FIELDS = [
   { key: "date_as_written", label: "Date as written", letterOnly: false },
-  { key: "dateline", label: "Dateline (written at)", letterOnly: false },
+  { key: "dateline", label: "Location Line (written at)", letterOnly: false },
   { key: "author", label: "Author (from)", letterOnly: true },
   { key: "recipient", label: "Recipient (to)", letterOnly: true },
   { key: "origin", label: "Mailing origin / location", letterOnly: false },
@@ -807,6 +808,16 @@ function LetterPage() {
                     value={(form[f.key] as string) ?? ""}
                     onChange={(e) => set(f.key, e.target.value)}
                   />
+                )}
+                {f.key === "dateline" && (
+                  <div className="mt-1.5">
+                    <LocationLineSuggestion
+                      letterId={letter.id}
+                      suggestion={letter.dateline_suggested}
+                      current={(form.dateline as string) ?? ""}
+                      onAccept={(v) => set("dateline", v)}
+                    />
+                  </div>
                 )}
                 {f.key === "primary_person" && (
                   <div className="mt-3">

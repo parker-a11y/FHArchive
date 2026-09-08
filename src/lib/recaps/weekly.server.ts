@@ -276,7 +276,7 @@ function materialText(m: WeekMaterial) {
         l.period ? `Period: ${l.period}` : "",
         l.author ? `From: ${l.author}` : "",
         l.recipient ? `To: ${l.recipient}` : "",
-        l.dateline ? `Written at (dateline): ${l.dateline}` : "",
+        l.dateline ? `Location line (written at): ${l.dateline}` : "",
         l.origin ? `Mailing origin: ${l.origin}` : "",
         l.destination ? `Destination: ${l.destination}` : "",
         l.starred ? "Flagged as a Francis File Find" : "",

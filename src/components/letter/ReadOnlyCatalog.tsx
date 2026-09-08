@@ -72,7 +72,7 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
     ),
   });
   push("Date as written", letter.date_as_written);
-  push("Dateline (written at)", letter.dateline);
+  push("Location Line (written at)", letter.dateline);
   push("End date", letter.date_end);
   push("Date precision", labelOf(DATE_PRECISION, letter.date_precision));
   push("Date certainty", labelOf(DATE_CERTAINTY, letter.date_certainty));
