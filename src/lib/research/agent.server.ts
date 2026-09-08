@@ -308,7 +308,12 @@ export async function answerResearchQuestion(
   question: string,
   history: { role: "user" | "assistant"; content: string }[] = [],
 ): Promise<ResearchAnswer> {
-  const evidence = await retrieveEvidence(admin, question);
+  const [evidence, queries] = await Promise.all([
+    retrieveEvidence(admin, question),
+    planExternalResearch(question),
+  ]);
+  const outside = await searchOutsideHistory(queries);
+
 
   const evidenceText = evidence
     .map((e) => {
