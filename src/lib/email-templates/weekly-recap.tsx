@@ -161,6 +161,10 @@ export const WeeklyRecapEmail = ({
                 )
               })}
             </Text>
+            <Text style={hint}>
+              Open any record above to view the letter and its transcription side by side — no
+              account needed.
+            </Text>
           </Section>
         ) : null}
 
@@ -306,6 +310,14 @@ const ids = {
   letterSpacing: '1px',
   color: '#a08a3f',
   fontFamily: 'Helvetica, Arial, sans-serif',
+}
+const hint = {
+  margin: '8px 0 0',
+  fontSize: '12px',
+  lineHeight: '18px',
+  color: '#8a8f7d',
+  fontFamily: 'Helvetica, Arial, sans-serif',
+  fontStyle: 'italic' as const,
 }
 const linkStyle = { color: '#5d6b4a' }
 const hr = { borderColor: '#e4dcc7', margin: '28px 0 14px' }
