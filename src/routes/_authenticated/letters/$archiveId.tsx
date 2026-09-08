@@ -811,6 +811,7 @@ function LetterPage() {
                 ) : (
                   <Input
                     value={(form[f.key] as string) ?? ""}
+                    list={f.key === "dateline" ? LOCATION_LINE_LIST_ID : undefined}
                     onChange={(e) => set(f.key, e.target.value)}
                   />
                 )}
