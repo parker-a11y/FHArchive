@@ -30,6 +30,11 @@ import {
 } from "@/components/ui/dialog";
 import { PostalFields, type PostalValues } from "@/components/letter/PostalFields";
 import { LocationLineSuggestion } from "@/components/letter/LocationLineSuggestion";
+import {
+  LocationLineDatalist,
+  LocationLineNoneButton,
+  LOCATION_LINE_LIST_ID,
+} from "@/components/letter/LocationLineOptions";
 import { useServerFn } from "@tanstack/react-start";
 import { suggestLocationLines } from "@/lib/location-line.functions";
 import { EnvelopeEntities } from "@/components/letter/EnvelopeEntities";
@@ -493,12 +498,22 @@ function EnvelopeReview() {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <Label className="field-label">Location Line — written at (from the letter)</Label>
-                  <Input
-                    key={`dateline-${current.id}`}
-                    ref={datelineInputRef}
-                    name="dateline"
-                    defaultValue={current.dateline ?? ""}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      className="flex-1"
+                      key={`dateline-${current.id}`}
+                      ref={datelineInputRef}
+                      name="dateline"
+                      list={LOCATION_LINE_LIST_ID}
+                      defaultValue={current.dateline ?? ""}
+                    />
+                    <LocationLineNoneButton
+                      onPick={(v) => {
+                        if (datelineInputRef.current) datelineInputRef.current.value = v;
+                      }}
+                    />
+                  </div>
+                  <LocationLineDatalist />
                   <LocationLineSuggestion
                     key={`dateline-sugg-${current.id}`}
                     letterId={current.id}

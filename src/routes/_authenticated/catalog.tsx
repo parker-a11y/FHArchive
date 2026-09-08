@@ -16,6 +16,11 @@ import { FilePlus2, Printer } from "lucide-react";
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
 import { PostalFields } from "@/components/letter/PostalFields";
+import {
+  LocationLineDatalist,
+  LocationLineNoneButton,
+  LOCATION_LINE_LIST_ID,
+} from "@/components/letter/LocationLineOptions";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import {
   DATE_CERTAINTY,
@@ -742,12 +747,19 @@ function QuickEntry() {
             </div>
             <div className="space-y-1.5">
               <Label className="field-label">Location Line (written at)</Label>
-              <Input
-                value={form.dateline}
-                onChange={(e) => set("dateline", e.target.value)}
-              />
+              <div className="flex gap-2">
+                <Input
+                  className="flex-1"
+                  list={LOCATION_LINE_LIST_ID}
+                  value={form.dateline}
+                  onChange={(e) => set("dateline", e.target.value)}
+                />
+                <LocationLineNoneButton onPick={(v) => set("dateline", v)} />
+              </div>
+              <LocationLineDatalist />
               <p className="text-[11px] text-muted-foreground">
-                The place written on the letter itself — not the postmark.
+                The place written on the letter itself — not the postmark. Use NONE when none
+                is written.
               </p>
             </div>
             <Select_

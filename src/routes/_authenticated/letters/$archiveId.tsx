@@ -67,6 +67,11 @@ import {
 } from "@/lib/letter-people";
 import { PostalFields } from "@/components/letter/PostalFields";
 import { LocationLineSuggestion } from "@/components/letter/LocationLineSuggestion";
+import {
+  LocationLineDatalist,
+  LocationLineNoneButton,
+  LOCATION_LINE_LIST_ID,
+} from "@/components/letter/LocationLineOptions";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
@@ -806,11 +811,14 @@ function LetterPage() {
                 ) : (
                   <Input
                     value={(form[f.key] as string) ?? ""}
+                    list={f.key === "dateline" ? LOCATION_LINE_LIST_ID : undefined}
                     onChange={(e) => set(f.key, e.target.value)}
                   />
                 )}
                 {f.key === "dateline" && (
-                  <div className="mt-1.5">
+                  <div className="mt-1.5 space-y-1.5">
+                    <LocationLineNoneButton onPick={(v) => set("dateline", v)} />
+                    <LocationLineDatalist />
                     <LocationLineSuggestion
                       letterId={letter.id}
                       suggestion={letter.dateline_suggested}
