@@ -366,9 +366,14 @@ function AskFrancis() {
     try {
       await postArchiveNote({
         title: `Research: ${turn.question.slice(0, 90)}`,
-        body: `${turn.answer.answer}\n\nConfidence: ${turn.answer.confidence}\nSources: ${turn.answer.citations
+        body: `${turn.answer.answer}\n\nConfidence: ${turn.answer.confidence}\nRecords: ${turn.answer.citations
           .map((c) => c.archive_id)
-          .join(", ")}\n\n(Saved from Ask Francis — research finding, not catalog data.)`,
+          .join(", ")}${
+          turn.answer.sources?.length
+            ? `\nOutside sources: ${turn.answer.sources.map((s) => s.url).join(", ")}`
+            : ""
+        }\n\n(Saved from Ask Francis — research finding, not catalog data.)`,
+
         authorId: user?.id,
         authorName: user?.email ?? null,
       });
