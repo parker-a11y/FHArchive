@@ -5,6 +5,7 @@ export type Letter = {
   fh_seq: number;
   archive_id: string;
   date_as_written: string | null;
+  dateline: string | null;
   normalized_date: string | null;
   date_precision: string;
   date_certainty: string;
@@ -86,6 +87,7 @@ export type NewRecordInput = {
   p_subtype?: string | null;
   p_title?: string | null;
   p_date_as_written?: string | null;
+  p_dateline?: string | null;
   p_normalized_date?: string | null;
   p_date_end?: string | null;
   p_date_precision: string;
