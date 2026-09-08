@@ -35,6 +35,25 @@ export const analyzeRecord = createServerFn({ method: "POST" })
     const fields = await analyzeRecordText(ctx);
     const keys = Object.keys(fields);
 
+    // Location Line: stored as a suggestion only, never applied automatically.
+    try {
+      const { data: l } = await supabaseAdmin
+        .from("letters")
+        .select("dateline")
+        .eq("id", data.letterId)
+        .maybeSingle();
+      if (!l?.dateline) {
+        const { suggestLocationLine, storeLocationLineSuggestion } = await import(
+          "./location-line.server"
+        );
+        const r = await suggestLocationLine(supabaseAdmin, data.letterId);
+        if (r.hasTranscript)
+          await storeLocationLineSuggestion(supabaseAdmin, data.letterId, r.suggestion ?? "");
+      }
+    } catch {
+      // A failed location-line read must not sink the rest of the analysis.
+    }
+
     // Anything the model no longer flags is dropped, so a superseded note (for
     // example an uncertain passage the archivist has since corrected) does not
     // linger on the record after a re-run.
