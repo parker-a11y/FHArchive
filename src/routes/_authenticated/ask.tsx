@@ -225,8 +225,12 @@ function ShareAnswerButton({ turn }: { turn: Turn }) {
     turn.answer.caveats ? `\nCaveats: ${turn.answer.caveats}` : "",
     `\nConfidence: ${turn.answer.confidence}`,
     ids.length ? `Supporting records: ${ids.join(", ")}` : "",
+    turn.answer.sources?.length
+      ? `Outside sources: ${turn.answer.sources.map((s) => `${s.title || s.url} — ${s.url}`).join("; ")}`
+      : "",
     "\nShared from Ask Francis — an AI research finding, not catalog fact.",
   ]
+
     .filter(Boolean)
     .join("\n");
 
