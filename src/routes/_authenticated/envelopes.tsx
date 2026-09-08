@@ -158,6 +158,7 @@ function EnvelopeReview() {
     }
   };
   const [zoomed, setZoomed] = useState(false);
+  const [pageZoom, setPageZoom] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
   const originInputRef = useRef<HTMLInputElement>(null);
   const datelineInputRef = useRef<HTMLInputElement>(null);
