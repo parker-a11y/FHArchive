@@ -255,13 +255,24 @@ function EnvelopeReview() {
         title="Envelope Review"
         description="Work through scanned envelopes and complete the mailing and postal details."
         actions={
-          <Button
-            variant={onlyNeedsReview ? "default" : "outline"}
-            size="sm"
-            onClick={() => setOnlyNeedsReview((v) => !v)}
-          >
-            Needs review only
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!!backfill}
+              onClick={runBackfill}
+              title="Read every record without a Location Line and store an AI suggestion for review"
+            >
+              {backfill ? `Suggesting… ${backfill}` : "Suggest location lines (AI)"}
+            </Button>
+            <Button
+              variant={onlyNeedsReview ? "default" : "outline"}
+              size="sm"
+              onClick={() => setOnlyNeedsReview((v) => !v)}
+            >
+              Needs review only
+            </Button>
+          </div>
         }
       />
 
