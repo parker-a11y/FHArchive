@@ -55,7 +55,10 @@ function AskHistory() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ask_francis_queries")
-        .select("id, user_email, user_name, question, answer, confidence, citations, model, error, created_at")
+        .select(
+          "id, user_email, user_name, question, answer, confidence, citations, sources, model, error, created_at",
+        )
+
         .order("created_at", { ascending: false })
         .limit(300);
       if (error) throw error;
