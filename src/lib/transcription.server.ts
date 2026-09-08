@@ -10,7 +10,12 @@ export const TRANSCRIPTION_MODEL = "openai/gpt-5.4";
 
 export const TRANSCRIPTION_PROMPT = `Transcribe this historical document as faithfully as possible.
 
-Preserve the original wording, spelling, capitalization, punctuation, paragraph breaks, abbreviations, and obvious errors.
+Preserve the original wording, spelling, capitalization, punctuation, abbreviations, and obvious errors.
+
+FORMATTING RULES (important):
+Preserve the writer's actual paragraph breaks, but do NOT preserve physical line breaks caused simply by the handwriting reaching the edge of the page. Reflow continuous sentences into normal paragraphs. Return each paragraph as one continuous line of text — a normal handwritten line ending is not a newline. Insert a paragraph break only when there is clear evidence the writer intentionally began a new paragraph, such as indentation or substantial vertical spacing. Never introduce line breaks based on the visual layout of the scan.
+
+Keep these on their own lines as written: the heading/location and date at the top, the salutation, the closing, the signature, postscripts, and any address block, postmark, censor or stamp text.
 
 Do not modernize the language.
 Do not silently correct spelling or grammar.
