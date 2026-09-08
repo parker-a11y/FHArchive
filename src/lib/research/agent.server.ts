@@ -392,6 +392,17 @@ Return a single JSON object:
     // Never surface a citation to a record the retriever did not actually supply.
     .filter((c: any) => c.archive_id && known.has(c.archive_id));
 
+  // Never surface a link the search pass did not actually return.
+  const allowedUrls = new Map(outside.sources.map((s) => [s.url, s]));
+  const sources: WebSource[] = (Array.isArray(parsed.sources) ? parsed.sources : [])
+    .map((s: any) => {
+      const url = String(s?.url ?? "").trim();
+      const known = allowedUrls.get(url);
+      if (!known) return null;
+      return { title: String(s?.title ?? "").trim() || known.title, url, note: String(s?.note ?? "").trim() };
+    })
+    .filter(Boolean) as WebSource[];
+
   const confidence = String(parsed.confidence ?? "possible").toLowerCase();
   return {
     answer: String(parsed.answer ?? "").trim() || "No answer was produced for this question.",
@@ -399,6 +410,8 @@ Return a single JSON object:
       ? (confidence as ResearchAnswer["confidence"])
       : "possible",
     citations,
+    sources,
+
     follow_ups: (Array.isArray(parsed.follow_ups) ? parsed.follow_ups : [])
       .map((f: any) => String(f).trim())
       .filter(Boolean)
