@@ -351,14 +351,22 @@ ${question}
 ARCHIVE EVIDENCE (${evidence.length} records retrieved from the research index)
 ${evidenceText || "(no matching records were found in the archive)"}
 
+${
+  outside.text
+    ? `OUTSIDE RESEARCH (general history, from web sources — cite only these URLs)\n${outside.text}`
+    : "OUTSIDE RESEARCH\n(none was gathered for this question — do not supply unsourced historical background)"
+}
+
 Return a single JSON object:
 {
-  "answer": "Markdown answer with inline FH citations",
+  "answer": "Markdown answer with inline FH citations, and inline labelled historical context where useful",
   "confidence": "confirmed | highly likely | probable | possible | uncertain",
   "citations": [{ "archive_id": "FH0042", "note": "what this record contributes", "confidence": "confirmed" }],
+  "sources": [{ "title": "page or site name", "url": "https://... (must appear in OUTSIDE RESEARCH)", "note": "what this source supports" }],
   "follow_ups": ["two or three sharper follow-up research questions"],
   "caveats": "what the archive does not show, or where the reading is shaky (may be empty)"
 }`;
+
 
   const raw = await callResearchModel(SYSTEM, prompt);
   if (!raw) throw new Error("The research service returned no answer");
