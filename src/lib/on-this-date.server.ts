@@ -64,7 +64,7 @@ async function gatherArchiveContext(admin: any, date: string) {
     admin
       .from("letters")
       .select(
-        "id, archive_id, title, record_type, subtype, author, recipient, origin, destination, summary_short, summary_long, historical_notes, tones, date_as_written, date_from_postmark",
+        "id, archive_id, title, record_type, subtype, author, recipient, dateline, origin, destination, summary_short, summary_long, historical_notes, tones, date_as_written, date_from_postmark",
       )
       .eq("normalized_date", date)
       .limit(40),
@@ -138,7 +138,7 @@ export async function generateDateNarrative(admin: any, date: string) {
       lines.push(
         `- ${l.archive_id} ${l.record_type}${l.subtype ? `/${l.subtype}` : ""}: ${l.title ?? "untitled"}` +
           `${l.author ? `; from ${l.author}` : ""}${l.recipient ? ` to ${l.recipient}` : ""}` +
-          `${l.origin ? `; written at ${l.origin}` : ""}${l.destination ? `; sent to ${l.destination}` : ""}` +
+          `${l.dateline ? `; written at ${l.dateline}` : ""}${l.origin ? `; postmarked ${l.origin}` : ""}${l.destination ? `; sent to ${l.destination}` : ""}` +
           `${l.summary_short ? `; summary: ${l.summary_short}` : ""}` +
           `${l.historical_notes ? `; notes: ${String(l.historical_notes).slice(0, 400)}` : ""}`,
       );

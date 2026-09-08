@@ -98,7 +98,7 @@ async function gatherWeek(admin: any, weekStart: string, weekEnd: string): Promi
         admin
           .from("letters")
           .select(
-            "id, archive_id, title, record_type, subtype, period, date_as_written, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status, created_at, updated_at",
+            "id, archive_id, title, record_type, subtype, period, date_as_written, dateline, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status, created_at, updated_at",
           ),
       ).order("fh_seq", { ascending: true }).limit(120),
       touched(
@@ -276,7 +276,8 @@ function materialText(m: WeekMaterial) {
         l.period ? `Period: ${l.period}` : "",
         l.author ? `From: ${l.author}` : "",
         l.recipient ? `To: ${l.recipient}` : "",
-        l.origin ? `Origin: ${l.origin}` : "",
+        l.dateline ? `Written at (dateline): ${l.dateline}` : "",
+        l.origin ? `Mailing origin: ${l.origin}` : "",
         l.destination ? `Destination: ${l.destination}` : "",
         l.starred ? "Flagged as a Francis File Find" : "",
         (l.tones ?? []).length ? `Tones: ${(l.tones ?? []).join(", ")}` : "",
