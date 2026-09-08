@@ -1948,6 +1948,7 @@ export type Database = {
           date_from_postmark: boolean
           date_precision: string
           dateline: string | null
+          dateline_suggested: string | null
           destination: string | null
           digitization_completed_at: string | null
           digitization_notes: string | null
@@ -2033,6 +2034,7 @@ export type Database = {
           date_from_postmark?: boolean
           date_precision?: string
           dateline?: string | null
+          dateline_suggested?: string | null
           destination?: string | null
           digitization_completed_at?: string | null
           digitization_notes?: string | null
@@ -2118,6 +2120,7 @@ export type Database = {
           date_from_postmark?: boolean
           date_precision?: string
           dateline?: string | null
+          dateline_suggested?: string | null
           destination?: string | null
           digitization_completed_at?: string | null
           digitization_notes?: string | null
