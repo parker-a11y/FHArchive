@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   displayRotation,
   fetchDigitalFiles,
+  pageViewerEntries,
   type DigitalFileWithDerivatives,
 } from "@/lib/digital-files";
 import {
@@ -157,6 +158,7 @@ function EnvelopeReview() {
     }
   };
   const [zoomed, setZoomed] = useState(false);
+  const [pageZoom, setPageZoom] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
   const originInputRef = useRef<HTMLInputElement>(null);
   const datelineInputRef = useRef<HTMLInputElement>(null);
@@ -192,6 +194,7 @@ function EnvelopeReview() {
     setSide("front");
     setRotations({});
     setZoomed(false);
+    setPageZoom(false);
   }, [current?.id]);
 
   const { data: files = [] } = useQuery({
@@ -201,6 +204,10 @@ function EnvelopeReview() {
   });
 
   const envelopes = files.filter(isEnvelope) as DigitalFileWithDerivatives[];
+  // First page of the letter itself, shown as a small reference thumbnail.
+  const pageOne = pageViewerEntries(
+    (files as DigitalFileWithDerivatives[]).filter((f) => !isEnvelope(f)),
+  )[0];
   const front = envelopes.find((f) => !isBack(f)) ?? envelopes[0];
   const back = envelopes.find((f) => isBack(f));
   const shown = side === "back" ? (back ?? front) : front;
@@ -441,6 +448,45 @@ function EnvelopeReview() {
 
                 {shown?.label && (
                   <p className="text-center text-xs text-muted-foreground">{shown.label}</p>
+                )}
+
+                {pageOne && (
+                  <div className="space-y-1 pt-2">
+                    <p className="field-label">Letter — page 1</p>
+                    <button
+                      type="button"
+                      onClick={() => setPageZoom(true)}
+                      className="cursor-zoom-in overflow-hidden rounded-md border border-border bg-muted/30 p-1"
+                      aria-label="Enlarge page 1 of the letter"
+                    >
+                      <img
+                        src={pageOne.thumbUrl}
+                        alt={`${current.archive_id} page 1`}
+                        style={{ transform: `rotate(${displayRotation(pageOne.file)}deg)` }}
+                        className="max-h-40 w-auto object-contain"
+                      />
+                    </button>
+                    <Dialog open={pageZoom} onOpenChange={setPageZoom}>
+                      <DialogContent className="max-w-5xl">
+                        <DialogHeader>
+                          <DialogTitle>{current.archive_id} — page 1</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex max-h-[70vh] items-center justify-center overflow-auto">
+                          <img
+                            src={pageOne.url}
+                            alt={`${current.archive_id} page 1`}
+                            style={{ transform: `rotate(${displayRotation(pageOne.file)}deg)` }}
+                            className="max-h-[70vh] w-auto object-contain"
+                          />
+                        </div>
+                        <div className="flex justify-end">
+                          <Button variant="outline" onClick={() => setPageZoom(false)}>
+                            Close
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 )}
               </div>
 
