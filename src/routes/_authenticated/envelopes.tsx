@@ -201,6 +201,10 @@ function EnvelopeReview() {
   });
 
   const envelopes = files.filter(isEnvelope) as DigitalFileWithDerivatives[];
+  // First page of the letter itself, shown as a small reference thumbnail.
+  const pageOne = pageViewerEntries(
+    (files as DigitalFileWithDerivatives[]).filter((f) => !isEnvelope(f)),
+  )[0];
   const front = envelopes.find((f) => !isBack(f)) ?? envelopes[0];
   const back = envelopes.find((f) => isBack(f));
   const shown = side === "back" ? (back ?? front) : front;
