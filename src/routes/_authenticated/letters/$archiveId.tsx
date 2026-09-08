@@ -66,6 +66,7 @@ import {
   type LetterPersonLink,
 } from "@/lib/letter-people";
 import { PostalFields } from "@/components/letter/PostalFields";
+import { LocationLineSuggestion } from "@/components/letter/LocationLineSuggestion";
 import { MentionsField } from "@/components/letter/MentionsField";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { isPersonalLetter, shortLetterTitle } from "@/lib/short-title";
