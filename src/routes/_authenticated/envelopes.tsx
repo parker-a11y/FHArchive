@@ -194,6 +194,7 @@ function EnvelopeReview() {
     setSide("front");
     setRotations({});
     setZoomed(false);
+    setPageZoom(false);
   }, [current?.id]);
 
   const { data: files = [] } = useQuery({
