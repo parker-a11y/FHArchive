@@ -416,6 +416,16 @@ function EnvelopeReview() {
                     name="dateline"
                     defaultValue={current.dateline ?? ""}
                   />
+                  <LocationLineSuggestion
+                    key={`dateline-sugg-${current.id}`}
+                    letterId={current.id}
+                    suggestion={current.dateline_suggested}
+                    current={current.dateline ?? ""}
+                    onAccept={(v) => {
+                      if (datelineInputRef.current) datelineInputRef.current.value = v;
+                      toast.message(`Location line set to “${v}” — save to keep it.`);
+                    }}
+                  />
                   <p className="text-[11px] text-muted-foreground">
                     The place written on the letter itself, not the postmark.
                   </p>
