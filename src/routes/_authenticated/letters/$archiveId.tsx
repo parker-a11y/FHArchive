@@ -120,7 +120,7 @@ export const Route = createFileRoute("/_authenticated/letters/$archiveId")({
 
 const TEXT_FIELDS = [
   { key: "date_as_written", label: "Date as written", letterOnly: false },
-  { key: "dateline", label: "Dateline (written at)", letterOnly: false },
+  { key: "dateline", label: "Location Line (written at)", letterOnly: false },
   { key: "author", label: "Author (from)", letterOnly: true },
   { key: "recipient", label: "Recipient (to)", letterOnly: true },
   { key: "origin", label: "Mailing origin / location", letterOnly: false },

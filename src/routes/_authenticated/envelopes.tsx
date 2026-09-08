@@ -39,6 +39,7 @@ type EnvelopeRecord = {
   normalized_date: string | null;
   origin: string | null;
   dateline: string | null;
+  dateline_suggested: string | null;
   destination: string | null;
   forwarded: boolean;
   forwarded_to: string | null;
@@ -67,7 +68,7 @@ async function fetchEnvelopeRecords(): Promise<EnvelopeRecord[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, title, date_as_written, normalized_date, dateline, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
+      "id, archive_id, title, date_as_written, normalized_date, dateline, dateline_suggested, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
     )
     .in("id", ids)
     .order("archive_id", { ascending: true });
@@ -405,7 +406,7 @@ function EnvelopeReview() {
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="field-label">Dateline — written at (from the letter)</Label>
+                  <Label className="field-label">Location Line — written at (from the letter)</Label>
                   <Input
                     key={`dateline-${current.id}`}
                     ref={datelineInputRef}

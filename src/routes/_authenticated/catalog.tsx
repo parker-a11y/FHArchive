@@ -741,7 +741,7 @@ function QuickEntry() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="field-label">Dateline (written at)</Label>
+              <Label className="field-label">Location Line (written at)</Label>
               <Input
                 value={form.dateline}
                 onChange={(e) => set("dateline", e.target.value)}

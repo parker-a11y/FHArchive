@@ -335,7 +335,7 @@ function recordMarkdown(r: ComposedRecord): string {
     ["Author", r["author"]],
     ["Recipient", r["recipient"]],
     ["Primary person", r["primary_person"]],
-    ["Dateline (written at)", r["dateline"]],
+    ["Location Line (written at)", r["dateline"]],
     ["Mailing origin (postmark)", r["origin"]],
     ["Mailing destination", r["destination"]],
     ["Forwarded", r["forwarded"] ? "yes" : ""],

@@ -102,7 +102,7 @@ export async function buildAnalysisContext(
     letter.period ? `Period: ${letter.period}` : "",
     letter.author ? `Author: ${letter.author}` : "",
     letter.recipient ? `Recipient: ${letter.recipient}` : "",
-    letter.dateline ? `Dateline (place written on the document — definitive location): ${letter.dateline}` : "",
+    letter.dateline ? `Location line (place written on the document — definitive location): ${letter.dateline}` : "",
     letter.origin ? `Mailing origin (postmark): ${letter.origin}` : "",
     letter.destination ? `Destination: ${letter.destination}` : "",
     letter.primary_person ? `Primary person: ${letter.primary_person}` : "",

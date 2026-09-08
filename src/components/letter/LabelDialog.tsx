@@ -106,7 +106,7 @@ export function labelLines(letter: Partial<Letter>): string[] {
     .filter(Boolean)
     .join("  ·  ");
   if (fromTo) lines.push(fromTo);
-  if (letter.dateline) lines.push(`Written at: ${letter.dateline}`);
+  if (letter.dateline) lines.push(`Location line: ${letter.dateline}`);
   const route = [letter.origin, letter.destination].filter(Boolean).join(" → ");
   if (route) lines.push(route);
   const extras: string[] = [];
