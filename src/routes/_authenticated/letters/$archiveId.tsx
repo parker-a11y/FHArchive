@@ -120,6 +120,7 @@ export const Route = createFileRoute("/_authenticated/letters/$archiveId")({
 
 const TEXT_FIELDS = [
   { key: "date_as_written", label: "Date as written", letterOnly: false },
+  { key: "dateline", label: "Dateline (written at)", letterOnly: false },
   { key: "author", label: "Author (from)", letterOnly: true },
   { key: "recipient", label: "Recipient (to)", letterOnly: true },
   { key: "origin", label: "Mailing origin / location", letterOnly: false },
@@ -192,6 +193,7 @@ function LetterPage() {
       citations: letter.citations ?? "",
       historical_notes: letter.historical_notes ?? "",
       date_as_written: letter.date_as_written ?? "",
+      dateline: letter.dateline ?? "",
       normalized_date: letter.normalized_date ?? "",
 
       date_precision: letter.date_precision,

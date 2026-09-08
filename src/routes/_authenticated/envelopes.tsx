@@ -38,6 +38,7 @@ type EnvelopeRecord = {
   date_as_written: string | null;
   normalized_date: string | null;
   origin: string | null;
+  dateline: string | null;
   destination: string | null;
   forwarded: boolean;
   forwarded_to: string | null;
@@ -66,7 +67,7 @@ async function fetchEnvelopeRecords(): Promise<EnvelopeRecord[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, title, date_as_written, normalized_date, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
+      "id, archive_id, title, date_as_written, normalized_date, dateline, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
     )
     .in("id", ids)
     .order("archive_id", { ascending: true });
@@ -128,6 +129,7 @@ function EnvelopeReview() {
   const [zoomed, setZoomed] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
   const originInputRef = useRef<HTMLInputElement>(null);
+  const datelineInputRef = useRef<HTMLInputElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
 
   const list = useMemo(
@@ -196,6 +198,7 @@ function EnvelopeReview() {
       const visibleOrigin = originInputRef.current?.value ?? "";
       const visibleDestination = destinationInputRef.current?.value ?? "";
       const payload = {
+        dateline: (datelineInputRef.current?.value ?? "").trim() || null,
         origin: visibleOrigin.trim() || null,
         destination: visibleDestination.trim() || null,
         forwarded: postal.forwarded,
@@ -401,9 +404,22 @@ function EnvelopeReview() {
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="field-label">Dateline — written at (from the letter)</Label>
+                  <Input
+                    key={`dateline-${current.id}`}
+                    ref={datelineInputRef}
+                    name="dateline"
+                    defaultValue={current.dateline ?? ""}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    The place written on the letter itself, not the postmark.
+                  </p>
+                </div>
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="field-label">Mailing origin</Label>
+                    <Label className="field-label">Mailing origin (postmark)</Label>
                     <Input
                       key={`origin-${current.id}`}
                       ref={originInputRef}

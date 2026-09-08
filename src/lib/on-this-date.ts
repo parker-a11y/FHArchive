@@ -54,6 +54,7 @@ export type DateRecord = {
   subtype: string | null;
   author: string | null;
   recipient: string | null;
+  dateline: string | null;
   origin: string | null;
   destination: string | null;
   summary_short: string | null;
@@ -86,7 +87,7 @@ export async function fetchArchiveOnDate(date: string) {
     supabase
       .from("letters")
       .select(
-        "id, archive_id, title, record_type, subtype, author, recipient, origin, destination, summary_short, date_as_written, date_from_postmark, starred",
+        "id, archive_id, title, record_type, subtype, author, recipient, dateline, origin, destination, summary_short, date_as_written, date_from_postmark, starred",
       )
       .eq("normalized_date", date)
       .order("fh_seq", { ascending: true }),

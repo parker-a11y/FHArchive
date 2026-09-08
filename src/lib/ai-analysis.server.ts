@@ -57,7 +57,7 @@ export async function buildAnalysisContext(
   const { data: letter, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, record_type, subtype, title, date_as_written, normalized_date, period, author, recipient, origin, destination, primary_person, date_from_postmark, physical_description, photo_occasion, photographer, print_size, photo_medium, photo_back_inscription, notes, transcription_verified, transcription_raw_ai, ocr_text",
+      "id, archive_id, record_type, subtype, title, date_as_written, dateline, normalized_date, period, author, recipient, origin, destination, primary_person, date_from_postmark, physical_description, photo_occasion, photographer, print_size, photo_medium, photo_back_inscription, notes, transcription_verified, transcription_raw_ai, ocr_text",
     )
     .eq("id", letterId)
     .maybeSingle();
@@ -102,7 +102,8 @@ export async function buildAnalysisContext(
     letter.period ? `Period: ${letter.period}` : "",
     letter.author ? `Author: ${letter.author}` : "",
     letter.recipient ? `Recipient: ${letter.recipient}` : "",
-    letter.origin ? `Origin: ${letter.origin}` : "",
+    letter.dateline ? `Dateline (place written on the document — definitive location): ${letter.dateline}` : "",
+    letter.origin ? `Mailing origin (postmark): ${letter.origin}` : "",
     letter.destination ? `Destination: ${letter.destination}` : "",
     letter.primary_person ? `Primary person: ${letter.primary_person}` : "",
     letter.physical_description ? `Physical description: ${letter.physical_description}` : "",

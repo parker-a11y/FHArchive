@@ -72,6 +72,7 @@ const blank = {
   subtype: "",
   title: "",
   date_as_written: "",
+  dateline: "",
   normalized_date: "",
   date_end: "",
   date_precision: "exact",
@@ -265,6 +266,7 @@ function QuickEntry() {
       p_subtype: form.subtype,
       p_title: form.title,
       p_date_as_written: form.date_as_written,
+      p_dateline: form.dateline,
       p_normalized_date: form.normalized_date,
       p_date_end: form.date_end,
       p_date_precision: precision,
@@ -291,6 +293,7 @@ function QuickEntry() {
       subtype: a.p_subtype || null,
       title: a.p_title || null,
       date_as_written: a.p_date_as_written || null,
+      dateline: a.p_dateline || null,
       normalized_date: a.p_normalized_date || null,
       date_end: a.p_date_end || null,
       date_precision: a.p_date_precision,
@@ -736,6 +739,16 @@ function QuickEntry() {
                   NONE
                 </Button>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="field-label">Dateline (written at)</Label>
+              <Input
+                value={form.dateline}
+                onChange={(e) => set("dateline", e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                The place written on the letter itself — not the postmark.
+              </p>
             </div>
             <Select_
               label="Date status"
