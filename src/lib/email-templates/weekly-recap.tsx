@@ -161,6 +161,10 @@ export const WeeklyRecapEmail = ({
                 )
               })}
             </Text>
+            <Text style={hint}>
+              Open any record above to view the letter and its transcription side by side — no
+              account needed.
+            </Text>
           </Section>
         ) : null}
 

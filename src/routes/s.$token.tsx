@@ -53,8 +53,6 @@ function Tags({ label, items }: { label: string; items: string[] }) {
   );
 }
 
-type SharedRecord = NonNullable<Awaited<ReturnType<typeof getSharedRecord>>>;
-
 function SharedRecordPage() {
   const record = Route.useLoaderData();
   const [index, setIndex] = useState(0);
