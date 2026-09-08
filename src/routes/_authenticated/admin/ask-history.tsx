@@ -31,6 +31,8 @@ type QueryRow = {
   answer: string | null;
   confidence: string | null;
   citations: { archive_id: string; note?: string }[];
+  sources: { title?: string; url: string; note?: string }[] | null;
+
   model: string | null;
   error: string | null;
   created_at: string;
