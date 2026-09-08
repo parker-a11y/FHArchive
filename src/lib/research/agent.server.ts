@@ -216,7 +216,7 @@ export async function answerResearchQuestion(
         e.date ? `Date: ${e.date}` : "",
         e.author ? `Author: ${e.author}` : "",
         e.recipient ? `Recipient: ${e.recipient}` : "",
-        e.origin ? `Origin: ${e.origin}` : "",
+        e.origin ? `Written at / origin: ${e.origin}` : "",
         e.destination ? `Destination: ${e.destination}` : "",
         e.people.length ? `People: ${e.people.join(", ")}` : "",
         e.places.length ? `Places: ${e.places.join(", ")}` : "",
