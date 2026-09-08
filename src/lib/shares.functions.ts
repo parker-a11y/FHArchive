@@ -158,9 +158,8 @@ export const getSharedRecord = createServerFn({ method: "GET" })
       primaryPerson: str("primary_person"),
       physicalDescription: str("physical_description"),
       summary: str("summary_long") ?? str("summary_short"),
-      transcription: share.include_transcription
-        ? str("transcription_verified") ?? str("transcription_raw_ai")
-        : null,
+      // Transcriptions are always visible to share-link viewers.
+      transcription: str("transcription_verified") ?? str("transcription_raw_ai"),
       notes: share.include_notes ? str("historical_notes") ?? str("notes") : null,
       publicNote: (share.public_note as string | null) ?? null,
       people: pick(people as { data: unknown[] | null }, "people", "name"),
