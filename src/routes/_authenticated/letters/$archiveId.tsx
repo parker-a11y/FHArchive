@@ -808,6 +808,16 @@ function LetterPage() {
                     onChange={(e) => set(f.key, e.target.value)}
                   />
                 )}
+                {f.key === "dateline" && (
+                  <div className="mt-1.5">
+                    <LocationLineSuggestion
+                      letterId={letter.id}
+                      suggestion={letter.dateline_suggested}
+                      current={(form.dateline as string) ?? ""}
+                      onAccept={(v) => set("dateline", v)}
+                    />
+                  </div>
+                )}
                 {f.key === "primary_person" && (
                   <div className="mt-3">
                     <label className="field-label">Mentions</label>
