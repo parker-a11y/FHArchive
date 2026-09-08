@@ -175,6 +175,26 @@ function AskHistory() {
                               )}
                             </div>
                           )}
+                          {(r.sources?.length ?? 0) > 0 && (
+                            <div className="mt-3">
+                              <p className="field-label mb-1">Outside sources</p>
+                              <ul className="space-y-1">
+                                {r.sources!.map((s) => (
+                                  <li key={s.url} className="text-xs">
+                                    <a
+                                      href={s.url}
+                                      target="_blank"
+                                      rel="noreferrer noopener"
+                                      className="text-archive-gold hover:underline"
+                                    >
+                                      {s.title || s.url}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
                         </>
                       )}
                     </div>
