@@ -588,6 +588,32 @@ function AskFrancis() {
                 </div>
               )}
 
+              {(turn.answer.sources?.length ?? 0) > 0 && (
+                <div className="mt-4">
+                  <p className="field-label mb-2">Outside sources (general history, not archive evidence)</p>
+                  <div className="divide-y divide-border rounded-xl border border-dashed border-border">
+                    {turn.answer.sources.map((s) => (
+                      <a
+                        key={s.url}
+                        href={s.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="flex items-start gap-3 px-3 py-2 text-sm transition-colors hover:bg-muted/60"
+                      >
+                        <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{s.title || s.url}</span>
+                          {s.note && (
+                            <span className="block text-xs text-muted-foreground">{s.note}</span>
+                          )}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+
               {turn.answer.follow_ups.length > 0 && (
                 <div className="mt-4">
                   <p className="field-label mb-2">Ask follow-up</p>
