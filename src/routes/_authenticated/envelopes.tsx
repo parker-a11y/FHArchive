@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   displayRotation,
   fetchDigitalFiles,
+  pageViewerEntries,
   type DigitalFileWithDerivatives,
 } from "@/lib/digital-files";
 import {
