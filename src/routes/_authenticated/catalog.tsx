@@ -16,6 +16,11 @@ import { FilePlus2, Printer } from "lucide-react";
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
 import { PostalFields } from "@/components/letter/PostalFields";
+import {
+  LocationLineDatalist,
+  LocationLineNoneButton,
+  LOCATION_LINE_LIST_ID,
+} from "@/components/letter/LocationLineOptions";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import {
   DATE_CERTAINTY,
