@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { FileText } from "lucide-react";
+import { BookOpenText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSharedRecord } from "@/lib/shares.functions";
 import { RECORD_TYPES, labelOf } from "@/lib/archive";
@@ -53,10 +53,12 @@ function Tags({ label, items }: { label: string; items: string[] }) {
   );
 }
 
+type SharedRecord = NonNullable<Awaited<ReturnType<typeof getSharedRecord>>>;
+
 function SharedRecordPage() {
   const record = Route.useLoaderData();
   const [index, setIndex] = useState(0);
-  const [showTranscription, setShowTranscription] = useState(false);
+  const [sideBySide, setSideBySide] = useState(false);
 
   if (!record) {
     return (
@@ -75,10 +77,96 @@ function SharedRecordPage() {
     [record.normalizedDate, record.dateEnd].filter(Boolean).join(" – ") ||
     "Undated";
 
+  const scanViewer = (
+    <>
+      {page ? (
+        <>
+          <div className="flex items-center justify-center rounded border border-border bg-muted p-3">
+            <img
+              src={page.url}
+              alt={`${record.archiveId} — ${page.label}`}
+              style={{ transform: `rotate(${page.rotation}deg)` }}
+              className="max-h-[70vh] w-auto object-contain"
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-sm">
+            <button
+              className="text-primary disabled:opacity-40"
+              disabled={index === 0}
+              onClick={() => setIndex((i) => i - 1)}
+            >
+              ← Previous
+            </button>
+            <span className="text-muted-foreground">
+              {page.label} · {index + 1} of {record.pages.length}
+            </span>
+            <button
+              className="text-primary disabled:opacity-40"
+              disabled={index >= record.pages.length - 1}
+              onClick={() => setIndex((i) => i + 1)}
+            >
+              Next →
+            </button>
+          </div>
+          {record.pages.length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {record.pages.map((p, i) => (
+                <button
+                  key={p.id}
+                  onClick={() => setIndex(i)}
+                  className={`h-16 w-16 overflow-hidden rounded border ${
+                    i === index ? "border-primary" : "border-border"
+                  }`}
+                >
+                  <img src={p.thumbUrl} alt={p.label} className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">No images are available for this record.</p>
+      )}
+    </>
+  );
+
+  const transcriptionPanel = record.transcription ? (
+    <section
+      id="shared-record-transcription"
+      className="lg:sticky lg:top-4 lg:self-start"
+      aria-label="Transcription"
+    >
+      <h2 className="font-display text-lg">Transcription</h2>
+      <div className="mt-2 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded border border-border bg-card p-4 text-sm leading-relaxed lg:max-h-[80vh]">
+        <FfnText text={record.transcription} />
+      </div>
+    </section>
+  ) : null;
+
+  const metaAside = (
+    <>
+      <Meta label="Date" value={dateLine} />
+      <Meta label="From" value={record.author} />
+      <Meta label="To" value={record.recipient} />
+      <Meta label="Origin" value={record.origin} />
+      <Meta label="Destination" value={record.destination} />
+      <Meta label="Primary person" value={record.primaryPerson} />
+      <Meta label="Description" value={record.physicalDescription} />
+      <Meta label="Summary" value={record.summary} />
+      <Tags label="People" items={record.people} />
+      <Tags label="Places" items={record.places} />
+      <Tags label="Organizations · ships · units" items={record.organizations} />
+      <Tags label="Events" items={record.events} />
+      <Tags label="Subjects · tags" items={record.keywords} />
+      <Meta label="Notes" value={record.notes} />
+      <Meta label="Note from the archivist" value={record.publicNote} />
+    </>
+  );
+
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border px-4 py-6 sm:px-8">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-6xl">
           <div className="archive-id font-display text-3xl leading-none sm:text-4xl">
             {record.archiveId}
           </div>
@@ -89,21 +177,29 @@ function SharedRecordPage() {
             </span>
             {record.title && <span className="font-medium">{record.title}</span>}
             <span className="text-muted-foreground">{dateLine}</span>
-            {record.transcription && (
+          </div>
+          {record.transcription && (
+            <div className="mt-4">
               <Button
                 type="button"
-                size="sm"
-                variant={showTranscription ? "secondary" : "outline"}
-                className="sm:ml-auto"
-                aria-expanded={showTranscription}
+                size="lg"
+                variant={sideBySide ? "secondary" : "default"}
+                className="w-full text-base font-semibold shadow-md sm:w-auto"
+                aria-expanded={sideBySide}
                 aria-controls="shared-record-transcription"
-                onClick={() => setShowTranscription((visible) => !visible)}
+                onClick={() => setSideBySide((visible) => !visible)}
               >
-                <FileText className="size-4" />
-                {showTranscription ? "Hide transcription" : "Show transcription"}
+                {sideBySide ? (
+                  <X className="size-5" />
+                ) : (
+                  <BookOpenText className="size-5" />
+                )}
+                {sideBySide
+                  ? "Close side-by-side view"
+                  : "Read transcription alongside the letter"}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
           {record.scope === "file" && record.itemLabel && (
             <p className="mt-2 text-xs text-muted-foreground">
               Single item from this record · {record.itemLabel}
@@ -112,85 +208,22 @@ function SharedRecordPage() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 sm:px-8 lg:grid-cols-[2fr_1fr]">
-        <section>
-          {page ? (
-            <>
-              <div className="flex items-center justify-center rounded border border-border bg-muted p-3">
-                <img
-                  src={page.url}
-                  alt={`${record.archiveId} — ${page.label}`}
-                  style={{ transform: `rotate(${page.rotation}deg)` }}
-                  className="max-h-[70vh] w-auto object-contain"
-                />
-              </div>
-              <div className="mt-2 flex items-center justify-between text-sm">
-                <button
-                  className="text-primary disabled:opacity-40"
-                  disabled={index === 0}
-                  onClick={() => setIndex((i) => i - 1)}
-                >
-                  ← Previous
-                </button>
-                <span className="text-muted-foreground">
-                  {page.label} · {index + 1} of {record.pages.length}
-                </span>
-                <button
-                  className="text-primary disabled:opacity-40"
-                  disabled={index >= record.pages.length - 1}
-                  onClick={() => setIndex((i) => i + 1)}
-                >
-                  Next →
-                </button>
-              </div>
-              {record.pages.length > 1 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {record.pages.map((p, i) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setIndex(i)}
-                      className={`h-16 w-16 overflow-hidden rounded border ${
-                        i === index ? "border-primary" : "border-border"
-                      }`}
-                    >
-                      <img src={p.thumbUrl} alt={p.label} className="h-full w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">No images are available for this record.</p>
-          )}
-
-          {record.transcription && showTranscription && (
-            <section id="shared-record-transcription" className="mt-8 scroll-mt-6">
-              <h2 className="font-display text-lg">Transcription</h2>
-              <div className="mt-2 max-h-[70vh] overflow-y-auto whitespace-pre-wrap rounded border border-border bg-card p-4 text-sm leading-relaxed">
-                <FfnText text={record.transcription} />
-              </div>
-            </section>
-          )}
-        </section>
-
-        <aside className="space-y-5">
-          <Meta label="Date" value={dateLine} />
-          <Meta label="From" value={record.author} />
-          <Meta label="To" value={record.recipient} />
-          <Meta label="Origin" value={record.origin} />
-          <Meta label="Destination" value={record.destination} />
-          <Meta label="Primary person" value={record.primaryPerson} />
-          <Meta label="Description" value={record.physicalDescription} />
-          <Meta label="Summary" value={record.summary} />
-          <Tags label="People" items={record.people} />
-          <Tags label="Places" items={record.places} />
-          <Tags label="Organizations · ships · units" items={record.organizations} />
-          <Tags label="Events" items={record.events} />
-          <Tags label="Subjects · tags" items={record.keywords} />
-          <Meta label="Notes" value={record.notes} />
-          <Meta label="Note from the archivist" value={record.publicNote} />
-        </aside>
-      </div>
+      {sideBySide && record.transcription ? (
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section>{scanViewer}</section>
+            {transcriptionPanel}
+          </div>
+          <aside className="mt-10 grid gap-5 border-t border-border pt-6 sm:grid-cols-2 lg:grid-cols-3">
+            {metaAside}
+          </aside>
+        </div>
+      ) : (
+        <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 sm:px-8 lg:grid-cols-[2fr_1fr]">
+          <section>{scanViewer}</section>
+          <aside className="space-y-5">{metaAside}</aside>
+        </div>
+      )}
 
       <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground sm:px-8">
         The Francis Files · shared privately by link · {record.archiveId}
