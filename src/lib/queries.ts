@@ -114,6 +114,7 @@ export async function createRecord(
     p_subtype: input.p_subtype || null,
     p_title: input.p_title || null,
     p_date_as_written: input.p_date_as_written || null,
+    p_dateline: input.p_dateline || null,
     p_normalized_date: input.p_normalized_date || null,
     p_date_end: input.p_date_end || null,
     p_date_precision: input.p_date_precision,
@@ -144,7 +145,7 @@ export async function createRecord(
  * that made whole-table fetches multi-megabyte at scale.
  */
 const LETTER_LIST_COLS =
-  "id, fh_seq, archive_id, date_as_written, normalized_date, date_end, date_precision, date_certainty, date_from_postmark, author, recipient, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark, period, sheets, image_count, has_envelope, has_enclosures, physical_condition, notes, transcription_status, scan_status, review_status, research_needed, summary_short, publication_status, record_type, subtype, title, primary_person, salutation_as_written, addressee_normalized, closing_as_written, signature_as_written, tones, physical_description, original_copy, storage_location, storage_type, storage_folder, storage_position, storage_notes, identification_status, sort_date, digitization_status, expected_scan_count, completeness_check, scan_both_sides, photo_front_scanned, photo_back_scanned, digitization_override, digitization_completed_at, provenance, source_container_id, original_order_notes, digitization_notes, research_status, citations, visibility, starred, created_at, updated_at";
+  "id, fh_seq, archive_id, date_as_written, dateline, normalized_date, date_end, date_precision, date_certainty, date_from_postmark, author, recipient, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark, period, sheets, image_count, has_envelope, has_enclosures, physical_condition, notes, transcription_status, scan_status, review_status, research_needed, summary_short, publication_status, record_type, subtype, title, primary_person, salutation_as_written, addressee_normalized, closing_as_written, signature_as_written, tones, physical_description, original_copy, storage_location, storage_type, storage_folder, storage_position, storage_notes, identification_status, sort_date, digitization_status, expected_scan_count, completeness_check, scan_both_sides, photo_front_scanned, photo_back_scanned, digitization_override, digitization_completed_at, provenance, source_container_id, original_order_notes, digitization_notes, research_status, citations, visibility, starred, created_at, updated_at";
 
 /** Slim whole-list fetch for pickers/navigation. Prefer searchLetters for tables. */
 export async function fetchLetters(): Promise<Letter[]> {
