@@ -130,6 +130,32 @@ function EnvelopeReview() {
   // until the record is saved (which writes them to the scan itself).
   const [rotations, setRotations] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [backfill, setBackfill] = useState<string | null>(null);
+  const suggestFn = useServerFn(suggestLocationLines);
+
+  // Walks every record with no Location Line in small batches; results are
+  // stored as suggestions only — nothing is accepted automatically.
+  const runBackfill = async () => {
+    setBackfill("starting");
+    let done = 0;
+    let filled = 0;
+    try {
+      for (let i = 0; i < 200; i++) {
+        const r = await suggestFn({ data: { limit: 4 } });
+        done += r.processed;
+        filled += r.filled;
+        setBackfill(`${done} read, ${filled} found, ${r.remaining} left`);
+        if (!r.remaining || !r.processed) break;
+      }
+      toast.success(`Checked ${done} record${done === 1 ? "" : "s"}; ${filled} suggested location line${filled === 1 ? "" : "s"} ready to review.`);
+      await qc.invalidateQueries({ queryKey: ["envelope-records"] });
+      await qc.invalidateQueries({ queryKey: ["letters"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Suggestion run stopped");
+    } finally {
+      setBackfill(null);
+    }
+  };
   const [zoomed, setZoomed] = useState(false);
   const [postal, setPostal] = useState<PostalValues>(emptyPostal);
   const originInputRef = useRef<HTMLInputElement>(null);
