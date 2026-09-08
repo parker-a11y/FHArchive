@@ -22,6 +22,7 @@ export type SharedRecord = {
   period: string | null;
   author: string | null;
   recipient: string | null;
+  dateline: string | null;
   origin: string | null;
   destination: string | null;
   primaryPerson: string | null;
@@ -153,6 +154,7 @@ export const getSharedRecord = createServerFn({ method: "GET" })
       period: str("period"),
       author: str("author"),
       recipient: str("recipient"),
+      dateline: str("dateline"),
       origin: str("origin"),
       destination: str("destination"),
       primaryPerson: str("primary_person"),

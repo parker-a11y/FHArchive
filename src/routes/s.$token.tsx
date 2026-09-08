@@ -146,7 +146,8 @@ function SharedRecordPage() {
       <Meta label="Date" value={dateLine} />
       <Meta label="From" value={record.author} />
       <Meta label="To" value={record.recipient} />
-      <Meta label="Origin" value={record.origin} />
+      <Meta label="Written at" value={record.dateline} />
+      <Meta label="Mailing origin" value={record.origin} />
       <Meta label="Destination" value={record.destination} />
       <Meta label="Primary person" value={record.primaryPerson} />
       <Meta label="Description" value={record.physicalDescription} />
