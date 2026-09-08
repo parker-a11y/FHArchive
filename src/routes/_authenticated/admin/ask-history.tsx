@@ -31,6 +31,8 @@ type QueryRow = {
   answer: string | null;
   confidence: string | null;
   citations: { archive_id: string; note?: string }[];
+  sources: { title?: string; url: string; note?: string }[] | null;
+
   model: string | null;
   error: string | null;
   created_at: string;
@@ -53,7 +55,10 @@ function AskHistory() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ask_francis_queries")
-        .select("id, user_email, user_name, question, answer, confidence, citations, model, error, created_at")
+        .select(
+          "id, user_email, user_name, question, answer, confidence, citations, sources, model, error, created_at",
+        )
+
         .order("created_at", { ascending: false })
         .limit(300);
       if (error) throw error;
@@ -170,6 +175,26 @@ function AskHistory() {
                               )}
                             </div>
                           )}
+                          {(r.sources?.length ?? 0) > 0 && (
+                            <div className="mt-3">
+                              <p className="field-label mb-1">Outside sources</p>
+                              <ul className="space-y-1">
+                                {r.sources!.map((s) => (
+                                  <li key={s.url} className="text-xs">
+                                    <a
+                                      href={s.url}
+                                      target="_blank"
+                                      rel="noreferrer noopener"
+                                      className="text-archive-gold hover:underline"
+                                    >
+                                      {s.title || s.url}
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
                         </>
                       )}
                     </div>

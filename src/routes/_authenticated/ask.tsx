@@ -9,6 +9,8 @@ import {
   Database,
   FileStack,
   Gavel,
+  Globe,
+
   Loader2,
   NotebookPen,
   RefreshCw,
@@ -223,8 +225,12 @@ function ShareAnswerButton({ turn }: { turn: Turn }) {
     turn.answer.caveats ? `\nCaveats: ${turn.answer.caveats}` : "",
     `\nConfidence: ${turn.answer.confidence}`,
     ids.length ? `Supporting records: ${ids.join(", ")}` : "",
+    turn.answer.sources?.length
+      ? `Outside sources: ${turn.answer.sources.map((s) => `${s.title || s.url} — ${s.url}`).join("; ")}`
+      : "",
     "\nShared from Ask Francis — an AI research finding, not catalog fact.",
   ]
+
     .filter(Boolean)
     .join("\n");
 
@@ -360,9 +366,14 @@ function AskFrancis() {
     try {
       await postArchiveNote({
         title: `Research: ${turn.question.slice(0, 90)}`,
-        body: `${turn.answer.answer}\n\nConfidence: ${turn.answer.confidence}\nSources: ${turn.answer.citations
+        body: `${turn.answer.answer}\n\nConfidence: ${turn.answer.confidence}\nRecords: ${turn.answer.citations
           .map((c) => c.archive_id)
-          .join(", ")}\n\n(Saved from Ask Francis — research finding, not catalog data.)`,
+          .join(", ")}${
+          turn.answer.sources?.length
+            ? `\nOutside sources: ${turn.answer.sources.map((s) => s.url).join(", ")}`
+            : ""
+        }\n\n(Saved from Ask Francis — research finding, not catalog data.)`,
+
         authorId: user?.id,
         authorName: user?.email ?? null,
       });
@@ -587,6 +598,32 @@ function AskFrancis() {
                   </div>
                 </div>
               )}
+
+              {(turn.answer.sources?.length ?? 0) > 0 && (
+                <div className="mt-4">
+                  <p className="field-label mb-2">Outside sources (general history, not archive evidence)</p>
+                  <div className="divide-y divide-border rounded-xl border border-dashed border-border">
+                    {turn.answer.sources.map((s) => (
+                      <a
+                        key={s.url}
+                        href={s.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="flex items-start gap-3 px-3 py-2 text-sm transition-colors hover:bg-muted/60"
+                      >
+                        <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">{s.title || s.url}</span>
+                          {s.note && (
+                            <span className="block text-xs text-muted-foreground">{s.note}</span>
+                          )}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
 
               {turn.answer.follow_ups.length > 0 && (
                 <div className="mt-4">

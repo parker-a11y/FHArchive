@@ -329,6 +329,7 @@ export type Database = {
           id: string
           model: string | null
           question: string
+          sources: Json
           updated_at: string
           user_email: string | null
           user_id: string
@@ -343,6 +344,7 @@ export type Database = {
           id?: string
           model?: string | null
           question: string
+          sources?: Json
           updated_at?: string
           user_email?: string | null
           user_id: string
@@ -357,6 +359,7 @@ export type Database = {
           id?: string
           model?: string | null
           question?: string
+          sources?: Json
           updated_at?: string
           user_email?: string | null
           user_id?: string

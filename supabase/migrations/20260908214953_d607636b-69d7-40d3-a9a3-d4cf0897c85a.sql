@@ -1,0 +1,1 @@
+alter table public.ask_francis_queries add column if not exists sources jsonb not null default '[]'::jsonb;

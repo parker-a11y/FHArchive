@@ -54,6 +54,8 @@ export const askFrancis = createServerFn({ method: "POST" })
           answer: answer?.answer ?? null,
           confidence: answer?.confidence ?? null,
           citations: answer?.citations ?? [],
+          sources: answer?.sources ?? [],
+
           model: answer?.model ?? null,
           error: error ?? null,
         });
