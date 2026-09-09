@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BadgeCheck, Loader2, Sparkles } from "lucide-react";
+import { BadgeCheck, Loader2, Sparkles, WrapText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import {
   transcribeScans,
 } from "@/lib/transcription.functions";
 import { HighlightedText, countMatches } from "@/lib/highlight";
+import { needsReflow, reflowTranscription } from "@/lib/transcription-format";
+
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
@@ -50,6 +52,8 @@ function PageEditor({
   highlight,
   readOnly,
   onTextState,
+  reflowSignal,
+
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
@@ -62,6 +66,8 @@ function PageEditor({
   readOnly?: boolean;
   /** Reports the editor's live text/dirty state so panel actions (Verify All) see unsaved edits. */
   onTextState?: (fileId: string, state: { text: string; dirty: boolean }) => void;
+  /** Increments when the record-level "Remove line breaks on all pages" action fires. */
+  reflowSignal?: number;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -75,6 +81,21 @@ function PageEditor({
     onTextState?.(file.id, { text, dirty });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, dirty]);
+
+  function doReflow() {
+    setText((cur) => {
+      const next = reflowTranscription(cur);
+      if (next !== cur) setDirty(true);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (!reflowSignal || readOnly) return;
+    doReflow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reflowSignal]);
+
 
   async function save(verify: boolean) {
     if (!record) return toast.error("Transcribe this scan first.");
@@ -97,15 +118,27 @@ function PageEditor({
         <span className="text-sm font-medium">{file.label || file.original_filename}</span>
         <StatusPill status={record?.status} />
         {!readOnly && (
-          <Button size="sm" variant="outline" className="ml-auto" onClick={onTranscribe} disabled={busy}>
-            {busy ? (
-              <Loader2 className="mr-1 size-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1 size-3.5" />
-            )}
-            Transcribe with ChatGPT
-          </Button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={doReflow}
+              disabled={!needsReflow(text)}
+              title="Join wrapped handwriting lines into flowing paragraphs (nothing is saved until you save)"
+            >
+              <WrapText className="mr-1 size-3.5" /> Remove line breaks
+            </Button>
+            <Button size="sm" variant="outline" onClick={onTranscribe} disabled={busy}>
+              {busy ? (
+                <Loader2 className="mr-1 size-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1 size-3.5" />
+              )}
+              Transcribe with ChatGPT
+            </Button>
+          </div>
         )}
+
       </div>
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
@@ -335,6 +368,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   const pageCoverage = files.filter((f) => bestText(byFile[f.id] ?? { ai_text: "", verified_text: "" })).length;
 
   const [verifyAllBusy, setVerifyAllBusy] = useState(false);
+  const [reflowSignal, setReflowSignal] = useState(0);
+
   const unverified = transcripts.filter(
     (t) => t.status !== "human_verified" && bestText(t)?.trim(),
   );
@@ -421,6 +456,17 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
               )}
               Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
             </Button>
+            <Button
+              variant="outline"
+              disabled={!files.length}
+              onClick={() => {
+                setReflowSignal((n) => n + 1);
+                toast.message("Line breaks cleaned up — review, then save each page.");
+              }}
+            >
+              <WrapText className="mr-1 size-3.5" /> Remove line breaks on all pages
+            </Button>
+
             {dirtyPageCount > 0 && (
               <span className="text-xs text-amber-600 dark:text-amber-400">
                 {dirtyPageCount} page{dirtyPageCount === 1 ? "" : "s"} with unsaved corrections
@@ -469,6 +515,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             highlight={highlight}
             readOnly={isGuestViewer}
             onTextState={handleTextState}
+            reflowSignal={reflowSignal}
+
           />
         ))}
       </div>
