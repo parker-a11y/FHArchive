@@ -16,7 +16,7 @@ const DATE_LINE =
 const NUMERIC_DATE = /^\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?$/;
 
 /** A line that should never be merged with its neighbours. */
-function isStructural(line: string, index: number, lines: string[]): boolean {
+function isStructural(line: string, index: number, lines: string[], blockIndex: number): boolean {
   const t = line.trim();
   if (!t) return true;
   if (DATE_LINE.test(t) || NUMERIC_DATE.test(t)) return true;
@@ -26,7 +26,12 @@ function isStructural(line: string, index: number, lines: string[]): boolean {
   if (/^[-—–*_=]{2,}$/.test(t)) return true;
   if (/^\[.*\]$/.test(t)) return true; // editorial notes like [illegible]
   // Heading block at the very top of the page (short lines before the salutation)
-  if (index < 4 && t.length <= 40 && lines.slice(0, index).every((l) => l.trim().length <= 40)) {
+  if (
+    blockIndex === 0 &&
+    index < 4 &&
+    t.length <= 40 &&
+    lines.slice(0, index).every((l) => l.trim().length <= 40)
+  ) {
     return true;
   }
   return false;
@@ -41,7 +46,7 @@ export function reflowTranscription(input: string): string {
   if (!input) return input;
   const blocks = input.replace(/\r\n?/g, "\n").split(/\n{2,}/);
 
-  const out = blocks.map((block) => {
+  const out = blocks.map((block, blockIndex) => {
     const lines = block.split("\n");
     const result: string[] = [];
     let buffer = "";
@@ -54,7 +59,7 @@ export function reflowTranscription(input: string): string {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
       if (!trimmed) return;
-      if (isStructural(trimmed, i, lines)) {
+      if (isStructural(trimmed, i, lines, blockIndex)) {
         flush();
         result.push(trimmed);
         return;
