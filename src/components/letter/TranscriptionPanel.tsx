@@ -62,6 +62,8 @@ function PageEditor({
   readOnly?: boolean;
   /** Reports the editor's live text/dirty state so panel actions (Verify All) see unsaved edits. */
   onTextState?: (fileId: string, state: { text: string; dirty: boolean }) => void;
+  /** Increments when the record-level "Remove line breaks on all pages" action fires. */
+  reflowSignal?: number;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -75,6 +77,21 @@ function PageEditor({
     onTextState?.(file.id, { text, dirty });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, dirty]);
+
+  function doReflow() {
+    setText((cur) => {
+      const next = reflowTranscription(cur);
+      if (next !== cur) setDirty(true);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (!reflowSignal || readOnly) return;
+    doReflow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reflowSignal]);
+
 
   async function save(verify: boolean) {
     if (!record) return toast.error("Transcribe this scan first.");
