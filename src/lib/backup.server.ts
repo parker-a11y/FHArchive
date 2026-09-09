@@ -1,5 +1,6 @@
-// Server-only backup engine: dumps the whole database to JSON and mirrors every
-// storage file (scans + digital source uploads) to Google Drive.
+// Server-only backup engine: dumps the whole database to a compressed JSON file,
+// rotates old database dumps on a grandfather-father-son schedule, and mirrors every
+// storage file (scans + digital source uploads) to Google Drive incrementally.
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_drive";
 
@@ -124,6 +125,108 @@ async function uploadToDrive(opts: {
   return json.id;
 }
 
+async function deleteDriveFile(fileId: string): Promise<void> {
+  const res = await fetch(`${GATEWAY}/drive/v3/files/${fileId}`, {
+    method: "DELETE",
+    headers: driveHeaders(),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Google Drive delete failed [${res.status}]: ${body}`);
+  }
+}
+
+async function gzipString(input: string): Promise<Uint8Array> {
+  const bytes = new TextEncoder().encode(input);
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
+    },
+  }).pipeThrough(new CompressionStream("gzip"));
+  const response = new Response(stream);
+  const buffer = await response.arrayBuffer();
+  return new Uint8Array(buffer);
+}
+
+type DumpFile = { id: string; name: string; date: Date };
+
+function parseDumpDate(name: string): Date | null {
+  const match = name.match(
+    /harrington-archive-(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})\.json\.gz$/,
+  );
+  if (!match) return null;
+  const [, y, mo, d, h, mi, s] = match;
+  const date = new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}Z`);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function selectRetainedDumps(dumps: DumpFile[], now: Date): Set<string> {
+  const keep = new Set<string>();
+  if (dumps.length === 0) return keep;
+
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const sorted = [...dumps].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  // Always keep the most recent successful dump.
+  keep.add(sorted[0]!.id);
+
+  // Group dumps by month and year so we can keep the oldest of each bucket.
+  const byMonth = new Map<string, DumpFile[]>();
+  const byYear = new Map<string, DumpFile[]>();
+  for (const dump of sorted) {
+    const monthKey = `${dump.date.getUTCFullYear()}-${String(dump.date.getUTCMonth() + 1).padStart(2, "0")}`;
+    const yearKey = String(dump.date.getUTCFullYear());
+    if (!byMonth.has(monthKey)) byMonth.set(monthKey, []);
+    byMonth.get(monthKey)!.push(dump);
+    if (!byYear.has(yearKey)) byYear.set(yearKey, []);
+    byYear.get(yearKey)!.push(dump);
+  }
+
+  for (const dump of sorted) {
+    const ageDays = Math.floor((now.getTime() - dump.date.getTime()) / msPerDay);
+    const monthKey = `${dump.date.getUTCFullYear()}-${String(dump.date.getUTCMonth() + 1).padStart(2, "0")}`;
+
+    if (ageDays <= 30) {
+      // Recent daily backups.
+      keep.add(dump.id);
+    } else if (ageDays <= 365) {
+      // One backup per month for the last 12 months (keep the oldest of that month).
+      const monthDumps = byMonth.get(monthKey)!;
+      keep.add(monthDumps[monthDumps.length - 1]!.id);
+    } else {
+      // One backup per year forever (keep the oldest of that year).
+      const yearDumps = byYear.get(String(dump.date.getUTCFullYear()))!;
+      keep.add(yearDumps[yearDumps.length - 1]!.id);
+    }
+  }
+
+  return keep;
+}
+
+async function listDumpFiles(rootId: string): Promise<DumpFile[]> {
+  const out: DumpFile[] = [];
+  let pageToken: string | undefined;
+  const q = encodeURIComponent(
+    `'${rootId}' in parents and trashed=false and name contains 'harrington-archive-'`,
+  );
+  const fields = encodeURIComponent("files(id,name,createdTime)");
+  for (;;) {
+    const url = `/drive/v3/files?q=${q}&fields=${fields}&pageSize=100${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;
+    const res = (await driveJson(url)) as {
+      files?: { id: string; name: string; createdTime?: string }[];
+      nextPageToken?: string;
+    };
+    for (const f of res.files ?? []) {
+      const date = parseDumpDate(f.name);
+      if (date) out.push({ id: f.id, name: f.name, date });
+    }
+    if (!res.nextPageToken) break;
+    pageToken = res.nextPageToken;
+  }
+  return out;
+}
+
 type StorageObject = { bucket: string; path: string; size: number };
 
 async function listBucket(
@@ -158,14 +261,44 @@ async function listBucket(
   return out;
 }
 
+async function verifyBackupFiles(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+  sampleSize = 200,
+): Promise<number> {
+  const { data: rows, error } = await admin
+    .from("backup_files")
+    .select("drive_file_id")
+    .limit(sampleSize);
+  if (error) throw new Error(`Reading backup_files for verification failed: ${error.message}`);
+
+  let missing = 0;
+  for (const row of rows ?? []) {
+    const fileId = (row as { drive_file_id: string | null }).drive_file_id;
+    if (!fileId) {
+      missing++;
+      continue;
+    }
+    const res = await fetch(`${GATEWAY}/drive/v3/files/${fileId}?fields=id`, {
+      headers: driveHeaders(),
+    });
+    if (!res.ok) missing++;
+  }
+  return missing;
+}
+
 export type BackupResult = {
   runId: string;
   status: "success" | "partial" | "error";
   folder: string;
   dbRows: number;
+  dbUncompressedBytes: number;
+  dbCompressedBytes: number;
   filesUploaded: number;
   filesPending: number;
   bytesUploaded: number;
+  retentionDeletedCount: number;
+  verificationMissingCount: number;
   error?: string;
 };
 
@@ -184,7 +317,8 @@ export async function runBackup(): Promise<BackupResult> {
       );
   }
 
-  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  const now = new Date();
+  const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
   const folderName = `db-${stamp}`;
 
   const { data: runRow, error: runError } = await supabaseAdmin
@@ -196,16 +330,21 @@ export async function runBackup(): Promise<BackupResult> {
   const runId = (runRow as { id: string }).id;
 
   let dbRows = 0;
+  let dbUncompressedBytes = 0;
+  let dbCompressedBytes = 0;
+  let dbDriveFileId: string | null = null;
   let filesUploaded = 0;
   let filesPending = 0;
   let bytesUploaded = 0;
+  let retentionDeletedCount = 0;
+  let verificationMissingCount = 0;
   let status: BackupResult["status"] = "success";
   let errorMessage: string | undefined;
 
   try {
     const rootId = await ensureFolder(ROOT_FOLDER);
 
-    // ---- 1. Full database dump as one JSON document -------------------------
+    // ---- 1. Full database dump as one compressed JSON document ---------------
     const dump: Record<string, unknown[]> = {};
     for (const table of TABLES) {
       const rows: unknown[] = [];
@@ -226,18 +365,39 @@ export async function runBackup(): Promise<BackupResult> {
     }
 
     const payload = JSON.stringify(
-      { exported_at: new Date().toISOString(), tables: dump },
+      { exported_at: now.toISOString(), tables: dump },
       null,
       2,
     );
-    await uploadToDrive({
-      name: `harrington-archive-${stamp}.json`,
+    dbUncompressedBytes = new TextEncoder().encode(payload).length;
+
+    const compressed = await gzipString(payload);
+    dbCompressedBytes = compressed.length;
+
+    dbDriveFileId = await uploadToDrive({
+      name: `harrington-archive-${stamp}.json.gz`,
       parentId: rootId,
-      mimeType: "application/json",
-      body: new Blob([payload], { type: "application/json" }),
+      mimeType: "application/gzip",
+      body: new Blob([compressed], { type: "application/gzip" }),
     });
 
-    // ---- 2. Mirror storage files (incremental) ------------------------------
+    // ---- 2. Rotate old database dumps ---------------------------------------
+    try {
+      const dumps = await listDumpFiles(rootId);
+      const keep = selectRetainedDumps(dumps, now);
+      for (const dump of dumps) {
+        if (!keep.has(dump.id)) {
+          await deleteDriveFile(dump.id);
+          retentionDeletedCount++;
+        }
+      }
+    } catch (err) {
+      // Retention failure is not fatal: we still have a fresh dump.
+      status = status === "success" ? "partial" : status;
+      console.error("Backup retention rotation failed:", err);
+    }
+
+    // ---- 3. Mirror storage files (incremental) ------------------------------
     const filesRootId = await ensureFolder(FILES_FOLDER, rootId);
     const { data: alreadyRows, error: alreadyError } = await supabaseAdmin
       .from("backup_files")
@@ -295,6 +455,17 @@ export async function runBackup(): Promise<BackupResult> {
         bytesUploaded += object.size;
       }
     }
+
+    // ---- 4. Monthly verification of a sample of mirrored files ---------------
+    if (now.getUTCDate() === 1) {
+      try {
+        verificationMissingCount = await verifyBackupFiles(supabaseAdmin, 200);
+        if (verificationMissingCount > 0) status = "partial";
+      } catch (err) {
+        status = "partial";
+        console.error("Backup verification failed:", err);
+      }
+    }
   } catch (err) {
     status = "error";
     errorMessage = err instanceof Error ? err.message : String(err);
@@ -306,9 +477,14 @@ export async function runBackup(): Promise<BackupResult> {
       status,
       finished_at: new Date().toISOString(),
       db_rows: dbRows,
+      db_drive_file_id: dbDriveFileId,
+      db_uncompressed_bytes: dbUncompressedBytes,
+      db_compressed_bytes: dbCompressedBytes,
       files_uploaded: filesUploaded,
       files_pending: filesPending,
       bytes_uploaded: bytesUploaded,
+      retention_deleted_count: retentionDeletedCount,
+      verification_missing_count: verificationMissingCount,
       drive_folder_name: ROOT_FOLDER,
       error: errorMessage ?? null,
     })
@@ -319,9 +495,13 @@ export async function runBackup(): Promise<BackupResult> {
     status,
     folder: ROOT_FOLDER,
     dbRows,
+    dbUncompressedBytes,
+    dbCompressedBytes,
     filesUploaded,
     filesPending,
     bytesUploaded,
+    retentionDeletedCount,
+    verificationMissingCount,
     ...(errorMessage ? { error: errorMessage } : {}),
   };
 }
