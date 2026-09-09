@@ -50,6 +50,8 @@ function PageEditor({
   highlight,
   readOnly,
   onTextState,
+  reflowSignal,
+
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
   record: ScanTranscription | undefined;
