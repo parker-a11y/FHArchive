@@ -85,13 +85,23 @@ const SELECT =
 export async function retrieveEvidence(
   admin: any,
   question: string,
-  limit = 14,
+  limit = 20,
 ): Promise<Evidence[]> {
   const terms = question
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+    .filter((w) => w.length > 2 && !STOPWORDS.has(w))
+    .slice(0, 12);
+
+  // Record numbers named directly in the question are always included.
+  const pinnedIds = Array.from(
+    new Set(
+      (question.toUpperCase().match(/\b(FH|DS)\s?-?\d{3,4}\b/g) ?? []).map((m) =>
+        m.replace(/[\s-]/g, ""),
+      ),
+    ),
+  );
 
   const hits = new Map<string, { row: any; score: number }>();
   const add = (rows: any[], weight: number) => {
@@ -103,6 +113,11 @@ export async function retrieveEvidence(
     }
   };
 
+  const { count: totalCount } = await admin
+    .from("research_index")
+    .select("archive_id", { count: "exact", head: true });
+  const total = Math.max(totalCount ?? 0, 1);
+
   if (terms.length) {
     const { data } = await admin
       .from("research_index")
@@ -111,26 +126,34 @@ export async function retrieveEvidence(
       .limit(60);
     add(data ?? [], 3);
 
-    // Per-term keyword pass so distinctive proper nouns rank higher.
-    for (const term of terms.slice(0, 8)) {
-      const like = `%${term.replace(/[%,]/g, " ")}%`;
-      const { data: rows } = await admin
-        .from("research_index")
-        .select(SELECT)
-        .or(
-          [
-            `body.ilike.${like}`,
-            `title.ilike.${like}`,
-            `summary.ilike.${like}`,
-            `archive_id.ilike.${like}`,
-            `author.ilike.${like}`,
-            `recipient.ilike.${like}`,
-            `origin.ilike.${like}`,
-            `destination.ilike.${like}`,
-          ].join(","),
-        )
-        .limit(40);
-      add(rows ?? [], 2);
+    // Per-term keyword pass, weighted so rare words outrank common ones.
+    const passes = await Promise.all(
+      terms.map(async (term) => {
+        const like = `%${term.replace(/[%,]/g, " ")}%`;
+        const { data: rows } = await admin
+          .from("research_index")
+          .select(SELECT)
+          .or(
+            [
+              `body.ilike.${like}`,
+              `title.ilike.${like}`,
+              `summary.ilike.${like}`,
+              `archive_id.ilike.${like}`,
+              `author.ilike.${like}`,
+              `recipient.ilike.${like}`,
+              `origin.ilike.${like}`,
+              `destination.ilike.${like}`,
+            ].join(","),
+          )
+          .limit(60);
+        return rows ?? [];
+      }),
+    );
+    for (const rows of passes) {
+      if (!rows.length) continue;
+      // IDF: a word found in a handful of records counts far more than a ubiquitous one.
+      const weight = 2 * Math.max(0.2, Math.log(total / rows.length));
+      add(rows, weight);
     }
   }
 
@@ -143,28 +166,45 @@ export async function retrieveEvidence(
     add(data ?? [], 1);
   }
 
-  return Array.from(hits.values())
-    .sort((a, b) => b.score - a.score || String(a.row.archive_id).localeCompare(String(b.row.archive_id)))
+  const pinnedRows: any[] = [];
+  if (pinnedIds.length) {
+    const { data } = await admin.from("research_index").select(SELECT).in("archive_id", pinnedIds);
+    pinnedRows.push(...(data ?? []));
+  }
+  const pinnedKeys = new Set(pinnedRows.map((r) => `${r.kind}:${r.archive_id}`));
+
+  const scored = Array.from(hits.entries())
+    .filter(([key]) => !pinnedKeys.has(key))
+    .map(([, v]) => v)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        String(a.row.sort_date ?? "").localeCompare(String(b.row.sort_date ?? "")) ||
+        String(a.row.archive_id).localeCompare(String(b.row.archive_id)),
+    )
     .slice(0, limit)
-    .map(({ row }) => ({
-      archive_id: row.archive_id,
-      kind: row.kind,
-      title: row.title,
-      date: row.date_text || row.sort_date || null,
-      record_type: row.record_type,
-      author: row.author,
-      recipient: row.recipient,
-      origin: row.origin,
-      destination: row.destination,
-      people: row.people ?? [],
-      places: row.places ?? [],
-      events: row.events ?? [],
-      keywords: row.keywords ?? [],
-      tones: row.tones ?? [],
-      summary: row.summary,
-      text: String(row.body ?? "").slice(0, 12000),
-    }));
+    .map((h) => h.row);
+
+  return [...pinnedRows, ...scored].map((row) => ({
+    archive_id: row.archive_id,
+    kind: row.kind,
+    title: row.title,
+    date: row.date_text || row.sort_date || null,
+    record_type: row.record_type,
+    author: row.author,
+    recipient: row.recipient,
+    origin: row.origin,
+    destination: row.destination,
+    people: row.people ?? [],
+    places: row.places ?? [],
+    events: row.events ?? [],
+    keywords: row.keywords ?? [],
+    tones: row.tones ?? [],
+    summary: row.summary,
+    text: String(row.body ?? "").slice(0, 12000),
+  }));
 }
+
 
 // ----------------------------------------------------------------- generation
 
