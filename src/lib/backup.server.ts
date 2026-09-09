@@ -136,7 +136,7 @@ async function deleteDriveFile(fileId: string): Promise<void> {
   }
 }
 
-async function gzipString(input: string): Promise<Uint8Array> {
+async function gzipString(input: string): Promise<ArrayBuffer> {
   const bytes = new TextEncoder().encode(input);
   const stream = new ReadableStream({
     start(controller) {
@@ -145,8 +145,7 @@ async function gzipString(input: string): Promise<Uint8Array> {
     },
   }).pipeThrough(new CompressionStream("gzip"));
   const response = new Response(stream);
-  const buffer = await response.arrayBuffer();
-  return new Uint8Array(buffer);
+  return response.arrayBuffer();
 }
 
 type DumpFile = { id: string; name: string; date: Date };
