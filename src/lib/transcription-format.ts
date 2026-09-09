@@ -32,16 +32,9 @@ function isStructural(line: string, index: number, lines: string[]): boolean {
   return false;
 }
 
-/** True when `line` visually wrapped and continues on `next`. */
+/** Within a paragraph block, non-structural lines are visual wraps and always join. */
 function continues(line: string, next: string): boolean {
-  const a = line.trim();
-  const b = next.trim();
-  if (!a || !b) return false;
-  if (a.endsWith("-")) return true;
-  // Ended a sentence and the next line starts a new one -> keep as separate lines
-  // only if the writer likely started a new paragraph; otherwise still join.
-  if (/[.!?:;,"”')]$/.test(a)) return !/^["“(]?[A-Z]/.test(b) || true;
-  return true;
+  return !!line.trim() && !!next.trim();
 }
 
 export function reflowTranscription(input: string): string {
