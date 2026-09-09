@@ -371,7 +371,7 @@ export async function runBackup(): Promise<BackupResult> {
     dbUncompressedBytes = new TextEncoder().encode(payload).length;
 
     const compressed = await gzipString(payload);
-    dbCompressedBytes = compressed.length;
+    dbCompressedBytes = compressed.byteLength;
 
     dbDriveFileId = await uploadToDrive({
       name: `harrington-archive-${stamp}.json.gz`,
