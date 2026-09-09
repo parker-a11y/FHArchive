@@ -28,12 +28,24 @@ export interface EmailRecord {
   fff?: boolean
 }
 
+/** An Ask Francis result travels as its own block so it can never be lost in the note. */
+export interface EmailResearch {
+  question?: string | null
+  answer?: string | null
+  caveats?: string | null
+  confidence?: string | null
+  sources?: { title?: string | null; url: string }[]
+}
+
 export interface ArchiveRecordEmailProps {
   headerTitle?: string
   headerSubtitle?: string
   message?: string
+  research?: EmailResearch | null
   records?: EmailRecord[]
   senderName?: string
+  /** Show one small clickable thumbnail per record instead of full-width scans. */
+  thumbnails?: boolean
   /** FH / DS number -> public share URL, so recipients can open cited records. */
   shareLinks?: Record<string, string>
 }
@@ -102,8 +114,10 @@ const ArchiveRecordEmail = ({
   headerTitle = 'From The Francis Files',
   headerSubtitle,
   message,
+  research,
   records = [],
   senderName,
+  thumbnails = false,
   shareLinks = {},
 }: ArchiveRecordEmailProps) => (
   <Html lang="en" dir="ltr">
@@ -126,6 +140,42 @@ const ArchiveRecordEmail = ({
 
         {message ? <MessageBody message={message} shareLinks={shareLinks} /> : null}
 
+        {research?.answer ? (
+          <Section style={researchCard}>
+            {research.question ? (
+              <>
+                <Text style={label}>Research question</Text>
+                <Text style={questionText}>{research.question}</Text>
+              </>
+            ) : null}
+            <MessageBody message={research.answer} shareLinks={shareLinks} />
+            {research.caveats ? (
+              <Text style={meta}>
+                <strong>Caveats:</strong> {research.caveats}
+              </Text>
+            ) : null}
+            {research.confidence ? (
+              <Text style={meta}>Confidence: {research.confidence}</Text>
+            ) : null}
+            {(research.sources ?? []).length > 0 ? (
+              <>
+                <Text style={label}>Outside sources</Text>
+                {(research.sources ?? []).map((s, i) => (
+                  <Text key={i} style={meta}>
+                    <Link href={s.url} style={recordLink}>
+                      {s.title || s.url}
+                    </Link>
+                  </Text>
+                ))}
+              </>
+            ) : null}
+            <Text style={meta}>
+              Shared from Ask Francis — an AI research finding, not catalog fact.
+            </Text>
+          </Section>
+        ) : null}
+
+
         {records.map((r, i) => (
           <Section key={i} style={card}>
             {r.fff ? (
@@ -147,9 +197,23 @@ const ArchiveRecordEmail = ({
               <Text style={meta}>{(r.details ?? []).join(' · ')}</Text>
             ) : null}
             {r.summary ? <Text style={body}>{r.summary}</Text> : null}
-            {(r.images ?? []).slice(0, 4).map((src, j) => (
-              <Img key={j} src={src} alt={`${r.identifier ?? 'Archive item'} scan`} style={image} />
-            ))}
+            {(r.images ?? []).slice(0, thumbnails ? 1 : 4).map((src, j) => {
+              const img = (
+                <Img
+                  key={j}
+                  src={src}
+                  alt={`${r.identifier ?? 'Archive item'} scan`}
+                  style={thumbnails ? thumbImage : image}
+                />
+              )
+              return r.url ? (
+                <Link key={j} href={r.url}>
+                  {img}
+                </Link>
+              ) : (
+                img
+              )
+            })}
             {r.transcription ? (
               <>
                 <Text style={label}>Transcription</Text>
@@ -301,4 +365,25 @@ const footer = {
   lineHeight: '18px',
   color: '#8a8f7d',
   fontFamily: 'Helvetica, Arial, sans-serif',
+}
+const thumbImage = {
+  width: '160px',
+  maxWidth: '160px',
+  borderRadius: '6px',
+  border: '1px solid #e4dcc7',
+  margin: '12px 0',
+}
+const researchCard = {
+  backgroundColor: '#f5f6f1',
+  border: '1px solid #dfe2d5',
+  borderRadius: '8px',
+  padding: '14px 18px',
+  margin: '18px 0',
+}
+const questionText = {
+  fontSize: '16px',
+  lineHeight: '25px',
+  color: '#2f3327',
+  fontWeight: 'bold' as const,
+  margin: '0 0 10px',
 }

@@ -28,6 +28,14 @@ type Recipient = { email: string; name?: string | null };
 
 type RecordRef = { kind: "letter" | "source"; id: string; identifier: string; title?: string | null };
 
+export type EmailResearchPayload = {
+  question?: string | null;
+  answer?: string | null;
+  caveats?: string | null;
+  confidence?: string | null;
+  sources?: { title?: string | null; url: string }[];
+};
+
 export function EmailArchiveDialog({
   kind,
   id,
@@ -38,6 +46,8 @@ export function EmailArchiveDialog({
   defaultSubject,
   defaultMessage,
   description,
+  research,
+  thumbnails,
 }: {
   kind?: "letter" | "source";
   id?: string;
@@ -48,6 +58,10 @@ export function EmailArchiveDialog({
   defaultSubject?: string;
   defaultMessage?: string;
   description?: ReactNode;
+  /** Ask Francis result sent as its own block, independent of the note. */
+  research?: EmailResearchPayload;
+  /** Show one small clickable thumbnail per record instead of full scans. */
+  thumbnails?: boolean;
 }) {
   const recordList: RecordRef[] =
     records ?? (id ? [{ kind: kind!, id: id!, identifier: identifier!, title }] : []);
@@ -78,7 +92,9 @@ export function EmailArchiveDialog({
 
   // Prefill the message with the record's short AI summary / description.
   useEffect(() => {
-    if (!open || message || !single) return;
+    // A caller-supplied message (e.g. an Ask Francis answer) must never be
+    // replaced by the record summary — including on a second send.
+    if (!open || message || defaultMessage || !single) return;
     (async () => {
       try {
         if (single.kind === "letter") {
@@ -175,6 +191,8 @@ export function EmailArchiveDialog({
           records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
           includeTranscription,
           includeImages,
+          research: research?.answer ? research : null,
+          thumbnails: Boolean(thumbnails),
         },
       });
       if (res.sent.length) toast.success(`Sent to ${res.sent.join(", ")}`);
