@@ -333,12 +333,21 @@ function EnvelopeReview() {
                   r.id === selectedId ? "bg-accent font-medium" : "hover:bg-accent/50"
                 }`}
               >
-                <span
-                  className={`size-2 shrink-0 rounded-full ${
-                    needsReview(r) ? "bg-amber-500" : "bg-emerald-500"
-                  }`}
-                  aria-hidden
-                />
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <span
+                    className={`size-2 rounded-full ${
+                      needsReview(r) ? "bg-amber-500" : "bg-emerald-500"
+                    }`}
+                    aria-hidden
+                  />
+                  {!r.dateline && (
+                    <span
+                      className="size-2 rounded-full bg-orange-500"
+                      aria-hidden
+                      title="No confirmed location line"
+                    />
+                  )}
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="font-mono text-xs">{r.archive_id}</span>
                   <span className="block truncate text-xs text-muted-foreground">
