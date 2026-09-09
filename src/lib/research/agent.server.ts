@@ -87,12 +87,15 @@ export async function retrieveEvidence(
   question: string,
   limit = 20,
 ): Promise<Evidence[]> {
-  const terms = question
+  const cleanedWords = question
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOPWORDS.has(w))
-    .slice(0, 12);
+    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+
+  // Use every meaningful word from the question for retrieval, not just the first few.
+  const terms = cleanedWords.slice(0, 50);
+  const ftsQuery = terms.join(" or ");
 
   // Record numbers named directly in the question are always included.
   const pinnedIds = Array.from(
