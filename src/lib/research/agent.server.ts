@@ -121,11 +121,11 @@ export async function retrieveEvidence(
     .select("archive_id", { count: "exact", head: true });
   const total = Math.max(totalCount ?? 0, 1);
 
-  if (terms.length) {
+  if (ftsQuery) {
     const { data } = await admin
       .from("research_index")
       .select(SELECT)
-      .textSearch("fts", terms.join(" or "), { type: "websearch" })
+      .textSearch("fts", ftsQuery, { type: "websearch" })
       .limit(60);
     add(data ?? [], 3);
 
