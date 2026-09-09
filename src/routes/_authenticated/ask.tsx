@@ -218,22 +218,6 @@ function ShareAnswerButton({ turn }: { turn: Turn }) {
     },
   });
 
-  const body = [
-    `Research question: ${turn.question}`,
-    "",
-    turn.answer.answer,
-    turn.answer.caveats ? `\nCaveats: ${turn.answer.caveats}` : "",
-    `\nConfidence: ${turn.answer.confidence}`,
-    ids.length ? `Supporting records: ${ids.join(", ")}` : "",
-    turn.answer.sources?.length
-      ? `Outside sources: ${turn.answer.sources.map((s) => `${s.title || s.url} — ${s.url}`).join("; ")}`
-      : "",
-    "\nShared from Ask Francis — an AI research finding, not catalog fact.",
-  ]
-
-    .filter(Boolean)
-    .join("\n");
-
   if (isLoading)
     return (
       <Button size="sm" className="gap-1.5" disabled>
@@ -245,7 +229,14 @@ function ShareAnswerButton({ turn }: { turn: Turn }) {
     <EmailArchiveDialog
       records={records ?? []}
       defaultSubject={`Research from The Francis Files: ${turn.question.slice(0, 120)}`}
-      defaultMessage={body}
+      thumbnails
+      research={{
+        question: turn.question,
+        answer: turn.answer.answer,
+        caveats: turn.answer.caveats ?? null,
+        confidence: turn.answer.confidence ?? null,
+        sources: (turn.answer.sources ?? []).map((s) => ({ title: s.title ?? null, url: s.url })),
+      }}
       description={
         (records ?? []).length > 0
           ? `Emails this research answer along with ${(records ?? []).map((r) => r.identifier).join(", ")}. Records travel as unlisted archive links you can switch off later.`

@@ -10,6 +10,16 @@ export type SendArchiveEmailInput = {
   records: { kind: "letter" | "source"; id: string }[];
   includeTranscription?: boolean;
   includeImages?: boolean;
+  /** Ask Francis result, sent as its own block so it is never lost in the note. */
+  research?: {
+    question?: string | null;
+    answer?: string | null;
+    caveats?: string | null;
+    confidence?: string | null;
+    sources?: { title?: string | null; url: string }[];
+  } | null;
+  /** One small clickable thumbnail per record instead of full-width scans. */
+  thumbnails?: boolean;
 };
 
 export type SendArchiveEmailResult = {
@@ -39,6 +49,19 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
       .map((r) => ({ kind: r.kind === "source" ? ("source" as const) : ("letter" as const), id: String(r.id) })),
     includeTranscription: Boolean(data.includeTranscription),
     includeImages: data.includeImages !== false,
+    thumbnails: Boolean(data.thumbnails),
+    research: data.research?.answer
+      ? {
+          question: String(data.research.question ?? "").slice(0, 2000),
+          answer: String(data.research.answer).slice(0, 40000),
+          caveats: String(data.research.caveats ?? "").slice(0, 4000),
+          confidence: String(data.research.confidence ?? "").slice(0, 40),
+          sources: (data.research.sources ?? [])
+            .slice(0, 15)
+            .map((s) => ({ title: s.title ?? null, url: String(s.url) }))
+            .filter((s) => /^https?:\/\//i.test(s.url)),
+        }
+      : null,
   }))
   .handler(async ({ data, context }): Promise<SendArchiveEmailResult> => {
     const db = context.supabase;
@@ -62,7 +85,10 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
      * citations) becomes a clickable public link in the email — the same
      * unlisted share tokens the weekly recap uses.
      */
-    const mentionedRefs = data.message.match(/(FH|DS)-?\d{3,}/gi) ?? [];
+    const linkableText = [data.message, data.research?.answer ?? "", data.research?.question ?? ""].join(
+      "\n",
+    );
+    const mentionedRefs = linkableText.match(/(FH|DS)-?\d{3,}/gi) ?? [];
     const shareLinks =
       mentionedRefs.length > 0
         ? await ensureShareLinksForRefs(
@@ -78,7 +104,14 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
       .insert({
         owner_id: context.userId,
         subject: data.subject,
-        message_body: data.message || null,
+        message_body:
+          [
+            data.message,
+            data.research?.question ? `Research question: ${data.research.question}` : "",
+            data.research?.answer ?? "",
+          ]
+            .filter(Boolean)
+            .join("\n\n") || null,
         header_title: data.headerTitle || null,
         header_subtitle: data.headerSubtitle || null,
         recipients: data.recipients,
@@ -113,6 +146,8 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
             headerTitle: data.headerTitle || data.subject,
             headerSubtitle: data.headerSubtitle || undefined,
             message: data.message || undefined,
+            research: data.research ?? undefined,
+            thumbnails: data.thumbnails,
             shareLinks,
             senderName: "The Francis Files",
             records: records.map((r) => ({
