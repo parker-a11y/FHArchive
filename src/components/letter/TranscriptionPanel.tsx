@@ -368,6 +368,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   const pageCoverage = files.filter((f) => bestText(byFile[f.id] ?? { ai_text: "", verified_text: "" })).length;
 
   const [verifyAllBusy, setVerifyAllBusy] = useState(false);
+  const [reflowSignal, setReflowSignal] = useState(0);
+
   const unverified = transcripts.filter(
     (t) => t.status !== "human_verified" && bestText(t)?.trim(),
   );
