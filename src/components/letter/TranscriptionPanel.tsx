@@ -456,6 +456,17 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
               )}
               Human Verify All{unverifiedCount ? ` (${unverifiedCount})` : ""}
             </Button>
+            <Button
+              variant="outline"
+              disabled={!files.length}
+              onClick={() => {
+                setReflowSignal((n) => n + 1);
+                toast.message("Line breaks cleaned up — review, then save each page.");
+              }}
+            >
+              <WrapText className="mr-1 size-3.5" /> Remove line breaks on all pages
+            </Button>
+
             {dirtyPageCount > 0 && (
               <span className="text-xs text-amber-600 dark:text-amber-400">
                 {dirtyPageCount} page{dirtyPageCount === 1 ? "" : "s"} with unsaved corrections
