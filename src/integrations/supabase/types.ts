@@ -404,7 +404,10 @@ export type Database = {
         Row: {
           bytes_uploaded: number
           created_at: string
+          db_compressed_bytes: number
+          db_drive_file_id: string | null
           db_rows: number
+          db_uncompressed_bytes: number
           destination: string
           drive_folder_id: string | null
           drive_folder_name: string | null
@@ -413,14 +416,19 @@ export type Database = {
           files_uploaded: number
           finished_at: string | null
           id: string
+          retention_deleted_count: number
           started_at: string
           status: string
           updated_at: string
+          verification_missing_count: number
         }
         Insert: {
           bytes_uploaded?: number
           created_at?: string
+          db_compressed_bytes?: number
+          db_drive_file_id?: string | null
           db_rows?: number
+          db_uncompressed_bytes?: number
           destination?: string
           drive_folder_id?: string | null
           drive_folder_name?: string | null
@@ -429,14 +437,19 @@ export type Database = {
           files_uploaded?: number
           finished_at?: string | null
           id?: string
+          retention_deleted_count?: number
           started_at?: string
           status?: string
           updated_at?: string
+          verification_missing_count?: number
         }
         Update: {
           bytes_uploaded?: number
           created_at?: string
+          db_compressed_bytes?: number
+          db_drive_file_id?: string | null
           db_rows?: number
+          db_uncompressed_bytes?: number
           destination?: string
           drive_folder_id?: string | null
           drive_folder_name?: string | null
@@ -445,9 +458,11 @@ export type Database = {
           files_uploaded?: number
           finished_at?: string | null
           id?: string
+          retention_deleted_count?: number
           started_at?: string
           status?: string
           updated_at?: string
+          verification_missing_count?: number
         }
         Relationships: []
       }
