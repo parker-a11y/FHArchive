@@ -116,15 +116,27 @@ function PageEditor({
         <span className="text-sm font-medium">{file.label || file.original_filename}</span>
         <StatusPill status={record?.status} />
         {!readOnly && (
-          <Button size="sm" variant="outline" className="ml-auto" onClick={onTranscribe} disabled={busy}>
-            {busy ? (
-              <Loader2 className="mr-1 size-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1 size-3.5" />
-            )}
-            Transcribe with ChatGPT
-          </Button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={doReflow}
+              disabled={!needsReflow(text)}
+              title="Join wrapped handwriting lines into flowing paragraphs (nothing is saved until you save)"
+            >
+              <WrapText className="mr-1 size-3.5" /> Remove line breaks
+            </Button>
+            <Button size="sm" variant="outline" onClick={onTranscribe} disabled={busy}>
+              {busy ? (
+                <Loader2 className="mr-1 size-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1 size-3.5" />
+              )}
+              Transcribe with ChatGPT
+            </Button>
+          </div>
         )}
+
       </div>
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
