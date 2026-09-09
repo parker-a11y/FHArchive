@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CloudUpload, HardDrive, RefreshCw, ShieldCheck } from "lucide-react";
+import { CloudUpload, HardDrive, RefreshCw, ShieldCheck, PackageOpen, FileArchive } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,15 +48,25 @@ function bytes(n: number) {
   return `${v.toFixed(v < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
+function compressionRatio(uncompressed: number, compressed: number): string {
+  if (!uncompressed) return "—";
+  const ratio = (1 - compressed / uncompressed) * 100;
+  return `${ratio.toFixed(0)}% smaller`;
+}
+
 type Run = {
   id: string;
   started_at: string;
   finished_at: string | null;
   status: string;
   db_rows: number;
+  db_uncompressed_bytes: number;
+  db_compressed_bytes: number;
   files_uploaded: number;
   files_pending: number;
   bytes_uploaded: number;
+  retention_deleted_count: number;
+  verification_missing_count: number;
   error: string | null;
 };
 
@@ -98,7 +108,7 @@ function Backups() {
         toast.error(`Backup failed: ${result.error}`);
       } else {
         toast.success(
-          `Backup ${result.status === "partial" ? "partially " : ""}complete — ${result.dbRows} records, ${result.filesUploaded} new files copied.`,
+          `Backup ${result.status === "partial" ? "partially " : ""}complete — ${result.dbRows} records, ${result.filesUploaded} new files copied, ${result.retentionDeletedCount} old dumps rotated.`,
         );
       }
       qc.invalidateQueries({ queryKey: ["backup_runs"] });
@@ -118,7 +128,7 @@ function Backups() {
       />
 
       <div className="space-y-6 p-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={<ShieldCheck className="size-5" />}
             label="Last successful backup"
@@ -134,9 +144,18 @@ function Backups() {
             value={String(fileStats?.count ?? 0)}
           />
           <StatCard
-            icon={<CloudUpload className="size-5" />}
-            label="Destination folder"
-            value="The Francis Files Backups"
+            icon={<PackageOpen className="size-5" />}
+            label="Retention policy"
+            value="30 dailies + 12 monthlies + yearly"
+          />
+          <StatCard
+            icon={<FileArchive className="size-5" />}
+            label="Latest dump compression"
+            value={
+              last
+                ? `${bytes(last.db_compressed_bytes)} (${compressionRatio(last.db_uncompressed_bytes, last.db_compressed_bytes)})`
+                : "—"
+            }
           />
         </div>
 
@@ -146,10 +165,12 @@ function Backups() {
               <h2 className="font-display text-lg font-semibold">How it works</h2>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                 Every night a complete JSON export of every table (records, items, people,
-                places, keywords, digital sources, edit history) is written to your Google
-                Drive, and every scan or uploaded file that hasn&apos;t been copied yet is
-                mirrored alongside it. Nothing is ever deleted from Drive, so a full
-                rebuild is always possible.
+                places, keywords, digital sources, edit history) is compressed with gzip and
+                written to your Google Drive. Old database dumps are rotated automatically:
+                the last 30 daily dumps are kept, plus one dump per month for 12 months, plus
+                one dump per year forever. Every scan or uploaded file that hasn&apos;t been
+                copied yet is mirrored alongside the dumps. Nothing is ever deleted from the
+                files folder, so a full rebuild is always possible.
               </p>
             </div>
             <Button onClick={backupNow} disabled={busy} className="gap-2">
@@ -167,14 +188,16 @@ function Backups() {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Records</th>
                 <th className="px-4 py-3">New files</th>
-                <th className="px-4 py-3">Size</th>
+                <th className="px-4 py-3">File size</th>
+                <th className="px-4 py-3">DB dump</th>
+                <th className="px-4 py-3">Rotated</th>
                 <th className="px-4 py-3">Notes</th>
               </tr>
             </thead>
             <tbody>
               {runs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 sm:py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-6 sm:py-8 text-center text-muted-foreground">
                     No backups have run yet.
                   </td>
                 </tr>
@@ -203,7 +226,22 @@ function Backups() {
                     {r.files_pending ? ` (${r.files_pending} pending)` : ""}
                   </td>
                   <td className="px-4 py-3">{bytes(r.bytes_uploaded)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{r.error ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {r.db_compressed_bytes
+                      ? `${bytes(r.db_compressed_bytes)} ${compressionRatio(r.db_uncompressed_bytes, r.db_compressed_bytes) !== "—" ? `(${compressionRatio(r.db_uncompressed_bytes, r.db_compressed_bytes)})` : ""}`
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.retention_deleted_count > 0
+                      ? `${r.retention_deleted_count} old dumps`
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {r.error ??
+                      (r.verification_missing_count > 0
+                        ? `${r.verification_missing_count} files missing`
+                        : "—")}
+                  </td>
                 </tr>
               ))}
             </tbody>
