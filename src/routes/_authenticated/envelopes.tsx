@@ -371,14 +371,24 @@ function EnvelopeReview() {
                   {index + 1} of {list.length}
                 </span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={index >= list.length - 1}
-                onClick={() => go(1)}
-              >
-                Next <ChevronRight className="size-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  disabled={saving || index >= list.length - 1}
+                  onClick={() => save(true)}
+                >
+                  {saving && <Loader2 className="mr-1 size-4 animate-spin" />}
+                  Save & next
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={index >= list.length - 1}
+                  onClick={() => go(1)}
+                >
+                  Next <ChevronRight className="size-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
