@@ -201,7 +201,7 @@ export function EmailArchiveDialog({
       for (const f of res.failed) toast.error(`${f.email}: ${f.error}`);
       if (res.failed.length === 0) {
         setOpen(false);
-        setMessage("");
+        setMessage(defaultMessage ?? "");
       }
     } catch (error) {
       toast.error((error as Error).message || "Could not send the email");
