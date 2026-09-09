@@ -312,40 +312,6 @@ export async function previewNextArchiveId(): Promise<{ fh_seq: number; archive_
 
 
 
-/**
- * Permanently deletes a letter (and, via cascade, its scans/links/history).
- * If it was the most recently issued FH number, the counter is rolled back so
- * the number is reused by the next record.
- */
-export async function deleteLetter(letter: Pick<Letter, "id" | "fh_seq">): Promise<boolean> {
-  const [masters, derivatives] = await Promise.all([
-    supabase.from("digital_files").select("master_path").eq("letter_id", letter.id),
-    supabase.from("file_derivatives").select("storage_path").eq("letter_id", letter.id),
-  ]);
-  const paths = [
-    ...(masters.data ?? []).map((f) => f.master_path),
-    ...(derivatives.data ?? []).map((d) => d.storage_path),
-  ].filter(Boolean) as string[];
-  if (paths.length) await supabase.storage.from("scans").remove(paths);
-
-  const { error } = await supabase.from("letters").delete().eq("id", letter.id);
-  if (error) throw error;
-
-  const { data: counter } = await supabase
-    .from("archive_counter")
-    .select("owner_id, last_seq")
-    .maybeSingle();
-  if (counter && counter.last_seq === letter.fh_seq) {
-    await supabase
-      .from("archive_counter")
-      .update({ last_seq: Math.max(letter.fh_seq - 1, 0) } as never)
-      .eq("owner_id", counter.owner_id);
-    return true;
-  }
-  return false;
-}
-
-
 export async function logEdits(
   letterId: string,
   before: Record<string, unknown>,

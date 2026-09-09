@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { CategorySelect } from "@/components/CategorySelect";
 import {
   addRecordType,
@@ -34,12 +35,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  deleteLetter,
   fetchLetterByArchiveId,
   fetchLetters,
   logEdits,
   type Letter,
 } from "@/lib/queries";
+import { deleteLetterRecord } from "@/lib/delete-letter.functions";
 
 import {
   DATE_CERTAINTY,
@@ -146,6 +147,7 @@ function LetterPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isGuestViewer, isAdmin } = useAuth();
+  const deleteRecord = useServerFn(deleteLetterRecord);
 
   const { data: letter, isLoading } = useQuery({
     queryKey: ["letter", archiveId],
@@ -504,10 +506,10 @@ function LetterPage() {
                           e.preventDefault();
                           setDeleting(true);
                           try {
-                            const reused = await deleteLetter(letter);
+                            const result = await deleteRecord({ data: { letterId: letter.id } });
                             await qc.invalidateQueries();
                             toast.success(
-                              reused
+                              result.reused
                                 ? `${letter.archive_id} deleted — number will be reused`
                                 : `${letter.archive_id} deleted`,
                             );
