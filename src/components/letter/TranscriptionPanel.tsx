@@ -502,6 +502,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             highlight={highlight}
             readOnly={isGuestViewer}
             onTextState={handleTextState}
+            reflowSignal={reflowSignal}
+
           />
         ))}
       </div>
