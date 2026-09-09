@@ -25,6 +25,8 @@ import {
   transcribeScans,
 } from "@/lib/transcription.functions";
 import { HighlightedText, countMatches } from "@/lib/highlight";
+import { needsReflow, reflowTranscription } from "@/lib/transcription-format";
+
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
