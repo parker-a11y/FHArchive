@@ -71,11 +71,21 @@ function PageEditor({
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
+  const [correctionsSaved, setCorrectionsSaved] = useState(false);
+  const [humanVerified, setHumanVerified] = useState(record?.status === "human_verified");
 
   useEffect(() => {
-    if (!dirty) setText(record?.verified_text ?? record?.ai_text ?? "");
+    if (!dirty) {
+      setText(record?.verified_text ?? record?.ai_text ?? "");
+      setHumanVerified(record?.status === "human_verified");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [record?.verified_text, record?.ai_text]);
+  }, [record?.verified_text, record?.ai_text, record?.status]);
+
+  useEffect(() => {
+    setCorrectionsSaved(false);
+    setHumanVerified(record?.status === "human_verified");
+  }, [record?.id]);
 
   useEffect(() => {
     onTextState?.(file.id, { text, dirty });
@@ -85,7 +95,11 @@ function PageEditor({
   function doReflow() {
     setText((cur) => {
       const next = reflowTranscription(cur);
-      if (next !== cur) setDirty(true);
+      if (next !== cur) {
+        setDirty(true);
+        setCorrectionsSaved(false);
+        setHumanVerified(false);
+      }
       return next;
     });
   }
@@ -102,6 +116,8 @@ function PageEditor({
     try {
       await saveCorrections(record.id, text, verify);
       setDirty(false);
+      setCorrectionsSaved(true);
+      setHumanVerified(verify);
       onSaved();
       toast.success(verify ? "Marked human verified" : "Corrections saved");
     } catch (e) {
@@ -190,6 +206,8 @@ function PageEditor({
                 onChange={(e) => {
                   setText(e.target.value);
                   setDirty(true);
+                   setCorrectionsSaved(false);
+                   setHumanVerified(false);
                 }}
               />
               <FfnPreview text={text} />
@@ -198,10 +216,30 @@ function PageEditor({
           <div className="flex flex-wrap items-center gap-2">
             {!readOnly && (
               <>
-                <Button size="sm" onClick={() => save(false)} disabled={!record}>
+                <Button
+                  size="sm"
+                  variant={correctionsSaved && !dirty ? "outline" : "default"}
+                  className={
+                    correctionsSaved && !dirty
+                      ? "border-tone-emerald bg-tone-emerald-soft text-tone-emerald hover:bg-tone-emerald-soft/80 hover:text-tone-emerald"
+                      : undefined
+                  }
+                  onClick={() => save(false)}
+                  disabled={!record}
+                >
                   Save Corrections
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => save(true)} disabled={!record}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={
+                    humanVerified && !dirty
+                      ? "border-tone-emerald bg-tone-emerald-soft text-tone-emerald hover:bg-tone-emerald-soft/80 hover:text-tone-emerald"
+                      : undefined
+                  }
+                  onClick={() => save(true)}
+                  disabled={!record}
+                >
                   <BadgeCheck className="mr-1 size-3.5" /> Mark Human Verified
                 </Button>
               </>
