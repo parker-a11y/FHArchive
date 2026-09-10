@@ -77,11 +77,12 @@ export function reflowTranscription(input: string): string {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
       if (!trimmed) return;
-      if (isStructural(trimmed, i, lines, blockIndex)) {
+      if (isStructural(trimmed, i, lines, blockIndex, inHeaderRun)) {
         flush();
         result.push(trimmed);
         return;
       }
+      inHeaderRun = false;
       if (!buffer) {
         buffer = trimmed;
         return;
