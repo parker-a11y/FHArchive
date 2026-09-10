@@ -50,7 +50,16 @@ function isStructural(
   if (/^\[.*\]$/.test(t)) return true; // editorial notes like [illegible]
   // Short lines stacked at the very top of the letter are letterhead, place,
   // and address lines — keep them, in any capitalisation.
-  if (blockIndex === 0 && inHeaderRun && t.length <= 45) return true;
+  if (
+    blockIndex === 0 &&
+    inHeaderRun &&
+    index < 6 &&
+    t.length <= 45 &&
+    t.split(/\s+/).length <= 6 &&
+    (/[,]/.test(t) || /\d/.test(t) || !/[a-z]/.test(t))
+  ) {
+    return true;
+  }
   return false;
 }
 
