@@ -194,6 +194,7 @@ export function EmailArchiveDialog({
           records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
           includeTranscription,
           includeImages,
+          includeEnvelope: includeImages && includeEnvelope,
           research: research?.answer ? research : null,
           thumbnails: Boolean(thumbnails),
         },
