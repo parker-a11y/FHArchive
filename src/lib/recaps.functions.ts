@@ -117,7 +117,7 @@ export const emailWeeklyRecapFn = createServerFn({ method: "POST" })
       includeTranscription?: boolean;
     }) => {
       const weekStart = String(data?.weekStart ?? "");
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) throw new Error("Invalid week.");
+      if (!weekStart) throw new Error("Invalid recap.");
       const recipients = (data?.recipients ?? [])
         .slice(0, 25)
         .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
