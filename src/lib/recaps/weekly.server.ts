@@ -366,12 +366,12 @@ function materialText(m: WeekMaterial) {
         l.summary_long ? `Detail: ${String(l.summary_long).slice(0, 1200)}` : "",
         l.historical_notes ? `Historical notes: ${String(l.historical_notes).slice(0, 800)}` : "",
         l.research_notes ? `Research notes: ${String(l.research_notes).slice(0, 800)}` : "",
-        idx?.body ? `TEXT:\n${String(idx.body).slice(0, 6000)}` : "",
+        idx?.body ? `TEXT:\n${String(idx.body).slice(0, bodyLimit)}` : "",
       ]
         .filter(Boolean)
         .join("\n"),
     );
-  }
+  });
   for (const s of m.sources) {
     const idx = indexById.get(s.ds_id);
     blocks.push(
@@ -391,7 +391,7 @@ function materialText(m: WeekMaterial) {
         .join("\n"),
     );
   }
-  return blocks.join("\n\n---\n\n").slice(0, 160000);
+  return blocks.join("\n\n---\n\n").slice(0, 240000);
 }
 
 export type RecapDraft = {
