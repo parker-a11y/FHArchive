@@ -88,7 +88,7 @@ import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
-import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
+import { FfnText } from "@/components/ffn/FfnText";
 import { fetchRetirement } from "@/lib/numbering";
 
 import {
@@ -1083,7 +1083,6 @@ function LetterPage() {
                 value={(form.notes as string) ?? ""}
                 onChange={(e) => set("notes", e.target.value)}
               />
-              <FfnPreview text={(form.notes as string) ?? ""} />
             </div>
             <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -1093,7 +1092,6 @@ function LetterPage() {
                   value={(form.summary_short as string) ?? ""}
                   onChange={(e) => set("summary_short", e.target.value)}
                 />
-                <FfnPreview text={(form.summary_short as string) ?? ""} />
               </div>
               <div>
                 <label className="field-label">Detailed summary</label>
@@ -1102,7 +1100,6 @@ function LetterPage() {
                   value={(form.summary_long as string) ?? ""}
                   onChange={(e) => set("summary_long", e.target.value)}
                 />
-                <FfnPreview text={(form.summary_long as string) ?? ""} />
               </div>
             </div>
             <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1113,7 +1110,6 @@ function LetterPage() {
                   value={(form.physical_description as string) ?? ""}
                   onChange={(e) => set("physical_description", e.target.value)}
                 />
-                <FfnPreview text={(form.physical_description as string) ?? ""} />
               </div>
               <div>
                 <label className="field-label">Provenance</label>
@@ -1122,7 +1118,6 @@ function LetterPage() {
                   value={(form.provenance as string) ?? ""}
                   onChange={(e) => set("provenance", e.target.value)}
                 />
-                <FfnPreview text={(form.provenance as string) ?? ""} />
               </div>
               <div>
                 <label className="field-label">Historical context notes</label>
@@ -1131,7 +1126,6 @@ function LetterPage() {
                   value={(form.historical_notes as string) ?? ""}
                   onChange={(e) => set("historical_notes", e.target.value)}
                 />
-                <FfnPreview text={(form.historical_notes as string) ?? ""} />
               </div>
               <div>
                 <label className="field-label">Private research notes</label>
@@ -1140,7 +1134,6 @@ function LetterPage() {
                   value={(form.research_notes as string) ?? ""}
                   onChange={(e) => set("research_notes", e.target.value)}
                 />
-                <FfnPreview text={(form.research_notes as string) ?? ""} />
               </div>
               <div className="col-span-full">
                 <label className="field-label">Citations / sources</label>
@@ -1149,7 +1142,6 @@ function LetterPage() {
                   value={(form.citations as string) ?? ""}
                   onChange={(e) => set("citations", e.target.value)}
                 />
-                <FfnPreview text={(form.citations as string) ?? ""} />
               </div>
             </div>
           </div>

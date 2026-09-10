@@ -6,7 +6,7 @@ import { FileText, Globe, Link2, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RelatedRecordsPicker } from "@/components/RelatedRecordsPicker";
-import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
+import { FfnText } from "@/components/ffn/FfnText";
 import {
   addRecordLink,
   fetchRelatedRecords,
@@ -149,7 +149,6 @@ export function RelatedRecordsPanel({
                     onChange={(e) => setEditNote(e.target.value)}
                     placeholder="Why are these records connected?"
                   />
-                  <FfnPreview text={editNote} />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => saveNote(l)}>
                       Save note
@@ -209,7 +208,6 @@ export function RelatedRecordsPanel({
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Optional note — why these records are connected"
               />
-              <FfnPreview text={note} />
               <div className="flex gap-2">
                 <Button size="sm" disabled={busy} onClick={connect}>
                   {busy ? "Connecting…" : "Connect records"}

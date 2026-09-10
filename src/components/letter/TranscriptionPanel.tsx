@@ -5,7 +5,7 @@ import { BadgeCheck, Loader2, Sparkles, WrapText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
+import { FfnText } from "@/components/ffn/FfnText";
 import { Textarea } from "@/components/ui/textarea";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
 import { logEdits, type Letter } from "@/lib/queries";
@@ -210,7 +210,6 @@ function PageEditor({
                    setHumanVerified(false);
                 }}
               />
-              <FfnPreview text={text} />
             </>
           )}
           <div className="flex flex-wrap items-center gap-2">
@@ -636,7 +635,6 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                   value={verified}
                   onChange={(e) => setVerified(e.target.value)}
                 />
-                <FfnPreview text={verified} />
               </>
             )}
             {!isGuestViewer && (

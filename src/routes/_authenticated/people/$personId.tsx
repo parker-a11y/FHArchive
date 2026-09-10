@@ -13,7 +13,6 @@ import { AliasManager } from "@/components/people/AliasManager";
 import { DeletePersonButton } from "@/components/people/DeletePersonButton";
 import { fetchLetters } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
-import { FfnPreview } from "@/components/ffn/FfnText";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   head: () => ({
@@ -146,7 +145,6 @@ function PersonPage() {
                   value={form[f.key] ?? ""}
                   onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                 />
-                <FfnPreview text={form[f.key] ?? ""} />
               </div>
             ) : (
               <div key={f.key}>
