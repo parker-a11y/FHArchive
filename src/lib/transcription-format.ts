@@ -9,7 +9,7 @@
 
 const SALUTATION = /^(my\s+)?(dear|darling|dearest|hi|hello|beloved)\b/i;
 const CLOSING =
-  /^(love|all my love|lots of love|yours|your|yours truly|sincerely|affectionately|fondly|as ever|ever yours|so long|goodnight|good night|bye|xoxo)\b[^.]{0,40}[,-]?\s*$/i;
+  /^(love|all my love|lots of love|yours|yours truly|sincerely|affectionately|fondly|as ever|ever yours|so long|goodnight|good night|bye|xoxo)\b[^.]{0,40}[,-]?\s*$/i;
 const POSTSCRIPT = /^p\.?\s?s\.?\b/i;
 const DATE_LINE =
   /^\(?\s*(\d{1,2}\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{0,4}(,?\s*\d{4})?\s*\)?$/i;
@@ -21,16 +21,20 @@ function isStructural(line: string, index: number, lines: string[], blockIndex: 
   if (!t) return true;
   if (DATE_LINE.test(t) || NUMERIC_DATE.test(t)) return true;
   if (POSTSCRIPT.test(t)) return true;
-  if (SALUTATION.test(t) && t.length <= 60) return true;
-  if (CLOSING.test(t)) return true;
+  // Greetings belong at the opening, while sign-offs belong at the end. Applying
+  // these patterns to every line mistakes ordinary prose such as "hi again" or
+  // "love the new house" for structural text.
+  if (index <= 2 && SALUTATION.test(t) && t.length <= 60) return true;
+  if (index >= lines.length - 3 && CLOSING.test(t)) return true;
   if (/^[-—–*_=]{2,}$/.test(t)) return true;
   if (/^\[.*\]$/.test(t)) return true; // editorial notes like [illegible]
-  // Heading block at the very top of the page (short lines before the salutation)
+  // Preserve an unmistakable all-caps heading at the top, not every short line.
   if (
     blockIndex === 0 &&
     index < 4 &&
     t.length <= 40 &&
-    lines.slice(0, index).every((l) => l.trim().length <= 40)
+    /[A-Z]/.test(t) &&
+    !/[a-z]/.test(t)
   ) {
     return true;
   }

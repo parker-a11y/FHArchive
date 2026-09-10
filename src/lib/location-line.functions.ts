@@ -25,15 +25,16 @@ export const suggestLocationLines = createServerFn({ method: "POST" })
       "./location-line.server"
     );
 
-    // Candidates: no Location Line yet and not already checked (unless forced).
+    // Bulk candidates need an empty Location Line. A forced, targeted request is
+    // an explicit second opinion and must still read a record with a saved value.
     let q = supabaseAdmin
       .from("letters")
       .select("id, archive_id")
-      .is("dateline", null)
       .order("fh_seq");
+    const targetedForce = !!data.letterIds?.length && data.force;
+    if (!targetedForce) q = q.is("dateline", null);
     if (data.letterIds?.length) q = q.in("id", data.letterIds);
-    else if (!data.force) q = q.is("dateline_suggested", null);
-    if (data.letterIds?.length && !data.force) q = q.is("dateline_suggested", null);
+    if (!data.force) q = q.is("dateline_suggested", null);
 
     const { data: candidates, error } = await q;
     if (error) throw new Error(error.message);

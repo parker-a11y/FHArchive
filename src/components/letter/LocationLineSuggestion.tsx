@@ -36,7 +36,9 @@ export function LocationLineSuggestion({ letterId, suggestion, current, onAccept
     setBusy(true);
     try {
       const r = await run({ data: { letterIds: [letterId], force: true, limit: 1 } });
-      const s = r.results[0]?.suggestion ?? "";
+      const result = r.results[0];
+      if (!result) throw new Error("This record could not be checked. Please try again.");
+      const s = result.suggestion ?? "";
       setLocal(s);
       if (!s) toast.message("No location line found on this letter.");
       qc.invalidateQueries({ queryKey: ["letters"] });
