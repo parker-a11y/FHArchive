@@ -238,8 +238,13 @@ function RecapPage() {
   return (
     <>
       <PageHeader
-        title="Francis Files — Weekly Recap"
-        description={`Week of ${formatWeekRange(recap.week_start, recap.week_end)}`}
+        title={recap.kind === "custom" ? "Francis Files — Custom Recap" : "Francis Files — Weekly Recap"}
+        description={
+          recap.kind === "custom"
+            ? recapRangeLabel(recap)
+            : `Week of ${formatWeekRange(recap.week_start, recap.week_end)}`
+        }
+
         actions={
           isAdmin ? (
             <div className="flex flex-wrap gap-2">
