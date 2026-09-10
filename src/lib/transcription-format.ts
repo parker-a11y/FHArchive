@@ -67,6 +67,7 @@ export function reflowTranscription(input: string): string {
     const lines = block.split("\n");
     const result: string[] = [];
     let buffer = "";
+    let inHeaderRun = true;
 
     const flush = () => {
       if (buffer.trim()) result.push(buffer.trim());
