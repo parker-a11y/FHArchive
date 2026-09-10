@@ -499,11 +499,14 @@ export async function runWeeklyRecap(
     .from("weekly_recaps")
     .select("id, status")
     .eq("week_start", weekStart)
+    .eq("kind", "weekly")
     .maybeSingle();
 
   const row = {
+    kind: "weekly",
     week_start: weekStart,
     week_end: weekEnd,
+
     title: draft.title,
     lede: draft.lede,
     body_md: draft.body_md,
