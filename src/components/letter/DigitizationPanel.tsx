@@ -66,7 +66,18 @@ import {
   sanitizeLabel,
 } from "@/lib/scan-rename";
 import { rotateStoredImage } from "@/lib/rotate";
-import { transcribeScans } from "@/lib/transcription.functions";
+import { transcribeScans, transcribeRecord } from "@/lib/transcription.functions";
+import { isEnvelopePage } from "@/lib/transcription";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Letter } from "@/lib/queries";
 
 type Progress = { total: number; done: number; current: string; stage: string } | null;
@@ -109,6 +120,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [autoTranscribing, setAutoTranscribing] = useState(false);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
@@ -287,10 +300,41 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         digitization_completed_at: new Date().toISOString(),
       });
       toast.success(`Processing complete — ${ok} viewing JPEG${ok === 1 ? "" : "s"} and thumbnails generated.`);
+      await maybeAutoTranscribe(current);
     } else if (ok) {
       toast.warning(`${ok} processed, ${failed} failed. Masters are all safe.`);
     }
   }
+
+  /**
+   * After processing finishes, send the record for transcription automatically.
+   * Never forces: existing page text is untouched, and nothing is accepted or
+   * human-verified — the record simply lands in the Transcription tab.
+   */
+  async function maybeAutoTranscribe(current: DigitalFileWithDerivatives[]) {
+    if ((letter.transcription_status ?? "") === "not_required") return;
+    const transcribable = current.filter(
+      (f) => !isEnvelopePage(f.label, f.original_filename),
+    );
+    if (!transcribable.length) return;
+    setAutoTranscribing(true);
+    toast.message("Sending this record for transcription…");
+    try {
+      const r = await transcribeRecord({ data: { letterId: letter.id, force: false } });
+      if (r.error) toast.error(r.error);
+      else if (r.pages)
+        toast.success(
+          `${r.pages} page${r.pages === 1 ? "" : "s"} transcribed — review them in the Transcription tab.`,
+        );
+    } catch (e) {
+      toast.error(`Automatic transcription could not run — ${(e as Error).message}`);
+    } finally {
+      setAutoTranscribing(false);
+      qc.invalidateQueries({ queryKey: ["scan-transcriptions", letter.id] });
+      refreshLetter();
+    }
+  }
+
 
 
   /** Renders (or re-renders) every page of a PDF master into viewing JPEGs. */
@@ -568,13 +612,63 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 )}
               </div>
               <Button
-                onClick={confirmUploadComplete}
-                disabled={!!generating || !!progress || pending.length === 0}
+                onClick={() =>
+                  unnamed.length ? setConfirmDialogOpen(true) : confirmUploadComplete()
+                }
+                disabled={
+                  !!generating || !!progress || autoTranscribing || pending.length === 0
+                }
               >
-                <ShieldCheck className="mr-1.5 size-4" />
-                Confirm Upload Complete
+                {autoTranscribing ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="mr-1.5 size-4" />
+                )}
+                {autoTranscribing ? "Transcribing…" : "Confirm Upload Complete"}
               </Button>
             </div>
+
+            <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} have no label
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-2">
+                      <p>
+                        Labels such as “Envelope Front” or “Sheet 1 Front” describe what each
+                        image shows. Unlabelled scans will simply be numbered in order.
+                      </p>
+                      <ul className="list-disc pl-5 text-xs">
+                        {unnamed.slice(0, 4).map((f) => (
+                          <li key={f.id}>{f.original_filename}</li>
+                        ))}
+                        {unnamed.length > 4 && <li>and {unnamed.length - 4} more</li>}
+                      </ul>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction
+                    onClick={() => {
+                      setConfirmDialogOpen(false);
+                      jumpToScan(unnamed[0].id);
+                    }}
+                  >
+                    Go back and label
+                  </AlertDialogAction>
+                  <AlertDialogCancel
+                    onClick={() => {
+                      setConfirmDialogOpen(false);
+                      void confirmUploadComplete();
+                    }}
+                  >
+                    Continue anyway
+                  </AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <p className="mt-2 text-xs text-muted-foreground">
               Confirming is not a lock — you can add, replace or rename scans later and confirm
               again. Only new or changed masters are processed.
