@@ -45,10 +45,12 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   fetchRecap,
   formatWeekRange,
+  recapRangeLabel,
   saveRecapEdits,
   setRecapStatus,
   signRecapImage,
 } from "@/lib/recaps";
+
 import { fetchContacts } from "@/lib/archive-email";
 import { fetchRecapShares, setRecapShareEnabled } from "@/lib/recaps";
 import {
