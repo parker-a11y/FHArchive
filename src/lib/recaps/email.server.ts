@@ -44,17 +44,19 @@ export async function sendRecapEmail(
   message: string,
   options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
 ): Promise<RecapEmailResult> {
-  const { data: recap } = await db
+  const isWeek = /^\d{4}-\d{2}-\d{2}$/.test(weekStart);
+  let query = db
     .from("weekly_recaps")
     .select(
-      "id, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_caption, stats",
-    )
-    .eq("week_start", weekStart)
-    .maybeSingle();
+      "id, kind, slug, range_label, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_caption, stats",
+    );
+  query = isWeek ? query.eq("week_start", weekStart).eq("kind", "weekly") : query.eq("slug", weekStart);
+  const { data: recap } = await query.maybeSingle();
 
   if (!recap) throw new Error("That recap could not be found.");
 
-  const weekRange = formatWeekRange(recap.week_start, recap.week_end);
+  const weekRange = recap.range_label || formatWeekRange(recap.week_start, recap.week_end);
+
 
   let imageUrl: string | null = null;
   if (recap.image_path) {
