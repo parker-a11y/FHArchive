@@ -134,7 +134,9 @@ async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMateria
       `and(created_at.gte.${from},created_at.lte.${to}),and(updated_at.gte.${from},updated_at.lte.${to})`,
     );
   };
-  const stamped = (q: any) => (from && to ? q.gte("created_at", from).lte("created_at", to) : q);
+  const stamped = (q: any, column = "created_at") =>
+    from && to ? q.gte(column, from).lte(column, to) : q;
+
 
   const [{ data: letters }, { data: sources }, { data: transcriptions }, { data: files }, { data: suggestions }] =
     await Promise.all([
