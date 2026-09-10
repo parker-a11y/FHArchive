@@ -147,7 +147,7 @@ async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMateria
             "id, archive_id, title, record_type, subtype, period, date_as_written, dateline, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status, created_at, updated_at",
           ),
         "sort_date",
-      ).order("fh_seq", { ascending: true }).limit(Math.max(hardLimit * 3, 120)),
+      ).order("fh_seq", { ascending: true }).limit(Math.min(Math.max(hardLimit * 3, 120), 1000)),
       windowed(
         admin
           .from("digital_sources")
