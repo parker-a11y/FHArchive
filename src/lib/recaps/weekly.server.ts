@@ -87,48 +87,84 @@ type WeekMaterial = {
   archiveIds: string[];
 };
 
-async function gatherWeek(admin: any, weekStart: string, weekEnd: string): Promise<WeekMaterial> {
-  const from = `${weekStart}T00:00:00Z`;
-  const to = `${weekEnd}T23:59:59Z`;
-  const touched = (q: any) => q.or(`and(created_at.gte.${from},created_at.lte.${to}),and(updated_at.gte.${from},updated_at.lte.${to})`);
+export type GatherOptions = {
+  /** ISO date (inclusive) or null for "everything in the archive". */
+  fromDate: string | null;
+  toDate: string | null;
+  /** "catalogued" = when the record was worked on; "written" = the record's own date. */
+  dateBasis: "catalogued" | "written";
+  limit: number;
+  focus?: string;
+};
+
+/** Ranks records against the focus text so the most relevant survive the limit. */
+function rankByFocus<T extends Record<string, any>>(rows: T[], focus: string | undefined, textOf: (r: T) => string) {
+  if (!focus?.trim()) return rows;
+  const terms = Array.from(
+    new Set(
+      focus
+        .toLowerCase()
+        .split(/[^a-z0-9']+/i)
+        .filter((t) => t.length > 2),
+    ),
+  ).slice(0, 25);
+  if (!terms.length) return rows;
+  const scored = rows.map((r) => {
+    const hay = textOf(r).toLowerCase();
+    let score = terms.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);
+    if (r["starred"]) score += 0.5;
+    return { r, score };
+  });
+  const hits = scored.filter((s) => s.score > 0);
+  const base = hits.length ? hits : scored;
+  return base.sort((a, b) => b.score - a.score).map((s) => s.r);
+}
+
+async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMaterial> {
+  const from = opts.fromDate ? `${opts.fromDate}T00:00:00Z` : null;
+  const to = opts.toDate ? `${opts.toDate}T23:59:59Z` : null;
+  const hardLimit = Math.min(Math.max(opts.limit, 1), 200);
+
+  /** Applies the chosen date window to a query, or leaves it wide open. */
+  const windowed = (q: any, writtenColumn: string | null) => {
+    if (!from || !to) return q;
+    if (opts.dateBasis === "written" && writtenColumn)
+      return q.gte(writtenColumn, opts.fromDate).lte(writtenColumn, opts.toDate);
+    return q.or(
+      `and(created_at.gte.${from},created_at.lte.${to}),and(updated_at.gte.${from},updated_at.lte.${to})`,
+    );
+  };
+  const stamped = (q: any) => (from && to ? q.gte("created_at", from).lte("created_at", to) : q);
 
   const [{ data: letters }, { data: sources }, { data: transcriptions }, { data: files }, { data: suggestions }] =
     await Promise.all([
-      touched(
+      windowed(
         admin
           .from("letters")
           .select(
             "id, archive_id, title, record_type, subtype, period, date_as_written, dateline, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status, created_at, updated_at",
           ),
-      ).order("fh_seq", { ascending: true }).limit(120),
-      touched(
+        "sort_date",
+      ).order("fh_seq", { ascending: true }).limit(Math.max(hardLimit * 3, 120)),
+      windowed(
         admin
           .from("digital_sources")
           .select(
             "id, ds_id, title, source_type, creator, institution, original_date, normalized_date, url, description, starred, created_at, updated_at",
           ),
-      ).order("ds_seq", { ascending: true }).limit(60),
-      admin
-        .from("scan_transcriptions")
-        .select("id, letter_id", { count: "exact" })
-        .gte("created_at", from)
-        .lte("created_at", to)
-        .limit(1000),
-      admin
-        .from("digital_files")
-        .select("id, letter_id", { count: "exact" })
-        .gte("created_at", from)
-        .lte("created_at", to)
-        .limit(1000),
-      admin
-        .from("ai_suggestions")
-        .select("letter_id, field_key, content, status, updated_at")
-        .eq("field_key", "quotations")
-        .eq("status", "accepted")
-        .gte("updated_at", from)
-        .lte("updated_at", to)
-        .limit(60),
+        "normalized_date",
+      ).order("ds_seq", { ascending: true }).limit(Math.max(Math.ceil(hardLimit / 2), 60)),
+      stamped(admin.from("scan_transcriptions").select("id, letter_id", { count: "exact" })).limit(1000),
+      stamped(admin.from("digital_files").select("id, letter_id", { count: "exact" })).limit(1000),
+      stamped(
+        admin
+          .from("ai_suggestions")
+          .select("letter_id, field_key, content, status, updated_at")
+          .eq("field_key", "quotations")
+          .eq("status", "accepted"),
+      ).limit(60),
     ]);
+
 
   const letterRows = (letters ?? []) as any[];
   const sourceRows = (sources ?? []) as any[];
