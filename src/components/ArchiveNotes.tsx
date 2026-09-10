@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { postArchiveNote } from "@/lib/archive-notes";
 import { FffBadge } from "@/components/FffBadge";
-import { FfnPreview, FfnText } from "@/components/ffn/FfnText";
+import { FfnText } from "@/components/ffn/FfnText";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -185,7 +185,6 @@ export function ArchiveNotes() {
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
-            <FfnPreview text={body} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setComposeOpen(false)}>

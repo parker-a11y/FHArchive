@@ -98,28 +98,6 @@ export function FfnText({ text, searchTerm }: { text: string; searchTerm?: strin
   return <>{nodes}</>;
 }
 
-/** Linked reading preview for plain-text editing fields. Hidden when no published term matches. */
-export function FfnPreview({ text }: { text: string }) {
-  const { data } = useAliasIndex();
-  const hasMatch = useMemo(() => {
-    if (!text.trim() || !data?.entries.length) return false;
-    return data.entries.some(({ alias }) => {
-      try {
-        return new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(alias)}(?![\\p{L}\\p{N}])`, "iu").test(text);
-      } catch {
-        return false;
-      }
-    });
-  }, [data, text]);
-  if (!hasMatch) return null;
-  return (
-    <div className="mt-2 rounded border border-archive-gold/30 bg-archive-note/40 p-3 text-sm leading-relaxed whitespace-pre-wrap">
-      <div className="field-label mb-1.5">Published Notes preview</div>
-      <FfnText text={text} />
-    </div>
-  );
-}
-
 function FfnTerm({ note, label }: { note: FfnNote; label: string }) {
   const [open, setOpen] = useState(false);
   return (
