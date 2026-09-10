@@ -44,16 +44,58 @@ export const generateWeeklyRecap = createServerFn({ method: "POST" })
     return runWeeklyRecap(data.mode);
   });
 
+/** "Generate Custom Recap": any date range (or the whole archive) with instructions. */
+export const generateCustomRecap = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      fromDate?: string | null;
+      toDate?: string | null;
+      wholeArchive?: boolean;
+      dateBasis?: "catalogued" | "written";
+      limit?: number;
+      detail?: "brief" | "standard" | "deep";
+      focus?: string;
+      audience?: string;
+      instructions?: string;
+    }) => {
+      const isDate = (v: unknown) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+      const whole = data?.wholeArchive === true;
+      const fromDate = !whole && isDate(data?.fromDate) ? (data!.fromDate as string) : null;
+      const toDate = !whole && isDate(data?.toDate) ? (data!.toDate as string) : null;
+      if (!whole && (!fromDate || !toDate)) throw new Error("Choose a start and end date, or the whole archive.");
+      if (fromDate && toDate && fromDate > toDate) throw new Error("The start date must come before the end date.");
+      const limit = Math.min(Math.max(Number(data?.limit ?? 40) || 40, 5), 120);
+      return {
+        fromDate,
+        toDate,
+        dateBasis: data?.dateBasis === "written" ? ("written" as const) : ("catalogued" as const),
+        limit,
+        detail:
+          data?.detail === "brief" ? ("brief" as const) : data?.detail === "deep" ? ("deep" as const) : ("standard" as const),
+        focus: String(data?.focus ?? "").trim().slice(0, 500),
+        audience: String(data?.audience ?? "").trim().slice(0, 200),
+        instructions: String(data?.instructions ?? "").trim().slice(0, 2000),
+      };
+    },
+  )
+  .handler(async ({ data, context }) => {
+    await assertArchiveAccess(context);
+    const { runCustomRecap } = await import("@/lib/recaps/weekly.server");
+    return runCustomRecap(data);
+  });
+
 /** Apply plain-language additions to an existing recap without regenerating it. */
 export const refineWeeklyRecapFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { weekStart: string; instructions: string }) => {
     const weekStart = String(data?.weekStart ?? "");
     const instructions = String(data?.instructions ?? "").trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) throw new Error("Invalid week.");
+    if (!weekStart) throw new Error("Invalid recap.");
     if (instructions.length < 3) throw new Error("Tell the AI what to add or change.");
     return { weekStart, instructions: instructions.slice(0, 4000) };
   })
+
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { refineWeeklyRecap } = await import("@/lib/recaps/weekly.server");
