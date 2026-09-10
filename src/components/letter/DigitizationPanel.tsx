@@ -120,6 +120,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [rotatingId, setRotatingId] = useState<string | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [autoTranscribing, setAutoTranscribing] = useState(false);
 
   const { data: files = [] } = useQuery({
     queryKey: key,
