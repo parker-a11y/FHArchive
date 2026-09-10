@@ -300,10 +300,41 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         digitization_completed_at: new Date().toISOString(),
       });
       toast.success(`Processing complete — ${ok} viewing JPEG${ok === 1 ? "" : "s"} and thumbnails generated.`);
+      await maybeAutoTranscribe(current);
     } else if (ok) {
       toast.warning(`${ok} processed, ${failed} failed. Masters are all safe.`);
     }
   }
+
+  /**
+   * After processing finishes, send the record for transcription automatically.
+   * Never forces: existing page text is untouched, and nothing is accepted or
+   * human-verified — the record simply lands in the Transcription tab.
+   */
+  async function maybeAutoTranscribe(current: DigitalFileWithDerivatives[]) {
+    if ((letter.transcription_status ?? "") === "not_required") return;
+    const transcribable = current.filter(
+      (f) => !isEnvelopePage(f.label, f.original_filename),
+    );
+    if (!transcribable.length) return;
+    setAutoTranscribing(true);
+    toast.message("Sending this record for transcription…");
+    try {
+      const r = await transcribeRecord({ data: { letterId: letter.id, force: false } });
+      if (r.error) toast.error(r.error);
+      else if (r.pages)
+        toast.success(
+          `${r.pages} page${r.pages === 1 ? "" : "s"} transcribed — review them in the Transcription tab.`,
+        );
+    } catch (e) {
+      toast.error(`Automatic transcription could not run — ${(e as Error).message}`);
+    } finally {
+      setAutoTranscribing(false);
+      qc.invalidateQueries({ queryKey: ["scan-transcriptions", letter.id] });
+      refreshLetter();
+    }
+  }
+
 
 
   /** Renders (or re-renders) every page of a PDF master into viewing JPEGs. */
