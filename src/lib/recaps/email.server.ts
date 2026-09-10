@@ -87,7 +87,10 @@ export async function sendRecapEmail(
   }
 
   const templateData = {
-    subject: `Francis Files Weekly Recap — ${weekRange}`,
+    subject:
+      recap.kind === "custom"
+        ? `The Francis Files — ${recap.title}`
+        : `Francis Files Weekly Recap — ${weekRange}`,
     weekRange,
     title: recap.title,
     lede: recap.lede,
@@ -98,8 +101,9 @@ export async function sendRecapEmail(
     relatedIds,
     shareLinks,
     stats,
-    recapUrl: `${SITE_URL}/recaps/${recap.week_start}`,
+    recapUrl: `${SITE_URL}/recaps/${recap.slug || recap.week_start}`,
   };
+
 
   const result: RecapEmailResult = { sent: [], suppressed: [], failed: [] };
 
