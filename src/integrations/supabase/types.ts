@@ -2968,11 +2968,15 @@ export type Database = {
           image_bucket: string | null
           image_caption: string | null
           image_path: string | null
+          kind: string
           lede: string | null
           manually_edited: boolean
           model: string | null
           owner_id: string | null
+          params: Json
+          range_label: string | null
           related_ids: string[]
+          slug: string | null
           stats: Json
           status: string
           title: string
@@ -2989,11 +2993,15 @@ export type Database = {
           image_bucket?: string | null
           image_caption?: string | null
           image_path?: string | null
+          kind?: string
           lede?: string | null
           manually_edited?: boolean
           model?: string | null
           owner_id?: string | null
+          params?: Json
+          range_label?: string | null
           related_ids?: string[]
+          slug?: string | null
           stats?: Json
           status?: string
           title?: string
@@ -3010,11 +3018,15 @@ export type Database = {
           image_bucket?: string | null
           image_caption?: string | null
           image_path?: string | null
+          kind?: string
           lede?: string | null
           manually_edited?: boolean
           model?: string | null
           owner_id?: string | null
+          params?: Json
+          range_label?: string | null
           related_ids?: string[]
+          slug?: string | null
           stats?: Json
           status?: string
           title?: string
