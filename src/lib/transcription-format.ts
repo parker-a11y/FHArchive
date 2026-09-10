@@ -15,8 +15,21 @@ const DATE_LINE =
   /^\(?\s*(\d{1,2}\s+)?(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*\d{0,4}(,?\s*\d{4})?\s*\)?$/i;
 const NUMERIC_DATE = /^\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?$/;
 
-/** A line that should never be merged with its neighbours. */
-function isStructural(line: string, index: number, lines: string[], blockIndex: number): boolean {
+/**
+ * A line that should never be merged with its neighbours.
+ *
+ * `inHeaderRun` is true while we are still in the opening run of the first
+ * block — the letterhead/address/date/greeting stack before the letter's prose
+ * starts. Those lines keep their own line even when mixed case, which is how
+ * "Camp Kilmer, N.J." above "Dear Jaq," survives the cleanup.
+ */
+function isStructural(
+  line: string,
+  index: number,
+  lines: string[],
+  blockIndex: number,
+  inHeaderRun: boolean,
+): boolean {
   const t = line.trim();
   if (!t) return true;
   if (DATE_LINE.test(t) || NUMERIC_DATE.test(t)) return true;
@@ -24,17 +37,26 @@ function isStructural(line: string, index: number, lines: string[], blockIndex: 
   // Greetings belong at the opening, while sign-offs belong at the end. Applying
   // these patterns to every line mistakes ordinary prose such as "hi again" or
   // "love the new house" for structural text.
-  if (index <= 2 && SALUTATION.test(t) && t.length <= 60 && !/[.!?]$/.test(t)) return true;
+  if (
+    (inHeaderRun || index <= 2) &&
+    SALUTATION.test(t) &&
+    t.length <= 60 &&
+    !/[.!?]$/.test(t)
+  ) {
+    return true;
+  }
   if (index >= lines.length - 3 && CLOSING.test(t)) return true;
   if (/^[-—–*_=]{2,}$/.test(t)) return true;
   if (/^\[.*\]$/.test(t)) return true; // editorial notes like [illegible]
-  // Preserve an unmistakable all-caps heading at the top, not every short line.
+  // Short lines stacked at the very top of the letter are letterhead, place,
+  // and address lines — keep them, in any capitalisation.
   if (
     blockIndex === 0 &&
-    index < 4 &&
-    t.length <= 40 &&
-    /[A-Z]/.test(t) &&
-    !/[a-z]/.test(t)
+    inHeaderRun &&
+    index < 6 &&
+    t.length <= 45 &&
+    t.split(/\s+/).length <= 6 &&
+    (/[,]/.test(t) || /\d/.test(t) || !/[a-z]/.test(t))
   ) {
     return true;
   }
@@ -54,6 +76,7 @@ export function reflowTranscription(input: string): string {
     const lines = block.split("\n");
     const result: string[] = [];
     let buffer = "";
+    let inHeaderRun = true;
 
     const flush = () => {
       if (buffer.trim()) result.push(buffer.trim());
@@ -63,11 +86,12 @@ export function reflowTranscription(input: string): string {
     lines.forEach((line, i) => {
       const trimmed = line.trim();
       if (!trimmed) return;
-      if (isStructural(trimmed, i, lines, blockIndex)) {
+      if (isStructural(trimmed, i, lines, blockIndex, inHeaderRun)) {
         flush();
         result.push(trimmed);
         return;
       }
+      inHeaderRun = false;
       if (!buffer) {
         buffer = trimmed;
         return;
