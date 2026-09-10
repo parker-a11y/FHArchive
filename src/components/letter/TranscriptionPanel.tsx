@@ -116,7 +116,7 @@ function PageEditor({
     try {
       await saveCorrections(record.id, text, verify);
       setDirty(false);
-      setCorrectionsSaved(!verify);
+      setCorrectionsSaved(true);
       setHumanVerified(verify);
       onSaved();
       toast.success(verify ? "Marked human verified" : "Corrections saved");
