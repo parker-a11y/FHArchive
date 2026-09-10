@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarRange, Loader2, Sparkles } from "lucide-react";
+import { CalendarRange, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { CustomRecapDialog } from "@/components/recaps/CustomRecapDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchRecaps, formatWeekRange } from "@/lib/recaps";
+import { fetchRecaps, recapKey, recapRangeLabel } from "@/lib/recaps";
 import { generateWeeklyRecap } from "@/lib/recaps.functions";
+
 
 export const Route = createFileRoute("/_authenticated/recaps/")({
   head: () => ({
