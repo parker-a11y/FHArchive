@@ -66,7 +66,18 @@ import {
   sanitizeLabel,
 } from "@/lib/scan-rename";
 import { rotateStoredImage } from "@/lib/rotate";
-import { transcribeScans } from "@/lib/transcription.functions";
+import { transcribeScans, transcribeRecord } from "@/lib/transcription.functions";
+import { isEnvelopePage } from "@/lib/transcription";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Letter } from "@/lib/queries";
 
 type Progress = { total: number; done: number; current: string; stage: string } | null;
