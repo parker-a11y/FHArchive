@@ -164,13 +164,26 @@ async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMateria
           .select("letter_id, field_key, content, status, updated_at")
           .eq("field_key", "quotations")
           .eq("status", "accepted"),
+        "updated_at",
       ).limit(60),
     ]);
 
-
-  const letterRows = (letters ?? []) as any[];
-  const sourceRows = (sources ?? []) as any[];
+  const letterRows = rankByFocus(
+    (letters ?? []) as any[],
+    opts.focus,
+    (l) =>
+      [l.title, l.author, l.recipient, l.origin, l.destination, l.dateline, l.summary_short, l.summary_long, l.historical_notes, (l.tones ?? []).join(" ")]
+        .filter(Boolean)
+        .join(" "),
+  ).slice(0, hardLimit);
+  const sourceRows = rankByFocus(
+    (sources ?? []) as any[],
+    opts.focus,
+    (s) => [s.title, s.creator, s.institution, s.description].filter(Boolean).join(" "),
+  ).slice(0, Math.max(Math.ceil(hardLimit / 3), 10));
   const byId = new Map(letterRows.map((l) => [l.id, l.archive_id]));
+
+
 
   const quotes: { archive_id: string; text: string }[] = [];
   for (const s of (suggestions ?? []) as any[]) {
