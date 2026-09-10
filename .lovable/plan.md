@@ -1,27 +1,39 @@
-# Add "Include envelope scan" option to the email dialog
+# Envelope scans in email + one-tap shareable record links
 
-When emailing record(s) from All Records (or a record page), add a third checkbox alongside "Include scan images" and "Include the transcription": **Include envelope scan**.
+## Answer to the sharing question
 
-## Behavior
+Yes — those `/s/<token>` links are not tied to recaps. Every FH record can have its own public read-only link, created with the **Share** button on the record page. Anyone with the link sees exactly what your recap recipients see (scan, transcription, side-by-side view), no sign-in. Recaps just mint those same links automatically.
 
-- New checkbox: "Include the envelope scan" — shown only when at least one selected record is a letter (hidden for Digital-Source-only emails).
-- Default: **off** — envelope pages are excluded from the email images, so the email shows only the letter scans.
-- When on: envelope scans (front/back) are included in the email images for each letter record, in addition to the letter pages, within the existing image limit (raise limit so letter pages aren't crowded out).
+What's missing today is convenience: you have to open the record page and use the Share dialog. The plan below adds a one-tap way to get a link from the records list and from the email dialog.
+
+## 1. Include envelope scan in emails
+
+In the email dialog (from All Records or a record page), add a third checkbox next to "Include scan images" and "Include the transcription": **Include the envelope scan**.
+
+- Shown only when at least one selected record is a letter.
+- Default: off — envelope pages are left out of the email images.
+- On: envelope front/back scans are included alongside the letter pages.
+
+## 2. One-tap share link, no dashboard trip
+
+- On the All Records table, each row's action group gains a **Copy share link** button (link icon). One click creates the record's public link if it doesn't have one, reuses it if it does, and copies the full `https://fharchive.com/s/<token>` URL to the clipboard with a confirmation toast — ready to paste into a text or email.
+- The same button appears in the email dialog header, so you can grab a link while composing.
+- Records that already have a live link show the link icon filled/highlighted so you can tell at a glance.
+- Links stay revocable exactly as today from the record's Share dialog.
 
 ## Technical details
 
-**`src/components/letter/EmailArchiveDialog.tsx`**
-- Add `includeEnvelope` state (default `false`) and a third checkbox, shown when `recordList.some(r => r.kind === "letter")`.
-- Pass `includeEnvelope` in the `sendArchiveEmail` payload.
+**Email envelope option**
+- `src/components/letter/EmailArchiveDialog.tsx`: add `includeEnvelope` state (default `false`), the checkbox (rendered when any record is a letter), and pass the flag in the `sendArchiveEmail` payload.
+- `src/lib/archive-email.functions.ts`: validate `includeEnvelope?: boolean` and forward into `buildRecords` opts.
+- `src/lib/archive-email.server.ts`: `letterImages()` also selects `label` and `original_filename`; skip files matching `isEnvelopePage(label, original_filename)` from `@/lib/transcription` unless `includeEnvelope` is set. Raise the per-record image cap from 4 to 6 when envelopes are included so letter pages aren't displaced.
 
-**`src/lib/archive-email.functions.ts`**
-- Accept and validate `includeEnvelope?: boolean`; forward into `buildRecords` opts.
-
-**`src/lib/archive-email.server.ts`**
-- `buildRecords` opts gain `includeEnvelope: boolean`.
-- `letterImages(db, letterId, limit, includeEnvelope)`: also select `label` and `original_filename` on `digital_files`; skip files where `isEnvelopePage(label, original_filename)` (from `@/lib/transcription`) is true **unless** `includeEnvelope` is set. When included, keep natural `sort_order` ordering. Raise the per-record image cap from 4 to 6 when envelopes are included so letter pages are not displaced.
+**Share link shortcut**
+- New helper `ensureShareLink(letterId)` — an authenticated server fn reusing the existing `ensureLetterShare` logic in `src/lib/archive-email.server.ts` (reuse enabled record-scope share, otherwise mint a token and flip visibility to `shared`).
+- New small component `CopyShareLinkButton.tsx` calling it, then `navigator.clipboard.writeText(shareUrl(token))` from `src/lib/shares.ts`.
+- Wire into `src/routes/_authenticated/letters/index.tsx` row actions and `EmailArchiveDialog.tsx`.
 
 ## What does not change
 
-- Transcription/images checkboxes, multi-record selection, templates, share links, and the `/emails` history page.
-- No database or storage changes.
+- Share security model, token format, revocation, recap sending, `/emails` history, templates.
+- No database migration.
