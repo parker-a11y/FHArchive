@@ -90,18 +90,27 @@ async function ensureSourceShare(
   return t;
 }
 
-async function letterImages(db: DB, letterId: string, limit: number): Promise<string[]> {
+async function letterImages(
+  db: DB,
+  letterId: string,
+  limit: number,
+  includeEnvelope: boolean,
+): Promise<string[]> {
   if (limit <= 0) return [];
   const [{ data: files }, { data: derivatives }] = await Promise.all([
     db
       .from("digital_files")
-      .select("id, master_path, master_mime, sort_order")
+      .select("id, master_path, master_mime, sort_order, label, original_filename")
       .eq("letter_id", letterId)
       .order("sort_order", { ascending: true }),
     db.from("file_derivatives").select("file_id, kind, status, storage_path").eq("letter_id", letterId),
   ]);
+  const { isEnvelopePage } = await import("@/lib/transcription");
+  const selectable = (files ?? []).filter(
+    (f: any) => includeEnvelope || !isEnvelopePage(f.label, f.original_filename),
+  );
   const urls: string[] = [];
-  for (const f of (files ?? []).slice(0, limit)) {
+  for (const f of selectable.slice(0, limit)) {
     const own = (derivatives ?? []).filter((d: any) => d.file_id === (f as any).id);
     const jpeg = own.find((d: any) => d.kind === "jpeg" && d.status === "complete");
     const viewable = /^image\/(jpeg|png|webp|gif)$/i.test(String((f as any).master_mime ?? ""));
