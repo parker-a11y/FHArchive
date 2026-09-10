@@ -10,6 +10,8 @@ export type SendArchiveEmailInput = {
   records: { kind: "letter" | "source"; id: string }[];
   includeTranscription?: boolean;
   includeImages?: boolean;
+  /** Include envelope scans among the record images. */
+  includeEnvelope?: boolean;
   /** Ask Francis result, sent as its own block so it is never lost in the note. */
   research?: {
     question?: string | null;
