@@ -612,13 +612,63 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 )}
               </div>
               <Button
-                onClick={confirmUploadComplete}
-                disabled={!!generating || !!progress || pending.length === 0}
+                onClick={() =>
+                  unnamed.length ? setConfirmDialogOpen(true) : confirmUploadComplete()
+                }
+                disabled={
+                  !!generating || !!progress || autoTranscribing || pending.length === 0
+                }
               >
-                <ShieldCheck className="mr-1.5 size-4" />
-                Confirm Upload Complete
+                {autoTranscribing ? (
+                  <Loader2 className="mr-1.5 size-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="mr-1.5 size-4" />
+                )}
+                {autoTranscribing ? "Transcribing…" : "Confirm Upload Complete"}
               </Button>
             </div>
+
+            <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    {unnamed.length} scan{unnamed.length === 1 ? "" : "s"} have no label
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-2">
+                      <p>
+                        Labels such as “Envelope Front” or “Sheet 1 Front” describe what each
+                        image shows. Unlabelled scans will simply be numbered in order.
+                      </p>
+                      <ul className="list-disc pl-5 text-xs">
+                        {unnamed.slice(0, 4).map((f) => (
+                          <li key={f.id}>{f.original_filename}</li>
+                        ))}
+                        {unnamed.length > 4 && <li>and {unnamed.length - 4} more</li>}
+                      </ul>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction
+                    onClick={() => {
+                      setConfirmDialogOpen(false);
+                      jumpToScan(unnamed[0].id);
+                    }}
+                  >
+                    Go back and label
+                  </AlertDialogAction>
+                  <AlertDialogCancel
+                    onClick={() => {
+                      setConfirmDialogOpen(false);
+                      void confirmUploadComplete();
+                    }}
+                  >
+                    Continue anyway
+                  </AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <p className="mt-2 text-xs text-muted-foreground">
               Confirming is not a lock — you can add, replace or rename scans later and confirm
               again. Only new or changed masters are processed.
