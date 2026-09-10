@@ -51,6 +51,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
       .map((r) => ({ kind: r.kind === "source" ? ("source" as const) : ("letter" as const), id: String(r.id) })),
     includeTranscription: Boolean(data.includeTranscription),
     includeImages: data.includeImages !== false,
+    includeEnvelope: Boolean(data.includeEnvelope),
     thumbnails: Boolean(data.thumbnails),
     research: data.research?.answer
       ? {
@@ -80,6 +81,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     const records = await buildRecords(db as never, context.userId, data.records, {
       includeTranscription: data.includeTranscription,
       includeImages: data.includeImages,
+      includeEnvelope: data.includeEnvelope,
     });
 
     /**
