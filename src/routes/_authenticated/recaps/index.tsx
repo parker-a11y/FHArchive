@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarRange, Loader2, Sparkles } from "lucide-react";
+import { CalendarRange, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { CustomRecapDialog } from "@/components/recaps/CustomRecapDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchRecaps, formatWeekRange } from "@/lib/recaps";
+import { fetchRecaps, recapKey, recapRangeLabel } from "@/lib/recaps";
 import { generateWeeklyRecap } from "@/lib/recaps.functions";
+
 
 export const Route = createFileRoute("/_authenticated/recaps/")({
   head: () => ({
@@ -40,6 +43,7 @@ function RecapsIndex() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const generate = useServerFn(generateWeeklyRecap);
+  const [customOpen, setCustomOpen] = useState(false);
 
   const { data: recaps = [], isLoading } = useQuery({ queryKey: ["weekly-recaps"], queryFn: fetchRecaps });
 
@@ -60,13 +64,20 @@ function RecapsIndex() {
         description="What the archive uncovered, week by week — the story behind the records."
         actions={
           canReadArchive ? (
-            <Button className="gap-2" onClick={() => run.mutate()} disabled={run.isPending}>
-              {run.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-archive-gold" />}
-              GENERATE WEEKLY RECAP NOW
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button className="gap-2" onClick={() => run.mutate()} disabled={run.isPending}>
+                {run.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-archive-gold" />}
+                GENERATE WEEKLY RECAP NOW
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => setCustomOpen(true)}>
+                <Wand2 className="size-4 text-archive-gold" />
+                GENERATE CUSTOM RECAP
+              </Button>
+            </div>
           ) : undefined
         }
       />
+      <CustomRecapDialog open={customOpen} onOpenChange={setCustomOpen} />
       <div className="p-4 sm:p-8">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -83,11 +94,16 @@ function RecapsIndex() {
               <Link
                 key={r.id}
                 to="/recaps/$weekStart"
-                params={{ weekStart: r.week_start }}
+                params={{ weekStart: recapKey(r) }}
                 className="block rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg"
               >
                 <div className="mb-1 flex flex-wrap items-center gap-3">
-                  <span className="field-label">{formatWeekRange(r.week_start, r.week_end)}</span>
+                  <span className="field-label">{recapRangeLabel(r)}</span>
+                  {r.kind === "custom" && (
+                    <span className="rounded-full bg-archive-gold/15 px-2 py-0.5 text-[11px] font-medium text-archive-gold">
+                      Custom
+                    </span>
+                  )}
                   {r.status !== "published" && (
                     <span className="rounded-full bg-tone-ochre-soft px-2 py-0.5 text-[11px] font-medium text-tone-ochre">
                       Draft
@@ -107,3 +123,4 @@ function RecapsIndex() {
     </>
   );
 }
+

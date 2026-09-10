@@ -45,10 +45,12 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   fetchRecap,
   formatWeekRange,
+  recapRangeLabel,
   saveRecapEdits,
   setRecapStatus,
   signRecapImage,
 } from "@/lib/recaps";
+
 import { fetchContacts } from "@/lib/archive-email";
 import { fetchRecapShares, setRecapShareEnabled } from "@/lib/recaps";
 import {
@@ -238,8 +240,13 @@ function RecapPage() {
   return (
     <>
       <PageHeader
-        title="Francis Files — Weekly Recap"
-        description={`Week of ${formatWeekRange(recap.week_start, recap.week_end)}`}
+        title={recap.kind === "custom" ? "Francis Files — Custom Recap" : "Francis Files — Weekly Recap"}
+        description={
+          recap.kind === "custom"
+            ? recapRangeLabel(recap)
+            : `Week of ${formatWeekRange(recap.week_start, recap.week_end)}`
+        }
+
         actions={
           isAdmin ? (
             <div className="flex flex-wrap gap-2">
@@ -272,19 +279,22 @@ function RecapPage() {
                     {recap.status === "published" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     {recap.status === "published" ? "Unpublish" : "Publish"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => (recap.manually_edited ? setConfirmRegen(true) : regenerate.mutate())}
-                    disabled={regenerate.isPending}
-                  >
-                    {regenerate.isPending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-4" />
-                    )}
-                    Regenerate
-                  </Button>
+                  {recap.kind !== "custom" && (
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => (recap.manually_edited ? setConfirmRegen(true) : regenerate.mutate())}
+                      disabled={regenerate.isPending}
+                    >
+                      {regenerate.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-4" />
+                      )}
+                      Regenerate
+                    </Button>
+                  )}
+
                 </>
               )}
             </div>

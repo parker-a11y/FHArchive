@@ -87,52 +87,103 @@ type WeekMaterial = {
   archiveIds: string[];
 };
 
-async function gatherWeek(admin: any, weekStart: string, weekEnd: string): Promise<WeekMaterial> {
-  const from = `${weekStart}T00:00:00Z`;
-  const to = `${weekEnd}T23:59:59Z`;
-  const touched = (q: any) => q.or(`and(created_at.gte.${from},created_at.lte.${to}),and(updated_at.gte.${from},updated_at.lte.${to})`);
+export type GatherOptions = {
+  /** ISO date (inclusive) or null for "everything in the archive". */
+  fromDate: string | null;
+  toDate: string | null;
+  /** "catalogued" = when the record was worked on; "written" = the record's own date. */
+  dateBasis: "catalogued" | "written";
+  limit: number;
+  focus?: string;
+};
+
+/** Ranks records against the focus text so the most relevant survive the limit. */
+function rankByFocus<T extends Record<string, any>>(rows: T[], focus: string | undefined, textOf: (r: T) => string) {
+  if (!focus?.trim()) return rows;
+  const terms = Array.from(
+    new Set(
+      focus
+        .toLowerCase()
+        .split(/[^a-z0-9']+/i)
+        .filter((t) => t.length > 2),
+    ),
+  ).slice(0, 25);
+  if (!terms.length) return rows;
+  const scored = rows.map((r) => {
+    const hay = textOf(r).toLowerCase();
+    let score = terms.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);
+    if (r["starred"]) score += 0.5;
+    return { r, score };
+  });
+  const hits = scored.filter((s) => s.score > 0);
+  const base = hits.length ? hits : scored;
+  return base.sort((a, b) => b.score - a.score).map((s) => s.r);
+}
+
+async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMaterial> {
+  const from = opts.fromDate ? `${opts.fromDate}T00:00:00Z` : null;
+  const to = opts.toDate ? `${opts.toDate}T23:59:59Z` : null;
+  const hardLimit = Math.min(Math.max(opts.limit, 1), 200);
+
+  /** Applies the chosen date window to a query, or leaves it wide open. */
+  const windowed = (q: any, writtenColumn: string | null) => {
+    if (!from || !to) return q;
+    if (opts.dateBasis === "written" && writtenColumn)
+      return q.gte(writtenColumn, opts.fromDate).lte(writtenColumn, opts.toDate);
+    return q.or(
+      `and(created_at.gte.${from},created_at.lte.${to}),and(updated_at.gte.${from},updated_at.lte.${to})`,
+    );
+  };
+  const stamped = (q: any, column = "created_at") =>
+    from && to ? q.gte(column, from).lte(column, to) : q;
+
 
   const [{ data: letters }, { data: sources }, { data: transcriptions }, { data: files }, { data: suggestions }] =
     await Promise.all([
-      touched(
+      windowed(
         admin
           .from("letters")
           .select(
             "id, archive_id, title, record_type, subtype, period, date_as_written, dateline, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status, created_at, updated_at",
           ),
-      ).order("fh_seq", { ascending: true }).limit(120),
-      touched(
+        "sort_date",
+      ).order("fh_seq", { ascending: true }).limit(Math.max(hardLimit * 3, 120)),
+      windowed(
         admin
           .from("digital_sources")
           .select(
             "id, ds_id, title, source_type, creator, institution, original_date, normalized_date, url, description, starred, created_at, updated_at",
           ),
-      ).order("ds_seq", { ascending: true }).limit(60),
-      admin
-        .from("scan_transcriptions")
-        .select("id, letter_id", { count: "exact" })
-        .gte("created_at", from)
-        .lte("created_at", to)
-        .limit(1000),
-      admin
-        .from("digital_files")
-        .select("id, letter_id", { count: "exact" })
-        .gte("created_at", from)
-        .lte("created_at", to)
-        .limit(1000),
-      admin
-        .from("ai_suggestions")
-        .select("letter_id, field_key, content, status, updated_at")
-        .eq("field_key", "quotations")
-        .eq("status", "accepted")
-        .gte("updated_at", from)
-        .lte("updated_at", to)
-        .limit(60),
+        "normalized_date",
+      ).order("ds_seq", { ascending: true }).limit(Math.max(Math.ceil(hardLimit / 2), 60)),
+      stamped(admin.from("scan_transcriptions").select("id, letter_id", { count: "exact" })).limit(1000),
+      stamped(admin.from("digital_files").select("id, letter_id", { count: "exact" })).limit(1000),
+      stamped(
+        admin
+          .from("ai_suggestions")
+          .select("letter_id, field_key, content, status, updated_at")
+          .eq("field_key", "quotations")
+          .eq("status", "accepted"),
+        "updated_at",
+      ).limit(60),
     ]);
 
-  const letterRows = (letters ?? []) as any[];
-  const sourceRows = (sources ?? []) as any[];
+  const letterRows = rankByFocus(
+    (letters ?? []) as any[],
+    opts.focus,
+    (l) =>
+      [l.title, l.author, l.recipient, l.origin, l.destination, l.dateline, l.summary_short, l.summary_long, l.historical_notes, (l.tones ?? []).join(" ")]
+        .filter(Boolean)
+        .join(" "),
+  ).slice(0, hardLimit);
+  const sourceRows = rankByFocus(
+    (sources ?? []) as any[],
+    opts.focus,
+    (s) => [s.title, s.creator, s.institution, s.description].filter(Boolean).join(" "),
+  ).slice(0, Math.max(Math.ceil(hardLimit / 3), 10));
   const byId = new Map(letterRows.map((l) => [l.id, l.archive_id]));
+
+
 
   const quotes: { archive_id: string; text: string }[] = [];
   for (const s of (suggestions ?? []) as any[]) {
@@ -206,6 +257,25 @@ async function gatherWeek(admin: any, weekStart: string, weekEnd: string): Promi
     archiveIds,
   };
 }
+
+/** The weekly recap keeps its original behaviour: everything touched that week. */
+function gatherWeek(admin: any, weekStart: string, weekEnd: string) {
+  return gatherRange(admin, {
+    fromDate: weekStart,
+    toDate: weekEnd,
+    dateBasis: "catalogued",
+    limit: 120,
+  });
+}
+
+/** Recaps are addressed either by their week (weekly) or by their slug (custom). */
+function byKey(query: any, key: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(key)
+    ? query.eq("week_start", key).eq("kind", "weekly")
+    : query.eq("slug", key);
+}
+
+
 
 /** Prior recaps + collection-wide entity frequencies give the model continuity. */
 async function gatherMemory(admin: any, weekStart: string) {
@@ -429,11 +499,14 @@ export async function runWeeklyRecap(
     .from("weekly_recaps")
     .select("id, status")
     .eq("week_start", weekStart)
+    .eq("kind", "weekly")
     .maybeSingle();
 
   const row = {
+    kind: "weekly",
     week_start: weekStart,
     week_end: weekEnd,
+
     title: draft.title,
     lede: draft.lede,
     body_md: draft.body_md,
@@ -468,25 +541,26 @@ You are now REVISING an existing recap, not rewriting it from scratch. Keep the 
  * ("also mention the Christmas party") without regenerating the whole week.
  */
 export async function refineWeeklyRecap(
-  weekStart: string,
+  key: string,
   instructions: string,
 ): Promise<RecapRunResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const admin = supabaseAdmin as any;
 
-  const { data: recap, error: loadError } = await admin
-    .from("weekly_recaps")
-    .select("id, week_start, week_end, title, lede, body_md, related_ids")
-    .eq("week_start", weekStart)
-    .maybeSingle();
+  const { data: recap, error: loadError } = await byKey(
+    admin.from("weekly_recaps").select("id, week_start, week_end, title, lede, body_md, related_ids, kind"),
+    key,
+  ).maybeSingle();
   if (loadError) throw new Error(`Loading the recap failed: ${loadError.message}`);
   if (!recap) throw new Error("There is no recap for that week yet — generate one first.");
 
+  const weekStart: string = recap.week_start;
   const weekEnd: string = recap.week_end;
   const [material, memory] = await Promise.all([
     gatherWeek(admin, weekStart, weekEnd),
     gatherMemory(admin, weekStart),
   ]);
+
 
   const prompt = `WEEK COVERED: ${formatRange(weekStart, weekEnd)}
 
@@ -542,4 +616,119 @@ Return a single JSON object:
   if (error) throw new Error(`Saving the revised recap failed: ${error.message}`);
 
   return { status: "ok", week_start: weekStart, week_end: weekEnd, id: recap.id };
+}
+
+// -------------------------------------------------------------- custom recap
+
+export type CustomRecapParams = {
+  /** null on both = the whole archive. */
+  fromDate: string | null;
+  toDate: string | null;
+  dateBasis: "catalogued" | "written";
+  limit: number;
+  detail: "brief" | "standard" | "deep";
+  focus?: string;
+  audience?: string;
+  instructions?: string;
+};
+
+const DETAIL_GUIDE: Record<CustomRecapParams["detail"], string> = {
+  brief: "Keep it short — roughly 300-400 words in total.",
+  standard: "Roughly one readable page, about 700-900 words.",
+  deep: "A longer piece, about 1400-1800 words, with more evidence and more quoted material.",
+};
+
+/** Human-readable label for the period a custom recap covers. */
+function rangeLabelOf(from: string | null, to: string | null) {
+  if (!from || !to) return "The whole archive";
+  return formatRange(from, to);
+}
+
+/**
+ * Generates a one-off recap over any date range (or the whole archive) using
+ * the archivist's own instructions. Always inserts a new row — it never
+ * replaces a weekly recap.
+ */
+export async function runCustomRecap(params: CustomRecapParams): Promise<RecapRunResult & { slug?: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const admin = supabaseAdmin as any;
+
+  const material = await gatherRange(admin, {
+    fromDate: params.fromDate,
+    toDate: params.toDate,
+    dateBasis: params.dateBasis,
+    limit: params.limit,
+    focus: params.focus,
+  });
+  const memory = await gatherMemory(admin, params.toDate ?? new Date().toISOString().slice(0, 10));
+
+  const label = rangeLabelOf(params.fromDate, params.toDate);
+  const prompt = `PERIOD COVERED: ${label} (${
+    params.dateBasis === "written" ? "selected by the date each record was written" : "selected by when the records were catalogued"
+  })
+
+MATERIAL SELECTED: ${material.counts.records} FH records and ${material.counts.sources} digital sources.
+
+${params.focus ? `FOCUS REQUESTED BY THE ARCHIVIST: ${params.focus}\n` : ""}${
+    params.audience ? `AUDIENCE / TONE: ${params.audience}\n` : ""
+  }${params.instructions ? `ADDITIONAL INSTRUCTIONS: ${params.instructions}\n` : ""}
+LENGTH: ${DETAIL_GUIDE[params.detail]}
+
+ARCHIVE MATERIAL
+${materialText(material) || "(no records matched this request)"}
+
+QUOTATIONS ACCEPTED IN THIS PERIOD
+${material.quotes.map((q) => `${q.archive_id}: "${q.text}"`).join("\n") || "(none)"}
+
+COLLECTION SO FAR (frequency across the whole indexed archive, ${memory.collection.total} records)
+People: ${memory.collection.people.join("; ") || "—"}
+Places: ${memory.collection.places.join("; ") || "—"}
+Events: ${memory.collection.events.join("; ") || "—"}
+Organizations: ${memory.collection.organizations.join("; ") || "—"}
+
+Write the recap as a single JSON object:
+{
+  "title": "a short, specific, inviting headline (no dates)",
+  "lede": "one sentence, max 220 characters, previewing this recap for the list",
+  "body_md": "markdown using '## ' headings that suit the request and the focus. Story-first paragraphs and short bullets only; cite every archival fact with its record number, and format quotes as: > \\"quoted text\\" — FH0087.",
+  "related_ids": ["every record number actually cited"],
+  "image_caption": "one short caption for the featured image, or null"
+}
+
+If the material does not support the request, say so honestly instead of padding.`;
+
+  const parsed = parseJson(await callModel(SYSTEM, prompt));
+  const known = new Set(material.archiveIds);
+  const today = new Date().toISOString().slice(0, 10);
+  const slug = `custom-${today}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const row = {
+    kind: "custom",
+    slug,
+    range_label: label,
+    params,
+    week_start: params.fromDate ?? material.letters.at(-1)?.sort_date ?? today,
+    week_end: params.toDate ?? today,
+    title: String(parsed.title ?? "").trim().slice(0, 160) || "Custom Recap",
+    lede: String(parsed.lede ?? "").trim().slice(0, 400),
+    body_md: String(parsed.body_md ?? "").trim(),
+    related_ids: (Array.isArray(parsed.related_ids) ? parsed.related_ids : [])
+      .map((x: any) => String(x).trim().toUpperCase())
+      .filter((x: string) => known.has(x))
+      .slice(0, 40),
+    image_bucket: material.image?.bucket ?? null,
+    image_path: material.image?.path ?? null,
+    image_archive_id: material.image?.archive_id ?? null,
+    image_caption: parsed.image_caption ? String(parsed.image_caption).slice(0, 240) : (material.image?.caption ?? null),
+    stats: material.counts,
+    model: MODEL,
+    manually_edited: false,
+    generated_at: new Date().toISOString(),
+    status: "published",
+  };
+
+  const { data, error } = await admin.from("weekly_recaps").insert(row).select("id, week_start, week_end").single();
+  if (error) throw new Error(`Saving the recap failed: ${error.message}`);
+
+  return { status: "ok", id: data?.id, slug, week_start: data?.week_start, week_end: data?.week_end };
 }
