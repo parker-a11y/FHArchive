@@ -279,19 +279,22 @@ function RecapPage() {
                     {recap.status === "published" ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     {recap.status === "published" ? "Unpublish" : "Publish"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => (recap.manually_edited ? setConfirmRegen(true) : regenerate.mutate())}
-                    disabled={regenerate.isPending}
-                  >
-                    {regenerate.isPending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-4" />
-                    )}
-                    Regenerate
-                  </Button>
+                  {recap.kind !== "custom" && (
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => (recap.manually_edited ? setConfirmRegen(true) : regenerate.mutate())}
+                      disabled={regenerate.isPending}
+                    >
+                      {regenerate.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-4" />
+                      )}
+                      Regenerate
+                    </Button>
+                  )}
+
                 </>
               )}
             </div>
