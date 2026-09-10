@@ -2,6 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type WeeklyRecap = {
   id: string;
+  kind: string;
+  slug: string | null;
+  range_label: string | null;
   week_start: string;
   week_end: string;
   title: string;
@@ -21,27 +24,37 @@ export type WeeklyRecap = {
 };
 
 const COLUMNS =
-  "id, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_archive_id, image_caption, stats, model, status, manually_edited, generated_at, updated_at";
+  "id, kind, slug, range_label, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_archive_id, image_caption, stats, model, status, manually_edited, generated_at, updated_at";
+
+/** The address a recap lives at: its week for weekly recaps, its slug for custom ones. */
+export function recapKey(r: WeeklyRecap): string {
+  return r.kind === "custom" && r.slug ? r.slug : r.week_start;
+}
+
+/** The period a recap covers, in words. */
+export function recapRangeLabel(r: WeeklyRecap): string {
+  return r.range_label || formatWeekRange(r.week_start, r.week_end);
+}
 
 export async function fetchRecaps(): Promise<WeeklyRecap[]> {
   const { data, error } = await supabase
     .from("weekly_recaps")
     .select(COLUMNS)
-    .order("week_start", { ascending: false })
+    .order("generated_at", { ascending: false })
     .limit(200);
   if (error) throw error;
   return (data ?? []) as unknown as WeeklyRecap[];
 }
 
-export async function fetchRecap(weekStart: string): Promise<WeeklyRecap | null> {
-  const { data, error } = await supabase
-    .from("weekly_recaps")
-    .select(COLUMNS)
-    .eq("week_start", weekStart)
-    .maybeSingle();
+export async function fetchRecap(key: string): Promise<WeeklyRecap | null> {
+  const isWeek = /^\d{4}-\d{2}-\d{2}$/.test(key);
+  let query = supabase.from("weekly_recaps").select(COLUMNS);
+  query = isWeek ? query.eq("week_start", key).eq("kind", "weekly") : query.eq("slug", key);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return (data ?? null) as unknown as WeeklyRecap | null;
 }
+
 
 /** Saved edits always mark the recap as manually edited, so regeneration can warn. */
 export async function saveRecapEdits(
