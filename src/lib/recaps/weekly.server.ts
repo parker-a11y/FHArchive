@@ -541,25 +541,26 @@ You are now REVISING an existing recap, not rewriting it from scratch. Keep the 
  * ("also mention the Christmas party") without regenerating the whole week.
  */
 export async function refineWeeklyRecap(
-  weekStart: string,
+  key: string,
   instructions: string,
 ): Promise<RecapRunResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const admin = supabaseAdmin as any;
 
-  const { data: recap, error: loadError } = await admin
-    .from("weekly_recaps")
-    .select("id, week_start, week_end, title, lede, body_md, related_ids")
-    .eq("week_start", weekStart)
-    .maybeSingle();
+  const { data: recap, error: loadError } = await byKey(
+    admin.from("weekly_recaps").select("id, week_start, week_end, title, lede, body_md, related_ids, kind"),
+    key,
+  ).maybeSingle();
   if (loadError) throw new Error(`Loading the recap failed: ${loadError.message}`);
   if (!recap) throw new Error("There is no recap for that week yet — generate one first.");
 
+  const weekStart: string = recap.week_start;
   const weekEnd: string = recap.week_end;
   const [material, memory] = await Promise.all([
     gatherWeek(admin, weekStart, weekEnd),
     gatherMemory(admin, weekStart),
   ]);
+
 
   const prompt = `WEEK COVERED: ${formatRange(weekStart, weekEnd)}
 
