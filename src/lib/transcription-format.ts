@@ -24,7 +24,7 @@ function isStructural(line: string, index: number, lines: string[], blockIndex: 
   // Greetings belong at the opening, while sign-offs belong at the end. Applying
   // these patterns to every line mistakes ordinary prose such as "hi again" or
   // "love the new house" for structural text.
-  if (index <= 2 && SALUTATION.test(t) && t.length <= 60) return true;
+  if (index <= 2 && SALUTATION.test(t) && t.length <= 60 && !/[.!?]$/.test(t)) return true;
   if (index >= lines.length - 3 && CLOSING.test(t)) return true;
   if (/^[-—–*_=]{2,}$/.test(t)) return true;
   if (/^\[.*\]$/.test(t)) return true; // editorial notes like [illegible]
