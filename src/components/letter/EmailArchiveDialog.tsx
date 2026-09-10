@@ -335,6 +335,16 @@ export function EmailArchiveDialog({
               />
               Include scan images in the email
             </label>
+            {hasLetter && (
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={includeEnvelope}
+                  disabled={!includeImages}
+                  onCheckedChange={(v) => setIncludeEnvelope(Boolean(v))}
+                />
+                Include the envelope scan
+              </label>
+            )}
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={includeTranscription}
