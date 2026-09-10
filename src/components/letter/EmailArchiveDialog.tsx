@@ -238,7 +238,11 @@ export function EmailArchiveDialog({
                 ? `Sends ${identifiers} as a formatted email. Scans travel as an unlisted archive link you can switch off later — file attachments are not supported.`
                 : "Sends this as a formatted email from the archive.")}
           </DialogDescription>
-
+          {single?.kind === "letter" && (
+            <div className="pt-1">
+              <CopyShareLinkButton letterId={single.id} size="sm" label="Copy share link" />
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">

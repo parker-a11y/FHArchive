@@ -1070,8 +1070,14 @@ function LettersTable() {
                                 </button>
                               }
                             />
+                           )}
+                          {isAdmin && (
+                            <CopyShareLinkButton
+                              letterId={l.id}
+                              className="size-6 rounded-full border border-border/60 bg-muted/40 p-0 text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                            />
                           )}
-                        </span>
+                         </span>
                       ) : isEditing ? (
                         <input
                           autoFocus
