@@ -123,7 +123,7 @@ function rankByFocus<T extends Record<string, any>>(rows: T[], focus: string | u
 async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMaterial> {
   const from = opts.fromDate ? `${opts.fromDate}T00:00:00Z` : null;
   const to = opts.toDate ? `${opts.toDate}T23:59:59Z` : null;
-  const hardLimit = Math.min(Math.max(opts.limit, 1), 200);
+  const hardLimit = Math.min(Math.max(opts.limit, 1), 400);
 
   /** Applies the chosen date window to a query, or leaves it wide open. */
   const windowed = (q: any, writtenColumn: string | null) => {
@@ -335,8 +335,13 @@ Hard rules:
 function materialText(m: WeekMaterial) {
   const indexById = new Map(m.indexRows.map((r) => [r.archive_id, r]));
   const blocks: string[] = [];
-  for (const l of m.letters) {
+  // Records beyond this point get their body text trimmed hard so large
+  // selections (whole-archive recaps) stay within the model's input limit;
+  // focus-ranked order means the most relevant records keep full text first.
+  const FULL_TEXT_COUNT = 60;
+  m.letters.forEach((l, i) => {
     const idx = indexById.get(l.archive_id);
+    const bodyLimit = i < FULL_TEXT_COUNT ? 6000 : 800;
     blocks.push(
       [
         `RECORD ${l.archive_id}`,
