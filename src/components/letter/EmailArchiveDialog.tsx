@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { fetchContacts } from "@/lib/archive-email";
 import { sendArchiveEmail } from "@/lib/archive-email.functions";
 import {
@@ -82,6 +83,8 @@ export function EmailArchiveDialog({
   const [message, setMessage] = useState(defaultMessage ?? "");
   const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
+  const [includeEnvelope, setIncludeEnvelope] = useState(false);
+  const hasLetter = recordList.some((r) => r.kind === "letter");
 
 
   const { data: contacts = [] } = useQuery({
