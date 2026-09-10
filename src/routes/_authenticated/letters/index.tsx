@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { DateLink } from "@/components/DateLink";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1070,8 +1071,14 @@ function LettersTable() {
                                 </button>
                               }
                             />
+                           )}
+                          {isAdmin && (
+                            <CopyShareLinkButton
+                              letterId={l.id}
+                              className="size-6 rounded-full border border-border/60 bg-muted/40 p-0 text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                            />
                           )}
-                        </span>
+                         </span>
                       ) : isEditing ? (
                         <input
                           autoFocus

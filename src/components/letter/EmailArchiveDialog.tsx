@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { fetchContacts } from "@/lib/archive-email";
 import { sendArchiveEmail } from "@/lib/archive-email.functions";
 import {
@@ -82,6 +83,8 @@ export function EmailArchiveDialog({
   const [message, setMessage] = useState(defaultMessage ?? "");
   const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
+  const [includeEnvelope, setIncludeEnvelope] = useState(false);
+  const hasLetter = recordList.some((r) => r.kind === "letter");
 
 
   const { data: contacts = [] } = useQuery({
@@ -191,6 +194,7 @@ export function EmailArchiveDialog({
           records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
           includeTranscription,
           includeImages,
+          includeEnvelope: includeImages && includeEnvelope,
           research: research?.answer ? research : null,
           thumbnails: Boolean(thumbnails),
         },
@@ -238,7 +242,11 @@ export function EmailArchiveDialog({
                 ? `Sends ${identifiers} as a formatted email. Scans travel as an unlisted archive link you can switch off later — file attachments are not supported.`
                 : "Sends this as a formatted email from the archive.")}
           </DialogDescription>
-
+          {single?.kind === "letter" && (
+            <div className="pt-1">
+              <CopyShareLinkButton letterId={single.id} size="sm" label="Copy share link" />
+            </div>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
@@ -327,6 +335,16 @@ export function EmailArchiveDialog({
               />
               Include scan images in the email
             </label>
+            {hasLetter && (
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={includeEnvelope}
+                  disabled={!includeImages}
+                  onCheckedChange={(v) => setIncludeEnvelope(Boolean(v))}
+                />
+                Include the envelope scan
+              </label>
+            )}
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={includeTranscription}

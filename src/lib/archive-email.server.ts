@@ -90,18 +90,27 @@ async function ensureSourceShare(
   return t;
 }
 
-async function letterImages(db: DB, letterId: string, limit: number): Promise<string[]> {
+async function letterImages(
+  db: DB,
+  letterId: string,
+  limit: number,
+  includeEnvelope: boolean,
+): Promise<string[]> {
   if (limit <= 0) return [];
   const [{ data: files }, { data: derivatives }] = await Promise.all([
     db
       .from("digital_files")
-      .select("id, master_path, master_mime, sort_order")
+      .select("id, master_path, master_mime, sort_order, label, original_filename")
       .eq("letter_id", letterId)
       .order("sort_order", { ascending: true }),
     db.from("file_derivatives").select("file_id, kind, status, storage_path").eq("letter_id", letterId),
   ]);
+  const { isEnvelopePage } = await import("@/lib/transcription");
+  const selectable = (files ?? []).filter(
+    (f: any) => includeEnvelope || !isEnvelopePage(f.label, f.original_filename),
+  );
   const urls: string[] = [];
-  for (const f of (files ?? []).slice(0, limit)) {
+  for (const f of selectable.slice(0, limit)) {
     const own = (derivatives ?? []).filter((d: any) => d.file_id === (f as any).id);
     const jpeg = own.find((d: any) => d.kind === "jpeg" && d.status === "complete");
     const viewable = /^image\/(jpeg|png|webp|gif)$/i.test(String((f as any).master_mime ?? ""));
@@ -137,10 +146,10 @@ export async function buildRecords(
   db: DB,
   ownerId: string,
   refs: EmailRecordRef[],
-  opts: { includeTranscription: boolean; includeImages: boolean },
+  opts: { includeTranscription: boolean; includeImages: boolean; includeEnvelope?: boolean },
 ): Promise<BuiltRecord[]> {
   const out: BuiltRecord[] = [];
-  const imageLimit = opts.includeImages ? 4 : 0;
+  const imageLimit = opts.includeImages ? (opts.includeEnvelope ? 6 : 4) : 0;
 
   for (const ref of refs) {
     if (ref.kind === "letter") {
@@ -168,7 +177,7 @@ export async function buildRecords(
           : null,
         fff: Boolean(row['starred']),
         url: `${PUBLIC_SITE_URL}/s/${t}`,
-        images: await letterImages(db, ref.id, imageLimit),
+        images: await letterImages(db, ref.id, imageLimit, Boolean(opts.includeEnvelope)),
       });
     } else {
       const { data: s } = await db.from("digital_sources").select("*").eq("id", ref.id).maybeSingle();
