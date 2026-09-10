@@ -258,6 +258,25 @@ async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMateria
   };
 }
 
+/** The weekly recap keeps its original behaviour: everything touched that week. */
+function gatherWeek(admin: any, weekStart: string, weekEnd: string) {
+  return gatherRange(admin, {
+    fromDate: weekStart,
+    toDate: weekEnd,
+    dateBasis: "catalogued",
+    limit: 120,
+  });
+}
+
+/** Recaps are addressed either by their week (weekly) or by their slug (custom). */
+function byKey(query: any, key: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(key)
+    ? query.eq("week_start", key).eq("kind", "weekly")
+    : query.eq("slug", key);
+}
+
+
+
 /** Prior recaps + collection-wide entity frequencies give the model continuity. */
 async function gatherMemory(admin: any, weekStart: string) {
   const [{ data: prior }, { data: allIndex }] = await Promise.all([
