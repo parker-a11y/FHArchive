@@ -120,11 +120,11 @@ export function CustomRecapDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="field-label">Records to use (max 120)</Label>
+              <Label className="field-label">Records to use (max 400)</Label>
               <Input
                 type="number"
                 min={5}
-                max={120}
+                max={400}
                 value={limit}
                 onChange={(e) => setLimit(e.target.value)}
               />

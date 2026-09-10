@@ -123,7 +123,7 @@ function rankByFocus<T extends Record<string, any>>(rows: T[], focus: string | u
 async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMaterial> {
   const from = opts.fromDate ? `${opts.fromDate}T00:00:00Z` : null;
   const to = opts.toDate ? `${opts.toDate}T23:59:59Z` : null;
-  const hardLimit = Math.min(Math.max(opts.limit, 1), 200);
+  const hardLimit = Math.min(Math.max(opts.limit, 1), 400);
 
   /** Applies the chosen date window to a query, or leaves it wide open. */
   const windowed = (q: any, writtenColumn: string | null) => {
@@ -147,7 +147,7 @@ async function gatherRange(admin: any, opts: GatherOptions): Promise<WeekMateria
             "id, archive_id, title, record_type, subtype, period, date_as_written, dateline, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status, created_at, updated_at",
           ),
         "sort_date",
-      ).order("fh_seq", { ascending: true }).limit(Math.max(hardLimit * 3, 120)),
+      ).order("fh_seq", { ascending: true }).limit(Math.min(Math.max(hardLimit * 3, 120), 1000)),
       windowed(
         admin
           .from("digital_sources")
@@ -335,8 +335,13 @@ Hard rules:
 function materialText(m: WeekMaterial) {
   const indexById = new Map(m.indexRows.map((r) => [r.archive_id, r]));
   const blocks: string[] = [];
-  for (const l of m.letters) {
+  // Records beyond this point get their body text trimmed hard so large
+  // selections (whole-archive recaps) stay within the model's input limit;
+  // focus-ranked order means the most relevant records keep full text first.
+  const FULL_TEXT_COUNT = 60;
+  m.letters.forEach((l, i) => {
     const idx = indexById.get(l.archive_id);
+    const bodyLimit = i < FULL_TEXT_COUNT ? 6000 : 800;
     blocks.push(
       [
         `RECORD ${l.archive_id}`,
@@ -361,12 +366,12 @@ function materialText(m: WeekMaterial) {
         l.summary_long ? `Detail: ${String(l.summary_long).slice(0, 1200)}` : "",
         l.historical_notes ? `Historical notes: ${String(l.historical_notes).slice(0, 800)}` : "",
         l.research_notes ? `Research notes: ${String(l.research_notes).slice(0, 800)}` : "",
-        idx?.body ? `TEXT:\n${String(idx.body).slice(0, 6000)}` : "",
+        idx?.body ? `TEXT:\n${String(idx.body).slice(0, bodyLimit)}` : "",
       ]
         .filter(Boolean)
         .join("\n"),
     );
-  }
+  });
   for (const s of m.sources) {
     const idx = indexById.get(s.ds_id);
     blocks.push(
@@ -386,7 +391,7 @@ function materialText(m: WeekMaterial) {
         .join("\n"),
     );
   }
-  return blocks.join("\n\n---\n\n").slice(0, 160000);
+  return blocks.join("\n\n---\n\n").slice(0, 240000);
 }
 
 export type RecapDraft = {

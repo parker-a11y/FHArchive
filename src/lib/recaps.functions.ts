@@ -65,7 +65,7 @@ export const generateCustomRecap = createServerFn({ method: "POST" })
       const toDate = !whole && isDate(data?.toDate) ? (data!.toDate as string) : null;
       if (!whole && (!fromDate || !toDate)) throw new Error("Choose a start and end date, or the whole archive.");
       if (fromDate && toDate && fromDate > toDate) throw new Error("The start date must come before the end date.");
-      const limit = Math.min(Math.max(Number(data?.limit ?? 40) || 40, 5), 120);
+      const limit = Math.min(Math.max(Number(data?.limit ?? 40) || 40, 5), 400);
       return {
         fromDate,
         toDate,
