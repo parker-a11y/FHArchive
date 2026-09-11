@@ -576,8 +576,8 @@ function Dashboard() {
                       <Mail className="size-4" />
                     </div>
                     <span
-                      title={recordHealth(l).label}
-                      aria-label={recordHealth(l).label}
+                      title={recordHealth(l, aiByLetter[l.id]).label}
+                      aria-label={recordHealth(l, aiByLetter[l.id]).label}
                       className="size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: recordHealth(l).color }}
                     />
