@@ -554,7 +554,7 @@ function QuickEntry() {
               </div>
             </div>
             <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-              <div className="archive-id font-display text-4xl">
+              <div className="archive-id font-display text-4xl rounded-md border border-archive-gold/50 bg-archive-gold/10 px-3 py-1 text-archive-gold-strong shadow-sm">
                 {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
               </div>
               <div className="flex items-center gap-2">
@@ -834,23 +834,42 @@ function QuickEntry() {
             </div>
             <div className="col-span-full space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <Label className="field-label">Title / short description</Label>
+                <Label className="field-label">
+                  Title / short description <span className="text-destructive">*</span>
+                </Label>
                 {isPersonalLetter(form.record_type, form.subtype) && (
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    onClick={() => set("title", shortLetterTitle(form))}
+                    className="border border-archive-gold-strong bg-archive-gold font-semibold text-white shadow-sm hover:bg-archive-gold-strong"
+                    onClick={() => {
+                      set("title", shortLetterTitle(form));
+                      setTitleError(false);
+                    }}
                   >
                     Create Short Title
                   </Button>
                 )}
               </div>
               <Input
+                ref={titleRef}
                 value={form.title}
-                onChange={(e) => set("title", e.target.value)}
+                onChange={(e) => {
+                  set("title", e.target.value);
+                  if (titleError && e.target.value.trim()) setTitleError(false);
+                }}
                 placeholder="e.g. Discharge papers, Navy — or: portrait in dress blues"
+                className={
+                  titleError
+                    ? "border-destructive ring-2 ring-destructive/40 focus-visible:ring-destructive"
+                    : undefined
+                }
               />
+              {titleError && (
+                <p className="text-xs font-medium text-destructive">
+                  A title or short description is required — the record can't be saved without one.
+                </p>
+              )}
             </div>
 
 
