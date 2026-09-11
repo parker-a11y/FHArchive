@@ -38,6 +38,11 @@ import {
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { RefreshCw } from "lucide-react";
+import { recomputeRecordStatuses } from "@/lib/record-status.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchDashboardStats, type Letter } from "@/lib/queries";
 import { fetchQuotations } from "@/lib/quotations";
@@ -234,6 +239,47 @@ function Dashboard() {
       return (data ?? []) as unknown as Letter[];
     },
   });
+  // The dots must match All Records, which factors in AI-analysis review state.
+  const recentIds = recent.map((l) => l.id);
+  const { data: aiByLetter = {} } = useQuery({
+    queryKey: ["dashboard-recent-ai", recentIds],
+    enabled: recentIds.length > 0,
+    queryFn: async () => {
+      const out: Record<string, { total: number; pending: number }> = {};
+      const { data, error } = await supabase
+        .from("ai_suggestions")
+        .select("letter_id, status")
+        .in("letter_id", recentIds);
+      if (error) throw error;
+      for (const r of (data ?? []) as { letter_id: string; status: string }[]) {
+        const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
+        s.total += 1;
+        if (r.status === "pending") s.pending += 1;
+      }
+      return out;
+    },
+  });
+  const queryClient = useQueryClient();
+  const updateStatuses = useServerFn(recomputeRecordStatuses);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const runStatusUpdate = async () => {
+    setUpdatingStatus(true);
+    try {
+      const r = await updateStatuses({});
+      toast.success(
+        `Checked ${r.checked} record${r.checked === 1 ? "" : "s"} — updated ${r.updated}`,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-recent"] }),
+        queryClient.invalidateQueries({ queryKey: ["letters"] }),
+      ]);
+    } catch (e) {
+      toast.error((e as Error).message || "Could not update record statuses");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
   // Only the count is needed here — never download the sources table.
   const { data: sourceCount = 0 } = useQuery({
     queryKey: ["source-count"],
@@ -397,6 +443,18 @@ function Dashboard() {
             {canEditForReal && (
               <Button
                 size="sm"
+                variant="outline"
+                disabled={updatingStatus}
+                className="w-full justify-center gap-2 rounded-full sm:w-auto"
+                onClick={runStatusUpdate}
+              >
+                <RefreshCw className={`size-4 ${updatingStatus ? "animate-spin" : ""}`} />
+                {updatingStatus ? "Checking records…" : "Update status"}
+              </Button>
+            )}
+            {canEditForReal && (
+              <Button
+                size="sm"
                 variant={guestPreview ? "default" : "outline"}
                 className="w-full justify-center gap-2 rounded-full sm:w-auto"
                 onClick={() => setGuestPreview(!guestPreview)}
@@ -530,10 +588,10 @@ function Dashboard() {
                       <Mail className="size-4" />
                     </div>
                     <span
-                      title={recordHealth(l).label}
-                      aria-label={recordHealth(l).label}
+                      title={recordHealth(l, aiByLetter[l.id]).label}
+                      aria-label={recordHealth(l, aiByLetter[l.id]).label}
                       className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: recordHealth(l).color }}
+                      style={{ backgroundColor: recordHealth(l, aiByLetter[l.id]).color }}
                     />
                     <span className="archive-id w-20 shrink-0 text-base sm:w-24">{l.archive_id}</span>
                     <span className="hidden w-36 shrink-0 text-muted-foreground sm:inline">{displayDate(l)}</span>
