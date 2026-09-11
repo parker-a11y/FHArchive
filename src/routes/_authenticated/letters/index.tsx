@@ -1043,7 +1043,7 @@ function LettersTable() {
                   onCheckedChange={(v) =>
                     setSelected((s) => {
                       const next = new Map(s);
-                      if (v) rows.forEach((l) => next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title }));
+                      if (v) rows.forEach((l) => next.set(l.id, asSelected(l)));
                       else rows.forEach((l) => next.delete(l.id));
                        return next;
                      })
