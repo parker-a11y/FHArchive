@@ -62,6 +62,7 @@ const ADMIN_NAV = [
   { to: "/admin/numbering", label: "Numbering & Gaps", icon: ListChecks },
   { to: "/admin/notes", label: "Francis File Notes", icon: BookOpen },
   { to: "/admin/ask-history", label: "Ask Francis History", icon: FileSearch },
+  { to: "/admin/leftover-names", label: "Leftover Names", icon: Tags },
 ];
 
 
