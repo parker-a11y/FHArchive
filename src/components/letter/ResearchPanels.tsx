@@ -6,7 +6,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
-import { applySuggestion, suggestionEntities } from "@/lib/ai-analysis";
+import {
+  applySuggestion,
+  suggestionEntities,
+  suggestionRemovals,
+  unlinkSuggestionEntities,
+} from "@/lib/ai-analysis";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 import {
   useEntityConfirmer,
