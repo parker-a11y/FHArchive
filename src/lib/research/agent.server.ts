@@ -719,6 +719,11 @@ export async function answerResearchQuestion(
         e.keywords.length ? `Keywords: ${e.keywords.join(", ")}` : "",
         e.tones.length ? `Tones: ${e.tones.join(", ")}` : "",
         e.summary ? `Summary: ${e.summary}` : "",
+        e.passages?.some((p) => p.page_label)
+          ? `Matching passages come from: ${Array.from(
+              new Set(e.passages.filter((p) => p.page_label).map((p) => p.page_label)),
+            ).join(", ")}`
+          : "",
       ]
         .filter(Boolean)
         .join("\n");
