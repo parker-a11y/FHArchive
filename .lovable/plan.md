@@ -1,31 +1,51 @@
-# Ask Francis reads the whole archive
+# Ask Francis: the whole archive, built for 1,000 records
 
-Today Ask Francis picks 20 records it guesses are relevant and only shows those to the AI. So a question about a word that appears once — "baboon" — can be answered "not present" when the letter is sitting right there.
+Today Ask Francis guesses at 20 records and only shows those to the AI, so a question about a word that appears in one letter can come back "not present" while the letter sits right there.
 
-The whole archive is small enough to hand over in full. All 85 records together are about 237,000 characters of text, well inside what the model can read in one go. So we stop guessing.
+The archive is 85 records now (about 237,000 characters) and heading for 1,000+. Simply pasting everything into each question works today and fails later, so the design below is the one that holds at 1,000: **nothing is ever silently excluded, and the way records are found does not depend on guessing the right keyword.**
 
-## What changes
+## Three things run on every question
 
-- **Every question sees every record.** No more 20-record window. The full archive text is sent with each question.
-- **Word questions are answered exactly.** Before answering, the system does a literal search across all record text for the distinctive words in your question. If "baboon" is nowhere in the archive, the answer says so as a fact, not a guess. If it appears in three letters, those three are named and pulled to the front.
-- **Honest wording.** The answer footer changes from "20 records retrieved" to "all 85 records searched", and the AI is told it is seeing the complete archive — so "I did not find it" now means it is not there.
-- **It keeps working as the archive grows.** Under roughly 300 records the full text goes in. Above that, the most relevant records keep their full text and the rest are included in condensed form (title, date, people, places, summary, plus any passage matching your question) so nothing ever drops out of view entirely.
-- Records named by number (FH0082) stay pinned, and outside historical research is unchanged.
+1. **A literal word check across the entire archive.** Every distinctive word in your question is searched, as text, against all record text in the database — not against a shortlist. The answer then knows, as fact, whether "baboon" appears anywhere and in which records. This is a cheap database count and stays cheap at 10,000 records.
+2. **Meaning-based search.** Each record is indexed once by meaning, so "the monkey he saw at the zoo" finds a letter that says baboon, and "homesick" finds letters that never use the word. This is what makes retrieval reliable rather than keyword luck.
+3. **Existing keyword and record-number matching**, kept as-is — a record you name by number is always included.
 
-## Trade-offs
+Results from all three are merged, so a record found by any route is in the answer's evidence.
 
-Each question costs somewhat more in AI credits and takes a little longer, since it reads everything. That is the price of never missing a record, and at this archive size it is modest.
+## What the AI actually reads
+
+A tiered brief instead of a hard cutoff:
+
+- **Full text** for the strongest matches (as many as fit a generous budget).
+- **Condensed entry** — title, date, people, places, summary, plus the passages around your search terms — for every other record that matched anything.
+- **Archive-wide facts** computed in the database, not sampled: total record count, date range, and the exact word-presence table from step 1.
+
+So an absence is a real absence, and at 1,000 records the brief stays roughly the same size — it is the strongest matches that fill it, not the whole shelf.
+
+## Honest wording
+
+The footer changes from "20 records retrieved" to something like "all 85 records searched; 24 read in full". The AI is told when a claim of absence is a verified archive-wide fact, and it must then say so plainly rather than hedging with "not in the retrieved set".
+
+## Cost and speed
+
+Indexing by meaning is a one-time cost per record (and on re-transcription), fractions of a cent each. Questions stay close to today's cost because the brief is budgeted, not unbounded. The word check adds no meaningful time.
 
 ## Technical notes
 
-All in `src/lib/research/agent.server.ts`:
+**Semantic index**
+- Migration: enable `vector`; new `research_chunks` (`kind`, `archive_id`, `chunk_index`, `content`, `embedding vector(3072)`, `token-ish length`, timestamps), FK-free but keyed to `research_index`, HNSW index on `(embedding::halfvec(3072)) halfvec_cosine_ops`, GRANTs (`service_role` all; no anon), RLS on with authenticated read only.
+- `match_research_chunks(query_embedding, match_count)` SQL function, cosine, casts matching the index.
+- Chunking: ~1,200 chars with 200 overlap, over `body` plus a metadata header line.
+- Embeddings via the gateway `/v1/embeddings`, `google/gemini-embedding-2`, batches of ≤100, server-side only.
+- New `src/lib/research/embed.server.ts` + a server function to (re)index: incremental by content hash, invoked from the existing research-snapshot refresh so "Refresh Search Snapshot" also refreshes the meaning index. Progress + counts surfaced on the existing snapshot UI.
 
-- Add `loadFullCorpus(admin)`: pages `research_index` with `.range()` (1,000-row pages) so nothing is silently truncated; returns all rows using the existing `SELECT`.
-- Add `exactTermReport(rows, question)`: for each meaningful question term (existing stopword filter), count records whose `body`/`title`/`summary`/metadata contain it as a substring, plus a word-boundary variant. Produces a `TERM PRESENCE` block injected into the prompt listing each term as absent or naming the matching FH numbers.
-- Replace `retrieveEvidence`'s role: keep its scoring (FTS + IDF keyword passes + pinned IDs) but use it only to *rank*, not to *filter*. New `buildEvidence()`:
-  - budget-driven: full `body` (cap 15,000 chars each) for as many top-ranked records as fit in a 400,000-char budget;
-  - remaining records emitted in condensed form — metadata + summary + up to two ±300-char snippets around question-term matches.
-- `answerResearchQuestion`: prompt header states the complete archive is supplied and gives archive size; add the TERM PRESENCE block; keep the "record named but missing" rule (now it means genuinely absent).
-- `SYSTEM`: add a rule — when the supplied evidence is the complete archive, an absence claim is a definite finding ("no record in the archive uses that word"), and it must not be hedged as "not in the retrieved set".
-- `ResearchAnswer` gains `corpus: { total: number; full: number; condensed: number }` so the UI can show "all N records searched".
-- UI text: `src/routes/_authenticated/ask.tsx` (and the admin history view) render the new corpus line in place of "N records retrieved". Persist `corpus` alongside existing fields in `ask_francis_queries` (jsonb column, migration with GRANTs matching the table).
+**Retrieval rewrite** (`src/lib/research/agent.server.ts`)
+- `termPresence(admin, question)`: for each stopword-filtered term, a `count: exact, head: true` query with `ilike` across `body/title/summary/people/places/keywords`, plus the FH ids of up to 10 matches. Runs in parallel; produces a `TERM PRESENCE (verified against all N records)` prompt block.
+- `semanticHits(question)`: embed the question, call `match_research_chunks` (top ~40 chunks), collapse to records with best-chunk score.
+- Merge scores: semantic + existing FTS/IDF keyword passes + pinned FH/DS ids, normalized per channel.
+- `buildEvidence()` replaces the hard `slice(limit)`: full `body` (cap 15,000 chars) for top records until a 300,000-char budget is used; every other matched record emitted condensed with up to two ±300-char term snippets. Nothing that matched is dropped.
+- `ResearchAnswer` gains `corpus: { total, full, condensed, absent_terms: string[] }`.
+
+**Prompt/UI**
+- `SYSTEM`: add the verified-absence rule and the tiered-evidence explanation; keep every existing anti-fabrication rule.
+- `src/routes/_authenticated/ask.tsx` and the admin history page render the corpus line; persist `corpus` as a jsonb column on `ask_francis_queries` (migration with GRANTs matching the table).
