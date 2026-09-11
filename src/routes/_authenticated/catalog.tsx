@@ -751,7 +751,7 @@ function QuickEntry() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                   onClick={() => {
                     set("date_as_written", "NONE");
                     if (!form.normalized_date) set("date_precision", "undated");
@@ -813,7 +813,7 @@ function QuickEntry() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                   onClick={() => set("primary_person", "Francis A. Harrington")}
                 >
                   Fran
@@ -822,7 +822,7 @@ function QuickEntry() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                   onClick={() => set("primary_person", "Jaquelyn Harrington")}
                 >
                   Jaq
@@ -890,7 +890,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setAuthorPerson, (v) => set("author", v), "Francis A. Harrington")
                       }
@@ -901,7 +901,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setAuthorPerson, (v) => set("author", v), "Jaquelyn Harrington")
                       }
@@ -925,7 +925,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setRecipientPerson, (v) => set("recipient", v), "Francis A. Harrington")
                       }
@@ -936,7 +936,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setRecipientPerson, (v) => set("recipient", v), "Jaquelyn Harrington")
                       }
@@ -957,7 +957,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() => set("destination", "Worcester, Massachusetts")}
                     >
                       Worcester
@@ -980,7 +980,7 @@ function QuickEntry() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 px-2.5 text-xs"
+                    className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                     onClick={() => set("origin", "FPO - San Francisco")}
                   >
                     FPO - San Francisco
@@ -989,7 +989,7 @@ function QuickEntry() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 px-2.5 text-xs"
+                    className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                     onClick={() => set("origin", "Ft Schuyler")}
                   >
                     Ft Schuyler
