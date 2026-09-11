@@ -77,8 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [loading, session, navigate]);
 
   // Global shortcuts:
-  //   Mac: Ctrl+Option+N → Quick Entry, Ctrl+Option+R → All Records
-  //   Win/Linux: Alt+N → Quick Entry, Alt+R → All Records
+  //   Ctrl+Option+0 → Quick Entry, Ctrl+Option+9 → All Records
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
@@ -87,21 +86,19 @@ export function AppShell({ children }: { children: ReactNode }) {
       const el = e.target as HTMLElement | null;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
 
-      // Accept Ctrl+Option (Mac) or Alt (Win/Linux); platform detection can be
-      // unreliable, so allow either combo everywhere.
-      const comboMatch = e.altKey && !e.metaKey && (e.ctrlKey || !isMac);
+      // Require the same physical Ctrl+Option combination on every platform.
+      const comboMatch = e.ctrlKey && e.altKey && !e.metaKey;
       if (!comboMatch) return;
 
-      // On Mac, Option rewrites e.key into dead/special characters (e.g. "˜"),
-      // so match the physical key via e.code and fall back to e.key.
+      // Match physical number-row keys because Option may rewrite e.key.
       const code = e.code;
       const key = e.key ? e.key.toLowerCase() : "";
-      const isN = code === "KeyN" || key === "n";
-      const isR = code === "KeyR" || key === "r";
-      if (isN && canEdit) {
+      const isZero = code === "Digit0" || key === "0";
+      const isNine = code === "Digit9" || key === "9";
+      if (isZero && canEdit) {
         e.preventDefault();
         navigate({ to: "/catalog" });
-      } else if (isR) {
+      } else if (isNine) {
         e.preventDefault();
         navigate({ to: "/letters" });
       }
@@ -168,9 +165,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <kbd className="rounded border border-sidebar-border px-1 text-[10px] text-sidebar-foreground/60">
                   {isMac
                     ? item.to === "/catalog"
-                      ? "⌃⌥N"
-                      : "⌃⌥R"
-                    : `Alt+${item.to === "/catalog" ? "N" : "R"}`}
+                       ? "⌃⌥0"
+                       : "⌃⌥9"
+                     : `Ctrl+Alt+${item.to === "/catalog" ? "0" : "9"}`}
                 </kbd>
               )}
 
