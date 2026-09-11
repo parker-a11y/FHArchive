@@ -45,13 +45,25 @@ function headerFor(row: any): string {
     .join("\n");
 }
 
+export type RecordChunk = { content: string; page_label: string | null };
+
+/** Last "[Page 2 front]" style marker at or before a position in the body. */
+function pageLabelAt(body: string, position: number): string | null {
+  const upto = body.slice(0, position + 1);
+  const matches = upto.match(/\[([^\]\n]{1,40})\]/g);
+  const last = matches?.[matches.length - 1];
+  if (!last) return null;
+  const label = last.slice(1, -1).trim();
+  return /page|front|back|envelope|p\.?\s*\d/i.test(label) ? label : null;
+}
+
 /** Splits a record into overlapping passages, each prefixed with its record header. */
-export function chunkRecord(row: any): string[] {
+export function chunkRecord(row: any): RecordChunk[] {
   const header = headerFor(row);
   const body = String(row.body ?? "").trim();
-  if (!body) return [header];
+  if (!body) return [{ content: header, page_label: null }];
 
-  const out: string[] = [];
+  const out: RecordChunk[] = [];
   let start = 0;
   while (start < body.length) {
     let end = Math.min(start + CHUNK_CHARS, body.length);
@@ -61,7 +73,10 @@ export function chunkRecord(row: any): string[] {
       const cut = Math.max(window.lastIndexOf("\n\n"), window.lastIndexOf(". "));
       if (cut > CHUNK_CHARS * 0.5) end = start + cut + 1;
     }
-    out.push(`${header}\nPASSAGE:\n${body.slice(start, end).trim()}`);
+    out.push({
+      content: `${header}\nPASSAGE:\n${body.slice(start, end).trim()}`,
+      page_label: pageLabelAt(body, start),
+    });
     if (end >= body.length) break;
     start = Math.max(end - CHUNK_OVERLAP, start + 1);
   }
@@ -117,7 +132,7 @@ export async function rebuildResearchEmbeddings(admin: any): Promise<EmbedIndexR
     const { data, error } = await admin
       .from("research_index")
       .select(
-        "kind, archive_id, title, sort_date, date_text, author, recipient, origin, people, places, keywords, summary, body",
+        "kind, archive_id, title, record_type, sort_date, date_text, author, recipient, origin, people, places, organizations, keywords, summary, body",
       )
       .order("archive_id")
       .range(from, from + 999);
@@ -138,23 +153,43 @@ export async function rebuildResearchEmbeddings(admin: any): Promise<EmbedIndexR
   }
 
   const wanted = new Set<string>();
-  const pending: { kind: string; archive_id: string; chunk_index: number; content: string; content_hash: string }[] =
-    [];
+  const pending: Record<string, any>[] = [];
   let chunkTotal = 0;
   let reused = 0;
 
   for (const row of rows) {
     const chunks = chunkRecord(row);
     chunkTotal += chunks.length;
-    chunks.forEach((content, chunk_index) => {
+    chunks.forEach((chunk, chunk_index) => {
       const key = `${row.kind}:${row.archive_id}:${chunk_index}`;
       wanted.add(key);
-      const hash = hashText(content);
+      // The filter metadata is part of the fingerprint, so a metadata-only edit
+      // (a new recipient, a corrected date) also refreshes the stored passage.
+      const meta = {
+        title: row.title ?? null,
+        record_type: row.record_type ?? null,
+        sort_date: row.sort_date ?? null,
+        author: row.author ?? null,
+        recipient: row.recipient ?? null,
+        people: row.people ?? [],
+        places: row.places ?? [],
+        organizations: row.organizations ?? [],
+        keywords: row.keywords ?? [],
+        page_label: chunk.page_label,
+      };
+      const hash = hashText(`${chunk.content}\u0000${JSON.stringify(meta)}`);
       if (existing.get(key) === hash) {
         reused++;
         return;
       }
-      pending.push({ kind: row.kind, archive_id: row.archive_id, chunk_index, content, content_hash: hash });
+      pending.push({
+        kind: row.kind,
+        archive_id: row.archive_id,
+        chunk_index,
+        content: chunk.content,
+        content_hash: hash,
+        ...meta,
+      });
     });
   }
 
@@ -195,30 +230,84 @@ export async function rebuildResearchEmbeddings(admin: any): Promise<EmbedIndexR
   return { records: rows.length, chunks: chunkTotal, embedded, reused, removed };
 }
 
-/** Embeds a question and returns per-record semantic scores (best matching passage). */
-export async function semanticRecordScores(
+export type RetrievalFilters = {
+  kinds?: string[] | null;
+  date_from?: string | null;
+  date_to?: string | null;
+  author?: string | null;
+  recipient?: string | null;
+  record_types?: string[] | null;
+  person?: string | null;
+  place?: string | null;
+  organization?: string | null;
+  keyword?: string | null;
+};
+
+export type SemanticPassage = {
+  kind: string;
+  archive_id: string;
+  chunk_index: number;
+  content: string;
+  page_label: string | null;
+  score: number;
+};
+
+/**
+ * Embeds a question and returns the best matching passages, optionally narrowed
+ * by structured filters (date range, sender, recipient, type, person, place,
+ * organization, keyword). Passage-level so citations stay traceable.
+ */
+export async function semanticPassages(
   admin: any,
   question: string,
-  matchCount = 60,
-): Promise<Map<string, { score: number; snippet: string }>> {
-  const out = new Map<string, { score: number; snippet: string }>();
+  filters: RetrievalFilters = {},
+  matchCount = 150,
+): Promise<SemanticPassage[]> {
   try {
     const [vector] = await embedTexts([question]);
-    if (!vector) return out;
+    if (!vector) return [];
     const { data, error } = await admin.rpc("match_research_chunks", {
       query_embedding: JSON.stringify(vector),
       match_count: matchCount,
+      p_kinds: filters.kinds?.length ? filters.kinds : null,
+      p_date_from: filters.date_from ?? null,
+      p_date_to: filters.date_to ?? null,
+      p_author: filters.author ?? null,
+      p_recipient: filters.recipient ?? null,
+      p_record_types: filters.record_types?.length ? filters.record_types : null,
+      p_person: filters.person ?? null,
+      p_place: filters.place ?? null,
+      p_org: filters.organization ?? null,
+      p_keyword: filters.keyword ?? null,
     });
     if (error) throw new Error(error.message);
-    for (const row of data ?? []) {
-      const key = `${row.kind}:${row.archive_id}`;
-      const score = Number(row.similarity ?? 0);
-      const prev = out.get(key);
-      if (!prev || score > prev.score) out.set(key, { score, snippet: String(row.content ?? "").slice(0, 600) });
-    }
+    return (data ?? []).map((row: any) => ({
+      kind: String(row.kind),
+      archive_id: String(row.archive_id),
+      chunk_index: Number(row.chunk_index ?? 0),
+      content: String(row.content ?? ""),
+      page_label: row.page_label ?? null,
+      score: Number(row.similarity ?? 0),
+    }));
   } catch (e) {
     // Meaning search is an enhancement: keyword retrieval still answers the question.
     console.error("Semantic retrieval unavailable:", e);
+    return [];
+  }
+}
+
+/** Per-record best-passage scores, derived from the passage results. */
+export async function semanticRecordScores(
+  admin: any,
+  question: string,
+  filters: RetrievalFilters = {},
+  matchCount = 150,
+): Promise<Map<string, { score: number; snippet: string }>> {
+  const out = new Map<string, { score: number; snippet: string }>();
+  for (const p of await semanticPassages(admin, question, filters, matchCount)) {
+    const key = `${p.kind}:${p.archive_id}`;
+    const prev = out.get(key);
+    if (!prev || p.score > prev.score) out.set(key, { score: p.score, snippet: p.content.slice(0, 600) });
   }
   return out;
 }

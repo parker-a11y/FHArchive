@@ -2548,6 +2548,51 @@ export type Database = {
           },
         ]
       }
+      reindex_queue: {
+        Row: {
+          id: string
+          marked_at: string
+          ref_id: string
+          source_table: string
+        }
+        Insert: {
+          id?: string
+          marked_at?: string
+          ref_id: string
+          source_table: string
+        }
+        Update: {
+          id?: string
+          marked_at?: string
+          ref_id?: string
+          source_table?: string
+        }
+        Relationships: []
+      }
+      reindex_state: {
+        Row: {
+          id: boolean
+          last_result: Json | null
+          last_run_at: string | null
+          lease_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          last_result?: Json | null
+          last_run_at?: string | null
+          lease_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          last_result?: Json | null
+          last_run_at?: string | null
+          lease_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rejected_entities: {
         Row: {
           created_at: string
@@ -2578,35 +2623,65 @@ export type Database = {
       research_chunks: {
         Row: {
           archive_id: string
+          author: string | null
           chunk_index: number
           content: string
           content_hash: string
           created_at: string
           embedding: string
           id: string
+          keywords: string[]
           kind: string
+          organizations: string[]
+          page_label: string | null
+          people: string[]
+          places: string[]
+          recipient: string | null
+          record_type: string | null
+          sort_date: string | null
+          title: string | null
           updated_at: string
         }
         Insert: {
           archive_id: string
+          author?: string | null
           chunk_index: number
           content: string
           content_hash: string
           created_at?: string
           embedding: string
           id?: string
+          keywords?: string[]
           kind: string
+          organizations?: string[]
+          page_label?: string | null
+          people?: string[]
+          places?: string[]
+          recipient?: string | null
+          record_type?: string | null
+          sort_date?: string | null
+          title?: string | null
           updated_at?: string
         }
         Update: {
           archive_id?: string
+          author?: string | null
           chunk_index?: number
           content?: string
           content_hash?: string
           created_at?: string
           embedding?: string
           id?: string
+          keywords?: string[]
           kind?: string
+          organizations?: string[]
+          page_label?: string | null
+          people?: string[]
+          places?: string[]
+          recipient?: string | null
+          record_type?: string | null
+          sort_date?: string | null
+          title?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2704,7 +2779,10 @@ export type Database = {
       research_snapshots: {
         Row: {
           bytes_written: number
+          chunks_embedded: number
+          chunks_indexed: number
           created_at: string
+          embed_error: string | null
           error: string | null
           files: Json
           finished_at: string | null
@@ -2722,7 +2800,10 @@ export type Database = {
         }
         Insert: {
           bytes_written?: number
+          chunks_embedded?: number
+          chunks_indexed?: number
           created_at?: string
+          embed_error?: string | null
           error?: string | null
           files?: Json
           finished_at?: string | null
@@ -2740,7 +2821,10 @@ export type Database = {
         }
         Update: {
           bytes_written?: number
+          chunks_embedded?: number
+          chunks_indexed?: number
           created_at?: string
+          embed_error?: string | null
           error?: string | null
           files?: Json
           finished_at?: string | null
@@ -3186,13 +3270,29 @@ export type Database = {
         }[]
       }
       match_research_chunks: {
-        Args: { match_count?: number; query_embedding: string }
+        Args: {
+          match_count?: number
+          p_author?: string
+          p_date_from?: string
+          p_date_to?: string
+          p_keyword?: string
+          p_kinds?: string[]
+          p_org?: string
+          p_person?: string
+          p_place?: string
+          p_recipient?: string
+          p_record_types?: string[]
+          query_embedding: string
+        }
         Returns: {
           archive_id: string
           chunk_index: number
           content: string
           kind: string
+          page_label: string
           similarity: number
+          sort_date: string
+          title: string
         }[]
       }
       merge_people: {
