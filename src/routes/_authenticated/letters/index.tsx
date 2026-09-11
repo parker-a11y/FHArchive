@@ -501,7 +501,7 @@ function LettersTable() {
     setSignature("");
     setPostal("");
     setForwardedOnly(false);
-    setSort({ key: "archive_id", dir: 1 });
+    setSort({ key: "image_count", dir: -1 });
     setStarredOnly(false);
     setPage(0);
     navigate({ to: "/letters", search: () => ({}) });
