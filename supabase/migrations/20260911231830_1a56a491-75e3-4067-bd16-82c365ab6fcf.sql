@@ -1,0 +1,1 @@
+ALTER TABLE public.ai_suggestions RENAME COLUMN proposed_content TO previous_content;

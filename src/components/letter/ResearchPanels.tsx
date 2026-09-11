@@ -6,7 +6,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
-import { applySuggestion, suggestionEntities } from "@/lib/ai-analysis";
+import {
+  applySuggestion,
+  suggestionEntities,
+  suggestionRemovals,
+  unlinkSuggestionEntities,
+} from "@/lib/ai-analysis";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 import {
   useEntityConfirmer,
@@ -577,22 +582,30 @@ export function AiPanel({ letter }: { letter: Letter }) {
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [showRejected, setShowRejected] = useState(false);
   const rejectedCount = rows.filter((r) => r.status === "rejected").length;
+  const changedCount = rows.filter((r) => r.previous_content && r.status === "pending").length;
 
   const hasTranscript = Boolean(
     (letter.transcription_verified ?? "").trim() || (letter.transcription_raw_ai ?? "").trim(),
   );
 
-  async function analyze(mode: "new" | "all" = "new") {
+  async function analyze(mode: "new" | "all" | "refresh" = "new") {
     setBusy(true);
     setError(null);
     try {
       const res = await runAnalysis({ data: { letterId: letter.id, mode } });
       qc.invalidateQueries({ queryKey: ["ai", letter.id] });
       qc.invalidateQueries({ queryKey: ["ai_pending"] });
-      toast.success(
-        `AI analysis complete — ${res.suggestions} suggestion(s) awaiting review` +
-          (res.cleared ? `, ${res.cleared} superseded cleared` : ""),
-      );
+      if (mode === "refresh")
+        toast.success(
+          res.updated
+            ? `${res.updated} field(s) changed and need re-review`
+            : "Nothing changed — your accepted review still matches the transcription",
+        );
+      else
+        toast.success(
+          `AI analysis complete — ${res.suggestions} suggestion(s) awaiting review` +
+            (res.cleared ? `, ${res.cleared} superseded cleared` : ""),
+        );
       await proposeTones();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "AI analysis failed";
@@ -632,7 +645,12 @@ export function AiPanel({ letter }: { letter: Letter }) {
     const row = rows.find((r) => r.id === id);
     await supabase
       .from("ai_suggestions")
-      .update({ status, ...(content !== undefined ? { content } : {}) })
+      .update({
+        status,
+        previous_content: null,
+        superseded_at: null,
+        ...(content !== undefined ? { content } : {}),
+      })
       .eq("id", id);
 
     if (status === "accepted" && row) {
@@ -653,6 +671,24 @@ export function AiPanel({ letter }: { letter: Letter }) {
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not apply the suggestion");
       }
+      // A re-read that dropped names it used to support: offer to unlink the
+      // links AI made. Anything linked by hand stays put.
+      if (row.previous_content) {
+        const gone = suggestionRemovals(row.field_key, row.previous_content, text);
+        if (
+          gone.length &&
+          confirm(
+            `The new reading no longer supports:\n\n${gone.join(", ")}\n\nRemove the AI-created links for these? Anything you linked by hand is kept.`,
+          )
+        ) {
+          try {
+            const n = await unlinkSuggestionEntities(letter.id, row.field_key, gone);
+            if (n) toast.success(`${n} AI link(s) removed`);
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Could not remove the links");
+          }
+        }
+      }
       qc.invalidateQueries({ queryKey: ["links", letter.id] });
       qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
       qc.invalidateQueries({ queryKey: ["entities"] });
@@ -661,6 +697,29 @@ export function AiPanel({ letter }: { letter: Letter }) {
 
     qc.invalidateQueries({ queryKey: ["ai", letter.id] });
     qc.invalidateQueries({ queryKey: ["ai_pending"] });
+  }
+
+  /** Puts a changed field back to the wording already accepted. */
+  async function keepCurrent(id: string) {
+    const row = rows.find((r) => r.id === id);
+    if (!row?.previous_content) return;
+    await supabase
+      .from("ai_suggestions")
+      .update({
+        status: "accepted",
+        content: row.previous_content,
+        previous_content: null,
+        superseded_at: null,
+      })
+      .eq("id", id);
+    setEditing((e) => {
+      const next = { ...e };
+      delete next[id];
+      return next;
+    });
+    qc.invalidateQueries({ queryKey: ["ai", letter.id] });
+    qc.invalidateQueries({ queryKey: ["ai_pending"] });
+    toast.message("Kept the wording you had already accepted.");
   }
 
   const acceptable = rows.filter(
@@ -750,6 +809,17 @@ export function AiPanel({ letter }: { letter: Letter }) {
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => analyze("refresh")}
+                disabled={busy || !hasTranscript}
+                title="Re-reads the record and only reopens fields whose answer actually changed. Everything you already accepted and that still matches is left alone."
+              >
+                Check for changes
+              </Button>
+            )}
+            {rows.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => analyze("all")}
                 disabled={busy || !hasTranscript}
                 title="Replaces every suggestion with a fresh read, including ones you already accepted or rejected. Metadata already saved on the record is not changed."
@@ -759,6 +829,13 @@ export function AiPanel({ letter }: { letter: Letter }) {
             )}
           </div>
         </div>
+        {changedCount > 0 && (
+          <p className="mt-2 text-sm font-medium text-archive-ai">
+            The transcription changed — {changedCount} field
+            {changedCount === 1 ? "" : "s"} need re-review below. Everything else you accepted is
+            untouched.
+          </p>
+        )}
         {!hasTranscript && (
           <p className="mt-2 text-sm text-muted-foreground">
             No transcription yet — transcribe the scans first, then run analysis.
@@ -781,21 +858,31 @@ export function AiPanel({ letter }: { letter: Letter }) {
       {AI_FIELDS.map((f) => {
         const row = rows.find((r) => r.field_key === f.key);
         if (row?.status === "rejected" && !showRejected) return null;
+        const changed = Boolean(row?.previous_content && row.status === "pending");
         return (
-          <div key={f.key} className="rounded border border-border bg-card p-3">
+          <div
+            key={f.key}
+            className={`rounded border bg-card p-3 ${changed ? "border-archive-ai" : "border-border"}`}
+          >
             <div className="flex items-center justify-between">
               <span className="field-label">{f.label}</span>
               {row ? (
                 <span
                   className={`rounded px-1.5 py-0.5 text-xs ${
-                    row.status === "accepted"
-                      ? "bg-secondary text-secondary-foreground"
-                      : row.status === "rejected"
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-archive-ai-surface text-archive-ai"
+                    changed
+                      ? "bg-archive-ai text-white"
+                      : row.status === "accepted"
+                        ? "bg-secondary text-secondary-foreground"
+                        : row.status === "rejected"
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-archive-ai-surface text-archive-ai"
                   }`}
                 >
-                  {row.status === "pending" ? "AI-GENERATED · awaiting review" : row.status}
+                  {changed
+                    ? "UPDATED · re-review"
+                    : row.status === "pending"
+                      ? "AI-GENERATED · awaiting review"
+                      : row.status}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground">No suggestion</span>
@@ -803,15 +890,24 @@ export function AiPanel({ letter }: { letter: Letter }) {
             </div>
             {row && (
               <>
+                {changed && (
+                  <div className="mt-2 rounded bg-muted/60 p-2 text-sm">
+                    <span className="field-label">Previously accepted</span>
+                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                      {row.previous_content}
+                    </p>
+                  </div>
+                )}
+                {changed && <span className="mt-2 block field-label">New reading</span>}
                 <Textarea
                   rows={3}
                   className="mt-2 text-sm"
                   value={editing[row.id] ?? row.content ?? ""}
                   onChange={(e) => setEditing({ ...editing, [row.id]: e.target.value })}
                 />
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => setStatus(row.id, "accepted")}>
-                    Accept
+                    {changed ? "Accept update" : "Accept"}
                   </Button>
                   <Button
                     size="sm"
@@ -820,6 +916,11 @@ export function AiPanel({ letter }: { letter: Letter }) {
                   >
                     Edit &amp; Accept
                   </Button>
+                  {changed && (
+                    <Button size="sm" variant="outline" onClick={() => keepCurrent(row.id)}>
+                      Keep current
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" onClick={() => setStatus(row.id, "rejected")}>
                     Reject
                   </Button>
