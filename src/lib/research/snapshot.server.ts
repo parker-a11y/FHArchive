@@ -814,17 +814,32 @@ export async function runResearchSnapshot(
   }
 }
 
-/** Rewrites the retrieval index from the composed snapshot data. */
+/**
+ * Rewrites the retrieval index from the composed snapshot data.
+ *
+ * Alongside letters and digital sources it indexes the archive's knowledge
+ * records — Francis File Notes, people, places, organizations (including ships)
+ * and archive notes — so a question about a person or a note can retrieve that
+ * record directly instead of only stumbling on its name inside a letter.
+ */
 async function rebuildResearchIndex(
   admin: any,
   snapshotId: string,
   records: ComposedRecord[],
   sources: ComposedRecord[],
+  dump: Dump = {},
 ) {
   const rows = [
     ...records.map((r) => {
-      const pageText = (r["pages"] ?? [])
-        .map((p: any) => (p.verified_text || p.ai_text || "").trim())
+      // Page markers keep passage-level provenance (FH0087 · Page 2) available
+      // to the meaning index without changing what the text says.
+      const pageText = ((r["pages"] ?? []) as any[])
+        .map((p: any, i: number) => {
+          const text = (p.verified_text || p.ai_text || "").trim();
+          if (!text) return "";
+          const label = String(p.page_label ?? "").trim() || `Page ${(p.page_index ?? i) + 1}`;
+          return `[${label}]\n${text}`;
+        })
         .filter(Boolean)
         .join("\n\n");
       const body = [
