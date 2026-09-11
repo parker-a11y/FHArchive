@@ -751,7 +751,11 @@ export async function answerResearchQuestion(
 ${question}
 
 ARCHIVE SCOPE
-The archive holds ${corpus.total} indexed records. All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question). No record was excluded from the search.
+The archive holds ${corpus.total} indexed records. All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question). No record was excluded from the search.${
+    filters && Object.keys(filters).length
+      ? `\nThe question stated these constraints, applied during retrieval: ${JSON.stringify(filters)}.`
+      : ""
+  }
 
 TERM PRESENCE (checked against all ${corpus.total} records, not just those supplied)
 ${presenceText || "(no distinctive terms in this question)"}
