@@ -148,7 +148,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                     : "text-sidebar-foreground/50 group-hover:text-archive-gold"
                 }`}
               />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {(item.to === "/catalog" || item.to === "/letters") && (
+                <kbd className="rounded border border-sidebar-border px-1 text-[10px] text-sidebar-foreground/60">
+                  Alt+{item.to === "/catalog" ? "N" : "R"}
+                </kbd>
+              )}
+
             </Link>
           );
         })}
