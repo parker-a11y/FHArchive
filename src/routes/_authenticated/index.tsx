@@ -443,6 +443,18 @@ function Dashboard() {
             {canEditForReal && (
               <Button
                 size="sm"
+                variant="outline"
+                disabled={updatingStatus}
+                className="w-full justify-center gap-2 rounded-full sm:w-auto"
+                onClick={runStatusUpdate}
+              >
+                <RefreshCw className={`size-4 ${updatingStatus ? "animate-spin" : ""}`} />
+                {updatingStatus ? "Checking records…" : "Update status"}
+              </Button>
+            )}
+            {canEditForReal && (
+              <Button
+                size="sm"
                 variant={guestPreview ? "default" : "outline"}
                 className="w-full justify-center gap-2 rounded-full sm:w-auto"
                 onClick={() => setGuestPreview(!guestPreview)}
