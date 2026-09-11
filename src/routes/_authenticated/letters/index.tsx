@@ -1116,12 +1116,15 @@ function LettersTable() {
                   )}
                 >
                   {isAdmin && (
-                    <Checkbox
-                      aria-label={`Select ${l.archive_id}`}
-                      checked={selected.has(l.id)}
-                      onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
-                    />
+                    <span onClick={(e) => (shiftHeld.current = e.shiftKey)}>
+                      <Checkbox
+                        aria-label={`Select ${l.archive_id}`}
+                        checked={selected.has(l.id)}
+                        onCheckedChange={(v) => toggleSelected(l, Boolean(v), shiftHeld.current)}
+                      />
+                    </span>
                   )}
+
                 </td>
                 {cols.map((c) => {
                   const isEditing = editing?.id === l.id && editing.key === c.key;
