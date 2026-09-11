@@ -76,6 +76,8 @@ export type Evidence = {
   text: string;
   /** true when only metadata + matching passages are supplied, not the full text. */
   condensed?: boolean;
+  /** Passage-level provenance: what was actually retrieved, and from where. */
+  passages?: { text: string; page_label: string | null; score: number }[];
 };
 
 export type TermPresence = { term: string; count: number; records: string[] };
@@ -86,6 +88,11 @@ export type Corpus = {
   condensed: number;
   absent_terms: string[];
   present_terms: TermPresence[];
+  /** Structured constraints inferred from the question, if any. */
+  filters?: RetrievalFilters;
+  /** How many passages the meaning search considered / how many were kept. */
+  passages_considered?: number;
+  passages_used?: number;
 };
 
 const SELECT =
