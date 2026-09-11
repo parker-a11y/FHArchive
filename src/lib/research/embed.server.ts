@@ -132,7 +132,7 @@ export async function rebuildResearchEmbeddings(admin: any): Promise<EmbedIndexR
     const { data, error } = await admin
       .from("research_index")
       .select(
-        "kind, archive_id, title, sort_date, date_text, author, recipient, origin, people, places, keywords, summary, body",
+        "kind, archive_id, title, record_type, sort_date, date_text, author, recipient, origin, people, places, organizations, keywords, summary, body",
       )
       .order("archive_id")
       .range(from, from + 999);
@@ -153,23 +153,43 @@ export async function rebuildResearchEmbeddings(admin: any): Promise<EmbedIndexR
   }
 
   const wanted = new Set<string>();
-  const pending: { kind: string; archive_id: string; chunk_index: number; content: string; content_hash: string }[] =
-    [];
+  const pending: Record<string, any>[] = [];
   let chunkTotal = 0;
   let reused = 0;
 
   for (const row of rows) {
     const chunks = chunkRecord(row);
     chunkTotal += chunks.length;
-    chunks.forEach((content, chunk_index) => {
+    chunks.forEach((chunk, chunk_index) => {
       const key = `${row.kind}:${row.archive_id}:${chunk_index}`;
       wanted.add(key);
-      const hash = hashText(content);
+      // The filter metadata is part of the fingerprint, so a metadata-only edit
+      // (a new recipient, a corrected date) also refreshes the stored passage.
+      const meta = {
+        title: row.title ?? null,
+        record_type: row.record_type ?? null,
+        sort_date: row.sort_date ?? null,
+        author: row.author ?? null,
+        recipient: row.recipient ?? null,
+        people: row.people ?? [],
+        places: row.places ?? [],
+        organizations: row.organizations ?? [],
+        keywords: row.keywords ?? [],
+        page_label: chunk.page_label,
+      };
+      const hash = hashText(`${chunk.content}\u0000${JSON.stringify(meta)}`);
       if (existing.get(key) === hash) {
         reused++;
         return;
       }
-      pending.push({ kind: row.kind, archive_id: row.archive_id, chunk_index, content, content_hash: hash });
+      pending.push({
+        kind: row.kind,
+        archive_id: row.archive_id,
+        chunk_index,
+        content: chunk.content,
+        content_hash: hash,
+        ...meta,
+      });
     });
   }
 
