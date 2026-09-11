@@ -579,7 +579,7 @@ function Dashboard() {
                       title={recordHealth(l, aiByLetter[l.id]).label}
                       aria-label={recordHealth(l, aiByLetter[l.id]).label}
                       className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: recordHealth(l).color }}
+                      style={{ backgroundColor: recordHealth(l, aiByLetter[l.id]).color }}
                     />
                     <span className="archive-id w-20 shrink-0 text-base sm:w-24">{l.archive_id}</span>
                     <span className="hidden w-36 shrink-0 text-muted-foreground sm:inline">{displayDate(l)}</span>
