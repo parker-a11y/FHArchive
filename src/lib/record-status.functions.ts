@@ -37,9 +37,15 @@ export const recomputeRecordStatuses = createServerFn({ method: "POST" })
     };
 
     type L = { id: string; scan_status: string | null; transcription_status: string | null };
-    type F = { letter_id: string | null };
+    type F = {
+      id: string;
+      letter_id: string | null;
+      label: string | null;
+      original_filename: string | null;
+    };
     type T = {
       letter_id: string | null;
+      file_id: string | null;
       status: string | null;
       ai_text: string | null;
       verified_text: string | null;
@@ -47,9 +53,14 @@ export const recomputeRecordStatuses = createServerFn({ method: "POST" })
 
     const [letters, files, trans] = await Promise.all([
       pageAll<L>("letters", "id, scan_status, transcription_status"),
-      pageAll<F>("digital_files", "letter_id"),
-      pageAll<T>("scan_transcriptions", "letter_id, status, ai_text, verified_text"),
+      pageAll<F>("digital_files", "id, letter_id, label, original_filename"),
+      pageAll<T>("scan_transcriptions", "letter_id, file_id, status, ai_text, verified_text"),
     ]);
+
+    const isEnvelope = (s: string) => s.toLowerCase().includes("envelope");
+    const envelopeFiles = new Set(
+      files.filter((f) => isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`)).map((f) => f.id),
+    );
 
     const fileCount = new Map<string, number>();
     for (const f of files) {
@@ -61,6 +72,7 @@ export const recomputeRecordStatuses = createServerFn({ method: "POST" })
     const tAgg = new Map<string, Agg>();
     for (const t of trans) {
       if (!t.letter_id) continue;
+      if (t.file_id && envelopeFiles.has(t.file_id)) continue;
       const a = tAgg.get(t.letter_id) ?? { total: 0, verified: 0, withText: 0, failed: 0 };
       a.total++;
       if (t.status === "human_verified") a.verified++;
@@ -68,6 +80,7 @@ export const recomputeRecordStatuses = createServerFn({ method: "POST" })
       if ((t.verified_text ?? "").trim() || (t.ai_text ?? "").trim()) a.withText++;
       tAgg.set(t.letter_id, a);
     }
+
 
     let updated = 0;
     const changes: { id: string; scan_status?: string; transcription_status?: string }[] = [];
