@@ -1130,7 +1130,7 @@ function QuickEntry() {
             <Button
               type="button"
               variant="outline"
-              className="flex-1 sm:flex-none"
+              className="flex-1 border-archive-gold/60 text-archive-gold-strong hover:bg-archive-gold/10 sm:flex-none"
               disabled={busy}
               onClick={() => save("label")}
             >
