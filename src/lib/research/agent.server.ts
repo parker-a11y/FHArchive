@@ -12,6 +12,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { semanticRecordScores } from "./embed.server";
+
 export type ResearchProvider = "lovable-gateway";
 
 const PROVIDER = (process.env["RESEARCH_PROVIDER"] as ResearchProvider) || "lovable-gateway";
@@ -603,6 +605,7 @@ Return a single JSON object:
       .slice(0, 4),
     caveats: String(parsed.caveats ?? "").trim(),
     evidence,
+    corpus,
     model: MODEL,
   };
 }
