@@ -832,21 +832,31 @@ export function AiPanel({ letter }: { letter: Letter }) {
       {AI_FIELDS.map((f) => {
         const row = rows.find((r) => r.field_key === f.key);
         if (row?.status === "rejected" && !showRejected) return null;
+        const changed = Boolean(row?.previous_content && row.status === "pending");
         return (
-          <div key={f.key} className="rounded border border-border bg-card p-3">
+          <div
+            key={f.key}
+            className={`rounded border bg-card p-3 ${changed ? "border-archive-ai" : "border-border"}`}
+          >
             <div className="flex items-center justify-between">
               <span className="field-label">{f.label}</span>
               {row ? (
                 <span
                   className={`rounded px-1.5 py-0.5 text-xs ${
-                    row.status === "accepted"
-                      ? "bg-secondary text-secondary-foreground"
-                      : row.status === "rejected"
-                        ? "bg-muted text-muted-foreground"
-                        : "bg-archive-ai-surface text-archive-ai"
+                    changed
+                      ? "bg-archive-ai text-white"
+                      : row.status === "accepted"
+                        ? "bg-secondary text-secondary-foreground"
+                        : row.status === "rejected"
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-archive-ai-surface text-archive-ai"
                   }`}
                 >
-                  {row.status === "pending" ? "AI-GENERATED · awaiting review" : row.status}
+                  {changed
+                    ? "UPDATED · re-review"
+                    : row.status === "pending"
+                      ? "AI-GENERATED · awaiting review"
+                      : row.status}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground">No suggestion</span>
@@ -854,15 +864,24 @@ export function AiPanel({ letter }: { letter: Letter }) {
             </div>
             {row && (
               <>
+                {changed && (
+                  <div className="mt-2 rounded bg-muted/60 p-2 text-sm">
+                    <span className="field-label">Previously accepted</span>
+                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                      {row.previous_content}
+                    </p>
+                  </div>
+                )}
+                {changed && <span className="mt-2 block field-label">New reading</span>}
                 <Textarea
                   rows={3}
                   className="mt-2 text-sm"
                   value={editing[row.id] ?? row.content ?? ""}
                   onChange={(e) => setEditing({ ...editing, [row.id]: e.target.value })}
                 />
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => setStatus(row.id, "accepted")}>
-                    Accept
+                    {changed ? "Accept update" : "Accept"}
                   </Button>
                   <Button
                     size="sm"
@@ -871,6 +890,11 @@ export function AiPanel({ letter }: { letter: Letter }) {
                   >
                     Edit &amp; Accept
                   </Button>
+                  {changed && (
+                    <Button size="sm" variant="outline" onClick={() => keepCurrent(row.id)}>
+                      Keep current
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" onClick={() => setStatus(row.id, "rejected")}>
                     Reject
                   </Button>
