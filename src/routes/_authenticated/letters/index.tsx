@@ -2,7 +2,7 @@ import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -265,6 +265,7 @@ function LettersTable() {
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [page, setPage] = useState(0);
+  const pageInitialized = useRef(false);
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
 
@@ -341,6 +342,14 @@ function LettersTable() {
   const rows = pageData?.rows ?? [];
   const total = pageData?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Default to the highest page number on first load so the newest records appear first.
+  useEffect(() => {
+    if (total > 0 && !pageInitialized.current) {
+      pageInitialized.current = true;
+      setPage(Math.max(0, pageCount - 1));
+    }
+  }, [total, pageCount]);
 
   // Keyword names only for the records on this page.
   const pageIds = rows.map((l) => l.id);
