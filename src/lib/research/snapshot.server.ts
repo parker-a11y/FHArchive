@@ -51,6 +51,7 @@ const TABLES = [
   "scan_transcriptions",
   "source_containers",
   "container_files",
+  "ffn_notes",
 ] as const;
 
 type Row = Record<string, any>;
@@ -762,7 +763,7 @@ export async function runResearchSnapshot(
     void idToDs;
 
     // 6. Rebuild the research index used by Ask Francis
-    await rebuildResearchIndex(supabaseAdmin, snapshotId, records, sources);
+    await rebuildResearchIndex(supabaseAdmin, snapshotId, records, sources, dump);
 
     await supabaseAdmin
       .from("research_snapshots")
