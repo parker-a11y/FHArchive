@@ -76,6 +76,76 @@ export function suggestionEntities(
   return splitList(content.trim()).map((name) => ({ kind, name }));
 }
 
+const LINK_TABLES: Record<
+  string,
+  { link: string; fk: string; table: "people" | "places" | "keywords" | "organizations" | "events"; column: string }
+> = {
+  people: { link: "letter_people", fk: "person_id", table: "people", column: "name" },
+  places: { link: "letter_places", fk: "place_id", table: "places", column: "canonical_name" },
+  keywords: { link: "letter_keywords", fk: "keyword_id", table: "keywords", column: "name" },
+  units: { link: "letter_organizations", fk: "organization_id", table: "organizations", column: "name" },
+  ships: { link: "letter_organizations", fk: "organization_id", table: "organizations", column: "name" },
+  organizations: {
+    link: "letter_organizations",
+    fk: "organization_id",
+    table: "organizations",
+    column: "name",
+  },
+  events: { link: "letter_events", fk: "event_id", table: "events", column: "name" },
+};
+
+const compare = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+/**
+ * Names the previously accepted answer contained that the new reading no longer
+ * supports — offered to the archivist before anything is unlinked.
+ */
+export function suggestionRemovals(
+  fieldKey: string,
+  previousContent: string,
+  newContent: string,
+): string[] {
+  if (!LINK_TABLES[fieldKey]) return [];
+  const keep = new Set(splitList(newContent).map(compare));
+  const seen = new Set<string>();
+  return splitList(previousContent).filter((name) => {
+    const key = compare(name);
+    if (!key || keep.has(key) || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
+ * Removes AI-created links for names dropped by a re-read. Links the archivist
+ * made by hand (source other than "ai") are never touched.
+ */
+export async function unlinkSuggestionEntities(
+  letterId: string,
+  fieldKey: string,
+  names: string[],
+): Promise<number> {
+  const map = LINK_TABLES[fieldKey];
+  if (!map || !names.length) return 0;
+  let removed = 0;
+  for (const name of names) {
+    const { data: found } = await (supabase.from(map.table) as any)
+      .select("id")
+      .ilike(map.column, name)
+      .limit(1)
+      .maybeSingle();
+    if (!found?.id) continue;
+    const { data: deleted } = await (supabase.from(map.link as "letter_people") as any)
+      .delete()
+      .eq("letter_id", letterId)
+      .eq(map.fk, found.id)
+      .eq("source", "ai")
+      .select("id");
+    removed += (deleted ?? []).length;
+  }
+  return removed;
+}
+
 export async function applySuggestion(
   letterId: string,
   fieldKey: string,
