@@ -23,7 +23,7 @@ export type Database = {
           letter_id: string
           model: string | null
           owner_id: string
-          proposed_content: string | null
+          previous_content: string | null
           status: string
           superseded_at: string | null
           updated_at: string
@@ -36,7 +36,7 @@ export type Database = {
           letter_id: string
           model?: string | null
           owner_id?: string
-          proposed_content?: string | null
+          previous_content?: string | null
           status?: string
           superseded_at?: string | null
           updated_at?: string
@@ -49,7 +49,7 @@ export type Database = {
           letter_id?: string
           model?: string | null
           owner_id?: string
-          proposed_content?: string | null
+          previous_content?: string | null
           status?: string
           superseded_at?: string | null
           updated_at?: string
