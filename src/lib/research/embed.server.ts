@@ -45,13 +45,25 @@ function headerFor(row: any): string {
     .join("\n");
 }
 
+export type RecordChunk = { content: string; page_label: string | null };
+
+/** Last "[Page 2 front]" style marker at or before a position in the body. */
+function pageLabelAt(body: string, position: number): string | null {
+  const upto = body.slice(0, position + 1);
+  const matches = upto.match(/\[([^\]\n]{1,40})\]/g);
+  const last = matches?.[matches.length - 1];
+  if (!last) return null;
+  const label = last.slice(1, -1).trim();
+  return /page|front|back|envelope|p\.?\s*\d/i.test(label) ? label : null;
+}
+
 /** Splits a record into overlapping passages, each prefixed with its record header. */
-export function chunkRecord(row: any): string[] {
+export function chunkRecord(row: any): RecordChunk[] {
   const header = headerFor(row);
   const body = String(row.body ?? "").trim();
-  if (!body) return [header];
+  if (!body) return [{ content: header, page_label: null }];
 
-  const out: string[] = [];
+  const out: RecordChunk[] = [];
   let start = 0;
   while (start < body.length) {
     let end = Math.min(start + CHUNK_CHARS, body.length);
@@ -61,7 +73,10 @@ export function chunkRecord(row: any): string[] {
       const cut = Math.max(window.lastIndexOf("\n\n"), window.lastIndexOf(". "));
       if (cut > CHUNK_CHARS * 0.5) end = start + cut + 1;
     }
-    out.push(`${header}\nPASSAGE:\n${body.slice(start, end).trim()}`);
+    out.push({
+      content: `${header}\nPASSAGE:\n${body.slice(start, end).trim()}`,
+      page_label: pageLabelAt(body, start),
+    });
     if (end >= body.length) break;
     start = Math.max(end - CHUNK_OVERLAP, start + 1);
   }
