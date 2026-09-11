@@ -76,6 +76,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!loading && !session) navigate({ to: "/auth" });
   }, [loading, session, navigate]);
 
+  // Global shortcuts: Alt+N → Quick Entry, Alt+R → All Records.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!e.altKey || e.ctrlKey || e.metaKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      const key = e.key.toLowerCase();
+      if (key === "n" && canEdit) {
+        e.preventDefault();
+        navigate({ to: "/catalog" });
+      } else if (key === "r") {
+        e.preventDefault();
+        navigate({ to: "/letters" });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate, canEdit]);
+
+
   if (loading)
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
