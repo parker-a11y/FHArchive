@@ -305,8 +305,10 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   };
 
   /**
-   * Once a record's transcription is human verified, queue AI analysis in the
-   * background. Suggestions stay pending — a person still reviews them.
+   * Once a record's transcription is human verified, keep AI analysis in step
+   * with it. A record that was never analyzed gets a first pass; one that was
+   * already reviewed only reopens the fields whose answer actually changed.
+   * Suggestions stay pending either way — a person still reviews them.
    */
   async function maybeAutoAnalyze() {
     try {
@@ -316,10 +318,20 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         .eq("id", letter.id)
         .maybeSingle();
       if (data?.transcription_status !== "human_verified") return;
-      await analyzeRecord({ data: { letterId: letter.id, mode: "new" } });
+      const { count } = await supabase
+        .from("ai_suggestions")
+        .select("id", { count: "exact", head: true })
+        .eq("letter_id", letter.id);
+      const mode = (count ?? 0) > 0 ? "refresh" : "new";
+      const res = await analyzeRecord({ data: { letterId: letter.id, mode } });
       qc.invalidateQueries({ queryKey: ["ai", letter.id] });
       qc.invalidateQueries({ queryKey: ["ai_pending"] });
-      toast.message("AI analysis run — review the suggestions when you're ready.");
+      if (mode === "refresh") {
+        if (res.updated)
+          toast.message(
+            `${res.updated} AI field(s) changed with the transcription — review them on the AI tab.`,
+          );
+      } else toast.message("AI analysis run — review the suggestions when you're ready.");
     } catch {
       /* non-fatal: analysis can be re-run from the research panel */
     }
