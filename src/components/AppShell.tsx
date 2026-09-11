@@ -87,9 +87,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       const el = e.target as HTMLElement | null;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
 
-      const macShortcut = isMac && e.ctrlKey && e.altKey && !e.metaKey;
-      const otherShortcut = !isMac && e.altKey && !e.ctrlKey && !e.metaKey;
-      if (!macShortcut && !otherShortcut) return;
+      // Accept Ctrl+Option (Mac) or Alt (Win/Linux); platform detection can be
+      // unreliable, so allow either combo everywhere.
+      const comboMatch = e.altKey && !e.metaKey && (e.ctrlKey || !isMac);
+      if (!comboMatch) return;
 
       // On Mac, Option rewrites e.key into dead/special characters (e.g. "˜"),
       // so match the physical key via e.code and fall back to e.key.
