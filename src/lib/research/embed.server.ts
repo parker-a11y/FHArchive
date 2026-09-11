@@ -230,30 +230,84 @@ export async function rebuildResearchEmbeddings(admin: any): Promise<EmbedIndexR
   return { records: rows.length, chunks: chunkTotal, embedded, reused, removed };
 }
 
-/** Embeds a question and returns per-record semantic scores (best matching passage). */
-export async function semanticRecordScores(
+export type RetrievalFilters = {
+  kinds?: string[] | null;
+  date_from?: string | null;
+  date_to?: string | null;
+  author?: string | null;
+  recipient?: string | null;
+  record_types?: string[] | null;
+  person?: string | null;
+  place?: string | null;
+  organization?: string | null;
+  keyword?: string | null;
+};
+
+export type SemanticPassage = {
+  kind: string;
+  archive_id: string;
+  chunk_index: number;
+  content: string;
+  page_label: string | null;
+  score: number;
+};
+
+/**
+ * Embeds a question and returns the best matching passages, optionally narrowed
+ * by structured filters (date range, sender, recipient, type, person, place,
+ * organization, keyword). Passage-level so citations stay traceable.
+ */
+export async function semanticPassages(
   admin: any,
   question: string,
-  matchCount = 60,
-): Promise<Map<string, { score: number; snippet: string }>> {
-  const out = new Map<string, { score: number; snippet: string }>();
+  filters: RetrievalFilters = {},
+  matchCount = 150,
+): Promise<SemanticPassage[]> {
   try {
     const [vector] = await embedTexts([question]);
-    if (!vector) return out;
+    if (!vector) return [];
     const { data, error } = await admin.rpc("match_research_chunks", {
       query_embedding: JSON.stringify(vector),
       match_count: matchCount,
+      p_kinds: filters.kinds?.length ? filters.kinds : null,
+      p_date_from: filters.date_from ?? null,
+      p_date_to: filters.date_to ?? null,
+      p_author: filters.author ?? null,
+      p_recipient: filters.recipient ?? null,
+      p_record_types: filters.record_types?.length ? filters.record_types : null,
+      p_person: filters.person ?? null,
+      p_place: filters.place ?? null,
+      p_org: filters.organization ?? null,
+      p_keyword: filters.keyword ?? null,
     });
     if (error) throw new Error(error.message);
-    for (const row of data ?? []) {
-      const key = `${row.kind}:${row.archive_id}`;
-      const score = Number(row.similarity ?? 0);
-      const prev = out.get(key);
-      if (!prev || score > prev.score) out.set(key, { score, snippet: String(row.content ?? "").slice(0, 600) });
-    }
+    return (data ?? []).map((row: any) => ({
+      kind: String(row.kind),
+      archive_id: String(row.archive_id),
+      chunk_index: Number(row.chunk_index ?? 0),
+      content: String(row.content ?? ""),
+      page_label: row.page_label ?? null,
+      score: Number(row.similarity ?? 0),
+    }));
   } catch (e) {
     // Meaning search is an enhancement: keyword retrieval still answers the question.
     console.error("Semantic retrieval unavailable:", e);
+    return [];
+  }
+}
+
+/** Per-record best-passage scores, derived from the passage results. */
+export async function semanticRecordScores(
+  admin: any,
+  question: string,
+  filters: RetrievalFilters = {},
+  matchCount = 150,
+): Promise<Map<string, { score: number; snippet: string }>> {
+  const out = new Map<string, { score: number; snippet: string }>();
+  for (const p of await semanticPassages(admin, question, filters, matchCount)) {
+    const key = `${p.kind}:${p.archive_id}`;
+    const prev = out.get(key);
+    if (!prev || p.score > prev.score) out.set(key, { score: p.score, snippet: p.content.slice(0, 600) });
   }
   return out;
 }
