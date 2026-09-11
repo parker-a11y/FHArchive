@@ -263,7 +263,7 @@ function LettersTable() {
   const debouncedClosing = useDebounced(closing);
   const debouncedSignature = useDebounced(signature);
 
-  const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "image_count", dir: -1 });
+  const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [page, setPage] = useState(0);
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
