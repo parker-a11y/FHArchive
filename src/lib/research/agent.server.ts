@@ -653,7 +653,7 @@ export const CONFIDENCE_LEVELS = [
 export type ResearchAnswer = {
   answer: string;
   confidence: (typeof CONFIDENCE_LEVELS)[number];
-  citations: { archive_id: string; note: string; confidence: string }[];
+  citations: { archive_id: string; note: string; confidence: string; page?: string | null }[];
   sources: WebSource[];
   follow_ups: string[];
   caveats: string;
@@ -692,8 +692,11 @@ export async function answerResearchQuestion(
   question: string,
   history: { role: "user" | "assistant"; content: string }[] = [],
 ): Promise<ResearchAnswer> {
+  // Structured constraints stated in the question narrow retrieval; anything the
+  // archive cannot confirm is dropped rather than guessed at.
+  const filters = await inferFilters(admin, question);
   const [{ evidence, corpus }, queries] = await Promise.all([
-    retrieveEvidence(admin, question),
+    retrieveEvidence(admin, question, filters),
     planExternalResearch(question),
   ]);
   const outside = await searchOutsideHistory(queries);
