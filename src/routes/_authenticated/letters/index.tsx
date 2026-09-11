@@ -265,6 +265,7 @@ function LettersTable() {
 
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "archive_id", dir: 1 });
   const [page, setPage] = useState(0);
+  const pageInitialized = useRef(false);
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
 
