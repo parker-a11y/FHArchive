@@ -139,21 +139,43 @@ export async function findLeftoverAiLinks(): Promise<LeftoverLink[]> {
     for (const n of splitList(s.content ?? "")) set.add(compare(n));
   }
 
+  // Nicknames: a person can be linked under their canonical name while the
+  // accepted answer used an alias ("Fran"), which still counts as support.
+  const aliasesByPerson = new Map<string, string[]>();
+  for (const a of await readAll<{ person_id: string; alias: string }>((from, to) =>
+    (supabase.from("person_aliases" as any) as any).select("person_id,alias").range(from, to),
+  )) {
+    const list = aliasesByPerson.get(a.person_id) ?? [];
+    list.push(a.alias);
+    aliasesByPerson.set(a.person_id, list);
+  }
+
   const out: LeftoverLink[] = [];
   for (const kind of Object.keys(SPECS) as LinkKind[]) {
     const spec = SPECS[kind];
     const rows = await readAll<Record<string, any>>((from, to) =>
       (supabase.from(spec.link as "letter_people") as any)
-        .select(`id, letter_id, ${spec.fk}, ${spec.table}(${spec.column})`)
+        .select(
+          `id, letter_id, ${spec.fk}, ${spec.table}(${spec.column})${
+            kind === "person" ? ", role" : ""
+          }`,
+        )
         .eq("source", "ai")
         .range(from, to),
     );
     for (const row of rows) {
+      // Author / recipient links come from the record's own fields.
+      if (kind === "person" && row.role !== "mentioned") continue;
       const set = supported.get(row.letter_id)?.get(kind);
       if (!set) continue; // no accepted answer of this kind — nothing to judge against
       const name: string = row?.[spec.table]?.[spec.column] ?? "";
       const key = compare(name);
-      if (!name || !key || set.has(key)) continue;
+      if (!name || !key) continue;
+      const forms = [
+        key,
+        ...(kind === "person" ? aliasesByPerson.get(row[spec.fk]) ?? [] : []).map(compare),
+      ].filter(Boolean);
+      if (forms.some((f) => set.has(f))) continue;
       out.push({
         id: row.id as string,
         letterId: row.letter_id as string,
