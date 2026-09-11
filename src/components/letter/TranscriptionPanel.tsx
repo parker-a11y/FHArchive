@@ -402,6 +402,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     );
     refreshLetter();
     toast.success("Combined transcription saved");
+    // Keep an already-reviewed AI analysis in step with the corrected text.
+    void maybeAutoAnalyze();
   }
 
   function copyAiIntoVerified() {
