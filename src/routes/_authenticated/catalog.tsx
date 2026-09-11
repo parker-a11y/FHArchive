@@ -209,6 +209,8 @@ function QuickEntry() {
     null,
   );
   const dateRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const [titleError, setTitleError] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: people = [] } = usePeopleNames();
@@ -361,9 +363,22 @@ function QuickEntry() {
     }
   }
 
+  /** Title is required for every save/print path — highlight and focus when missing. */
+  function requireTitle(): boolean {
+    if (form.title.trim()) return true;
+    setTitleError(true);
+    toast.warning("Title / short description is required before saving", {
+      description: "Give the record a short title — a few words is enough.",
+    });
+    titleRef.current?.focus();
+    titleRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
+
   /** Print a label for what's on screen — saves first if the record doesn't exist yet. */
   function printLabel() {
     if (busy) return;
+    if (!requireTitle()) return;
     if (startedLetter) {
       setLabelFor({
         archiveId: startedLetter.archive_id,
@@ -378,6 +393,7 @@ function QuickEntry() {
 
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
+    if (!requireTitle()) return;
     setBusy(true);
     const precision = datePrecision();
     let created: { id: string; archive_id: string };
