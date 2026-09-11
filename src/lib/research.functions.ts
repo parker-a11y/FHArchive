@@ -86,7 +86,13 @@ export const refreshResearchSnapshot = createServerFn({ method: "POST" })
     const result = await runResearchSnapshot("manual");
     // Keep the meaning index in step with the snapshot, so Ask Francis can find
     // records by sense as well as by wording.
-    let embeddings: unknown = null;
+    let embeddings: {
+      records: number;
+      chunks: number;
+      embedded: number;
+      reused: number;
+      removed: number;
+    } | null = null;
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { rebuildResearchEmbeddings } = await import("@/lib/research/embed.server");
