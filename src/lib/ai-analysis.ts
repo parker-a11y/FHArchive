@@ -183,16 +183,39 @@ export async function unsupportedAiLinks(
   }
 
   const { data: links } = await (supabase.from(map.link as "letter_people") as any)
-    .select(`${map.fk}, ${map.table}(${map.column})`)
+    .select(`${map.fk}, ${map.table}(${map.column})${map.link === "letter_people" ? ", role" : ""}`)
     .eq("letter_id", letterId)
     .eq("source", "ai");
 
+  const rows = ((links ?? []) as Record<string, any>[]).filter(
+    // Author / recipient links come from the record's own fields, not from a
+    // suggestion, so they are never candidates for removal.
+    (r) => map.link !== "letter_people" || r.role === "mentioned",
+  );
+
+  // A person may be linked under their canonical name while the suggestion used
+  // a nickname ("Fran"), so aliases count as support too.
+  const aliasByEntity = new Map<string, string[]>();
+  if (map.table === "people" && rows.length) {
+    const ids = rows.map((r) => r[map.fk]).filter(Boolean);
+    const { data: aliases } = await (supabase.from("person_aliases" as any) as any)
+      .select("person_id,alias")
+      .in("person_id", ids);
+    for (const a of (aliases ?? []) as { person_id: string; alias: string }[]) {
+      const list = aliasByEntity.get(a.person_id) ?? [];
+      list.push(a.alias);
+      aliasByEntity.set(a.person_id, list);
+    }
+  }
+
   const out: string[] = [];
   const seen = new Set<string>();
-  for (const row of (links ?? []) as Record<string, any>[]) {
+  for (const row of rows) {
     const name: string = row?.[map.table]?.[map.column] ?? "";
     const key = compare(name);
-    if (!name || !key || keep.has(key) || seen.has(key)) continue;
+    if (!name || !key || seen.has(key)) continue;
+    const forms = [key, ...(aliasByEntity.get(row[map.fk]) ?? []).map(compare)].filter(Boolean);
+    if (forms.some((f) => keep.has(f))) continue;
     seen.add(key);
     out.push(name);
   }
