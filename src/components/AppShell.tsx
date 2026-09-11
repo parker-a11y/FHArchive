@@ -162,7 +162,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="flex-1">{item.label}</span>
               {(item.to === "/catalog" || item.to === "/letters") && (
                 <kbd className="rounded border border-sidebar-border px-1 text-[10px] text-sidebar-foreground/60">
-                  Alt+{item.to === "/catalog" ? "N" : "R"}
+                  {isMac
+                    ? item.to === "/catalog"
+                      ? "⌘⌥N"
+                      : "⌘⌥R"
+                    : `Alt+${item.to === "/catalog" ? "N" : "R"}`}
                 </kbd>
               )}
 
