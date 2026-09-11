@@ -926,6 +926,7 @@ async function rebuildResearchIndex(
       snapshot_id: snapshotId,
       updated_at: new Date().toISOString(),
     })),
+    ...knowledgeRows(dump, snapshotId),
   ];
 
   for (let i = 0; i < rows.length; i += 100) {
