@@ -773,7 +773,7 @@ Return a single JSON object:
 {
   "answer": "Markdown answer with inline FH citations, and inline labelled historical context where useful",
   "confidence": "confirmed | highly likely | probable | possible | uncertain",
-  "citations": [{ "archive_id": "FH0042", "note": "what this record contributes", "confidence": "confirmed" }],
+  "citations": [{ "archive_id": "FH0042", "page": "Page 2 (only when the evidence names the page the passage came from, else null)", "note": "what this record contributes", "confidence": "confirmed" }],
   "sources": [{ "title": "page or site name", "url": "https://... (must appear in OUTSIDE RESEARCH)", "note": "what this source supports" }],
   "follow_ups": ["two or three sharper follow-up research questions"],
   "caveats": "what the archive does not show, or where the reading is shaky (may be empty)"
