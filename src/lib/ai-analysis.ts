@@ -146,6 +146,59 @@ export async function unlinkSuggestionEntities(
   return removed;
 }
 
+/** Field keys that write into the same link table as `fieldKey`. */
+export function siblingFieldKeys(fieldKey: string): string[] {
+  const map = LINK_TABLES[fieldKey];
+  if (!map) return [];
+  return Object.keys(LINK_TABLES).filter((k) => LINK_TABLES[k].link === map.link);
+}
+
+/**
+ * AI-created links already on the record that the newly accepted answer no
+ * longer mentions. Looks at the record's real links instead of relying on the
+ * stored "before" wording, so corrections made before this feature existed are
+ * caught too. Hand-made links (source other than "ai") are ignored, as are
+ * names still supported by another accepted answer of the same kind.
+ */
+export async function unsupportedAiLinks(
+  letterId: string,
+  fieldKey: string,
+  newContent: string,
+): Promise<string[]> {
+  const map = LINK_TABLES[fieldKey];
+  if (!map) return [];
+
+  const keep = new Set(splitList(newContent).map(compare));
+
+  // Other accepted answers that feed the same link table still count as support.
+  const siblings = siblingFieldKeys(fieldKey);
+  const { data: others } = await supabase
+    .from("ai_suggestions")
+    .select("field_key,content,status")
+    .eq("letter_id", letterId)
+    .in("field_key", siblings);
+  for (const row of others ?? []) {
+    if (row.status !== "accepted" || row.field_key === fieldKey) continue;
+    for (const n of splitList(row.content ?? "")) keep.add(compare(n));
+  }
+
+  const { data: links } = await (supabase.from(map.link as "letter_people") as any)
+    .select(`${map.fk}, ${map.table}(${map.column})`)
+    .eq("letter_id", letterId)
+    .eq("source", "ai");
+
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const row of (links ?? []) as Record<string, any>[]) {
+    const name: string = row?.[map.table]?.[map.column] ?? "";
+    const key = compare(name);
+    if (!name || !key || keep.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
 export async function applySuggestion(
   letterId: string,
   fieldKey: string,
