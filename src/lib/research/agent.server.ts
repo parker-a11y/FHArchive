@@ -72,29 +72,117 @@ export type Evidence = {
   tones: string[];
   summary: string | null;
   text: string;
+  /** true when only metadata + matching passages are supplied, not the full text. */
+  condensed?: boolean;
+};
+
+export type TermPresence = { term: string; count: number; records: string[] };
+
+export type Corpus = {
+  total: number;
+  full: number;
+  condensed: number;
+  absent_terms: string[];
+  present_terms: TermPresence[];
 };
 
 const SELECT =
   "kind, archive_id, title, record_type, subtype, period, sort_date, date_text, author, recipient, origin, destination, tones, keywords, people, places, events, organizations, linked_refs, summary, body";
 
+/** Budgets: the brief stays roughly constant however large the archive grows. */
+const FULL_TEXT_CAP = 15000;
+const FULL_TEXT_BUDGET = 300000;
+const MAX_CONDENSED = 400;
+
+function questionTerms(question: string): string[] {
+  return Array.from(
+    new Set(
+      question
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
+    ),
+  ).slice(0, 50);
+}
+
 /**
- * Retrieves the most relevant records for a question: full-text search first,
- * then keyword fallback, then a recency backstop. Only the retrieved evidence
- * is sent to the model — never the whole archive.
+ * Literal word check across the ENTIRE archive, not a shortlist. This is what
+ * lets the answer say "no record uses that word" as a verified fact.
+ */
+export async function termPresence(admin: any, terms: string[]): Promise<TermPresence[]> {
+  return Promise.all(
+    terms.map(async (term) => {
+      const like = `%${term.replace(/[%,]/g, " ")}%`;
+      const filter = [
+        `body.ilike.${like}`,
+        `title.ilike.${like}`,
+        `summary.ilike.${like}`,
+        `archive_id.ilike.${like}`,
+        `author.ilike.${like}`,
+        `recipient.ilike.${like}`,
+        `origin.ilike.${like}`,
+        `destination.ilike.${like}`,
+      ].join(",");
+      const { data, count } = await admin
+        .from("research_index")
+        .select("archive_id", { count: "exact" })
+        .or(filter)
+        .limit(10);
+      return {
+        term,
+        count: count ?? (data?.length ?? 0),
+        records: (data ?? []).map((r: any) => String(r.archive_id)),
+      };
+    }),
+  );
+}
+
+function snippetsFor(body: string, terms: string[], max = 2): string[] {
+  const lower = body.toLowerCase();
+  const out: string[] = [];
+  for (const term of terms) {
+    const i = lower.indexOf(term);
+    if (i === -1) continue;
+    out.push(`…${body.slice(Math.max(0, i - 300), i + 300).trim()}…`);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function toEvidence(row: any, text: string, condensed: boolean): Evidence {
+  return {
+    archive_id: row.archive_id,
+    kind: row.kind,
+    title: row.title,
+    date: row.date_text || row.sort_date || null,
+    record_type: row.record_type,
+    author: row.author,
+    recipient: row.recipient,
+    origin: row.origin,
+    destination: row.destination,
+    people: row.people ?? [],
+    places: row.places ?? [],
+    events: row.events ?? [],
+    keywords: row.keywords ?? [],
+    tones: row.tones ?? [],
+    summary: row.summary,
+    text,
+    condensed,
+  };
+}
+
+/**
+ * Ranks the whole archive for a question — meaning search, full-text search,
+ * per-term keyword passes and directly named record numbers all contribute —
+ * then builds a tiered brief: full text for the strongest matches, condensed
+ * entries for everything else that matched. Nothing that matched is dropped.
  */
 export async function retrieveEvidence(
   admin: any,
   question: string,
-  limit = 20,
-): Promise<Evidence[]> {
-  const cleanedWords = question
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
-
-  // Use every meaningful word from the question for retrieval, not just the first few.
-  const terms = cleanedWords.slice(0, 50);
+): Promise<{ evidence: Evidence[]; corpus: Corpus }> {
+  const terms = questionTerms(question);
   const ftsQuery = terms.join(" or ");
 
   // Record numbers named directly in the question are always included.
@@ -120,6 +208,11 @@ export async function retrieveEvidence(
     .from("research_index")
     .select("archive_id", { count: "exact", head: true });
   const total = Math.max(totalCount ?? 0, 1);
+
+  const [presence, semantic] = await Promise.all([
+    termPresence(admin, terms),
+    semanticRecordScores(admin, question),
+  ]);
 
   if (ftsQuery) {
     const { data } = await admin
@@ -160,12 +253,27 @@ export async function retrieveEvidence(
     }
   }
 
+  // Fold in the meaning matches: fetch any semantic hit not already retrieved.
+  if (semantic.size) {
+    const missing = Array.from(semantic.keys())
+      .filter((k) => !hits.has(k))
+      .map((k) => k.slice(k.indexOf(":") + 1));
+    if (missing.length) {
+      const { data } = await admin.from("research_index").select(SELECT).in("archive_id", missing);
+      add(data ?? [], 0);
+    }
+    for (const [key, s] of semantic) {
+      const hit = hits.get(key);
+      if (hit) hit.score += 8 * s.score;
+    }
+  }
+
   if (hits.size < 4) {
     const { data } = await admin
       .from("research_index")
       .select(SELECT)
       .order("sort_date", { ascending: true, nullsFirst: false })
-      .limit(limit);
+      .limit(20);
     add(data ?? [], 1);
   }
 
@@ -176,7 +284,7 @@ export async function retrieveEvidence(
   }
   const pinnedKeys = new Set(pinnedRows.map((r) => `${r.kind}:${r.archive_id}`));
 
-  const scored = Array.from(hits.entries())
+  const ranked = Array.from(hits.entries())
     .filter(([key]) => !pinnedKeys.has(key))
     .map(([, v]) => v)
     .sort(
@@ -185,27 +293,39 @@ export async function retrieveEvidence(
         String(a.row.sort_date ?? "").localeCompare(String(b.row.sort_date ?? "")) ||
         String(a.row.archive_id).localeCompare(String(b.row.archive_id)),
     )
-    .slice(0, limit)
     .map((h) => h.row);
 
-  return [...pinnedRows, ...scored].map((row) => ({
-    archive_id: row.archive_id,
-    kind: row.kind,
-    title: row.title,
-    date: row.date_text || row.sort_date || null,
-    record_type: row.record_type,
-    author: row.author,
-    recipient: row.recipient,
-    origin: row.origin,
-    destination: row.destination,
-    people: row.people ?? [],
-    places: row.places ?? [],
-    events: row.events ?? [],
-    keywords: row.keywords ?? [],
-    tones: row.tones ?? [],
-    summary: row.summary,
-    text: String(row.body ?? "").slice(0, 12000),
-  }));
+  const ordered = [...pinnedRows, ...ranked];
+
+  const evidence: Evidence[] = [];
+  let budget = FULL_TEXT_BUDGET;
+  let condensedCount = 0;
+  for (const row of ordered) {
+    const body = String(row.body ?? "");
+    const full = body.slice(0, FULL_TEXT_CAP);
+    if (budget - full.length >= 0) {
+      budget -= full.length;
+      evidence.push(toEvidence(row, full, false));
+      continue;
+    }
+    if (condensedCount >= MAX_CONDENSED) break;
+    condensedCount++;
+    const snips = snippetsFor(body, terms);
+    evidence.push(
+      toEvidence(row, snips.length ? snips.join("\n\n") : body.slice(0, 400), true),
+    );
+  }
+
+  return {
+    evidence,
+    corpus: {
+      total,
+      full: evidence.filter((e) => !e.condensed).length,
+      condensed: condensedCount,
+      absent_terms: presence.filter((p) => p.count === 0).map((p) => p.term),
+      present_terms: presence.filter((p) => p.count > 0),
+    },
+  };
 }
 
 
