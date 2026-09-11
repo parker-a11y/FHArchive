@@ -343,6 +343,14 @@ function LettersTable() {
   const total = pageData?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  // Default to the highest page number on first load so the newest records appear first.
+  useEffect(() => {
+    if (total > 0 && !pageInitialized.current) {
+      pageInitialized.current = true;
+      setPage(Math.max(0, pageCount - 1));
+    }
+  }, [total, pageCount]);
+
   // Keyword names only for the records on this page.
   const pageIds = rows.map((l) => l.id);
   const { data: keywordsByLetter = {} } = useQuery({
