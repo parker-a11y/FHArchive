@@ -146,6 +146,82 @@ export async function unlinkSuggestionEntities(
   return removed;
 }
 
+/** Field keys that write into the same link table as `fieldKey`. */
+export function siblingFieldKeys(fieldKey: string): string[] {
+  const map = LINK_TABLES[fieldKey];
+  if (!map) return [];
+  return Object.keys(LINK_TABLES).filter((k) => LINK_TABLES[k].link === map.link);
+}
+
+/**
+ * AI-created links already on the record that the newly accepted answer no
+ * longer mentions. Looks at the record's real links instead of relying on the
+ * stored "before" wording, so corrections made before this feature existed are
+ * caught too. Hand-made links (source other than "ai") are ignored, as are
+ * names still supported by another accepted answer of the same kind.
+ */
+export async function unsupportedAiLinks(
+  letterId: string,
+  fieldKey: string,
+  newContent: string,
+): Promise<string[]> {
+  const map = LINK_TABLES[fieldKey];
+  if (!map) return [];
+
+  const keep = new Set(splitList(newContent).map(compare));
+
+  // Other accepted answers that feed the same link table still count as support.
+  const siblings = siblingFieldKeys(fieldKey);
+  const { data: others } = await supabase
+    .from("ai_suggestions")
+    .select("field_key,content,status")
+    .eq("letter_id", letterId)
+    .in("field_key", siblings);
+  for (const row of others ?? []) {
+    if (row.status !== "accepted" || row.field_key === fieldKey) continue;
+    for (const n of splitList(row.content ?? "")) keep.add(compare(n));
+  }
+
+  const { data: links } = await (supabase.from(map.link as "letter_people") as any)
+    .select(`${map.fk}, ${map.table}(${map.column})${map.link === "letter_people" ? ", role" : ""}`)
+    .eq("letter_id", letterId)
+    .eq("source", "ai");
+
+  const rows = ((links ?? []) as Record<string, any>[]).filter(
+    // Author / recipient links come from the record's own fields, not from a
+    // suggestion, so they are never candidates for removal.
+    (r) => map.link !== "letter_people" || r.role === "mentioned",
+  );
+
+  // A person may be linked under their canonical name while the suggestion used
+  // a nickname ("Fran"), so aliases count as support too.
+  const aliasByEntity = new Map<string, string[]>();
+  if (map.table === "people" && rows.length) {
+    const ids = rows.map((r) => r[map.fk]).filter(Boolean);
+    const { data: aliases } = await (supabase.from("person_aliases" as any) as any)
+      .select("person_id,alias")
+      .in("person_id", ids);
+    for (const a of (aliases ?? []) as { person_id: string; alias: string }[]) {
+      const list = aliasByEntity.get(a.person_id) ?? [];
+      list.push(a.alias);
+      aliasByEntity.set(a.person_id, list);
+    }
+  }
+
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const name: string = row?.[map.table]?.[map.column] ?? "";
+    const key = compare(name);
+    if (!name || !key || seen.has(key)) continue;
+    const forms = [key, ...(aliasByEntity.get(row[map.fk]) ?? []).map(compare)].filter(Boolean);
+    if (forms.some((f) => keep.has(f))) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
 export async function applySuggestion(
   letterId: string,
   fieldKey: string,
