@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [loading, session, navigate]);
 
   // Global shortcuts:
-  //   Mac: Cmd+Option+N → Quick Entry, Cmd+Option+R → All Records
+  //   Mac: Ctrl+Option+N → Quick Entry, Ctrl+Option+R → All Records
   //   Win/Linux: Alt+N → Quick Entry, Alt+R → All Records
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       const el = e.target as HTMLElement | null;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
 
-      const macShortcut = isMac && e.metaKey && e.altKey && !e.ctrlKey;
+      const macShortcut = isMac && e.ctrlKey && e.altKey && !e.metaKey;
       const otherShortcut = !isMac && e.altKey && !e.ctrlKey && !e.metaKey;
       if (!macShortcut && !otherShortcut) return;
 
@@ -162,8 +162,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <kbd className="rounded border border-sidebar-border px-1 text-[10px] text-sidebar-foreground/60">
                   {isMac
                     ? item.to === "/catalog"
-                      ? "⌘⌥N"
-                      : "⌘⌥R"
+                      ? "⌃⌥N"
+                      : "⌃⌥R"
                     : `Alt+${item.to === "/catalog" ? "N" : "R"}`}
                 </kbd>
               )}
