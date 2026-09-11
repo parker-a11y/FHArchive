@@ -55,6 +55,8 @@ export const askFrancis = createServerFn({ method: "POST" })
           confidence: answer?.confidence ?? null,
           citations: answer?.citations ?? [],
           sources: answer?.sources ?? [],
+          corpus: answer?.corpus ?? null,
+
 
           model: answer?.model ?? null,
           error: error ?? null,
@@ -81,7 +83,37 @@ export const refreshResearchSnapshot = createServerFn({ method: "POST" })
     const { canEdit } = await assertResearchAccess(context);
     if (!canEdit) throw new Error("Only the archive owner or an archivist can refresh the snapshot.");
     const { runResearchSnapshot } = await import("@/lib/research/snapshot.server");
-    return runResearchSnapshot("manual");
+    const result = await runResearchSnapshot("manual");
+    // Keep the meaning index in step with the snapshot, so Ask Francis can find
+    // records by sense as well as by wording.
+    let embeddings: {
+      records: number;
+      chunks: number;
+      embedded: number;
+      reused: number;
+      removed: number;
+    } | null = null;
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { rebuildResearchEmbeddings } = await import("@/lib/research/embed.server");
+      embeddings = await rebuildResearchEmbeddings(supabaseAdmin);
+    } catch (e) {
+      console.error("Meaning index refresh failed:", e);
+    }
+    return {
+      snapshotId: result.snapshotId,
+      status: result.status,
+      folder: result.folder,
+      records: result.records,
+      sources: result.sources,
+      transcriptions: result.transcriptions,
+      people: result.people,
+      places: result.places,
+      files: result.files,
+      bytes: result.bytes,
+      error: result.error ?? null,
+      embeddings,
+    };
   });
 
 

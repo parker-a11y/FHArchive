@@ -324,6 +324,7 @@ export type Database = {
           answer: string | null
           citations: Json
           confidence: string | null
+          corpus: Json | null
           created_at: string
           error: string | null
           id: string
@@ -339,6 +340,7 @@ export type Database = {
           answer?: string | null
           citations?: Json
           confidence?: string | null
+          corpus?: Json | null
           created_at?: string
           error?: string | null
           id?: string
@@ -354,6 +356,7 @@ export type Database = {
           answer?: string | null
           citations?: Json
           confidence?: string | null
+          corpus?: Json | null
           created_at?: string
           error?: string | null
           id?: string
@@ -2572,6 +2575,42 @@ export type Database = {
         }
         Relationships: []
       }
+      research_chunks: {
+        Row: {
+          archive_id: string
+          chunk_index: number
+          content: string
+          content_hash: string
+          created_at: string
+          embedding: string
+          id: string
+          kind: string
+          updated_at: string
+        }
+        Insert: {
+          archive_id: string
+          chunk_index: number
+          content: string
+          content_hash: string
+          created_at?: string
+          embedding: string
+          id?: string
+          kind: string
+          updated_at?: string
+        }
+        Update: {
+          archive_id?: string
+          chunk_index?: number
+          content?: string
+          content_hash?: string
+          created_at?: string
+          embedding?: string
+          id?: string
+          kind?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       research_index: {
         Row: {
           archive_id: string
@@ -3144,6 +3183,16 @@ export type Database = {
         Returns: {
           keyword_id: string
           uses: number
+        }[]
+      }
+      match_research_chunks: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          archive_id: string
+          chunk_index: number
+          content: string
+          kind: string
+          similarity: number
         }[]
       }
       merge_people: {
