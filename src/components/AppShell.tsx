@@ -76,12 +76,21 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!loading && !session) navigate({ to: "/auth" });
   }, [loading, session, navigate]);
 
-  // Global shortcuts: Alt+N → Quick Entry, Alt+R → All Records.
+  // Global shortcuts:
+  //   Mac: Cmd+Option+N → Quick Entry, Cmd+Option+R → All Records
+  //   Win/Linux: Alt+N → Quick Entry, Alt+R → All Records
+  const isMac =
+    typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (!e.altKey || e.ctrlKey || e.metaKey) return;
       const el = e.target as HTMLElement | null;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+
+      const macShortcut = isMac && e.metaKey && e.altKey && !e.ctrlKey;
+      const otherShortcut = !isMac && e.altKey && !e.ctrlKey && !e.metaKey;
+      if (!macShortcut && !otherShortcut) return;
+
       const key = e.key.toLowerCase();
       if (key === "n" && canEdit) {
         e.preventDefault();
@@ -93,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [navigate, canEdit]);
+  }, [navigate, canEdit, isMac]);
 
 
   if (loading)
@@ -151,7 +160,11 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="flex-1">{item.label}</span>
               {(item.to === "/catalog" || item.to === "/letters") && (
                 <kbd className="rounded border border-sidebar-border px-1 text-[10px] text-sidebar-foreground/60">
-                  Alt+{item.to === "/catalog" ? "N" : "R"}
+                  {isMac
+                    ? item.to === "/catalog"
+                      ? "⌘⌥N"
+                      : "⌘⌥R"
+                    : `Alt+${item.to === "/catalog" ? "N" : "R"}`}
                 </kbd>
               )}
 
