@@ -89,7 +89,7 @@ function LeftoverNames() {
     <>
       <PageHeader
         title="Leftover Names"
-        subtitle="Names the AI linked to a record that its accepted reading no longer supports. Anything you linked by hand is never listed."
+        description="Names the AI linked to a record that its accepted reading no longer supports. Anything you linked by hand is never listed."
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
