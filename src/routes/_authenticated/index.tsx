@@ -239,6 +239,47 @@ function Dashboard() {
       return (data ?? []) as unknown as Letter[];
     },
   });
+  // The dots must match All Records, which factors in AI-analysis review state.
+  const recentIds = recent.map((l) => l.id);
+  const { data: aiByLetter = {} } = useQuery({
+    queryKey: ["dashboard-recent-ai", recentIds],
+    enabled: recentIds.length > 0,
+    queryFn: async () => {
+      const out: Record<string, { total: number; pending: number }> = {};
+      const { data, error } = await supabase
+        .from("ai_suggestions")
+        .select("letter_id, status")
+        .in("letter_id", recentIds);
+      if (error) throw error;
+      for (const r of (data ?? []) as { letter_id: string; status: string }[]) {
+        const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
+        s.total += 1;
+        if (r.status === "pending") s.pending += 1;
+      }
+      return out;
+    },
+  });
+  const queryClient = useQueryClient();
+  const updateStatuses = useServerFn(recomputeRecordStatuses);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const runStatusUpdate = async () => {
+    setUpdatingStatus(true);
+    try {
+      const r = await updateStatuses({});
+      toast.success(
+        `Checked ${r.checked} record${r.checked === 1 ? "" : "s"} — updated ${r.updated}`,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-recent"] }),
+        queryClient.invalidateQueries({ queryKey: ["letters"] }),
+      ]);
+    } catch (e) {
+      toast.error((e as Error).message || "Could not update record statuses");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
   // Only the count is needed here — never download the sources table.
   const { data: sourceCount = 0 } = useQuery({
     queryKey: ["source-count"],
