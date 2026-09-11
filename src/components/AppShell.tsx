@@ -91,11 +91,16 @@ export function AppShell({ children }: { children: ReactNode }) {
       const otherShortcut = !isMac && e.altKey && !e.ctrlKey && !e.metaKey;
       if (!macShortcut && !otherShortcut) return;
 
-      const key = e.key.toLowerCase();
-      if (key === "n" && canEdit) {
+      // On Mac, Option rewrites e.key into dead/special characters (e.g. "˜"),
+      // so match the physical key via e.code and fall back to e.key.
+      const code = e.code;
+      const key = e.key ? e.key.toLowerCase() : "";
+      const isN = code === "KeyN" || key === "n";
+      const isR = code === "KeyR" || key === "r";
+      if (isN && canEdit) {
         e.preventDefault();
         navigate({ to: "/catalog" });
-      } else if (key === "r") {
+      } else if (isR) {
         e.preventDefault();
         navigate({ to: "/letters" });
       }
