@@ -809,6 +809,17 @@ export function AiPanel({ letter }: { letter: Letter }) {
               <Button
                 size="sm"
                 variant="outline"
+                onClick={() => analyze("refresh")}
+                disabled={busy || !hasTranscript}
+                title="Re-reads the record and only reopens fields whose answer actually changed. Everything you already accepted and that still matches is left alone."
+              >
+                Check for changes
+              </Button>
+            )}
+            {rows.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => analyze("all")}
                 disabled={busy || !hasTranscript}
                 title="Replaces every suggestion with a fresh read, including ones you already accepted or rejected. Metadata already saved on the record is not changed."
@@ -818,6 +829,13 @@ export function AiPanel({ letter }: { letter: Letter }) {
             )}
           </div>
         </div>
+        {changedCount > 0 && (
+          <p className="mt-2 text-sm font-medium text-archive-ai">
+            The transcription changed — {changedCount} field
+            {changedCount === 1 ? "" : "s"} need re-review below. Everything else you accepted is
+            untouched.
+          </p>
+        )}
         {!hasTranscript && (
           <p className="mt-2 text-sm text-muted-foreground">
             No transcription yet — transcribe the scans first, then run analysis.
