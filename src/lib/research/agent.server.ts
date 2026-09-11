@@ -499,20 +499,36 @@ export async function answerResearchQuestion(
       ]
         .filter(Boolean)
         .join("\n");
-      return `${meta}\nTEXT:\n${e.text}`;
+      return `${meta}\n${e.condensed ? "CONDENSED ENTRY (metadata + matching passages only)" : "TEXT"}:\n${e.text}`;
     })
     .join("\n\n---\n\n")
-    .slice(0, 180000);
+    .slice(0, 400000);
 
   const historyText = history
     .slice(-6)
     .map((h) => `${h.role === "user" ? "Researcher" : "Ask Francis"}: ${h.content}`)
     .join("\n\n");
 
+  const presenceText = [
+    ...corpus.present_terms.map(
+      (p) =>
+        `"${p.term}" — appears in ${p.count} record${p.count === 1 ? "" : "s"}${
+          p.records.length ? ` (e.g. ${p.records.join(", ")})` : ""
+        }`,
+    ),
+    ...corpus.absent_terms.map((t) => `"${t}" — VERIFIED ABSENT: appears in no record in the archive`),
+  ].join("\n");
+
   const prompt = `${historyText ? `EARLIER IN THIS RESEARCH THREAD\n${historyText}\n\n` : ""}RESEARCH QUESTION
 ${question}
 
-ARCHIVE EVIDENCE (${evidence.length} records retrieved from the research index)
+ARCHIVE SCOPE
+The archive holds ${corpus.total} indexed records. All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question). No record was excluded from the search.
+
+TERM PRESENCE (checked against all ${corpus.total} records, not just those supplied)
+${presenceText || "(no distinctive terms in this question)"}
+
+ARCHIVE EVIDENCE
 ${evidenceText || "(no matching records were found in the archive)"}
 
 ${
