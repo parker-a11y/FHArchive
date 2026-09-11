@@ -209,6 +209,8 @@ function QuickEntry() {
     null,
   );
   const dateRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const [titleError, setTitleError] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: people = [] } = usePeopleNames();
@@ -361,9 +363,22 @@ function QuickEntry() {
     }
   }
 
+  /** Title is required for every save/print path — highlight and focus when missing. */
+  function requireTitle(): boolean {
+    if (form.title.trim()) return true;
+    setTitleError(true);
+    toast.warning("Title / short description is required before saving", {
+      description: "Give the record a short title — a few words is enough.",
+    });
+    titleRef.current?.focus();
+    titleRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
+
   /** Print a label for what's on screen — saves first if the record doesn't exist yet. */
   function printLabel() {
     if (busy) return;
+    if (!requireTitle()) return;
     if (startedLetter) {
       setLabelFor({
         archiveId: startedLetter.archive_id,
@@ -378,6 +393,7 @@ function QuickEntry() {
 
   async function save(mode: "next" | "open" | "label") {
     if (busy) return;
+    if (!requireTitle()) return;
     setBusy(true);
     const precision = datePrecision();
     let created: { id: string; archive_id: string };
@@ -538,7 +554,7 @@ function QuickEntry() {
               </div>
             </div>
             <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-              <div className="archive-id font-display text-4xl">
+              <div className="archive-id font-display text-4xl rounded-md border border-archive-gold/50 bg-archive-gold/10 px-3 py-1 text-archive-gold-strong shadow-sm">
                 {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
               </div>
               <div className="flex items-center gap-2">
@@ -735,7 +751,7 @@ function QuickEntry() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                   onClick={() => {
                     set("date_as_written", "NONE");
                     if (!form.normalized_date) set("date_precision", "undated");
@@ -797,7 +813,7 @@ function QuickEntry() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                   onClick={() => set("primary_person", "Francis A. Harrington")}
                 >
                   Fran
@@ -806,7 +822,7 @@ function QuickEntry() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 px-2.5 text-xs"
+                  className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                   onClick={() => set("primary_person", "Jaquelyn Harrington")}
                 >
                   Jaq
@@ -818,23 +834,42 @@ function QuickEntry() {
             </div>
             <div className="col-span-full space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <Label className="field-label">Title / short description</Label>
+                <Label className="field-label">
+                  Title / short description <span className="text-destructive">*</span>
+                </Label>
                 {isPersonalLetter(form.record_type, form.subtype) && (
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    onClick={() => set("title", shortLetterTitle(form))}
+                    className="border border-archive-gold-strong bg-archive-gold font-semibold text-white shadow-sm hover:bg-archive-gold-strong"
+                    onClick={() => {
+                      set("title", shortLetterTitle(form));
+                      setTitleError(false);
+                    }}
                   >
                     Create Short Title
                   </Button>
                 )}
               </div>
               <Input
+                ref={titleRef}
                 value={form.title}
-                onChange={(e) => set("title", e.target.value)}
+                onChange={(e) => {
+                  set("title", e.target.value);
+                  if (titleError && e.target.value.trim()) setTitleError(false);
+                }}
                 placeholder="e.g. Discharge papers, Navy — or: portrait in dress blues"
+                className={
+                  titleError
+                    ? "border-destructive ring-2 ring-destructive/40 focus-visible:ring-destructive"
+                    : undefined
+                }
               />
+              {titleError && (
+                <p className="text-xs font-medium text-destructive">
+                  A title or short description is required — the record can't be saved without one.
+                </p>
+              )}
             </div>
 
 
@@ -855,7 +890,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setAuthorPerson, (v) => set("author", v), "Francis A. Harrington")
                       }
@@ -866,7 +901,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setAuthorPerson, (v) => set("author", v), "Jaquelyn Harrington")
                       }
@@ -890,7 +925,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setRecipientPerson, (v) => set("recipient", v), "Francis A. Harrington")
                       }
@@ -901,7 +936,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() =>
                         pickPerson(setRecipientPerson, (v) => set("recipient", v), "Jaquelyn Harrington")
                       }
@@ -922,7 +957,7 @@ function QuickEntry() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-7 px-2.5 text-xs"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                       onClick={() => set("destination", "Worcester, Massachusetts")}
                     >
                       Worcester
@@ -945,7 +980,7 @@ function QuickEntry() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 px-2.5 text-xs"
+                    className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                     onClick={() => set("origin", "FPO - San Francisco")}
                   >
                     FPO - San Francisco
@@ -954,7 +989,7 @@ function QuickEntry() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 px-2.5 text-xs"
+                    className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
                     onClick={() => set("origin", "Ft Schuyler")}
                   >
                     Ft Schuyler
@@ -984,7 +1019,7 @@ function QuickEntry() {
               />
             </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
-              <div className="field-label mb-3">Physical storage location</div>
+              <div className="field-label mb-3 border-l-2 border-archive-gold pl-2">Physical storage location</div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Select_
                   label="Storage type"
@@ -1010,7 +1045,7 @@ function QuickEntry() {
               )}
             </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
-              <div className="field-label mb-3">Original source container (provenance)</div>
+              <div className="field-label mb-3 border-l-2 border-archive-gold pl-2">Original source container (provenance)</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
@@ -1095,7 +1130,7 @@ function QuickEntry() {
             <Button
               type="button"
               variant="outline"
-              className="flex-1 sm:flex-none"
+              className="flex-1 border-archive-gold/60 text-archive-gold-strong hover:bg-archive-gold/10 sm:flex-none"
               disabled={busy}
               onClick={() => save("label")}
             >

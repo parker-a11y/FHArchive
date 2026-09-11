@@ -1166,6 +1166,26 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
             })}
           </div>
         )}
+        {/* Second confirm button by the thumbnails — same action as the top one, no scrolling */}
+        {masters > 0 && !isGuestViewer && (
+          <div className="mt-4 flex justify-center">
+            <Button
+              size="lg"
+              className="border border-archive-gold-strong bg-archive-gold font-semibold text-white shadow-md hover:bg-archive-gold-strong"
+              onClick={() =>
+                unnamed.length ? setConfirmDialogOpen(true) : confirmUploadComplete()
+              }
+              disabled={!!generating || !!progress || autoTranscribing || pending.length === 0}
+            >
+              {autoTranscribing ? (
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="mr-1.5 size-4" />
+              )}
+              {autoTranscribing ? "Transcribing…" : "Confirm Upload Complete"}
+            </Button>
+          </div>
+        )}
         <datalist id={`labels-${letter.id}`}>
           {labels.map((l) => (
             <option key={l} value={l} />
