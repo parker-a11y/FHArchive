@@ -11,6 +11,7 @@ import {
   suggestionEntities,
   suggestionRemovals,
   unlinkSuggestionEntities,
+  unsupportedAiLinks,
 } from "@/lib/ai-analysis";
 import { usePersonMatcher } from "@/components/MatchPersonDialog";
 import {
@@ -673,21 +674,29 @@ export function AiPanel({ letter }: { letter: Letter }) {
       }
       // A re-read that dropped names it used to support: offer to unlink the
       // links AI made. Anything linked by hand stays put.
-      if (row.previous_content) {
-        const gone = suggestionRemovals(row.field_key, row.previous_content, text);
+      try {
+        const fromBefore = row.previous_content
+          ? suggestionRemovals(row.field_key, row.previous_content, text)
+          : [];
+        const fromLinks = await unsupportedAiLinks(letter.id, row.field_key, text);
+        const seen = new Set<string>();
+        const gone = [...fromBefore, ...fromLinks].filter((n) => {
+          const k = n.trim().toLowerCase();
+          if (!k || seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
         if (
           gone.length &&
           confirm(
             `The new reading no longer supports:\n\n${gone.join(", ")}\n\nRemove the AI-created links for these? Anything you linked by hand is kept.`,
           )
         ) {
-          try {
-            const n = await unlinkSuggestionEntities(letter.id, row.field_key, gone);
-            if (n) toast.success(`${n} AI link(s) removed`);
-          } catch (e) {
-            toast.error(e instanceof Error ? e.message : "Could not remove the links");
-          }
+          const n = await unlinkSuggestionEntities(letter.id, row.field_key, gone);
+          if (n) toast.success(`${n} AI link(s) removed`);
         }
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Could not check for leftover links");
       }
       qc.invalidateQueries({ queryKey: ["links", letter.id] });
       qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
