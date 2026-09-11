@@ -795,12 +795,24 @@ Return a single JSON object:
   }
 
   const known = new Set(evidence.map((e) => e.archive_id));
+  // Page labels that were actually retrieved, per record — a cited page the
+  // retriever never supplied is dropped rather than shown.
+  const knownPages = new Map<string, Set<string>>();
+  for (const e of evidence) {
+    const pages = new Set((e.passages ?? []).map((p) => p.page_label).filter(Boolean) as string[]);
+    if (pages.size) knownPages.set(e.archive_id, pages);
+  }
   const citations = (Array.isArray(parsed.citations) ? parsed.citations : [])
-    .map((c: any) => ({
-      archive_id: String(c?.archive_id ?? "").trim().toUpperCase(),
-      note: String(c?.note ?? "").trim(),
-      confidence: String(c?.confidence ?? "").trim().toLowerCase(),
-    }))
+    .map((c: any) => {
+      const archive_id = String(c?.archive_id ?? "").trim().toUpperCase();
+      const page = String(c?.page ?? "").trim();
+      return {
+        archive_id,
+        page: page && knownPages.get(archive_id)?.has(page) ? page : null,
+        note: String(c?.note ?? "").trim(),
+        confidence: String(c?.confidence ?? "").trim().toLowerCase(),
+      };
+    })
     // Never surface a citation to a record the retriever did not actually supply.
     .filter((c: any) => c.archive_id && known.has(c.archive_id));
 
