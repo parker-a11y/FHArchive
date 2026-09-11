@@ -32,6 +32,7 @@ type QueryRow = {
   confidence: string | null;
   citations: { archive_id: string; note?: string }[];
   sources: { title?: string; url: string; note?: string }[] | null;
+  corpus: { total: number; full: number; condensed: number } | null;
 
   model: string | null;
   error: string | null;
@@ -56,7 +57,7 @@ function AskHistory() {
       const { data, error } = await supabase
         .from("ask_francis_queries")
         .select(
-          "id, user_email, user_name, question, answer, confidence, citations, sources, model, error, created_at",
+          "id, user_email, user_name, question, answer, confidence, citations, sources, corpus, model, error, created_at",
         )
 
         .order("created_at", { ascending: false })
