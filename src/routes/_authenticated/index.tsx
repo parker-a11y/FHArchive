@@ -246,15 +246,21 @@ function Dashboard() {
     enabled: recentIds.length > 0,
     queryFn: async () => {
       const out: Record<string, { total: number; pending: number }> = {};
-      const { data, error } = await supabase
-        .from("ai_suggestions")
-        .select("letter_id, status")
-        .in("letter_id", recentIds);
-      if (error) throw error;
-      for (const r of (data ?? []) as { letter_id: string; status: string }[]) {
-        const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
-        s.total += 1;
-        if (r.status === "pending") s.pending += 1;
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("ai_suggestions")
+          .select("letter_id, status")
+          .in("letter_id", recentIds)
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = (data ?? []) as { letter_id: string; status: string }[];
+        for (const r of rows) {
+          const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
+          s.total += 1;
+          if (r.status === "pending") s.pending += 1;
+        }
+        if (rows.length < PAGE) break;
       }
       return out;
     },
