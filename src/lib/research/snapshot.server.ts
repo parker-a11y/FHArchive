@@ -938,3 +938,173 @@ async function rebuildResearchIndex(
   // Drop index rows for records that no longer exist.
   await admin.from("research_index").delete().neq("snapshot_id", snapshotId);
 }
+
+// ------------------------------------------------- knowledge records indexing
+
+const text = (v: unknown) => (v == null ? "" : String(v).trim());
+
+/**
+ * Francis File Notes, people, places, organizations/ships and archive notes as
+ * first-class index entries. Each keeps a prefixed identifier (FFN-, PER-, PLC-,
+ * ORG-, AN-) so a citation can be traced back to its source record.
+ */
+function knowledgeRows(dump: Dump, snapshotId: string) {
+  const stamp = new Date().toISOString();
+  const base = (kind: string, ref_id: string, archive_id: string, title: string, body: string, extra: Row = {}) => ({
+    kind,
+    ref_id,
+    archive_id,
+    title: title || archive_id,
+    record_type: kind,
+    subtype: null,
+    period: null,
+    sort_date: null,
+    date_text: null,
+    author: null,
+    recipient: null,
+    origin: null,
+    destination: null,
+    tones: [],
+    keywords: [],
+    people: [],
+    places: [],
+    events: [],
+    organizations: [],
+    linked_refs: [],
+    summary: null,
+    has_transcription: false,
+    snapshot_id: snapshotId,
+    updated_at: stamp,
+    ...extra,
+    body: body.slice(0, 200000),
+  });
+
+  const notes = (dump["ffn_notes"] ?? [])
+    .filter((n) => text(n["status"]) !== "archived")
+    .map((n) =>
+      base(
+        "note",
+        n["id"],
+        `FFN-${text(n["slug"]) || text(n["id"]).slice(0, 8)}`,
+        `Francis File Note: ${text(n["title"]) || text(n["term"])}`,
+        [
+          `Term: ${text(n["term"])}`,
+          n["expanded_name"] ? `Also known as: ${text(n["expanded_name"])}` : "",
+          n["category"] ? `Category: ${text(n["category"])}` : "",
+          text(n["short_definition"]),
+          text(n["background"]),
+          text(n["archive_context"]),
+          text(n["sources"]),
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
+        { summary: text(n["short_definition"]) || null, keywords: [text(n["term"])].filter(Boolean) },
+      ),
+    );
+
+  const people = (dump["people"] ?? []).map((p) =>
+    base(
+      "person",
+      p["id"],
+      `PER-${text(p["id"]).slice(0, 8)}`,
+      `Person: ${text(p["name"])}`,
+      [
+        `Name: ${text(p["name"])}`,
+        p["alternate_names"] ? `Also known as: ${text(p["alternate_names"])}` : "",
+        p["relationship"] ? `Relationship: ${text(p["relationship"])}` : "",
+        p["birth_date"] || p["death_date"] ? `Life dates: ${text(p["birth_date"])} – ${text(p["death_date"])}` : "",
+        text(p["biographical_notes"]),
+        text(p["research_notes"]),
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      { people: [text(p["name"])].filter(Boolean) },
+    ),
+  );
+
+  const places = (dump["places"] ?? []).map((p) =>
+    base(
+      "place",
+      p["id"],
+      `PLC-${text(p["id"]).slice(0, 8)}`,
+      `Place: ${text(p["canonical_name"])}`,
+      [
+        `Place: ${text(p["canonical_name"])}`,
+        p["name_as_written"] ? `Written as: ${text(p["name_as_written"])}` : "",
+        [text(p["city"]), text(p["region"]), text(p["country"])].filter(Boolean).join(", "),
+        text(p["historical_notes"]),
+        text(p["research_notes"]),
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      { places: [text(p["canonical_name"])].filter(Boolean) },
+    ),
+  );
+
+  const orgs = (dump["organizations"] ?? []).map((o) =>
+    base(
+      "organization",
+      o["id"],
+      `ORG-${text(o["id"]).slice(0, 8)}`,
+      `${text(o["org_type"]) === "ship" ? "Ship" : "Organization"}: ${text(o["name"])}`,
+      [
+        `Name: ${text(o["name"])}`,
+        o["org_type"] ? `Type: ${text(o["org_type"])}` : "",
+        text(o["description"]),
+        text(o["notes"]),
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      { organizations: [text(o["name"])].filter(Boolean), record_type: text(o["org_type"]) || "organization" },
+    ),
+  );
+
+  const archiveNotes = (dump["archive_notes"] ?? []).map((n) =>
+    base(
+      "archive_note",
+      n["id"],
+      `AN-${text(n["id"]).slice(0, 8)}`,
+      `Archive note: ${text(n["title"]) || "untitled"}`,
+      [n["author_name"] ? `Written by: ${text(n["author_name"])}` : "", text(n["body"])]
+        .filter(Boolean)
+        .join("\n\n"),
+      { author: text(n["author_name"]) || null },
+    ),
+  );
+
+  return [...notes, ...people, ...places, ...orgs, ...archiveNotes].filter((r) => r.body.trim());
+}
+
+/**
+ * Index-only refresh: rebuilds the searchable index from live data without
+ * writing a snapshot bundle to storage. Used by the incremental job so an edited
+ * record becomes searchable within minutes.
+ */
+export async function refreshResearchIndexOnly(): Promise<{ records: number; sources: number; rows: number }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const dump: Dump = {};
+  for (const table of TABLES) dump[table] = await loadTable(supabaseAdmin, table);
+  const { records, sources } = composeRecords(dump);
+
+  const { data: runRow, error: runError } = await supabaseAdmin
+    .from("research_snapshots")
+    .insert({ status: "index-only", trigger: "incremental", folder: "index-only" } as never)
+    .select("id")
+    .single();
+  if (runError) throw new Error(`Could not start the index refresh: ${runError.message}`);
+  const snapshotId = (runRow as { id: string }).id;
+
+  await rebuildResearchIndex(supabaseAdmin, snapshotId, records, sources, dump);
+
+  await supabaseAdmin
+    .from("research_snapshots")
+    .update({
+      status: "success",
+      finished_at: new Date().toISOString(),
+      records_indexed: records.length,
+      sources_indexed: sources.length,
+    } as never)
+    .eq("id", snapshotId);
+
+  return { records: records.length, sources: sources.length, rows: records.length + sources.length };
+}
