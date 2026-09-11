@@ -98,10 +98,37 @@ export type Corpus = {
 const SELECT =
   "kind, archive_id, title, record_type, subtype, period, sort_date, date_text, author, recipient, origin, destination, tones, keywords, people, places, events, organizations, linked_refs, summary, body";
 
-/** Budgets: the brief stays roughly constant however large the archive grows. */
+/**
+ * Budgets. The aim is the SMALLEST high-quality evidence set that answers the
+ * question — not a full context window. FULL_TEXT_BUDGET is a safety ceiling,
+ * never a target.
+ */
 const FULL_TEXT_CAP = 15000;
 const FULL_TEXT_BUDGET = 300000;
-const MAX_CONDENSED = 400;
+const MAX_CONDENSED = 60;
+/** How many passages the meaning search considers before ranking. */
+const SEMANTIC_CANDIDATES = 150;
+/** No single record may crowd the brief out with near-identical passages. */
+const MAX_PASSAGES_PER_RECORD = 3;
+
+type Shape = {
+  /** Records supplied in full. */
+  fullRecords: number;
+  /** Passage-level evidence entries kept for other strong matches. */
+  passages: number;
+  broad: boolean;
+};
+
+const BROAD_HINTS =
+  /\b(overall|throughout|across|every|all of|summar|theme|themes|trend|evolv|evolution|over time|pattern|whole archive|entire archive|timeline|how did .* change)\b/i;
+
+/** Focused factual questions get a tight brief; synthesis questions get more. */
+function shapeFor(question: string, terms: string[]): Shape {
+  const broad = BROAD_HINTS.test(question) || terms.length > 14;
+  return broad
+    ? { fullRecords: 20, passages: 45, broad: true }
+    : { fullRecords: 8, passages: 18, broad: false };
+}
 
 function questionTerms(question: string): string[] {
   return Array.from(
