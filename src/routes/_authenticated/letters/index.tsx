@@ -3,11 +3,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
+import { parseRecordNumber } from "@/lib/box-ranges";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { DateLink } from "@/components/DateLink";
 import { Button } from "@/components/ui/button";
@@ -392,6 +394,7 @@ function LettersTable() {
     storage_location: r.storage_location,
   }));
   const lastClickedRow = useRef<string | null>(null);
+  const shiftHeld = useRef(false);
   /** Shift-click extends the selection across the visible rows. */
   const toggleSelected = (l: Letter, on: boolean, shift = false) =>
     setSelected((s) => {
@@ -673,6 +676,43 @@ function LettersTable() {
         description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
+            {isAdmin && (
+              <div className="flex items-center gap-1 rounded border border-border px-2 py-1">
+                <span className="text-xs text-muted-foreground">Range</span>
+                <Input
+                  className="h-7 w-24 text-xs"
+                  placeholder="FH0050"
+                  value={rangeFrom}
+                  onChange={(e) => setRangeFrom(e.target.value)}
+                />
+                <span className="text-xs text-muted-foreground">to</span>
+                <Input
+                  className="h-7 w-24 text-xs"
+                  placeholder="FH0060"
+                  value={rangeTo}
+                  onChange={(e) => setRangeTo(e.target.value)}
+                />
+                <Button size="sm" variant="outline" className="h-7" disabled={rangeLoading} onClick={selectRange}>
+                  {rangeLoading ? <Loader2 className="size-3 animate-spin" /> : "Select"}
+                </Button>
+                {selectedRecords.length > 0 && (
+                  <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelected(new Map())}>
+                    Clear ({selectedRecords.length})
+                  </Button>
+                )}
+              </div>
+            )}
+            {isAdmin && selectedRecords.length > 0 && (
+              <BoxLabelDialog
+                records={boxRecords}
+                onApplied={() => qc.invalidateQueries({ queryKey: ["letters-page"] })}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Boxes className="size-4" /> Assign to box ({selectedRecords.length})
+                  </Button>
+                }
+              />
+            )}
             {isAdmin && selectedRecords.length > 0 && (
               <EmailArchiveDialog
                 records={selectedRecords}
