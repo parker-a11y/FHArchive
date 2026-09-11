@@ -582,22 +582,30 @@ export function AiPanel({ letter }: { letter: Letter }) {
   const [editing, setEditing] = useState<Record<string, string>>({});
   const [showRejected, setShowRejected] = useState(false);
   const rejectedCount = rows.filter((r) => r.status === "rejected").length;
+  const changedCount = rows.filter((r) => r.previous_content && r.status === "pending").length;
 
   const hasTranscript = Boolean(
     (letter.transcription_verified ?? "").trim() || (letter.transcription_raw_ai ?? "").trim(),
   );
 
-  async function analyze(mode: "new" | "all" = "new") {
+  async function analyze(mode: "new" | "all" | "refresh" = "new") {
     setBusy(true);
     setError(null);
     try {
       const res = await runAnalysis({ data: { letterId: letter.id, mode } });
       qc.invalidateQueries({ queryKey: ["ai", letter.id] });
       qc.invalidateQueries({ queryKey: ["ai_pending"] });
-      toast.success(
-        `AI analysis complete — ${res.suggestions} suggestion(s) awaiting review` +
-          (res.cleared ? `, ${res.cleared} superseded cleared` : ""),
-      );
+      if (mode === "refresh")
+        toast.success(
+          res.updated
+            ? `${res.updated} field(s) changed and need re-review`
+            : "Nothing changed — your accepted review still matches the transcription",
+        );
+      else
+        toast.success(
+          `AI analysis complete — ${res.suggestions} suggestion(s) awaiting review` +
+            (res.cleared ? `, ${res.cleared} superseded cleared` : ""),
+        );
       await proposeTones();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "AI analysis failed";
