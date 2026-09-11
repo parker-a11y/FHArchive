@@ -343,7 +343,10 @@ function AskFrancis() {
       if (result.status === "error") toast.error(`Snapshot failed: ${result.error}`);
       else
         toast.success(
-          `Snapshot complete — ${result.records} records, ${result.transcriptions} transcriptions, ${result.files} files written.`,
+          `Snapshot complete — ${result.records} records, ${result.transcriptions} transcriptions, ${result.files} files written.` +
+            (result.embeddings
+              ? ` Meaning index: ${result.embeddings.chunks} passages (${result.embeddings.embedded} newly indexed).`
+              : " Meaning index could not be refreshed."),
         );
       qc.invalidateQueries({ queryKey: ["research-snapshot-latest"] });
     } catch (err) {
