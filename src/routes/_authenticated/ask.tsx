@@ -549,7 +549,10 @@ function AskFrancis() {
                   {turn.answer.confidence}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {turn.answer.evidence.length} records retrieved · AI interpretation, not catalog fact
+                  {turn.answer.corpus
+                    ? `all ${turn.answer.corpus.total} records searched · ${turn.answer.corpus.full} read in full`
+                    : `${turn.answer.evidence.length} records retrieved`}{" "}
+                  · AI interpretation, not catalog fact
                 </span>
               </div>
 
