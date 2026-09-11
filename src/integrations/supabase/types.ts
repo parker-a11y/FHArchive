@@ -23,7 +23,9 @@ export type Database = {
           letter_id: string
           model: string | null
           owner_id: string
+          proposed_content: string | null
           status: string
+          superseded_at: string | null
           updated_at: string
         }
         Insert: {
@@ -34,7 +36,9 @@ export type Database = {
           letter_id: string
           model?: string | null
           owner_id?: string
+          proposed_content?: string | null
           status?: string
+          superseded_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -45,7 +49,9 @@ export type Database = {
           letter_id?: string
           model?: string | null
           owner_id?: string
+          proposed_content?: string | null
           status?: string
+          superseded_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1956,6 +1962,7 @@ export type Database = {
       letters: {
         Row: {
           addressee_normalized: string | null
+          ai_source_hash: string | null
           archive_id: string
           author: string | null
           censor_mark: boolean
@@ -2042,6 +2049,7 @@ export type Database = {
         }
         Insert: {
           addressee_normalized?: string | null
+          ai_source_hash?: string | null
           archive_id: string
           author?: string | null
           censor_mark?: boolean
@@ -2128,6 +2136,7 @@ export type Database = {
         }
         Update: {
           addressee_normalized?: string | null
+          ai_source_hash?: string | null
           archive_id?: string
           author?: string | null
           censor_mark?: boolean
