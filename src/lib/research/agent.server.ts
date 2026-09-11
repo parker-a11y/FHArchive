@@ -208,18 +208,159 @@ function toEvidence(row: any, text: string, condensed: boolean): Evidence {
   };
 }
 
+// ------------------------------------------------------- structured filtering
+
+const KIND_BY_WORD: Record<string, string[]> = {
+  photograph: ["record"],
+  photo: ["record"],
+  letter: ["record"],
+};
+void KIND_BY_WORD;
+
+/** Month names → 1-12, for date ranges written in prose. */
+const MONTHS: Record<string, number> = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+};
+
+function lastDay(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** Dates read straight from the wording — no model, no guessing. */
+function literalDateRange(question: string): { date_from?: string; date_to?: string } {
+  const q = question.toLowerCase();
+  const monthNames = Object.keys(MONTHS).join("|");
+  const span = new RegExp(`(${monthNames})\\s*(?:through|to|-|–|until)\\s*(${monthNames})\\s+(\\d{4})`).exec(q);
+  if (span) {
+    const y = Number(span[3]);
+    const m1 = MONTHS[span[1]!]!;
+    const m2 = MONTHS[span[2]!]!;
+    return {
+      date_from: `${y}-${String(m1).padStart(2, "0")}-01`,
+      date_to: `${y}-${String(m2).padStart(2, "0")}-${lastDay(y, m2)}`,
+    };
+  }
+  const one = new RegExp(`(${monthNames})\\s+(\\d{4})`).exec(q);
+  if (one) {
+    const y = Number(one[2]);
+    const m = MONTHS[one[1]!]!;
+    return {
+      date_from: `${y}-${String(m).padStart(2, "0")}-01`,
+      date_to: `${y}-${String(m).padStart(2, "0")}-${lastDay(y, m)}`,
+    };
+  }
+  const years = Array.from(new Set((q.match(/\b(19[0-9]{2}|20[0-9]{2})\b/g) ?? []).map(Number))).sort();
+  if (years.length === 1) return { date_from: `${years[0]}-01-01`, date_to: `${years[0]}-12-31` };
+  if (years.length >= 2) {
+    return { date_from: `${years[0]}-01-01`, date_to: `${years[years.length - 1]}-12-31` };
+  }
+  return {};
+}
+
 /**
- * Ranks the whole archive for a question — meaning search, full-text search,
- * per-term keyword passes and directly named record numbers all contribute —
- * then builds a tiered brief: full text for the strongest matches, condensed
- * entries for everything else that matched. Nothing that matched is dropped.
+ * Reads structured constraints out of the question (date range, sender,
+ * recipient, record type, person, place, ship/organization, keyword or note).
+ * Anything the archive cannot confirm is dropped — a filter is never invented.
+ */
+export async function inferFilters(admin: any, question: string): Promise<RetrievalFilters> {
+  const filters: RetrievalFilters = { ...literalDateRange(question) };
+
+  let proposed: any = {};
+  try {
+    const raw = await callResearchModel(
+      `You extract retrieval filters from a question about a private family archive of letters, photographs and documents.
+Return ONLY constraints the question states explicitly or unmistakably implies. Leave a field null when unsure — a wrong filter hides evidence.
+Return JSON: {"date_from":"YYYY-MM-DD|null","date_to":"YYYY-MM-DD|null","author":"sender name|null","recipient":"recipient name|null","record_types":["letter"|"photograph"|"document"|...]|null,"person":"name|null","place":"place name|null","organization":"ship or unit or organization name|null","keyword":"tag or note term|null"}`,
+      question,
+    );
+    const cleaned = raw.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    proposed = JSON.parse(cleaned.slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1)) ?? {};
+  } catch {
+    proposed = {};
+  }
+
+  const str = (v: any) => {
+    const s = String(v ?? "").trim();
+    return s && s.toLowerCase() !== "null" ? s : null;
+  };
+  const isDate = (v: any) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v ?? "")) ? String(v) : null);
+
+  if (!filters.date_from) filters.date_from = isDate(proposed.date_from);
+  if (!filters.date_to) filters.date_to = isDate(proposed.date_to);
+
+  /** Only keep a name/type filter the archive actually contains. */
+  const confirm = async (column: string, value: string | null, array = false) => {
+    if (!value) return null;
+    const like = `%${value.replace(/[%,]/g, " ")}%`;
+    const query = admin.from("research_index").select("archive_id", { count: "exact", head: true });
+    const { count } = array
+      ? await query.overlaps(column, [value])
+      : await query.ilike(column, like);
+    return (count ?? 0) > 0 ? value : null;
+  };
+
+  const [author, recipient, person, place, organization] = await Promise.all([
+    confirm("author", str(proposed.author)),
+    confirm("recipient", str(proposed.recipient)),
+    confirm("people", str(proposed.person), true),
+    confirm("places", str(proposed.place), true),
+    confirm("organizations", str(proposed.organization), true),
+  ]);
+  filters.author = author;
+  filters.recipient = recipient;
+  filters.person = person;
+  filters.place = place;
+  filters.organization = organization;
+
+  const types = Array.isArray(proposed.record_types)
+    ? proposed.record_types.map((t: any) => str(t)).filter(Boolean)
+    : [];
+  if (types.length) {
+    const { data } = await admin.from("research_index").select("record_type").in("record_type", types).limit(1);
+    filters.record_types = (data ?? []).length ? types : null;
+  }
+  filters.keyword = await confirm("keywords", str(proposed.keyword), true);
+
+  // Drop empty keys so the corpus report only shows real constraints.
+  for (const key of Object.keys(filters) as (keyof RetrievalFilters)[]) {
+    if (filters[key] == null || (Array.isArray(filters[key]) && !(filters[key] as string[]).length)) {
+      delete filters[key];
+    }
+  }
+  return filters;
+}
+
+/** Applies confirmed filters to a research_index query. */
+function applyFilters(query: any, f: RetrievalFilters) {
+  let q = query;
+  if (f.date_from) q = q.gte("sort_date", f.date_from);
+  if (f.date_to) q = q.lte("sort_date", f.date_to);
+  if (f.author) q = q.ilike("author", `%${f.author}%`);
+  if (f.recipient) q = q.ilike("recipient", `%${f.recipient}%`);
+  if (f.record_types?.length) q = q.in("record_type", f.record_types);
+  if (f.person) q = q.overlaps("people", [f.person]);
+  if (f.place) q = q.overlaps("places", [f.place]);
+  if (f.organization) q = q.overlaps("organizations", [f.organization]);
+  if (f.keyword) q = q.overlaps("keywords", [f.keyword]);
+  return q;
+}
+
+/**
+ * Ranks the whole archive for a question — meaning search over passages,
+ * full-text search, per-term keyword passes and directly named record numbers
+ * all contribute — then builds the smallest strong brief: full text for the
+ * best records, retrieved passages for other strong matches, and condensed
+ * metadata entries beyond that.
  */
 export async function retrieveEvidence(
   admin: any,
   question: string,
+  filters: RetrievalFilters = {},
 ): Promise<{ evidence: Evidence[]; corpus: Corpus }> {
   const terms = questionTerms(question);
   const ftsQuery = terms.join(" or ");
+  const shape = shapeFor(question, terms);
 
   // Record numbers named directly in the question are always included.
   const pinnedIds = Array.from(
@@ -245,39 +386,51 @@ export async function retrieveEvidence(
     .select("archive_id", { count: "exact", head: true });
   const total = Math.max(totalCount ?? 0, 1);
 
-  const [presence, semantic] = await Promise.all([
+  const [presence, passages] = await Promise.all([
     termPresence(admin, terms),
-    semanticRecordScores(admin, question),
+    semanticPassages(admin, question, filters, SEMANTIC_CANDIDATES),
   ]);
 
+  // Group passages by record, keep only the strongest few per record so one
+  // chatty letter cannot crowd out the rest of the archive.
+  const byRecord = new Map<string, SemanticPassage[]>();
+  for (const p of passages.slice().sort((a, b) => b.score - a.score)) {
+    const key = `${p.kind}:${p.archive_id}`;
+    const list = byRecord.get(key) ?? [];
+    if (list.length >= MAX_PASSAGES_PER_RECORD) continue;
+    list.push(p);
+    byRecord.set(key, list);
+  }
+
   if (ftsQuery) {
-    const { data } = await admin
-      .from("research_index")
-      .select(SELECT)
-      .textSearch("fts", ftsQuery, { type: "websearch" })
-      .limit(60);
+    const { data } = await applyFilters(
+      admin.from("research_index").select(SELECT).textSearch("fts", ftsQuery, { type: "websearch" }),
+      filters,
+    ).limit(60);
     add(data ?? [], 3);
 
     // Per-term keyword pass, weighted so rare words outrank common ones.
     const passes = await Promise.all(
       terms.map(async (term) => {
         const like = `%${term.replace(/[%,]/g, " ")}%`;
-        const { data: rows } = await admin
-          .from("research_index")
-          .select(SELECT)
-          .or(
-            [
-              `body.ilike.${like}`,
-              `title.ilike.${like}`,
-              `summary.ilike.${like}`,
-              `archive_id.ilike.${like}`,
-              `author.ilike.${like}`,
-              `recipient.ilike.${like}`,
-              `origin.ilike.${like}`,
-              `destination.ilike.${like}`,
-            ].join(","),
-          )
-          .limit(60);
+        const { data: rows } = await applyFilters(
+          admin
+            .from("research_index")
+            .select(SELECT)
+            .or(
+              [
+                `body.ilike.${like}`,
+                `title.ilike.${like}`,
+                `summary.ilike.${like}`,
+                `archive_id.ilike.${like}`,
+                `author.ilike.${like}`,
+                `recipient.ilike.${like}`,
+                `origin.ilike.${like}`,
+                `destination.ilike.${like}`,
+              ].join(","),
+            ),
+          filters,
+        ).limit(60);
         return rows ?? [];
       }),
     );
@@ -290,24 +443,22 @@ export async function retrieveEvidence(
   }
 
   // Fold in the meaning matches: fetch any semantic hit not already retrieved.
-  if (semantic.size) {
-    const missing = Array.from(semantic.keys())
+  if (byRecord.size) {
+    const missing = Array.from(byRecord.keys())
       .filter((k) => !hits.has(k))
       .map((k) => k.slice(k.indexOf(":") + 1));
     if (missing.length) {
       const { data } = await admin.from("research_index").select(SELECT).in("archive_id", missing);
       add(data ?? [], 0);
     }
-    for (const [key, s] of semantic) {
+    for (const [key, list] of byRecord) {
       const hit = hits.get(key);
-      if (hit) hit.score += 8 * s.score;
+      if (hit) hit.score += 8 * (list[0]?.score ?? 0);
     }
   }
 
   if (hits.size < 4) {
-    const { data } = await admin
-      .from("research_index")
-      .select(SELECT)
+    const { data } = await applyFilters(admin.from("research_index").select(SELECT), filters)
       .order("sort_date", { ascending: true, nullsFirst: false })
       .limit(20);
     add(data ?? [], 1);
@@ -335,31 +486,59 @@ export async function retrieveEvidence(
 
   const evidence: Evidence[] = [];
   let budget = FULL_TEXT_BUDGET;
+  let fullCount = 0;
+  let passageCount = 0;
   let condensedCount = 0;
+
   for (const row of ordered) {
     const body = String(row.body ?? "");
-    const full = body.slice(0, FULL_TEXT_CAP);
-    if (budget - full.length >= 0) {
-      budget -= full.length;
-      evidence.push(toEvidence(row, full, false));
+    const key = `${row.kind}:${row.archive_id}`;
+    const recordPassages = (byRecord.get(key) ?? []).map((p) => ({
+      text: p.content.includes("PASSAGE:") ? p.content.slice(p.content.indexOf("PASSAGE:") + 8).trim() : p.content,
+      page_label: p.page_label,
+      score: Number(p.score.toFixed(4)),
+    }));
+
+    // 1. Strongest records: the full text, so nothing is read out of context.
+    if (fullCount < shape.fullRecords) {
+      const full = body.slice(0, FULL_TEXT_CAP);
+      if (budget - full.length >= 0) {
+        budget -= full.length;
+        fullCount++;
+        const e = toEvidence(row, full, false);
+        if (recordPassages.length) e.passages = recordPassages;
+        evidence.push(e);
+        continue;
+      }
+    }
+
+    // 2. Other strong matches: only the passages actually retrieved.
+    if (recordPassages.length && passageCount < shape.passages) {
+      passageCount += recordPassages.length;
+      const e = toEvidence(row, recordPassages.map((p) => (p.page_label ? `[${p.page_label}] ${p.text}` : p.text)).join("\n\n…\n\n"), true);
+      e.passages = recordPassages;
+      evidence.push(e);
       continue;
     }
+
+    // 3. Everything else that matched: metadata plus keyword snippets.
     if (condensedCount >= MAX_CONDENSED) break;
     condensedCount++;
     const snips = snippetsFor(body, terms);
-    evidence.push(
-      toEvidence(row, snips.length ? snips.join("\n\n") : body.slice(0, 400), true),
-    );
+    evidence.push(toEvidence(row, snips.length ? snips.join("\n\n") : body.slice(0, 400), true));
   }
 
   return {
     evidence,
     corpus: {
       total,
-      full: evidence.filter((e) => !e.condensed).length,
-      condensed: condensedCount,
+      full: fullCount,
+      condensed: evidence.length - fullCount,
       absent_terms: presence.filter((p) => p.count === 0).map((p) => p.term),
       present_terms: presence.filter((p) => p.count > 0),
+      filters: Object.keys(filters).length ? filters : undefined,
+      passages_considered: passages.length,
+      passages_used: passageCount,
     },
   };
 }
