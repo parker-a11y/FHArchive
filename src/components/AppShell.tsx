@@ -80,9 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   //   Mac: Cmd+Option+N → Quick Entry, Cmd+Option+R → All Records
   //   Win/Linux: Alt+N → Quick Entry, Alt+R → All Records
   const isMac =
-    typeof navigator !== "undefined" &&
-    (navigator.userAgentData?.platform === "macOS" ||
-      /Mac|iPod|iPhone|iPad/.test(navigator.platform));
+    typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
