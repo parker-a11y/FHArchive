@@ -12,7 +12,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { semanticRecordScores } from "./embed.server";
+import { semanticPassages, type RetrievalFilters, type SemanticPassage } from "./embed.server";
 
 export type ResearchProvider = "lovable-gateway";
 
