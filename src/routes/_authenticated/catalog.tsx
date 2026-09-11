@@ -1019,7 +1019,7 @@ function QuickEntry() {
               />
             </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
-              <div className="field-label mb-3">Physical storage location</div>
+              <div className="field-label mb-3 border-l-2 border-archive-gold pl-2">Physical storage location</div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Select_
                   label="Storage type"
@@ -1045,7 +1045,7 @@ function QuickEntry() {
               )}
             </div>
             <div className="col-span-full rounded border border-border bg-card p-4">
-              <div className="field-label mb-3">Original source container (provenance)</div>
+              <div className="field-label mb-3 border-l-2 border-archive-gold pl-2">Original source container (provenance)</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ContainerSelect
                   value={form.source_container_id}
