@@ -3,11 +3,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
+import { parseRecordNumber } from "@/lib/box-ranges";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { DateLink } from "@/components/DateLink";
 import { Button } from "@/components/ui/button";
@@ -368,16 +370,101 @@ function LettersTable() {
 
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
 
-  type SelectedRecord = { kind: "letter"; id: string; identifier: string; title: string | null };
+  type SelectedRecord = {
+    kind: "letter";
+    id: string;
+    identifier: string;
+    title: string | null;
+    storage_type: string | null;
+    storage_location: string | null;
+  };
+  const asSelected = (l: Letter): SelectedRecord => ({
+    kind: "letter",
+    id: l.id,
+    identifier: l.archive_id,
+    title: l.title,
+    storage_type: l.storage_type,
+    storage_location: l.storage_location,
+  });
   const selectedRecords = [...selected.values()];
-  const toggleSelected = (l: Letter, on: boolean) =>
+  const boxRecords = selectedRecords.map((r) => ({
+    id: r.id,
+    archive_id: r.identifier,
+    storage_type: r.storage_type,
+    storage_location: r.storage_location,
+  }));
+  const lastClickedRow = useRef<string | null>(null);
+  const shiftHeld = useRef(false);
+  /** Shift-click extends the selection across the visible rows. */
+  const toggleSelected = (l: Letter, on: boolean, shift = false) =>
     setSelected((s) => {
       const next = new Map(s);
-      if (on) next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title });
+      const anchor = lastClickedRow.current;
+      const from = anchor ? rows.findIndex((r) => r.id === anchor) : -1;
+      const to = rows.findIndex((r) => r.id === l.id);
+      if (shift && from >= 0 && to >= 0) {
+        const [a, b] = from < to ? [from, to] : [to, from];
+        rows.slice(a, b + 1).forEach((r) => {
+          if (on) next.set(r.id, asSelected(r));
+          else next.delete(r.id);
+        });
+      } else if (on) next.set(l.id, asSelected(l));
       else next.delete(l.id);
+      lastClickedRow.current = l.id;
       return next;
     });
   const allSelected = rows.length > 0 && rows.every((l) => selected.has(l.id));
+
+  /** Select every record in an FH number range, across all pages. */
+  const [rangeFrom, setRangeFrom] = useState("");
+  const [rangeTo, setRangeTo] = useState("");
+  const [rangeLoading, setRangeLoading] = useState(false);
+  async function selectRange() {
+    const a = parseRecordNumber(rangeFrom);
+    const b = parseRecordNumber(rangeTo);
+    if (a === null || b === null) {
+      toast.error("Enter a start and end record number, e.g. FH0050 to FH0060.");
+      return;
+    }
+    const [lo, hi] = a <= b ? [a, b] : [b, a];
+    setRangeLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("letters")
+        .select("id, archive_id, title, storage_type, storage_location, fh_seq")
+        .gte("fh_seq", lo)
+        .lte("fh_seq", hi)
+        .order("fh_seq", { ascending: true });
+      if (error) throw error;
+      const found = (data ?? []) as {
+        id: string;
+        archive_id: string;
+        title: string | null;
+        storage_type: string | null;
+        storage_location: string | null;
+      }[];
+      setSelected((s) => {
+        const next = new Map(s);
+        found.forEach((r) =>
+          next.set(r.id, {
+            kind: "letter",
+            id: r.id,
+            identifier: r.archive_id,
+            title: r.title,
+            storage_type: r.storage_type,
+            storage_location: r.storage_location,
+          }),
+        );
+        return next;
+      });
+      toast.success(`Selected ${found.length} record${found.length === 1 ? "" : "s"} in range`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setRangeLoading(false);
+    }
+  }
+
 
   /** Selected records that are scanned but still awaiting transcription (yellow). */
   const transcribableSelected = rows.filter(
@@ -589,6 +676,43 @@ function LettersTable() {
         description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
+            {isAdmin && (
+              <div className="flex items-center gap-1 rounded border border-border px-2 py-1">
+                <span className="text-xs text-muted-foreground">Range</span>
+                <Input
+                  className="h-7 w-24 text-xs"
+                  placeholder="FH0050"
+                  value={rangeFrom}
+                  onChange={(e) => setRangeFrom(e.target.value)}
+                />
+                <span className="text-xs text-muted-foreground">to</span>
+                <Input
+                  className="h-7 w-24 text-xs"
+                  placeholder="FH0060"
+                  value={rangeTo}
+                  onChange={(e) => setRangeTo(e.target.value)}
+                />
+                <Button size="sm" variant="outline" className="h-7" disabled={rangeLoading} onClick={selectRange}>
+                  {rangeLoading ? <Loader2 className="size-3 animate-spin" /> : "Select"}
+                </Button>
+                {selectedRecords.length > 0 && (
+                  <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelected(new Map())}>
+                    Clear ({selectedRecords.length})
+                  </Button>
+                )}
+              </div>
+            )}
+            {isAdmin && selectedRecords.length > 0 && (
+              <BoxLabelDialog
+                records={boxRecords}
+                onApplied={() => qc.invalidateQueries({ queryKey: ["letters-page"] })}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Boxes className="size-4" /> Assign to box ({selectedRecords.length})
+                  </Button>
+                }
+              />
+            )}
             {isAdmin && selectedRecords.length > 0 && (
               <EmailArchiveDialog
                 records={selectedRecords}
@@ -959,7 +1083,7 @@ function LettersTable() {
                   onCheckedChange={(v) =>
                     setSelected((s) => {
                       const next = new Map(s);
-                      if (v) rows.forEach((l) => next.set(l.id, { kind: "letter", id: l.id, identifier: l.archive_id, title: l.title }));
+                      if (v) rows.forEach((l) => next.set(l.id, asSelected(l)));
                       else rows.forEach((l) => next.delete(l.id));
                        return next;
                      })
@@ -1032,12 +1156,15 @@ function LettersTable() {
                   )}
                 >
                   {isAdmin && (
-                    <Checkbox
-                      aria-label={`Select ${l.archive_id}`}
-                      checked={selected.has(l.id)}
-                      onCheckedChange={(v) => toggleSelected(l, Boolean(v))}
-                    />
+                    <span onClick={(e) => (shiftHeld.current = e.shiftKey)}>
+                      <Checkbox
+                        aria-label={`Select ${l.archive_id}`}
+                        checked={selected.has(l.id)}
+                        onCheckedChange={(v) => toggleSelected(l, Boolean(v), shiftHeld.current)}
+                      />
+                    </span>
                   )}
+
                 </td>
                 {cols.map((c) => {
                   const isEditing = editing?.id === l.id && editing.key === c.key;
