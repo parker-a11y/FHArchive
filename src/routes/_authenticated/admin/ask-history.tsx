@@ -150,6 +150,12 @@ function AskHistory() {
                         </p>
                       ) : (
                         <>
+                          {r.corpus && (
+                            <p className="mb-2 text-xs text-muted-foreground">
+                              All {r.corpus.total} records searched · {r.corpus.full} read in full
+                              {r.corpus.condensed ? ` · ${r.corpus.condensed} condensed` : ""}
+                            </p>
+                          )}
                           <p className="whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={r.answer ?? ""} /></p>
                           {r.citations.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-1.5">
