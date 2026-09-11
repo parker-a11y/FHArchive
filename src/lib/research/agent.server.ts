@@ -472,7 +472,7 @@ export async function answerResearchQuestion(
   question: string,
   history: { role: "user" | "assistant"; content: string }[] = [],
 ): Promise<ResearchAnswer> {
-  const [evidence, queries] = await Promise.all([
+  const [{ evidence, corpus }, queries] = await Promise.all([
     retrieveEvidence(admin, question),
     planExternalResearch(question),
   ]);
