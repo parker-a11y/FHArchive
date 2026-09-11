@@ -632,7 +632,12 @@ export function AiPanel({ letter }: { letter: Letter }) {
     const row = rows.find((r) => r.id === id);
     await supabase
       .from("ai_suggestions")
-      .update({ status, ...(content !== undefined ? { content } : {}) })
+      .update({
+        status,
+        previous_content: null,
+        superseded_at: null,
+        ...(content !== undefined ? { content } : {}),
+      })
       .eq("id", id);
 
     if (status === "accepted" && row) {
@@ -653,6 +658,24 @@ export function AiPanel({ letter }: { letter: Letter }) {
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not apply the suggestion");
       }
+      // A re-read that dropped names it used to support: offer to unlink the
+      // links AI made. Anything linked by hand stays put.
+      if (row.previous_content) {
+        const gone = suggestionRemovals(row.field_key, row.previous_content, text);
+        if (
+          gone.length &&
+          confirm(
+            `The new reading no longer supports:\n\n${gone.join(", ")}\n\nRemove the AI-created links for these? Anything you linked by hand is kept.`,
+          )
+        ) {
+          try {
+            const n = await unlinkSuggestionEntities(letter.id, row.field_key, gone);
+            if (n) toast.success(`${n} AI link(s) removed`);
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Could not remove the links");
+          }
+        }
+      }
       qc.invalidateQueries({ queryKey: ["links", letter.id] });
       qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
       qc.invalidateQueries({ queryKey: ["entities"] });
@@ -661,6 +684,29 @@ export function AiPanel({ letter }: { letter: Letter }) {
 
     qc.invalidateQueries({ queryKey: ["ai", letter.id] });
     qc.invalidateQueries({ queryKey: ["ai_pending"] });
+  }
+
+  /** Puts a changed field back to the wording already accepted. */
+  async function keepCurrent(id: string) {
+    const row = rows.find((r) => r.id === id);
+    if (!row?.previous_content) return;
+    await supabase
+      .from("ai_suggestions")
+      .update({
+        status: "accepted",
+        content: row.previous_content,
+        previous_content: null,
+        superseded_at: null,
+      })
+      .eq("id", id);
+    setEditing((e) => {
+      const next = { ...e };
+      delete next[id];
+      return next;
+    });
+    qc.invalidateQueries({ queryKey: ["ai", letter.id] });
+    qc.invalidateQueries({ queryKey: ["ai_pending"] });
+    toast.message("Kept the wording you had already accepted.");
   }
 
   const acceptable = rows.filter(
