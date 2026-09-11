@@ -100,7 +100,7 @@ export const refreshResearchSnapshot = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("Meaning index refresh failed:", e);
     }
-    return { ...(result as object), embeddings };
+    return { ...result, embeddings };
   });
 
 
