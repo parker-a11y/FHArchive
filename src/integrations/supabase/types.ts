@@ -3106,6 +3106,7 @@ export type Database = {
           model: string | null
           owner_id: string | null
           params: Json
+          public_visible: boolean
           range_label: string | null
           related_ids: string[]
           slug: string | null
@@ -3131,6 +3132,7 @@ export type Database = {
           model?: string | null
           owner_id?: string | null
           params?: Json
+          public_visible?: boolean
           range_label?: string | null
           related_ids?: string[]
           slug?: string | null
@@ -3156,6 +3158,7 @@ export type Database = {
           model?: string | null
           owner_id?: string | null
           params?: Json
+          public_visible?: boolean
           range_label?: string | null
           related_ids?: string[]
           slug?: string | null
