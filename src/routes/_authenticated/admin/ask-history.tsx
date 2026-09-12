@@ -32,7 +32,7 @@ type QueryRow = {
   confidence: string | null;
   citations: { archive_id: string; note?: string }[];
   sources: { title?: string; url: string; note?: string }[] | null;
-  corpus: { total: number; full: number; condensed: number } | null;
+  corpus: { total: number; searched?: number; full: number; condensed: number } | null;
 
   model: string | null;
   error: string | null;
