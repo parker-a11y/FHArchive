@@ -388,6 +388,18 @@ export async function retrieveEvidence(
     .select("archive_id", { count: "exact", head: true });
   const total = Math.max(totalCount ?? 0, 1);
 
+  // When the question narrowed the field (a year, a sender, a place), only some
+  // records could be searched — records with no date on file drop out of a date
+  // range entirely. Count that honestly instead of claiming the whole archive.
+  let searched = total;
+  if (Object.keys(filters).length) {
+    const { count: filteredCount } = await applyFilters(
+      admin.from("research_index").select("archive_id", { count: "exact", head: true }),
+      filters,
+    );
+    searched = Math.min(total, filteredCount ?? total);
+  }
+
   const [presence, passages] = await Promise.all([
     termPresence(admin, terms),
     semanticPassages(admin, question, filters, SEMANTIC_CANDIDATES),
@@ -534,6 +546,7 @@ export async function retrieveEvidence(
     evidence,
     corpus: {
       total,
+      searched,
       full: fullCount,
       condensed: evidence.length - fullCount,
       absent_terms: presence.filter((p) => p.count === 0).map((p) => p.term),
