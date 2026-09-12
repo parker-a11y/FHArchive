@@ -71,20 +71,18 @@ function PageEditor({
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
-  const [correctionsSaved, setCorrectionsSaved] = useState(false);
-  const [humanVerified, setHumanVerified] = useState(record?.status === "human_verified");
+  const [savedVerified, setSavedVerified] = useState(record?.status === "human_verified");
 
   useEffect(() => {
     if (!dirty) {
       setText(record?.verified_text ?? record?.ai_text ?? "");
-      setHumanVerified(record?.status === "human_verified");
+      setSavedVerified(record?.status === "human_verified");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record?.verified_text, record?.ai_text, record?.status]);
 
   useEffect(() => {
-    setCorrectionsSaved(false);
-    setHumanVerified(record?.status === "human_verified");
+    setSavedVerified(record?.status === "human_verified");
   }, [record?.id]);
 
   useEffect(() => {
@@ -97,8 +95,7 @@ function PageEditor({
       const next = reflowTranscription(cur);
       if (next !== cur) {
         setDirty(true);
-        setCorrectionsSaved(false);
-        setHumanVerified(false);
+        setSavedVerified(false);
       }
       return next;
     });
@@ -111,15 +108,14 @@ function PageEditor({
   }, [reflowSignal]);
 
 
-  async function save(verify: boolean) {
+  async function save() {
     if (!record) return toast.error("Transcribe this scan first.");
     try {
-      await saveCorrections(record.id, text, verify);
+      await saveCorrections(record.id, text, true);
       setDirty(false);
-      setCorrectionsSaved(true);
-      setHumanVerified(verify);
+      setSavedVerified(true);
       onSaved();
-      toast.success(verify ? "Marked human verified" : "Corrections saved");
+      toast.success("Saved and marked human verified");
     } catch (e) {
       toast.error((e as Error).message);
     }
