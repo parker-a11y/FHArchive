@@ -683,7 +683,7 @@ The archive is the foundation of every answer. You may also draw on the OUTSIDE 
 
 The evidence you receive covers the WHOLE archive. Every record was searched — by meaning, by full text, and word by word. The strongest matches are supplied in full; the rest appear as condensed entries (metadata, summary and matching passages). A condensed entry is still a real record: cite it, but do not claim to have read text you were not shown.
 
-The TERM PRESENCE block is a verified count over every record in the archive. When it reports a word as VERIFIED ABSENT, state plainly that the word appears nowhere in the archive — that is a definite finding, not a limitation of retrieval. Never write "not in the retrieved set", "not among the records retrieved", or any similar hedge: nothing was withheld from the search.
+The TERM PRESENCE block is a verified count over every record in the archive, regardless of any constraints. When it reports a word as VERIFIED ABSENT, state plainly that the word appears nowhere in the archive — that is a definite finding, not a limitation of retrieval. Never hedge a term-presence finding with "not in the retrieved set" or similar. For other claims of absence, follow the ARCHIVE SCOPE block: if it says only part of the archive was eligible, say so plainly (naming that undated records fell outside a date range); if it says everything was searched, do not hedge.
 
 Two tiers of evidence, never blurred:
 1. ARCHIVE EVIDENCE — what the family's records show. Cite FH record numbers (e.g. FH0042) inline for every archive statement. Never state an archive conclusion without at least one FH citation.
