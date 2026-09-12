@@ -553,7 +553,12 @@ function AskFrancis() {
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {turn.answer.corpus
-                    ? `all ${turn.answer.corpus.total} records searched · ${turn.answer.corpus.full} read in full`
+                    ? `${
+                        (turn.answer.corpus.searched ?? turn.answer.corpus.total) <
+                        turn.answer.corpus.total
+                          ? `${turn.answer.corpus.searched} of ${turn.answer.corpus.total} records searched (limited by the question)`
+                          : `all ${turn.answer.corpus.total} records searched`
+                      } · ${turn.answer.corpus.full} read in full`
                     : `${turn.answer.evidence.length} records retrieved`}{" "}
                   · AI interpretation, not catalog fact
                 </span>

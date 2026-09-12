@@ -766,11 +766,11 @@ export async function answerResearchQuestion(
 ${question}
 
 ARCHIVE SCOPE
-The archive holds ${corpus.total} indexed records. All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question). No record was excluded from the search.${
-    filters && Object.keys(filters).length
-      ? `\nThe question stated these constraints, applied during retrieval: ${JSON.stringify(filters)}.`
-      : ""
-  }
+The archive holds ${corpus.total} indexed records. ${
+    (corpus.searched ?? corpus.total) < corpus.total
+      ? `Because the question stated constraints (${JSON.stringify(filters ?? {})}), only ${corpus.searched} of the ${corpus.total} records were eligible for retrieval — records that do not meet those constraints, INCLUDING records with no date on file when a date range is in force, were not searched. If you state that something is absent, say plainly that the absence is only within those ${corpus.searched} records and that undated records were outside the search.`
+      : `All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. No record was excluded from the search.`
+  } ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question).
 
 TERM PRESENCE (checked against all ${corpus.total} records, not just those supplied)
 ${presenceText || "(no distinctive terms in this question)"}
