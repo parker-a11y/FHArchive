@@ -132,6 +132,7 @@ function RecapsIndex() {
                 <h2 className="font-display text-lg font-semibold">{r.title}</h2>
                 {r.lede && <p className="mt-1 text-sm text-muted-foreground">{r.lede}</p>}
               </Link>
+              </div>
             ))}
           </div>
         )}
