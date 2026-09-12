@@ -32,7 +32,7 @@ type QueryRow = {
   confidence: string | null;
   citations: { archive_id: string; note?: string }[];
   sources: { title?: string; url: string; note?: string }[] | null;
-  corpus: { total: number; full: number; condensed: number } | null;
+  corpus: { total: number; searched?: number; full: number; condensed: number } | null;
 
   model: string | null;
   error: string | null;
@@ -152,7 +152,10 @@ function AskHistory() {
                         <>
                           {r.corpus && (
                             <p className="mb-2 text-xs text-muted-foreground">
-                              All {r.corpus.total} records searched · {r.corpus.full} read in full
+                              {(r.corpus.searched ?? r.corpus.total) < r.corpus.total
+                                ? `${r.corpus.searched} of ${r.corpus.total} records searched (limited by the question)`
+                                : `All ${r.corpus.total} records searched`}{" "}
+                              · {r.corpus.full} read in full
                               {r.corpus.condensed ? ` · ${r.corpus.condensed} condensed` : ""}
                             </p>
                           )}

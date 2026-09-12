@@ -84,6 +84,8 @@ export type TermPresence = { term: string; count: number; records: string[] };
 
 export type Corpus = {
   total: number;
+  /** How many records the constraints actually allowed to be searched. */
+  searched?: number;
   full: number;
   condensed: number;
   absent_terms: string[];
@@ -386,6 +388,18 @@ export async function retrieveEvidence(
     .select("archive_id", { count: "exact", head: true });
   const total = Math.max(totalCount ?? 0, 1);
 
+  // When the question narrowed the field (a year, a sender, a place), only some
+  // records could be searched — records with no date on file drop out of a date
+  // range entirely. Count that honestly instead of claiming the whole archive.
+  let searched = total;
+  if (Object.keys(filters).length) {
+    const { count: filteredCount } = await applyFilters(
+      admin.from("research_index").select("archive_id", { count: "exact", head: true }),
+      filters,
+    );
+    searched = Math.min(total, filteredCount ?? total);
+  }
+
   const [presence, passages] = await Promise.all([
     termPresence(admin, terms),
     semanticPassages(admin, question, filters, SEMANTIC_CANDIDATES),
@@ -532,6 +546,7 @@ export async function retrieveEvidence(
     evidence,
     corpus: {
       total,
+      searched,
       full: fullCount,
       condensed: evidence.length - fullCount,
       absent_terms: presence.filter((p) => p.count === 0).map((p) => p.term),
@@ -575,22 +590,39 @@ Return JSON: {"needed": true|false, "queries": ["at most two short web search qu
   }
 }
 
-/** Real web research via Perplexity. Returns [] when the connector is not linked. */
+/** Pulls the answer text out of a Perplexity Agent API (/v1/responses) payload. */
+function responsesText(json: any): string {
+  if (typeof json?.output_text === "string" && json.output_text.trim()) return json.output_text.trim();
+  const parts: string[] = [];
+  for (const item of Array.isArray(json?.output) ? json.output : []) {
+    for (const c of Array.isArray(item?.content) ? item.content : []) {
+      const t = c?.text ?? c?.output_text;
+      if (typeof t === "string" && t.trim()) parts.push(t.trim());
+    }
+  }
+  return parts.join("\n\n").trim();
+}
+
+/**
+ * Real web research via the Perplexity Agent API. Returns an `error` message when
+ * the lookup fails, so the answer can say so instead of looking like nothing was found.
+ */
 async function searchOutsideHistory(
   queries: string[],
-): Promise<{ text: string; sources: WebSource[] }> {
+): Promise<{ text: string; sources: WebSource[]; error?: string }> {
   const key = process.env["PERPLEXITY_API_KEY"];
   if (!key || !queries.length) return { text: "", sources: [] };
 
+  let failure: string | undefined;
   const runs = await Promise.all(
     queries.map(async (query) => {
       try {
-        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+        const res = await fetch("https://api.perplexity.ai/v1/responses", {
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "sonar",
-            messages: [
+            input: [
               {
                 role: "system",
                 content:
@@ -601,19 +633,30 @@ async function searchOutsideHistory(
           }),
         });
         if (!res.ok) {
-          console.error(`Perplexity request failed [${res.status}]: ${(await res.text()).slice(0, 300)}`);
+          const body = (await res.text()).slice(0, 300);
+          console.error(`Perplexity request failed [${res.status}]: ${body}`);
+          failure = `Outside web research was unavailable (search service returned ${res.status}).`;
           return null;
         }
         const json: any = await res.json();
-        const content = String(json?.choices?.[0]?.message?.content ?? "").trim();
-        const urls: string[] = Array.isArray(json?.citations)
-          ? json.citations.map((c: any) => (typeof c === "string" ? c : c?.url)).filter(Boolean)
-          : (json?.search_results ?? []).map((r: any) => r?.url).filter(Boolean);
+        const content = responsesText(json);
+        const rawSources = Array.isArray(json?.search_results)
+          ? json.search_results
+          : Array.isArray(json?.citations)
+            ? json.citations
+            : [];
         const titles: Record<string, string> = {};
-        for (const r of json?.search_results ?? []) if (r?.url) titles[r.url] = String(r.title ?? "");
+        const urls: string[] = [];
+        for (const r of rawSources) {
+          const url = typeof r === "string" ? r : r?.url;
+          if (!url) continue;
+          urls.push(url);
+          if (typeof r !== "string" && r?.title) titles[url] = String(r.title);
+        }
         return { query, content, urls: urls.slice(0, 6), titles };
       } catch (e) {
         console.error("Perplexity lookup failed:", e);
+        failure = "Outside web research was unavailable (the search service could not be reached).";
         return null;
       }
     }),
@@ -637,7 +680,11 @@ async function searchOutsideHistory(
       sources.push({ title: run.titles[url] || host, url, note: run.query });
     }
   }
-  return { text: blocks.join("\n\n---\n\n").slice(0, 30000), sources };
+  return {
+    text: blocks.join("\n\n---\n\n").slice(0, 30000),
+    sources,
+    ...(blocks.length ? {} : failure ? { error: failure } : {}),
+  };
 }
 
 // ----------------------------------------------------------------- generation
@@ -668,7 +715,7 @@ The archive is the foundation of every answer. You may also draw on the OUTSIDE 
 
 The evidence you receive covers the WHOLE archive. Every record was searched — by meaning, by full text, and word by word. The strongest matches are supplied in full; the rest appear as condensed entries (metadata, summary and matching passages). A condensed entry is still a real record: cite it, but do not claim to have read text you were not shown.
 
-The TERM PRESENCE block is a verified count over every record in the archive. When it reports a word as VERIFIED ABSENT, state plainly that the word appears nowhere in the archive — that is a definite finding, not a limitation of retrieval. Never write "not in the retrieved set", "not among the records retrieved", or any similar hedge: nothing was withheld from the search.
+The TERM PRESENCE block is a verified count over every record in the archive, regardless of any constraints. When it reports a word as VERIFIED ABSENT, state plainly that the word appears nowhere in the archive — that is a definite finding, not a limitation of retrieval. Never hedge a term-presence finding with "not in the retrieved set" or similar. For other claims of absence, follow the ARCHIVE SCOPE block: if it says only part of the archive was eligible, say so plainly (naming that undated records fell outside a date range); if it says everything was searched, do not hedge.
 
 Two tiers of evidence, never blurred:
 1. ARCHIVE EVIDENCE — what the family's records show. Cite FH record numbers (e.g. FH0042) inline for every archive statement. Never state an archive conclusion without at least one FH citation.
@@ -751,11 +798,11 @@ export async function answerResearchQuestion(
 ${question}
 
 ARCHIVE SCOPE
-The archive holds ${corpus.total} indexed records. All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question). No record was excluded from the search.${
-    filters && Object.keys(filters).length
-      ? `\nThe question stated these constraints, applied during retrieval: ${JSON.stringify(filters)}.`
-      : ""
-  }
+The archive holds ${corpus.total} indexed records. ${
+    (corpus.searched ?? corpus.total) < corpus.total
+      ? `Because the question stated constraints (${JSON.stringify(filters ?? {})}), only ${corpus.searched} of the ${corpus.total} records were eligible for retrieval — records that do not meet those constraints, INCLUDING records with no date on file when a date range is in force, were not searched. If you state that something is absent, say plainly that the absence is only within those ${corpus.searched} records and that undated records were outside the search.`
+      : `All ${corpus.total} were searched for this question — by meaning, by full text, and word by word. No record was excluded from the search.`
+  } ${corpus.full} are supplied below in full; ${corpus.condensed} are supplied as condensed entries (metadata, summary and the passages matching this question).
 
 TERM PRESENCE (checked against all ${corpus.total} records, not just those supplied)
 ${presenceText || "(no distinctive terms in this question)"}
@@ -766,7 +813,9 @@ ${evidenceText || "(no matching records were found in the archive)"}
 ${
   outside.text
     ? `OUTSIDE RESEARCH (general history, from web sources — cite only these URLs)\n${outside.text}`
-    : "OUTSIDE RESEARCH\n(none was gathered for this question — do not supply unsourced historical background)"
+    : outside.error
+      ? `OUTSIDE RESEARCH\n(the web search failed for this question: ${outside.error} — do not supply unsourced historical background, and say in your caveats that outside historical context could not be retrieved)`
+      : "OUTSIDE RESEARCH\n(none was gathered for this question — do not supply unsourced historical background)"
 }
 
 Return a single JSON object:
@@ -840,7 +889,9 @@ Return a single JSON object:
       .map((f: any) => String(f).trim())
       .filter(Boolean)
       .slice(0, 4),
-    caveats: String(parsed.caveats ?? "").trim(),
+    caveats: [String(parsed.caveats ?? "").trim(), outside.error ?? ""]
+      .filter(Boolean)
+      .join(" "),
     evidence,
     corpus,
     model: MODEL,

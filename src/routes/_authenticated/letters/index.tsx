@@ -1156,7 +1156,10 @@ function LettersTable() {
                   )}
                 >
                   {isAdmin && (
-                    <span onClick={(e) => (shiftHeld.current = e.shiftKey)}>
+                    <span
+                      onPointerDownCapture={(e) => (shiftHeld.current = e.shiftKey)}
+                      onKeyDownCapture={(e) => (shiftHeld.current = e.shiftKey)}
+                    >
                       <Checkbox
                         aria-label={`Select ${l.archive_id}`}
                         checked={selected.has(l.id)}
