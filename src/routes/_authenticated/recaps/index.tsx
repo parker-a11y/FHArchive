@@ -58,6 +58,21 @@ function RecapsIndex() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const visibility = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      setPendingId(id);
+      await setRecapPublicVisible(id, value);
+      return value;
+    },
+    onSuccess: async (value) => {
+      await qc.invalidateQueries({ queryKey: ["weekly-recaps"] });
+      toast.success(value ? "Recap is now visible to guests." : "Recap hidden from guests.");
+    },
+    onError: (err: Error) => toast.error(err.message),
+    onSettled: () => setPendingId(null),
+  });
+
   return (
     <>
       <PageHeader
