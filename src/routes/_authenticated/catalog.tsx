@@ -1078,7 +1078,7 @@ function QuickEntry() {
                     checked={form.has_envelope}
                     onChange={(e) => set("has_envelope", e.target.checked)}
                   />
-                  Envelope
+                  Envelope{form.has_envelope ? "" : " — NO ENVELOPE"}
                 </label>
               )}
               <label className="flex items-center gap-2 text-sm">
