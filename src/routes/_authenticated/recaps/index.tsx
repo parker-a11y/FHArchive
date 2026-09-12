@@ -91,11 +91,27 @@ function RecapsIndex() {
         ) : (
           <div className="space-y-4">
             {recaps.map((r) => (
-              <Link
+              <div
                 key={r.id}
+                className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg"
+              >
+                {isAdmin && (
+                  <div className="flex w-24 shrink-0 flex-col items-center gap-1 pt-1">
+                    <Switch
+                      checked={r.public_visible}
+                      disabled={pendingId === r.id}
+                      onCheckedChange={(v) => visibility.mutate({ id: r.id, value: Boolean(v) })}
+                      aria-label="Public visible"
+                    />
+                    <span className="text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {r.public_visible ? "Public visible" : "Hidden"}
+                    </span>
+                  </div>
+                )}
+                <Link
                 to="/recaps/$weekStart"
                 params={{ weekStart: recapKey(r) }}
-                className="block rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg"
+                className="block min-w-0 flex-1"
               >
                 <div className="mb-1 flex flex-wrap items-center gap-3">
                   <span className="field-label">{recapRangeLabel(r)}</span>
