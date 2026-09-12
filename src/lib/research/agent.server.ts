@@ -680,7 +680,11 @@ async function searchOutsideHistory(
       sources.push({ title: run.titles[url] || host, url, note: run.query });
     }
   }
-  return { text: blocks.join("\n\n---\n\n").slice(0, 30000), sources };
+  return {
+    text: blocks.join("\n\n---\n\n").slice(0, 30000),
+    sources,
+    ...(blocks.length ? {} : failure ? { error: failure } : {}),
+  };
 }
 
 // ----------------------------------------------------------------- generation
@@ -809,7 +813,9 @@ ${evidenceText || "(no matching records were found in the archive)"}
 ${
   outside.text
     ? `OUTSIDE RESEARCH (general history, from web sources — cite only these URLs)\n${outside.text}`
-    : "OUTSIDE RESEARCH\n(none was gathered for this question — do not supply unsourced historical background)"
+    : outside.error
+      ? `OUTSIDE RESEARCH\n(the web search failed for this question: ${outside.error} — do not supply unsourced historical background, and say in your caveats that outside historical context could not be retrieved)`
+      : "OUTSIDE RESEARCH\n(none was gathered for this question — do not supply unsourced historical background)"
 }
 
 Return a single JSON object:
