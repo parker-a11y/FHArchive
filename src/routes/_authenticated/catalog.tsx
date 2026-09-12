@@ -96,7 +96,8 @@ const blank = {
   censor_mark: false,
   period: "wartime",
   sheets: "",
-  has_envelope: false,
+  // Letters are assumed to have an envelope; uncheck for NO ENVELOPE.
+  has_envelope: true,
   has_enclosures: false,
   starred: false,
   transcription_not_required: false,
@@ -618,7 +619,13 @@ function QuickEntry() {
                 value={form.subtype}
                 allowEmpty
                 onChange={(v) => {
-                  set("subtype", v);
+                  setForm((f) => ({
+                    ...f,
+                    subtype: v,
+                    // Personal letters always assume an envelope; the
+                    // archivist can still uncheck it for NO ENVELOPE.
+                    has_envelope: v.toLowerCase() === "personal" ? true : f.has_envelope,
+                  }));
                   rememberTypes(form.record_type, v);
                 }}
                 options={subtypeOptions.map((s) => ({ value: s, label: s }))}
