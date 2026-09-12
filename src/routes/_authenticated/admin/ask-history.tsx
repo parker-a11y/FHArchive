@@ -152,7 +152,10 @@ function AskHistory() {
                         <>
                           {r.corpus && (
                             <p className="mb-2 text-xs text-muted-foreground">
-                              All {r.corpus.total} records searched · {r.corpus.full} read in full
+                              {(r.corpus.searched ?? r.corpus.total) < r.corpus.total
+                                ? `${r.corpus.searched} of ${r.corpus.total} records searched (limited by the question)`
+                                : `All ${r.corpus.total} records searched`}{" "}
+                              · {r.corpus.full} read in full
                               {r.corpus.condensed ? ` · ${r.corpus.condensed} condensed` : ""}
                             </p>
                           )}
