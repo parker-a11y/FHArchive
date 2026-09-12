@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { CalendarRange, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { CustomRecapDialog } from "@/components/recaps/CustomRecapDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchRecaps, recapKey, recapRangeLabel } from "@/lib/recaps";
+import { fetchRecaps, recapKey, recapRangeLabel, setRecapPublicVisible } from "@/lib/recaps";
 import { generateWeeklyRecap } from "@/lib/recaps.functions";
 
 
