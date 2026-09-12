@@ -590,22 +590,39 @@ Return JSON: {"needed": true|false, "queries": ["at most two short web search qu
   }
 }
 
-/** Real web research via Perplexity. Returns [] when the connector is not linked. */
+/** Pulls the answer text out of a Perplexity Agent API (/v1/responses) payload. */
+function responsesText(json: any): string {
+  if (typeof json?.output_text === "string" && json.output_text.trim()) return json.output_text.trim();
+  const parts: string[] = [];
+  for (const item of Array.isArray(json?.output) ? json.output : []) {
+    for (const c of Array.isArray(item?.content) ? item.content : []) {
+      const t = c?.text ?? c?.output_text;
+      if (typeof t === "string" && t.trim()) parts.push(t.trim());
+    }
+  }
+  return parts.join("\n\n").trim();
+}
+
+/**
+ * Real web research via the Perplexity Agent API. Returns an `error` message when
+ * the lookup fails, so the answer can say so instead of looking like nothing was found.
+ */
 async function searchOutsideHistory(
   queries: string[],
-): Promise<{ text: string; sources: WebSource[] }> {
+): Promise<{ text: string; sources: WebSource[]; error?: string }> {
   const key = process.env["PERPLEXITY_API_KEY"];
   if (!key || !queries.length) return { text: "", sources: [] };
 
+  let failure: string | undefined;
   const runs = await Promise.all(
     queries.map(async (query) => {
       try {
-        const res = await fetch("https://api.perplexity.ai/chat/completions", {
+        const res = await fetch("https://api.perplexity.ai/v1/responses", {
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "sonar",
-            messages: [
+            input: [
               {
                 role: "system",
                 content:
@@ -616,19 +633,30 @@ async function searchOutsideHistory(
           }),
         });
         if (!res.ok) {
-          console.error(`Perplexity request failed [${res.status}]: ${(await res.text()).slice(0, 300)}`);
+          const body = (await res.text()).slice(0, 300);
+          console.error(`Perplexity request failed [${res.status}]: ${body}`);
+          failure = `Outside web research was unavailable (search service returned ${res.status}).`;
           return null;
         }
         const json: any = await res.json();
-        const content = String(json?.choices?.[0]?.message?.content ?? "").trim();
-        const urls: string[] = Array.isArray(json?.citations)
-          ? json.citations.map((c: any) => (typeof c === "string" ? c : c?.url)).filter(Boolean)
-          : (json?.search_results ?? []).map((r: any) => r?.url).filter(Boolean);
+        const content = responsesText(json);
+        const rawSources = Array.isArray(json?.search_results)
+          ? json.search_results
+          : Array.isArray(json?.citations)
+            ? json.citations
+            : [];
         const titles: Record<string, string> = {};
-        for (const r of json?.search_results ?? []) if (r?.url) titles[r.url] = String(r.title ?? "");
+        const urls: string[] = [];
+        for (const r of rawSources) {
+          const url = typeof r === "string" ? r : r?.url;
+          if (!url) continue;
+          urls.push(url);
+          if (typeof r !== "string" && r?.title) titles[url] = String(r.title);
+        }
         return { query, content, urls: urls.slice(0, 6), titles };
       } catch (e) {
         console.error("Perplexity lookup failed:", e);
+        failure = "Outside web research was unavailable (the search service could not be reached).";
         return null;
       }
     }),
