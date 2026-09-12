@@ -84,6 +84,8 @@ export type TermPresence = { term: string; count: number; records: string[] };
 
 export type Corpus = {
   total: number;
+  /** How many records the constraints actually allowed to be searched. */
+  searched?: number;
   full: number;
   condensed: number;
   absent_terms: string[];
