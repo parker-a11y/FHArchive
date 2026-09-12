@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { CalendarRange, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { CustomRecapDialog } from "@/components/recaps/CustomRecapDialog";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchRecaps, recapKey, recapRangeLabel } from "@/lib/recaps";
+import { fetchRecaps, recapKey, recapRangeLabel, setRecapPublicVisible } from "@/lib/recaps";
 import { generateWeeklyRecap } from "@/lib/recaps.functions";
 
 
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/recaps/")({
 
 function RecapsIndex() {
   // Everyone with archive access — including view-only guests — may generate a recap.
-  const { canReadArchive } = useAuth();
+  const { canReadArchive, isAdmin } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const generate = useServerFn(generateWeeklyRecap);
@@ -55,6 +56,21 @@ function RecapsIndex() {
       if (result?.week_start) navigate({ to: "/recaps/$weekStart", params: { weekStart: result.week_start } });
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const visibility = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      setPendingId(id);
+      await setRecapPublicVisible(id, value);
+      return value;
+    },
+    onSuccess: async (value) => {
+      await qc.invalidateQueries({ queryKey: ["weekly-recaps"] });
+      toast.success(value ? "Recap is now visible to guests." : "Recap hidden from guests.");
+    },
+    onError: (err: Error) => toast.error(err.message),
+    onSettled: () => setPendingId(null),
   });
 
   return (
@@ -91,11 +107,27 @@ function RecapsIndex() {
         ) : (
           <div className="space-y-4">
             {recaps.map((r) => (
-              <Link
+              <div
                 key={r.id}
+                className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg"
+              >
+                {isAdmin && (
+                  <div className="flex w-24 shrink-0 flex-col items-center gap-1 pt-1">
+                    <Switch
+                      checked={r.public_visible}
+                      disabled={pendingId === r.id}
+                      onCheckedChange={(v) => visibility.mutate({ id: r.id, value: Boolean(v) })}
+                      aria-label="Public visible"
+                    />
+                    <span className="text-center text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {r.public_visible ? "Public visible" : "Hidden"}
+                    </span>
+                  </div>
+                )}
+                <Link
                 to="/recaps/$weekStart"
                 params={{ weekStart: recapKey(r) }}
-                className="block rounded-2xl border border-border bg-card p-5 shadow-sm transition-all hover:border-archive-gold/40 hover:shadow-lg"
+                className="block min-w-0 flex-1"
               >
                 <div className="mb-1 flex flex-wrap items-center gap-3">
                   <span className="field-label">{recapRangeLabel(r)}</span>
@@ -116,6 +148,7 @@ function RecapsIndex() {
                 <h2 className="font-display text-lg font-semibold">{r.title}</h2>
                 {r.lede && <p className="mt-1 text-sm text-muted-foreground">{r.lede}</p>}
               </Link>
+              </div>
             ))}
           </div>
         )}
