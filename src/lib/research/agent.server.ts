@@ -889,7 +889,9 @@ Return a single JSON object:
       .map((f: any) => String(f).trim())
       .filter(Boolean)
       .slice(0, 4),
-    caveats: String(parsed.caveats ?? "").trim(),
+    caveats: [String(parsed.caveats ?? "").trim(), outside.error ?? ""]
+      .filter(Boolean)
+      .join(" "),
     evidence,
     corpus,
     model: MODEL,
