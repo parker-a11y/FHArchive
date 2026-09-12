@@ -74,6 +74,15 @@ export async function setRecapStatus(id: string, status: "published" | "draft"):
   if (error) throw error;
 }
 
+/** Guests only ever see recaps that are published and flagged public visible. */
+export async function setRecapPublicVisible(id: string, publicVisible: boolean): Promise<void> {
+  const { error } = await supabase
+    .from("weekly_recaps")
+    .update({ public_visible: publicVisible } as never)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 /** The JPEG derivative only — archival TIFF masters are never displayed. */
 export async function signRecapImage(recap: WeeklyRecap): Promise<string | null> {
   if (!recap.image_path) return null;
