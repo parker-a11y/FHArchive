@@ -202,8 +202,7 @@ function PageEditor({
                 onChange={(e) => {
                   setText(e.target.value);
                   setDirty(true);
-                   setCorrectionsSaved(false);
-                   setHumanVerified(false);
+                  setSavedVerified(false);
                 }}
               />
             </>
@@ -213,29 +212,16 @@ function PageEditor({
               <>
                 <Button
                   size="sm"
-                  variant={correctionsSaved && !dirty ? "outline" : "default"}
+                  variant={savedVerified && !dirty ? "outline" : "default"}
                   className={
-                    correctionsSaved && !dirty
+                    savedVerified && !dirty
                       ? "border-tone-emerald bg-tone-emerald-soft text-tone-emerald hover:bg-tone-emerald-soft/80 hover:text-tone-emerald"
                       : undefined
                   }
-                  onClick={() => save(false)}
+                  onClick={() => save()}
                   disabled={!record}
                 >
-                  Save Corrections
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={
-                    humanVerified && !dirty
-                      ? "border-tone-emerald bg-tone-emerald-soft text-tone-emerald hover:bg-tone-emerald-soft/80 hover:text-tone-emerald"
-                      : undefined
-                  }
-                  onClick={() => save(true)}
-                  disabled={!record}
-                >
-                  <BadgeCheck className="mr-1 size-3.5" /> Mark Human Verified
+                  <BadgeCheck className="mr-1 size-3.5" /> Save & Mark Human Verified
                 </Button>
               </>
             )}
