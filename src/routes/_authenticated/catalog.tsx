@@ -279,7 +279,8 @@ function QuickEntry() {
       p_date_end: form.date_end,
       p_date_precision: precision,
       p_date_certainty: form.date_certainty,
-      p_primary_person: form.primary_person,
+      // If no primary person was picked, assume the recipient is primary.
+      p_primary_person: form.primary_person || (isLetter ? form.recipient || null : null),
       p_author: isLetter ? form.author : null,
       p_recipient: isLetter ? form.recipient : null,
       p_origin: form.origin,
