@@ -107,7 +107,7 @@ function todayText() {
 }
 
 /** Existing box names, so the archivist can reuse one instead of retyping. */
-async function fetchBoxNames(): Promise<string[]> {
+export async function fetchBoxNames(): Promise<string[]> {
   const { data } = await supabase
     .from("letters")
     .select("storage_location")
