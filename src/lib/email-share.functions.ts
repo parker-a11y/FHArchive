@@ -87,12 +87,12 @@ export const getSharedEmail = createServerFn({ method: "GET" })
         supabaseAdmin
           .from("letters")
           .select("title, record_type, normalized_date, date_as_written")
-          .eq("id", r['letter_id'])
+          .eq("id", letterId)
           .maybeSingle(),
         supabaseAdmin
           .from("record_shares")
           .select("token")
-          .eq("letter_id", r['letter_id'])
+          .eq("letter_id", letterId)
           .eq("scope", "record")
           .eq("enabled", true)
           .limit(1)
