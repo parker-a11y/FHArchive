@@ -1,10 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Send } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Check, Link2, Loader2, Send } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { fetchAllEmailRecords, fetchSentEmails } from "@/lib/archive-email";
+import { ensureEmailShareLink } from "@/lib/email-share.functions";
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
@@ -39,6 +43,47 @@ const STATUS_STYLES: Record<string, string> = {
   suppressed: "border-border bg-secondary text-muted-foreground",
   sending: "border-border bg-secondary text-muted-foreground",
 };
+
+/** Creates (or reuses) the public view-only page for this email and copies its link. */
+function GetEmailLinkButton({ emailId }: { emailId: string }) {
+  const ensure = useServerFn(ensureEmailShareLink);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const copy = async () => {
+    setBusy(true);
+    try {
+      const res = await ensure({ data: { emailId } });
+      try {
+        await navigator.clipboard.writeText(res.url);
+        setDone(true);
+        setTimeout(() => setDone(false), 2000);
+        toast.success(res.created ? "Link created and copied" : "Link copied", {
+          description: res.url,
+        });
+      } catch {
+        toast.message("Link ready — copy it below", { description: res.url });
+      }
+    } catch (error) {
+      toast.error((error as Error).message || "Could not create a link");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" size="sm" className="gap-2" onClick={copy} disabled={busy}>
+      {busy ? (
+        <Loader2 className="size-4 animate-spin" />
+      ) : done ? (
+        <Check className="size-4 text-emerald-600" />
+      ) : (
+        <Link2 className="size-4" />
+      )}
+      Get link
+    </Button>
+  );
+}
 
 function EmailsPage() {
   const { data: emails = [], isLoading } = useQuery({
@@ -114,6 +159,7 @@ function EmailsPage() {
                           </Button>
                         }
                       />
+                      <GetEmailLinkButton emailId={e.id} />
                     </div>
                   );
                 })()}

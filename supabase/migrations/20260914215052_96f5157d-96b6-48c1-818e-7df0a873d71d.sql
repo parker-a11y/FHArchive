@@ -1,0 +1,1 @@
+ALTER TABLE public.archive_emails ADD COLUMN IF NOT EXISTS share_token text; CREATE UNIQUE INDEX IF NOT EXISTS archive_emails_share_token_idx ON public.archive_emails (share_token) WHERE share_token IS NOT NULL;

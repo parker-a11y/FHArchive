@@ -224,6 +224,7 @@ export type Database = {
           recipients: Json
           sender_email: string | null
           sent_at: string
+          share_token: string | null
           status: string
           subject: string
           updated_at: string
@@ -240,6 +241,7 @@ export type Database = {
           recipients?: Json
           sender_email?: string | null
           sent_at?: string
+          share_token?: string | null
           status?: string
           subject: string
           updated_at?: string
@@ -256,6 +258,7 @@ export type Database = {
           recipients?: Json
           sender_email?: string | null
           sent_at?: string
+          share_token?: string | null
           status?: string
           subject?: string
           updated_at?: string
