@@ -77,7 +77,7 @@ export const getSharedEmail = createServerFn({ method: "GET" })
     const { data: recs } = await supabaseAdmin
       .from("archive_email_records")
       .select("letter_id, archive_id, sort_order")
-      .eq("email_id", e['id'])
+      .eq("email_id", String(e['id']))
       .order("sort_order", { ascending: true });
 
     const records: SharedEmailRecord[] = [];
