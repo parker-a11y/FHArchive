@@ -103,6 +103,7 @@ const blank = {
   transcription_not_required: false,
   storage_type: "file_jacket",
   storage_folder: "",
+  storage_location: "",
   source_container_id: "",
   original_order_notes: "",
   identification_status: "identified",
@@ -289,7 +290,7 @@ function QuickEntry() {
       p_sheets: form.sheets ? Number(form.sheets) : null,
       p_has_envelope: isLetter ? form.has_envelope : false,
       p_has_enclosures: form.has_enclosures,
-      p_storage_location: null,
+      p_storage_location: form.storage_location || null,
       p_original_copy: "original",
       p_notes: form.notes,
     };
