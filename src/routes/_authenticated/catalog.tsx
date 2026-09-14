@@ -22,6 +22,7 @@ import {
   LOCATION_LINE_LIST_ID,
 } from "@/components/letter/LocationLineOptions";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
+import { StorageLocationSelect } from "@/components/letter/StorageLocationSelect";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
@@ -146,6 +147,7 @@ type StorageMemory = {
   record_type: string;
   subtype: string;
   storage_type: string;
+  storage_location: string;
   source_container_id: string;
   original_order_notes: string;
 };
@@ -160,6 +162,7 @@ function readLastStorage(): Partial<StorageMemory> {
       record_type: p.record_type || "letter",
       subtype: p.subtype ?? "",
       storage_type: p.storage_type || "file_jacket",
+      storage_location: p.storage_location ?? "",
       source_container_id: p.source_container_id ?? "",
       original_order_notes: p.original_order_notes ?? "",
     };
@@ -189,6 +192,7 @@ function rememberField(patch: Partial<StorageMemory>) {
     record_type: prev.record_type || "letter",
     subtype: prev.subtype ?? "",
     storage_type: prev.storage_type || "file_jacket",
+    storage_location: prev.storage_location ?? "",
     source_container_id: prev.source_container_id ?? "",
     original_order_notes: prev.original_order_notes ?? "",
     ...patch,
