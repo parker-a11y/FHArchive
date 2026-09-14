@@ -449,6 +449,7 @@ function QuickEntry() {
       record_type: form.record_type,
       subtype: form.subtype,
       storage_type: form.storage_type,
+      storage_location: form.storage_location,
       source_container_id: form.source_container_id,
       original_order_notes: form.original_order_notes,
     });
@@ -489,6 +490,7 @@ function QuickEntry() {
       primary_person: f.primary_person,
       storage_type: f.storage_type,
       storage_folder: f.storage_folder,
+      storage_location: f.storage_location,
       source_container_id: f.source_container_id,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
