@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EditorOnly, AppShell, PageHeader } from "@/components/AppShell";
@@ -22,6 +22,7 @@ import {
   LOCATION_LINE_LIST_ID,
 } from "@/components/letter/LocationLineOptions";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
+import { StorageLocationSelect } from "@/components/letter/StorageLocationSelect";
 import {
   DATE_CERTAINTY,
   DATE_PRECISION,
@@ -103,6 +104,7 @@ const blank = {
   transcription_not_required: false,
   storage_type: "file_jacket",
   storage_folder: "",
+  storage_location: "",
   source_container_id: "",
   original_order_notes: "",
   identification_status: "identified",
@@ -145,6 +147,7 @@ type StorageMemory = {
   record_type: string;
   subtype: string;
   storage_type: string;
+  storage_location: string;
   source_container_id: string;
   original_order_notes: string;
 };
@@ -159,6 +162,7 @@ function readLastStorage(): Partial<StorageMemory> {
       record_type: p.record_type || "letter",
       subtype: p.subtype ?? "",
       storage_type: p.storage_type || "file_jacket",
+      storage_location: p.storage_location ?? "",
       source_container_id: p.source_container_id ?? "",
       original_order_notes: p.original_order_notes ?? "",
     };
@@ -188,6 +192,7 @@ function rememberField(patch: Partial<StorageMemory>) {
     record_type: prev.record_type || "letter",
     subtype: prev.subtype ?? "",
     storage_type: prev.storage_type || "file_jacket",
+    storage_location: prev.storage_location ?? "",
     source_container_id: prev.source_container_id ?? "",
     original_order_notes: prev.original_order_notes ?? "",
     ...patch,
@@ -289,7 +294,7 @@ function QuickEntry() {
       p_sheets: form.sheets ? Number(form.sheets) : null,
       p_has_envelope: isLetter ? form.has_envelope : false,
       p_has_enclosures: form.has_enclosures,
-      p_storage_location: null,
+      p_storage_location: form.storage_location || null,
       p_original_copy: "original",
       p_notes: form.notes,
     };
@@ -331,6 +336,7 @@ function QuickEntry() {
       censor_mark: isLetter ? form.censor_mark : false,
       storage_type: form.storage_type || null,
       storage_folder: form.storage_folder || null,
+      storage_location: form.storage_location || null,
       source_container_id: form.source_container_id || null,
       original_order_notes: form.original_order_notes || null,
       tones: form.tones,
@@ -443,6 +449,7 @@ function QuickEntry() {
       record_type: form.record_type,
       subtype: form.subtype,
       storage_type: form.storage_type,
+      storage_location: form.storage_location,
       source_container_id: form.source_container_id,
       original_order_notes: form.original_order_notes,
     });
@@ -483,6 +490,7 @@ function QuickEntry() {
       primary_person: f.primary_person,
       storage_type: f.storage_type,
       storage_folder: f.storage_folder,
+      storage_location: f.storage_location,
       source_container_id: f.source_container_id,
       author: isLetterType(f.record_type) ? f.author : "",
       recipient: isLetterType(f.record_type) ? f.recipient : "",
@@ -1036,14 +1044,23 @@ function QuickEntry() {
                   options={STORAGE_TYPES}
                 />
                 {form.storage_type !== "digital_only" && (
-                  <div className="space-y-1.5">
-                    <Label className="field-label">Folder / jacket</Label>
-                    <Input
-                      value={form.storage_folder}
-                      onChange={(e) => set("storage_folder", e.target.value)}
-                      placeholder="FH-0268"
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="field-label">Folder / jacket</Label>
+                      <Input
+                        value={form.storage_folder}
+                        onChange={(e) => set("storage_folder", e.target.value)}
+                        placeholder="FH-0268"
+                      />
+                    </div>
+                    <StorageLocationSelect
+                      value={form.storage_location}
+                      onChange={(v) => {
+                        set("storage_location", v);
+                        rememberField({ storage_location: v });
+                      }}
                     />
-                  </div>
+                  </>
                 )}
               </div>
               {form.storage_type === "digital_only" && (
