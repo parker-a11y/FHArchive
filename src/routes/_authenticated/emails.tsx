@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Send } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
-import { fetchSentEmails } from "@/lib/archive-email";
+import { Button } from "@/components/ui/button";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { fetchAllEmailRecords, fetchSentEmails } from "@/lib/archive-email";
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
@@ -42,6 +45,10 @@ function EmailsPage() {
     queryKey: ["archive-emails"],
     queryFn: fetchSentEmails,
   });
+  const { data: emailRecords = [] } = useQuery({
+    queryKey: ["archive-email-records"],
+    queryFn: fetchAllEmailRecords,
+  });
 
   return (
     <AppShell>
@@ -81,6 +88,35 @@ function EmailsPage() {
               <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
                 {e.message_body && <p className="whitespace-pre-wrap">{e.message_body}</p>}
                 {e.error && <p className="text-destructive">{e.error}</p>}
+                {(() => {
+                  const recs = emailRecords
+                    .filter((r) => r.email_id === e.id)
+                    .map((r) => ({
+                      kind: "letter" as const,
+                      id: r.letter_id,
+                      identifier: r.archive_id,
+                    }));
+                  return (
+                    <div className="flex flex-wrap items-center gap-3 pt-1">
+                      {recs.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          Records: {recs.map((r) => r.identifier).join(", ")}
+                        </span>
+                      )}
+                      <EmailArchiveDialog
+                        records={recs}
+                        defaultSubject={e.subject}
+                        defaultMessage={e.message_body ?? ""}
+                        description="Send this same email again — add the new recipients below."
+                        trigger={
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <Send className="size-4" /> Send again
+                          </Button>
+                        }
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             </details>
           ))}
