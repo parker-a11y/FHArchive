@@ -45,6 +45,10 @@ function EmailsPage() {
     queryKey: ["archive-emails"],
     queryFn: fetchSentEmails,
   });
+  const { data: emailRecords = [] } = useQuery({
+    queryKey: ["archive-email-records"],
+    queryFn: fetchAllEmailRecords,
+  });
 
   return (
     <AppShell>
