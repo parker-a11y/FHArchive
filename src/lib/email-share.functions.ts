@@ -82,6 +82,7 @@ export const getSharedEmail = createServerFn({ method: "GET" })
 
     const records: SharedEmailRecord[] = [];
     for (const r of (recs ?? []) as Record<string, unknown>[]) {
+      const letterId = String(r['letter_id']);
       const [{ data: letter }, { data: share }] = await Promise.all([
         supabaseAdmin
           .from("letters")
