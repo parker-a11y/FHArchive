@@ -49,3 +49,18 @@ export async function fetchEmailRecords(emailId: string) {
   if (error) throw error;
   return data ?? [];
 }
+
+export type EmailRecordRef = { email_id: string; archive_id: string; letter_id: string };
+
+/**
+ * Records for every logged email in one query — lets the Sent Email page
+ * offer a resend without a request per row.
+ */
+export async function fetchAllEmailRecords(): Promise<EmailRecordRef[]> {
+  const { data, error } = await supabase
+    .from("archive_email_records")
+    .select("email_id, archive_id, letter_id, sort_order")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as unknown as EmailRecordRef[];
+}
