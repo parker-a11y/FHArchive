@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
+import { StorageLocationSelect } from "@/components/letter/StorageLocationSelect";
 import { fetchContainers } from "@/lib/containers";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -191,6 +192,7 @@ function LetterPage() {
       physical_description: letter.physical_description ?? "",
       storage_type: letter.storage_type ?? "",
       storage_folder: letter.storage_folder ?? "",
+      storage_location: letter.storage_location ?? "",
       identification_status: letter.identification_status ?? "",
       provenance: letter.provenance ?? "",
       source_container_id: letter.source_container_id ?? "",
@@ -997,6 +999,12 @@ function LetterPage() {
                         />
                       </div>
                     ))}
+                {form.storage_type !== "digital_only" && (
+                  <StorageLocationSelect
+                    value={(form.storage_location as string) ?? ""}
+                    onChange={(v) => set("storage_location", v)}
+                  />
+                )}
               </div>
               {form.storage_type === "digital_only" && (
                 <p className="mt-3 text-xs text-muted-foreground">
