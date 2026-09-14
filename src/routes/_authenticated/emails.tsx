@@ -129,6 +129,14 @@ function EmailsPage() {
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(e.sent_at).toLocaleString()}
                 </span>
+                <span
+                  onClick={(ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                  }}
+                >
+                  <GetEmailLinkButton emailId={e.id} />
+                </span>
               </summary>
               <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
                 {e.message_body && <p className="whitespace-pre-wrap">{e.message_body}</p>}
