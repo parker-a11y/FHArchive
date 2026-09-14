@@ -332,6 +332,7 @@ function QuickEntry() {
       censor_mark: isLetter ? form.censor_mark : false,
       storage_type: form.storage_type || null,
       storage_folder: form.storage_folder || null,
+      storage_location: form.storage_location || null,
       source_container_id: form.source_container_id || null,
       original_order_notes: form.original_order_notes || null,
       tones: form.tones,
@@ -1037,14 +1038,23 @@ function QuickEntry() {
                   options={STORAGE_TYPES}
                 />
                 {form.storage_type !== "digital_only" && (
-                  <div className="space-y-1.5">
-                    <Label className="field-label">Folder / jacket</Label>
-                    <Input
-                      value={form.storage_folder}
-                      onChange={(e) => set("storage_folder", e.target.value)}
-                      placeholder="FH-0268"
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="field-label">Folder / jacket</Label>
+                      <Input
+                        value={form.storage_folder}
+                        onChange={(e) => set("storage_folder", e.target.value)}
+                        placeholder="FH-0268"
+                      />
+                    </div>
+                    <StorageLocationSelect
+                      value={form.storage_location}
+                      onChange={(v) => {
+                        set("storage_location", v);
+                        rememberField({ storage_location: v });
+                      }}
                     />
-                  </div>
+                  </>
                 )}
               </div>
               {form.storage_type === "digital_only" && (
