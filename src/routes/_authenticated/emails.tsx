@@ -1,10 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Send } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Check, Link2, Loader2, Send } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { fetchAllEmailRecords, fetchSentEmails } from "@/lib/archive-email";
+import { ensureEmailShareLink } from "@/lib/email-share.functions";
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
