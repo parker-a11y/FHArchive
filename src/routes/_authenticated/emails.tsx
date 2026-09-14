@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Send } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
-import { fetchSentEmails } from "@/lib/archive-email";
+import { Button } from "@/components/ui/button";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { fetchAllEmailRecords, fetchSentEmails } from "@/lib/archive-email";
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
