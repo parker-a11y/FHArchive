@@ -1,25 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
-import { getSharedEmail } from "@/lib/email-share.functions";
-import { RECORD_TYPES, labelOf } from "@/lib/archive";
-import { FfnText } from "@/components/ffn/FfnText";
+import { getSharedEmail, getSharedEmailHtml } from "@/lib/email-share.functions";
 
 export const Route = createFileRoute("/e/$token")({
-  loader: ({ params }) => getSharedEmail({ data: { token: params.token } }),
+  loader: async ({ params }) => {
+    const [email, html] = await Promise.all([
+      getSharedEmail({ data: { token: params.token } }),
+      getSharedEmailHtml({ data: { token: params.token } }),
+    ]);
+    return { email, html };
+  },
   head: ({ loaderData }) => ({
     meta: [
       {
-        title: loaderData
-          ? `${loaderData.subject} — The Francis Files`
+        title: loaderData?.email
+          ? `${loaderData.email.subject} — The Francis Files`
           : "Link unavailable — The Francis Files",
       },
       {
         name: "description",
-        content: loaderData
+        content: loaderData?.email
           ? `An email shared from The Francis Files archive.`
           : "This shared email link is no longer available.",
       },
-      { property: "og:title", content: loaderData?.subject ?? "Shared email — The Francis Files" },
+      {
+        property: "og:title",
+        content: loaderData?.email?.subject ?? "Shared email — The Francis Files",
+      },
       {
         property: "og:description",
         content: "An email shared from The Francis Files archive.",
@@ -33,9 +39,9 @@ export const Route = createFileRoute("/e/$token")({
 });
 
 function SharedEmailPage() {
-  const email = Route.useLoaderData();
+  const { email, html } = Route.useLoaderData();
 
-  if (!email) {
+  if (!email || !html) {
     return (
       <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-6 text-center">
         <h1 className="font-display text-2xl">This link is no longer available</h1>
@@ -47,65 +53,25 @@ function SharedEmailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b border-border px-4 py-6 sm:px-8">
-        <div className="mx-auto max-w-3xl">
-          <div className="field-label">Email from the archive</div>
-          <h1 className="mt-1 font-display text-3xl leading-tight">
-            {email.headerTitle ?? email.subject}
-          </h1>
-          {email.headerSubtitle && (
-            <p className="mt-1 text-sm text-muted-foreground">{email.headerSubtitle}</p>
-          )}
-          <p className="mt-2 text-xs text-muted-foreground">
-            {new Date(email.sentAt).toLocaleString()}
-            {email.senderEmail ? ` · from ${email.senderEmail}` : ""}
-          </p>
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-3xl space-y-8 px-4 py-8 sm:px-8">
-        {email.messageBody && (
-          <section className="whitespace-pre-wrap rounded border border-border bg-card p-5 text-sm leading-relaxed">
-            <FfnText text={email.messageBody} />
-          </section>
-        )}
-
-        {email.records.length > 0 && (
-          <section>
-            <h2 className="font-display text-lg">Records in this email</h2>
-            <ul className="mt-3 space-y-2">
-              {email.records.map((r) => (
-                <li
-                  key={r.archiveId}
-                  className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-border bg-card px-4 py-3"
-                >
-                  <span className="archive-id font-display text-lg">{r.archiveId}</span>
-                  {r.recordType && (
-                    <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
-                      {labelOf(RECORD_TYPES, r.recordType)}
-                    </span>
-                  )}
-                  {r.title && <span className="text-sm font-medium">{r.title}</span>}
-                  {r.date && <span className="text-xs text-muted-foreground">{r.date}</span>}
-                  {r.url && (
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="ml-auto inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                    >
-                      View in archive <ExternalLink className="size-3.5" />
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+    <main className="min-h-screen bg-[#f6f4ef]">
+      <div className="mx-auto max-w-3xl px-2 py-6 sm:px-4">
+        <p className="mb-3 px-2 text-xs text-muted-foreground">
+          Sent {new Date(email.sentAt).toLocaleString()}
+          {email.senderEmail ? ` · from ${email.senderEmail}` : ""}
+        </p>
+        <iframe
+          title={email.subject}
+          srcDoc={html}
+          sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          className="h-[80vh] w-full rounded border border-border bg-white"
+          onLoad={(ev) => {
+            const frame = ev.currentTarget;
+            const doc = frame.contentDocument;
+            if (doc) frame.style.height = `${doc.documentElement.scrollHeight + 32}px`;
+          }}
+        />
       </div>
-
-      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground sm:px-8">
+      <footer className="px-4 py-6 text-center text-xs text-muted-foreground">
         The Francis Files · shared privately by link
       </footer>
     </main>
