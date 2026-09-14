@@ -167,7 +167,6 @@ function EmailsPage() {
                           </Button>
                         }
                       />
-                      <GetEmailLinkButton emailId={e.id} />
                     </div>
                   );
                 })()}
