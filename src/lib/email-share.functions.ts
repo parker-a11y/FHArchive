@@ -60,6 +60,68 @@ export type SharedEmail = {
   records: SharedEmailRecord[];
 };
 
+/**
+ * Renders the shared email exactly as recipients received it — header, message,
+ * record cards with scans and transcriptions — as standalone HTML.
+ * Scan links are regenerated fresh so images still load.
+ */
+export const getSharedEmailHtml = createServerFn({ method: "GET" })
+  .inputValidator((data: { token: string }) => ({ token: String(data.token).slice(0, 64) }))
+  .handler(async ({ data }): Promise<string | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: email } = await supabaseAdmin
+      .from("archive_emails")
+      .select("id, owner_id, subject, header_title, header_subtitle, message_body")
+      .eq("share_token", data.token)
+      .maybeSingle();
+    if (!email) return null;
+    const e = email as Record<string, unknown>;
+
+    const { data: recs } = await supabaseAdmin
+      .from("archive_email_records")
+      .select("letter_id, sort_order")
+      .eq("email_id", String(e['id']))
+      .order("sort_order", { ascending: true });
+
+    const { buildRecords } = await import("@/lib/archive-email.server");
+    const built = await buildRecords(
+      supabaseAdmin as never,
+      String(e['owner_id']),
+      ((recs ?? []) as Record<string, unknown>[]).map((r) => ({
+        kind: "letter" as const,
+        id: String(r['letter_id']),
+      })),
+      { includeTranscription: true, includeImages: true, includeEnvelope: true },
+    );
+
+    const [{ render }, { template }, React] = await Promise.all([
+      import("@react-email/render"),
+      import("@/lib/email-templates/archive-record"),
+      import("react"),
+    ]);
+
+    const element = React.createElement(template.component, {
+      headerTitle: (e['header_title'] as string | null) || String(e['subject']),
+      headerSubtitle: (e['header_subtitle'] as string | null) || undefined,
+      message: (e['message_body'] as string | null) || undefined,
+      senderName: "The Francis Files",
+      records: built.map((r) => ({
+        identifier: r.identifier,
+        title: r.title,
+        date: r.date,
+        details: r.details,
+        summary: r.summary,
+        transcription: r.transcription,
+        url: r.url,
+        images: r.images,
+        fff: r.fff,
+      })),
+    });
+
+    return await render(element as never);
+  });
+
 /** Public, unauthenticated read of one shared sent email. Whitelisted fields only. */
 export const getSharedEmail = createServerFn({ method: "GET" })
   .inputValidator((data: { token: string }) => ({ token: String(data.token).slice(0, 64) }))
