@@ -117,7 +117,15 @@ export const WeeklyRecapEmail = ({
         ) : null}
 
         <Section>
-          {blocksOf(body).map((block, i) => {
+          {isRichHtml(body) ? (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: richHtmlToEmail(body, { shareLinks, inlinePhotos }),
+              }}
+            />
+          ) : null}
+          {(isRichHtml(body) ? [] : blocksOf(body)).map((block, i) => {
+
             if (block.kind === 'photo') {
               const photo = photoOfBlock(block.token, inlinePhotos)
               if (!photo) return null
