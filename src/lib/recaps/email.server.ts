@@ -110,6 +110,8 @@ export async function sendRecapEmail(
     imageCaption: recap.image_caption,
     relatedIds,
     shareLinks,
+    inlinePhotos,
+
     stats,
     recapUrl: `${SITE_URL}/recaps/${recap.slug || recap.week_start}`,
   };
