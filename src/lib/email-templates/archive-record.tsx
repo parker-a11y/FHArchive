@@ -430,3 +430,12 @@ const questionText = {
   fontWeight: 'bold' as const,
   margin: '0 0 10px',
 }
+const photoBlock = { margin: '18px 0' }
+const photoCaption = {
+  margin: '6px 0 0',
+  fontSize: '12px',
+  letterSpacing: '1.5px',
+  textTransform: 'uppercase' as const,
+  color: '#a08a3f',
+  fontFamily: 'Helvetica, Arial, sans-serif',
+}
