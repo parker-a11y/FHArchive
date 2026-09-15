@@ -13,6 +13,9 @@ import {
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
+import { isRichHtml } from '@/lib/rich-text'
+import { richHtmlToEmail } from '@/lib/rich-text-email'
+
 
 
 const LOGO =
