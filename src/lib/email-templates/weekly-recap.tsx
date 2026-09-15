@@ -30,17 +30,20 @@ export interface WeeklyRecapEmailProps {
   relatedIds?: string[]
   /** FH / DS number -> public share URL, so non-members can open records. */
   shareLinks?: Record<string, string>
+  /** Photos embedded in the body, keyed by their `[[photo:…]]` token. */
+  inlinePhotos?: Record<string, InlinePhoto>
   stats?: { label: string; value: string | number }[]
   recapUrl?: string | null
 }
 
-/** Splits the recap body into renderable blocks (heading / bullet / paragraph). */
+/** Splits the recap body into renderable blocks (heading / bullet / paragraph / photo). */
 function blocksOf(body: string) {
-  return body
+  return isolatePhotoTokens(body)
     .split(/\n{2,}/)
     .map((b) => b.trim())
     .filter(Boolean)
     .map((block) => {
+      if (isPhotoBlock(block)) return { kind: 'photo' as const, token: block }
       if (/^#{1,4}\s/.test(block))
         return { kind: 'heading' as const, text: block.replace(/^#{1,4}\s+/, '') }
       const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
@@ -49,6 +52,7 @@ function blocksOf(body: string) {
       return { kind: 'paragraph' as const, text: lines.join(' ') }
     })
 }
+
 
 /** Strips markdown emphasis so the email reads cleanly in every client. */
 const plain = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/`/g, '')
