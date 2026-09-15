@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +21,8 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ArchivePhotoPicker, insertAtCursor } from "@/components/media/ArchivePhotoPicker";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -98,6 +100,8 @@ function RecapPage() {
   const [draft, setDraft] = useState({ title: "", lede: "", body_md: "" });
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
   const [addOpen, setAddOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
   const refineFn = useServerFn(refineWeeklyRecapFn);
