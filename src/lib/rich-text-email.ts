@@ -44,6 +44,14 @@ const RECORD_RE = /(FH-?\d{3,}|DS-?\d{3,})/g;
 
 function linkRecords(text: string, shareLinks: Record<string, string>) {
   if (!Object.keys(shareLinks).length) return escapeHtml(text);
+  // Photo tokens are replaced later; never link the record number inside one.
+  return text
+    .split(new RegExp(`(${PHOTO_TOKEN_RE.source})`, "gi"))
+    .map((chunk) => (/^\[\[photo:/i.test(chunk) ? chunk : linkRun(chunk, shareLinks)))
+    .join("");
+}
+
+function linkRun(text: string, shareLinks: Record<string, string>) {
   return text
     .split(RECORD_RE)
     .map((part) => {
@@ -79,11 +87,13 @@ export function richHtmlToEmail(
   const photos = opts.inlinePhotos ?? {};
   let out = "";
   const open: string[] = [];
+  let skip = 0;
 
   const parser = new Parser(
     {
       onopentag(name, attribs) {
         const tag = name.toLowerCase();
+        if (tag === "script" || tag === "style") skip++;
         if (!ALLOWED.has(tag)) return;
         const own = safeStyle(attribs["style"]);
         const style = `${STYLES[tag] ?? ""}${own ? `${own};` : ""}`;
@@ -101,10 +111,12 @@ export function richHtmlToEmail(
         out += `<${tag}${attrs}>`;
       },
       ontext(text) {
+        if (skip > 0) return;
         out += linkRecords(text, shareLinks);
       },
       onclosetag(name) {
         const tag = name.toLowerCase();
+        if (tag === "script" || tag === "style") skip = Math.max(0, skip - 1);
         if (VOID_TAGS.has(tag) || !ALLOWED.has(tag)) return;
         const last = open.lastIndexOf(tag);
         if (last === -1) return;

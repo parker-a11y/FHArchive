@@ -72,10 +72,12 @@ export function safeHref(href: string | undefined) {
 export function sanitizeRichHtml(html: string) {
   let out = "";
   const open: string[] = [];
+  let skip = 0;
   const parser = new Parser(
     {
       onopentag(name, attribs) {
         const tag = name.toLowerCase();
+        if (tag === "script" || tag === "style") skip++;
         if (!ALLOWED_TAGS.has(tag)) return;
         let attrs = "";
         const style = safeStyle(attribs["style"]);
@@ -93,10 +95,12 @@ export function sanitizeRichHtml(html: string) {
         out += `<${tag}${attrs}>`;
       },
       ontext(text) {
+        if (skip > 0) return;
         out += escapeHtml(text);
       },
       onclosetag(name) {
         const tag = name.toLowerCase();
+        if (tag === "script" || tag === "style") skip = Math.max(0, skip - 1);
         if (VOID_TAGS.has(tag) || !ALLOWED_TAGS.has(tag)) return;
         const last = open.lastIndexOf(tag);
         if (last === -1) return;
