@@ -162,6 +162,8 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
             research: data.research ?? undefined,
             thumbnails: data.thumbnails,
             shareLinks,
+            inlinePhotos,
+
             senderName: "The Francis Files",
             records: records.map((r) => ({
               identifier: r.identifier,

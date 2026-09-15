@@ -84,7 +84,7 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
       .eq("email_id", String(e['id']))
       .order("sort_order", { ascending: true });
 
-    const { buildRecords } = await import("@/lib/archive-email.server");
+    const { buildRecords, resolveInlinePhotos } = await import("@/lib/archive-email.server");
     const built = await buildRecords(
       supabaseAdmin as never,
       String(e['owner_id']),
