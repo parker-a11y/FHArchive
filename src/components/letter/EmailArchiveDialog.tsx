@@ -322,26 +322,28 @@ export function EmailArchiveDialog({
           </div>
 
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase">Message</label>
-              <ArchivePhotoPicker
-                onInsert={(token) =>
-                  setMessage((m) => insertAtCursor(messageRef.current, m, token))
-                }
-              />
-            </div>
-            <Textarea
-              ref={messageRef}
-              className="mt-1 min-h-28"
+            <label className="text-xs font-medium text-muted-foreground uppercase">Message</label>
+            <RichTextEditor
+              className="mt-1"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={setMessage}
+              minHeight="8rem"
               placeholder="A note to go above the record…"
+              onEditorReady={(e) => {
+                editorRef.current = e;
+              }}
+              toolbarExtras={
+                <ArchivePhotoPicker
+                  onInsert={(token) => insertTokenParagraph(editorRef.current, token)}
+                />
+              }
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              Embedded photos show as a [[photo:…]] marker here and as the picture itself in the
-              email, captioned with its record number.
+              Use the toolbar for bold, italic, underline, headings, lists and alignment. Inserted
+              photos appear in the email captioned with their record number.
             </p>
           </div>
+
 
 
           <div className="space-y-2">
