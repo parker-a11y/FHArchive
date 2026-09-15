@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
+import { ArchivePhotoPicker, insertAtCursor } from "@/components/media/ArchivePhotoPicker";
+
 import { fetchContacts } from "@/lib/archive-email";
 import { sendArchiveEmail } from "@/lib/archive-email.functions";
 import {
@@ -83,6 +85,8 @@ export function EmailArchiveDialog({
   const [message, setMessage] = useState(defaultMessage ?? "");
   const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+
   const [includeEnvelope, setIncludeEnvelope] = useState(false);
   const hasLetter = recordList.some((r) => r.kind === "letter");
 
@@ -318,14 +322,27 @@ export function EmailArchiveDialog({
           </div>
 
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase">Message</label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-medium text-muted-foreground uppercase">Message</label>
+              <ArchivePhotoPicker
+                onInsert={(token) =>
+                  setMessage((m) => insertAtCursor(messageRef.current, m, token))
+                }
+              />
+            </div>
             <Textarea
+              ref={messageRef}
               className="mt-1 min-h-28"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="A note to go above the record…"
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Embedded photos show as a [[photo:…]] marker here and as the picture itself in the
+              email, captioned with its record number.
+            </p>
           </div>
+
 
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm">
