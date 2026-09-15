@@ -1,4 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  extractPhotoTokens,
+  parsePhotoToken,
+  type InlinePhoto,
+} from "@/lib/inline-photos";
+
 
 /** Emailed links always point at the public archive domain, never a preview URL. */
 export const PUBLIC_SITE_URL = "https://fharchive.com";
