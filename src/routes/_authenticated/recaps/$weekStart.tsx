@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,6 +21,8 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ArchivePhotoPicker, insertAtCursor } from "@/components/media/ArchivePhotoPicker";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
@@ -98,6 +100,8 @@ function RecapPage() {
   const [draft, setDraft] = useState({ title: "", lede: "", body_md: "" });
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
   const [addOpen, setAddOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
   const refineFn = useServerFn(refineWeeklyRecapFn);
@@ -329,12 +333,25 @@ function RecapPage() {
               placeholder="One-sentence preview"
               rows={2}
             />
+            <div className="flex items-center justify-between gap-2">
+              <p className="field-label">Body</p>
+              <ArchivePhotoPicker
+                onInsert={(token) =>
+                  setDraft((d) => ({
+                    ...d,
+                    body_md: insertAtCursor(bodyRef.current, d.body_md, token),
+                  }))
+                }
+              />
+            </div>
             <Textarea
+              ref={bodyRef}
               value={draft.body_md}
               onChange={(e) => setDraft((d) => ({ ...d, body_md: e.target.value }))}
               rows={28}
               className="font-mono text-xs"
             />
+
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="field-label mb-3">Preview</p>
               <RecapBody text={draft.body_md} />

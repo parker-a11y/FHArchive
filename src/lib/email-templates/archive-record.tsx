@@ -14,6 +14,8 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
+
 
 export interface EmailRecord {
   identifier?: string
@@ -48,7 +50,10 @@ export interface ArchiveRecordEmailProps {
   thumbnails?: boolean
   /** FH / DS number -> public share URL, so recipients can open cited records. */
   shareLinks?: Record<string, string>
+  /** Photos embedded in the message body, keyed by their `[[photo:…]]` token. */
+  inlinePhotos?: Record<string, InlinePhoto>
 }
+
 
 /** Renders **bold**, *italic*, and FH/DS record numbers as clickable links. */
 function renderInline(text: string, shareLinks: Record<string, string>) {
@@ -71,16 +76,49 @@ function renderInline(text: string, shareLinks: Record<string, string>) {
   })
 }
 
+/** One embedded archive photo, captioned with its record number. */
+function InlinePhotoBlock({ photo }: { photo: InlinePhoto }) {
+  const img = <Img src={photo.url} alt={`${photo.identifier} archive photo`} style={image} />
+  return (
+    <Section style={photoBlock}>
+      {photo.href ? <Link href={photo.href}>{img}</Link> : img}
+      <Text style={photoCaption}>
+        {photo.href ? (
+          <Link href={photo.href} style={recordLink}>
+            {photo.identifier}
+          </Link>
+        ) : (
+          photo.identifier
+        )}
+      </Text>
+    </Section>
+  )
+}
+
 /** Message paragraphs with light markdown: headings, bullets, hr, bold/italic, record links. */
-function MessageBody({ message, shareLinks }: { message: string; shareLinks: Record<string, string> }) {
-  const blocks = message.trim().split(/\n{2,}/)
+function MessageBody({
+  message,
+  shareLinks,
+  inlinePhotos,
+}: {
+  message: string
+  shareLinks: Record<string, string>
+  inlinePhotos?: Record<string, InlinePhoto>
+}) {
+  const blocks = isolatePhotoTokens(message).trim().split(/\n{2,}/)
   return (
     <>
       {blocks.map((block, i) => {
+        if (isPhotoBlock(block)) {
+          const photo = photoOfBlock(block, inlinePhotos)
+          return photo ? <InlinePhotoBlock key={i} photo={photo} /> : null
+        }
+
         const lines = block.split('\n').filter((l) => l.trim())
         if (!lines.length) return null
 
         if (lines.every((l) => /^\s*-{3,}\s*$/.test(l))) return <Hr key={i} style={hr} />
+
 
         if (/^#{1,4}\s/.test(lines[0]!) && lines.length === 1)
           return (
@@ -119,6 +157,8 @@ const ArchiveRecordEmail = ({
   senderName,
   thumbnails = false,
   shareLinks = {},
+  inlinePhotos = {},
+
 }: ArchiveRecordEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -138,7 +178,10 @@ const ArchiveRecordEmail = ({
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}
         </Section>
 
-        {message ? <MessageBody message={message} shareLinks={shareLinks} /> : null}
+        {message ? (
+          <MessageBody message={message} shareLinks={shareLinks} inlinePhotos={inlinePhotos} />
+        ) : null}
+
 
         {research?.answer ? (
           <Section style={researchCard}>
@@ -148,7 +191,7 @@ const ArchiveRecordEmail = ({
                 <Text style={questionText}>{research.question}</Text>
               </>
             ) : null}
-            <MessageBody message={research.answer} shareLinks={shareLinks} />
+            <MessageBody message={research.answer} shareLinks={shareLinks} inlinePhotos={inlinePhotos} />
             {research.caveats ? (
               <Text style={meta}>
                 <strong>Caveats:</strong> {research.caveats}
@@ -386,4 +429,13 @@ const questionText = {
   color: '#2f3327',
   fontWeight: 'bold' as const,
   margin: '0 0 10px',
+}
+const photoBlock = { margin: '18px 0' }
+const photoCaption = {
+  margin: '6px 0 0',
+  fontSize: '12px',
+  letterSpacing: '1.5px',
+  textTransform: 'uppercase' as const,
+  color: '#a08a3f',
+  fontFamily: 'Helvetica, Arial, sans-serif',
 }

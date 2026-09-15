@@ -73,9 +73,9 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     if (data.recipients.length === 0) throw new Error("Add at least one valid email address.");
     if (!data.subject) throw new Error("A subject is required.");
 
-    const { buildRecords, rememberContacts, ensureShareLinksForRefs } = await import(
-      "@/lib/archive-email.server"
-    );
+    const { buildRecords, rememberContacts, ensureShareLinksForRefs, resolveInlinePhotos } =
+      await import("@/lib/archive-email.server");
+
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
 
     const records = await buildRecords(db as never, context.userId, data.records, {
@@ -102,6 +102,15 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
             data.includeTranscription,
           )
         : {};
+
+    // Photos the archivist embedded in the note itself.
+    const inlinePhotos = await resolveInlinePhotos(
+      db as never,
+      context.userId,
+      linkableText,
+      { includeTranscription: data.includeTranscription },
+    );
+
 
     const { data: logRow } = await db
       .from("archive_emails")
@@ -153,6 +162,8 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
             research: data.research ?? undefined,
             thumbnails: data.thumbnails,
             shareLinks,
+            inlinePhotos,
+
             senderName: "The Francis Files",
             records: records.map((r) => ({
               identifier: r.identifier,

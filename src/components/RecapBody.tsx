@@ -1,5 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
+import { useInlinePhotos } from "@/lib/inline-photos-urls";
+import { isolatePhotoTokens, isPhotoBlock, photoOfBlock } from "@/lib/inline-photos";
+
 
 /** Turns FH / DS record numbers into links into the archive. */
 export function RecapInline({ text }: { text: string }) {
@@ -53,12 +56,49 @@ export function RecapInline({ text }: { text: string }) {
 
 /** Narrative markdown: headings, paragraphs, bullets and pull quotes. */
 export function RecapBody({ text }: { text: string }) {
-  const blocks = text.trim().split(/\n{2,}/);
+  const photos = useInlinePhotos(text);
+  const blocks = isolatePhotoTokens(text).trim().split(/\n{2,}/);
   return (
     <div className="space-y-4 text-[15px] leading-relaxed">
       {blocks.map((block, i) => {
+        if (isPhotoBlock(block)) {
+          const photo = photoOfBlock(block, photos);
+          if (!photo) return null;
+          return (
+            <figure key={i} className="my-4">
+              <img
+                src={photo.url}
+                alt={`${photo.identifier} archive photo`}
+                className="w-full rounded border border-border"
+                loading="lazy"
+              />
+              <figcaption className="mt-1 text-xs tracking-widest uppercase">
+                {photo.identifier.startsWith("FH") ? (
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: photo.identifier }}
+                    className="archive-id text-archive-gold underline-offset-2 hover:underline"
+                  >
+                    {photo.identifier}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/sources/$dsId"
+                    params={{ dsId: photo.identifier }}
+                    className="archive-id text-archive-gold underline-offset-2 hover:underline"
+                  >
+                    {photo.identifier}
+                  </Link>
+                )}
+              </figcaption>
+
+            </figure>
+          );
+        }
+
         const lines = block.split("\n").filter((l) => l.trim());
         if (!lines.length) return null;
+
 
         if (/^#{1,4}\s/.test(lines[0]!) && lines.length === 1)
           return (

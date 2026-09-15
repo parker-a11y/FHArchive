@@ -12,6 +12,8 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
+
 
 const LOGO =
   'https://fharchive.com/__l5e/assets-v1/f9b37994-85ba-4cde-b07a-a2698f053834/email-logo.png'
@@ -28,17 +30,20 @@ export interface WeeklyRecapEmailProps {
   relatedIds?: string[]
   /** FH / DS number -> public share URL, so non-members can open records. */
   shareLinks?: Record<string, string>
+  /** Photos embedded in the body, keyed by their `[[photo:…]]` token. */
+  inlinePhotos?: Record<string, InlinePhoto>
   stats?: { label: string; value: string | number }[]
   recapUrl?: string | null
 }
 
-/** Splits the recap body into renderable blocks (heading / bullet / paragraph). */
+/** Splits the recap body into renderable blocks (heading / bullet / paragraph / photo). */
 function blocksOf(body: string) {
-  return body
+  return isolatePhotoTokens(body)
     .split(/\n{2,}/)
     .map((b) => b.trim())
     .filter(Boolean)
     .map((block) => {
+      if (isPhotoBlock(block)) return { kind: 'photo' as const, token: block }
       if (/^#{1,4}\s/.test(block))
         return { kind: 'heading' as const, text: block.replace(/^#{1,4}\s+/, '') }
       const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
@@ -47,6 +52,7 @@ function blocksOf(body: string) {
       return { kind: 'paragraph' as const, text: lines.join(' ') }
     })
 }
+
 
 /** Strips markdown emphasis so the email reads cleanly in every client. */
 const plain = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/`/g, '')
@@ -76,6 +82,8 @@ export const WeeklyRecapEmail = ({
   imageCaption = null,
   relatedIds = [],
   shareLinks = {},
+  inlinePhotos = {},
+
   stats = [],
   recapUrl = null,
 }: WeeklyRecapEmailProps) => (
@@ -107,7 +115,29 @@ export const WeeklyRecapEmail = ({
 
         <Section>
           {blocksOf(body).map((block, i) => {
+            if (block.kind === 'photo') {
+              const photo = photoOfBlock(block.token, inlinePhotos)
+              if (!photo) return null
+              const img = (
+                <Img src={photo.url} alt={`${photo.identifier} archive photo`} style={image} />
+              )
+              return (
+                <Section key={i}>
+                  {photo.href ? <Link href={photo.href}>{img}</Link> : img}
+                  <Text style={caption}>
+                    {photo.href ? (
+                      <Link href={photo.href} style={recordLink}>
+                        {photo.identifier}
+                      </Link>
+                    ) : (
+                      photo.identifier
+                    )}
+                  </Text>
+                </Section>
+              )
+            }
             if (block.kind === 'heading')
+
               return (
                 <Text key={i} style={h2}>
                   {linkify(block.text, shareLinks)}
