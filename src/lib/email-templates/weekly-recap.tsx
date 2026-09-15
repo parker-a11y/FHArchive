@@ -13,6 +13,9 @@ import {
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
+import { isRichHtml } from '@/lib/rich-text'
+import { richHtmlToEmail } from '@/lib/rich-text-email'
+
 
 
 const LOGO =
@@ -114,7 +117,15 @@ export const WeeklyRecapEmail = ({
         ) : null}
 
         <Section>
-          {blocksOf(body).map((block, i) => {
+          {isRichHtml(body) ? (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: richHtmlToEmail(body, { shareLinks, inlinePhotos }),
+              }}
+            />
+          ) : null}
+          {(isRichHtml(body) ? [] : blocksOf(body)).map((block, i) => {
+
             if (block.kind === 'photo') {
               const photo = photoOfBlock(block.token, inlinePhotos)
               if (!photo) return null

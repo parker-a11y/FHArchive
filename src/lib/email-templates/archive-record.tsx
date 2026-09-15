@@ -15,6 +15,9 @@ import {
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
+import { isRichHtml } from '@/lib/rich-text'
+import { richHtmlToEmail } from '@/lib/rich-text-email'
+
 
 
 export interface EmailRecord {
@@ -105,7 +108,18 @@ function MessageBody({
   shareLinks: Record<string, string>
   inlinePhotos?: Record<string, InlinePhoto>
 }) {
+  // Notes written in the rich-text editor arrive as HTML.
+  if (isRichHtml(message))
+    return (
+      <div
+        dangerouslySetInnerHTML={{
+          __html: richHtmlToEmail(message, { shareLinks, inlinePhotos }),
+        }}
+      />
+    )
+
   const blocks = isolatePhotoTokens(message).trim().split(/\n{2,}/)
+
   return (
     <>
       {blocks.map((block, i) => {
