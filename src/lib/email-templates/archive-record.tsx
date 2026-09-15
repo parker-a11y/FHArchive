@@ -14,6 +14,8 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
+
 
 export interface EmailRecord {
   identifier?: string
@@ -48,7 +50,10 @@ export interface ArchiveRecordEmailProps {
   thumbnails?: boolean
   /** FH / DS number -> public share URL, so recipients can open cited records. */
   shareLinks?: Record<string, string>
+  /** Photos embedded in the message body, keyed by their `[[photo:…]]` token. */
+  inlinePhotos?: Record<string, InlinePhoto>
 }
+
 
 /** Renders **bold**, *italic*, and FH/DS record numbers as clickable links. */
 function renderInline(text: string, shareLinks: Record<string, string>) {
