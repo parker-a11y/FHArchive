@@ -76,16 +76,49 @@ function renderInline(text: string, shareLinks: Record<string, string>) {
   })
 }
 
+/** One embedded archive photo, captioned with its record number. */
+function InlinePhotoBlock({ photo }: { photo: InlinePhoto }) {
+  const img = <Img src={photo.url} alt={`${photo.identifier} archive photo`} style={image} />
+  return (
+    <Section style={photoBlock}>
+      {photo.href ? <Link href={photo.href}>{img}</Link> : img}
+      <Text style={photoCaption}>
+        {photo.href ? (
+          <Link href={photo.href} style={recordLink}>
+            {photo.identifier}
+          </Link>
+        ) : (
+          photo.identifier
+        )}
+      </Text>
+    </Section>
+  )
+}
+
 /** Message paragraphs with light markdown: headings, bullets, hr, bold/italic, record links. */
-function MessageBody({ message, shareLinks }: { message: string; shareLinks: Record<string, string> }) {
-  const blocks = message.trim().split(/\n{2,}/)
+function MessageBody({
+  message,
+  shareLinks,
+  inlinePhotos,
+}: {
+  message: string
+  shareLinks: Record<string, string>
+  inlinePhotos?: Record<string, InlinePhoto>
+}) {
+  const blocks = isolatePhotoTokens(message).trim().split(/\n{2,}/)
   return (
     <>
       {blocks.map((block, i) => {
+        if (isPhotoBlock(block)) {
+          const photo = photoOfBlock(block, inlinePhotos)
+          return photo ? <InlinePhotoBlock key={i} photo={photo} /> : null
+        }
+
         const lines = block.split('\n').filter((l) => l.trim())
         if (!lines.length) return null
 
         if (lines.every((l) => /^\s*-{3,}\s*$/.test(l))) return <Hr key={i} style={hr} />
+
 
         if (/^#{1,4}\s/.test(lines[0]!) && lines.length === 1)
           return (
