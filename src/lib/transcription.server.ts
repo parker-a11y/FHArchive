@@ -243,7 +243,7 @@ export async function rebuildRecordTranscription(
   let withText = 0;
   let verifiedCount = 0;
 
-  ordered.forEach((f: any, i: number) => {
+  ordered.forEach((f: any) => {
     const r: any = byFile.get(f.id);
     if (!r) return;
     const best = (r.verified_text?.trim() || r.ai_text?.trim() || "") as string;

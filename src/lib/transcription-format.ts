@@ -20,8 +20,8 @@ const NUMERIC_DATE = /^\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?$/;
  * Keep this deliberately narrow so an author's ordinary mention of a page is
  * never removed.
  */
-const COMBINED_PAGE_MARKER =
-  /^[ \t]*(?:—|---)\s*Page\s+\d+(?:\s*\([^\n)]*\))?\s*(?:—|---)[ \t]*$/gim;
+const COMBINED_PAGE_MARKER_SOURCE =
+  "(?:—|---)\\s*Page\\s+\\d+(?:\\s*\\([^\\n)]*\\))?\\s*(?:—|---)";
 
 /**
  * Removes legacy system page headings from a combined transcription. A page
@@ -30,18 +30,13 @@ const COMBINED_PAGE_MARKER =
  */
 export function flowingCombinedTranscription(input: string | null | undefined): string {
   if (!input) return "";
-  return input
-    .replace(/\r\n?/g, "\n")
-    .replace(COMBINED_PAGE_MARKER, "")
-    .replace(/\n{2,}[ \t]*\n*/g, "\n\n")
-    .replace(/(^|\S)[ \t]*\n{2}(?=\S)/g, (_match, before: string) =>
-      before ? `${before}\n\n` : "",
-    )
-    .replace(/(^|\S)[ \t]*\n(?=\S)/g, (_match, before: string) =>
-      before ? `${before} ` : "",
-    )
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
+  const normalized = input.replace(/\r\n?/g, "\n");
+  const openingMarker = new RegExp(`^[ \\t]*${COMBINED_PAGE_MARKER_SOURCE}[ \\t]*\\n+`, "i");
+  const middleMarker = new RegExp(
+    `\\n+[ \\t]*${COMBINED_PAGE_MARKER_SOURCE}[ \\t]*\\n+`,
+    "gi",
+  );
+  return normalized.replace(openingMarker, "").replace(middleMarker, " ").trim();
 }
 
 /** Combines page text without introducing an artificial page boundary. */
