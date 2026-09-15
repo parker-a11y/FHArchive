@@ -191,7 +191,7 @@ const ArchiveRecordEmail = ({
                 <Text style={questionText}>{research.question}</Text>
               </>
             ) : null}
-            <MessageBody message={research.answer} shareLinks={shareLinks} />
+            <MessageBody message={research.answer} shareLinks={shareLinks} inlinePhotos={inlinePhotos} />
             {research.caveats ? (
               <Text style={meta}>
                 <strong>Caveats:</strong> {research.caveats}
