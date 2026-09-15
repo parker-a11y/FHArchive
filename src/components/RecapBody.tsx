@@ -73,14 +73,25 @@ export function RecapBody({ text }: { text: string }) {
                 loading="lazy"
               />
               <figcaption className="mt-1 text-xs tracking-widest uppercase">
-                <Link
-                  to="/letters/$archiveId"
-                  params={{ archiveId: photo.identifier }}
-                  className="archive-id text-archive-gold underline-offset-2 hover:underline"
-                >
-                  {photo.identifier}
-                </Link>
+                {photo.identifier.startsWith("FH") ? (
+                  <Link
+                    to="/letters/$archiveId"
+                    params={{ archiveId: photo.identifier }}
+                    className="archive-id text-archive-gold underline-offset-2 hover:underline"
+                  >
+                    {photo.identifier}
+                  </Link>
+                ) : (
+                  <Link
+                    to="/sources/$dsId"
+                    params={{ dsId: photo.identifier }}
+                    className="archive-id text-archive-gold underline-offset-2 hover:underline"
+                  >
+                    {photo.identifier}
+                  </Link>
+                )}
               </figcaption>
+
             </figure>
           );
         }
