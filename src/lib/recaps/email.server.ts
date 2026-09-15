@@ -86,7 +86,17 @@ export async function sendRecapEmail(
     );
   }
 
+  // Photos the archivist embedded in the recap body travel inline.
+  const { resolveInlinePhotos } = await import("@/lib/archive-email.server");
+  const inlinePhotos = await resolveInlinePhotos(
+    db,
+    ownerId,
+    `${recap.body_md ?? ""}\n${message ?? ""}`,
+    { includeTranscription: options.includeTranscription === true },
+  );
+
   const templateData = {
+
     subject:
       recap.kind === "custom"
         ? `The Francis Files — ${recap.title}`

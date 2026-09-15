@@ -101,11 +101,20 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
       import("react"),
     ]);
 
+    const inlinePhotos = await resolveInlinePhotos(
+      supabaseAdmin as never,
+      String(e['owner_id']),
+      String(e['message_body'] ?? ""),
+      { includeTranscription: true },
+    );
+
     const element = React.createElement(template.component, {
       headerTitle: (e['header_title'] as string | null) || String(e['subject']),
       headerSubtitle: (e['header_subtitle'] as string | null) || undefined,
       message: (e['message_body'] as string | null) || undefined,
+      inlinePhotos,
       senderName: "The Francis Files",
+
       records: built.map((r) => ({
         identifier: r.identifier,
         title: r.title,
