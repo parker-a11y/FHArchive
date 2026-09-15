@@ -115,7 +115,29 @@ export const WeeklyRecapEmail = ({
 
         <Section>
           {blocksOf(body).map((block, i) => {
+            if (block.kind === 'photo') {
+              const photo = photoOfBlock(block.token, inlinePhotos)
+              if (!photo) return null
+              const img = (
+                <Img src={photo.url} alt={`${photo.identifier} archive photo`} style={image} />
+              )
+              return (
+                <Section key={i}>
+                  {photo.href ? <Link href={photo.href}>{img}</Link> : img}
+                  <Text style={caption}>
+                    {photo.href ? (
+                      <Link href={photo.href} style={recordLink}>
+                        {photo.identifier}
+                      </Link>
+                    ) : (
+                      photo.identifier
+                    )}
+                  </Text>
+                </Section>
+              )
+            }
             if (block.kind === 'heading')
+
               return (
                 <Text key={i} style={h2}>
                   {linkify(block.text, shareLinks)}
