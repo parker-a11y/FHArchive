@@ -861,17 +861,25 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       >
         <UploadCloud className="mx-auto mb-3 size-8 text-primary" />
         <p className="text-sm">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
             <UploadCloud className="size-4" />
             Upload Scans / Digital Files
-            <input
-              type="file"
-              multiple
-              accept={MASTER_ACCEPT}
-              className="hidden"
-              onChange={(e) => e.target.files && uploadFiles(e.target.files)}
-            />
-          </label>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={MASTER_ACCEPT}
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.length) uploadFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
         </p>
         <p className="mt-2 text-xs text-muted-foreground">
           Or drop a whole batch here (e.g. {letter.archive_id}_001.tif …_010.tif)
