@@ -120,16 +120,21 @@ export function sanitizeRichHtml(html: string) {
 export function richTextToPlain(html: string) {
   if (!isRichHtml(html)) return String(html ?? "");
   let out = "";
+  let skip = 0;
   const parser = new Parser(
     {
       onopentag(name) {
-        if (BLOCK.has(name.toLowerCase())) out += "\n";
+        const tag = name.toLowerCase();
+        if (tag === "script" || tag === "style") skip++;
+        if (BLOCK.has(tag)) out += "\n";
       },
       ontext(text) {
-        out += text;
+        if (skip === 0) out += text;
       },
       onclosetag(name) {
-        if (BLOCK.has(name.toLowerCase())) out += "\n";
+        const tag = name.toLowerCase();
+        if (tag === "script" || tag === "style") skip = Math.max(0, skip - 1);
+        if (BLOCK.has(tag)) out += "\n";
       },
     },
     { decodeEntities: true },

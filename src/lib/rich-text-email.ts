@@ -4,7 +4,7 @@
  */
 import { Parser } from "htmlparser2";
 import { escapeHtml, safeHref, safeStyle } from "@/lib/rich-text";
-import { PHOTO_TOKEN_RE, photoKey, type InlinePhoto } from "@/lib/inline-photos";
+import { PHOTO_TOKEN_SRC, photoKey, type InlinePhoto } from "@/lib/inline-photos";
 
 const STYLES: Record<string, string> = {
   p: "font-size:15px;line-height:24px;color:#33372b;margin:0 0 14px;",
@@ -46,7 +46,7 @@ function linkRecords(text: string, shareLinks: Record<string, string>) {
   if (!Object.keys(shareLinks).length) return escapeHtml(text);
   // Photo tokens are replaced later; never link the record number inside one.
   return text
-    .split(new RegExp(`(${PHOTO_TOKEN_RE.source})`, "gi"))
+    .split(new RegExp(`(${PHOTO_TOKEN_SRC})`, "gi"))
     .map((chunk) => (/^\[\[photo:/i.test(chunk) ? chunk : linkRun(chunk, shareLinks)))
     .join("");
 }
@@ -131,7 +131,7 @@ export function richHtmlToEmail(
   while (open.length) out += `</${open.pop()}>`;
 
   // A paragraph that holds nothing but a photo becomes the photo itself.
-  const token = PHOTO_TOKEN_RE.source;
+  const token = PHOTO_TOKEN_SRC;
   out = out.replace(new RegExp(`<p[^>]*>\\s*(${token})\\s*</p>`, "gi"), (_m, t: string) => {
     const photo = photos[photoKey(t)];
     return photo ? photoHtml(photo) : "";

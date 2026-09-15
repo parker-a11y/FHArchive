@@ -2,7 +2,7 @@ import parse, { domToReact, Element, Text as TextNode, type DOMNode } from "html
 import { Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
 import { useInlinePhotos } from "@/lib/inline-photos-urls";
-import { PHOTO_TOKEN_RE, photoKey, type InlinePhoto } from "@/lib/inline-photos";
+import { PHOTO_TOKEN_SRC, photoKey, type InlinePhoto } from "@/lib/inline-photos";
 import { sanitizeRichHtml, safeStyle } from "@/lib/rich-text";
 
 function RecordLink({ id }: { id: string }) {
@@ -36,7 +36,7 @@ function PhotoFigure({ photo }: { photo: InlinePhoto }) {
 
 /** Photo tokens, record numbers and Francis Files Notes inside one text run. */
 function TextRun({ text, photos }: { text: string; photos?: Record<string, InlinePhoto> }) {
-  const parts = text.split(new RegExp(`(${PHOTO_TOKEN_RE.source}|FH-?\\d{3,}|DS-?\\d{3,})`, "gi"));
+  const parts = text.split(new RegExp(`(${PHOTO_TOKEN_SRC}|FH-?\\d{3,}|DS-?\\d{3,})`, "gi"));
   return (
     <>
       {parts.map((part, i) => {

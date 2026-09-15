@@ -13,6 +13,9 @@ export type InlinePhoto = {
   href?: string | null;
 };
 
+/** Same token, with no capture groups — safe inside split() and replace(). */
+export const PHOTO_TOKEN_SRC = String.raw`\[\[photo:(?:FH|DS)-?\d{3,}:\d+\]\]`;
+
 export const PHOTO_TOKEN_RE = /\[\[photo:((?:FH|DS)-?\d{3,}):(\d+)\]\]/gi;
 
 export function photoToken(identifier: string, page = 1) {
