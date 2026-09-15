@@ -82,6 +82,8 @@ export const WeeklyRecapEmail = ({
   imageCaption = null,
   relatedIds = [],
   shareLinks = {},
+  inlinePhotos = {},
+
   stats = [],
   recapUrl = null,
 }: WeeklyRecapEmailProps) => (
