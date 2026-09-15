@@ -122,6 +122,118 @@ async function letterImages(
   }
   return urls;
 }
+/** Every viewable page of a record, in reading order (envelopes included). */
+async function letterPageUrls(db: DB, letterId: string): Promise<string[]> {
+  const [{ data: files }, { data: derivatives }] = await Promise.all([
+    db
+      .from("digital_files")
+      .select("id, master_path, master_mime, sort_order")
+      .eq("letter_id", letterId)
+      .order("sort_order", { ascending: true }),
+    db.from("file_derivatives").select("file_id, kind, status, storage_path").eq("letter_id", letterId),
+  ]);
+  const paths: string[] = [];
+  for (const f of (files ?? []) as any[]) {
+    const jpegs = ((derivatives ?? []) as any[])
+      .filter((d) => d.file_id === f.id && d.kind === "jpeg" && d.status === "complete" && d.storage_path)
+      .sort((a, b) => String(a.storage_path).localeCompare(String(b.storage_path)));
+    if (jpegs.length) paths.push(...jpegs.map((d) => String(d.storage_path)));
+    else if (/^image\/(jpeg|png|webp|gif)$/i.test(String(f.master_mime ?? "")))
+      paths.push(String(f.master_path));
+  }
+  const urls: string[] = [];
+  for (const p of paths) {
+    const { data } = await db.storage.from("scans").createSignedUrl(p, 60 * 60 * 24 * 365);
+    urls.push(data?.signedUrl ?? "");
+  }
+  return urls;
+}
+
+async function sourcePageUrls(db: DB, sourceId: string): Promise<string[]> {
+  const { data: files } = await db
+    .from("ds_files")
+    .select("storage_path, mime_type, sort_order")
+    .eq("source_id", sourceId)
+    .order("sort_order", { ascending: true });
+  const urls: string[] = [];
+  for (const f of (files ?? []) as any[]) {
+    if (!/^image\//i.test(String(f.mime_type ?? ""))) continue;
+    const { data } = await db.storage
+      .from("ds-files")
+      .createSignedUrl(String(f.storage_path), 60 * 60 * 24 * 365);
+    urls.push(data?.signedUrl ?? "");
+  }
+  return urls;
+}
+
+/**
+ * Turns `[[photo:FH0042:3]]` tokens written in a message or recap body into
+ * signed image URLs plus a caption link to the record.
+ */
+export async function resolveInlinePhotos(
+  db: DB,
+  ownerId: string,
+  text: string,
+  opts: { shareLinks?: boolean; includeTranscription?: boolean } = {},
+): Promise<Record<string, InlinePhoto>> {
+  const tokens = extractPhotoTokens(text);
+  if (!tokens.length) return {};
+
+  const parsed = tokens
+    .map((t) => ({ token: t, ...(parsePhotoToken(t) as { identifier: string; page: number }) }))
+    .filter((p) => Boolean(p.identifier));
+  const identifiers = Array.from(new Set(parsed.map((p) => p.identifier)));
+
+  const links =
+    opts.shareLinks === false
+      ? {}
+      : await ensureShareLinksForRefs(
+          db,
+          ownerId,
+          identifiers,
+          Boolean(opts.includeTranscription),
+        ).catch(() => ({}) as Record<string, string>);
+
+  const pagesByIdentifier: Record<string, string[]> = {};
+  for (const identifier of identifiers) {
+    try {
+      if (identifier.startsWith("FH")) {
+        const { data } = await db
+          .from("letters")
+          .select("id")
+          .eq("archive_id", identifier)
+          .maybeSingle();
+        if (data) pagesByIdentifier[identifier] = await letterPageUrls(db, String((data as any).id));
+      } else {
+        const variants = Array.from(
+          new Set([identifier, identifier.replace(/^DS-?/, "DS-"), identifier.replace(/-/g, "")]),
+        );
+        const { data } = await db
+          .from("digital_sources")
+          .select("id")
+          .in("ds_id", variants)
+          .limit(1)
+          .maybeSingle();
+        if (data) pagesByIdentifier[identifier] = await sourcePageUrls(db, String((data as any).id));
+      }
+    } catch {
+      /* one unreadable record must never block the send */
+    }
+  }
+
+  const out: Record<string, InlinePhoto> = {};
+  for (const p of parsed) {
+    const url = (pagesByIdentifier[p.identifier] ?? [])[p.page - 1];
+    if (!url) continue;
+    out[p.token] = {
+      url,
+      identifier: p.identifier,
+      href: links[p.identifier] ?? links[p.identifier.replace(/-/g, "")] ?? null,
+    };
+  }
+  return out;
+}
+
 
 async function sourceImages(db: DB, sourceId: string, limit: number): Promise<string[]> {
   if (limit <= 0) return [];
