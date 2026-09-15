@@ -333,24 +333,21 @@ function RecapPage() {
               placeholder="One-sentence preview"
               rows={2}
             />
-            <div className="flex items-center justify-between gap-2">
-              <p className="field-label">Body</p>
-              <ArchivePhotoPicker
-                onInsert={(token) =>
-                  setDraft((d) => ({
-                    ...d,
-                    body_md: insertAtCursor(bodyRef.current, d.body_md, token),
-                  }))
-                }
-              />
-            </div>
-            <Textarea
-              ref={bodyRef}
+            <p className="field-label">Body</p>
+            <RichTextEditor
               value={draft.body_md}
-              onChange={(e) => setDraft((d) => ({ ...d, body_md: e.target.value }))}
-              rows={28}
-              className="font-mono text-xs"
+              onChange={(html) => setDraft((d) => ({ ...d, body_md: html }))}
+              minHeight="22rem"
+              onEditorReady={(e) => {
+                recapEditorRef.current = e;
+              }}
+              toolbarExtras={
+                <ArchivePhotoPicker
+                  onInsert={(token) => insertTokenParagraph(recapEditorRef.current, token)}
+                />
+              }
             />
+
 
             <div className="rounded-2xl border border-border bg-card p-5">
               <p className="field-label mb-3">Preview</p>
