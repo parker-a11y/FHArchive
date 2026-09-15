@@ -112,6 +112,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [progress, setProgress] = useState<Progress>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [transcribing, setTranscribing] = useState<string[]>([]);
