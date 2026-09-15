@@ -25,7 +25,11 @@ import {
   transcribeScans,
 } from "@/lib/transcription.functions";
 import { HighlightedText, countMatches } from "@/lib/highlight";
-import { needsReflow, reflowTranscription } from "@/lib/transcription-format";
+import {
+  flowingCombinedTranscription,
+  needsReflow,
+  reflowTranscription,
+} from "@/lib/transcription-format";
 
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 
@@ -243,7 +247,9 @@ function PageEditor({
 export function TranscriptionPanel({ letter, highlight }: { letter: Letter; highlight?: string }) {
   const qc = useQueryClient();
   const { isGuestViewer } = useAuth();
-  const [verified, setVerified] = useState(letter.transcription_verified ?? "");
+  const [verified, setVerified] = useState(
+    flowingCombinedTranscription(letter.transcription_verified),
+  );
   const [status, setStatus] = useState(letter.transcription_status);
   const [selected, setSelected] = useState<string[]>([]);
   const [busyIds, setBusyIds] = useState<string[]>([]);
@@ -251,7 +257,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   const [rollupConflict, setRollupConflict] = useState(false);
 
   useEffect(() => {
-    setVerified(letter.transcription_verified ?? "");
+    setVerified(flowingCombinedTranscription(letter.transcription_verified));
     setStatus(letter.transcription_status);
   }, [letter.id, letter.transcription_verified, letter.transcription_status]);
 
@@ -394,7 +400,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
       !confirm("This will replace the combined verified transcription in the editor. Continue?")
     )
       return;
-    setVerified(letter.transcription_raw_ai ?? "");
+    setVerified(flowingCombinedTranscription(letter.transcription_raw_ai));
     toast.message("AI text copied into the editor — review, then save.");
   }
 
@@ -590,7 +596,10 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
               {letter.transcription_raw_ai ? (
-                <FfnText text={letter.transcription_raw_ai} searchTerm={highlight} />
+                <FfnText
+                  text={flowingCombinedTranscription(letter.transcription_raw_ai)}
+                  searchTerm={highlight}
+                />
               ) : (
                 <span className="text-muted-foreground">
                   None yet. “Transcribe Entire Record” assembles the letter pages here in scan

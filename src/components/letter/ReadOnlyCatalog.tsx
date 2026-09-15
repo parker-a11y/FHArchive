@@ -12,6 +12,7 @@ import {
   labelOf,
 } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
+import { flowingCombinedTranscription } from "@/lib/transcription-format";
 
 /**
  * Read-only catalog for view-only accounts. Guests never see form controls,
@@ -50,7 +51,9 @@ const has = (v: unknown) => v !== null && v !== undefined && String(v).trim() !=
 
 export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
   const isLetter = isLetterType(letter.record_type);
-  const transcription = letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim();
+  const transcription = flowingCombinedTranscription(
+    letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim(),
+  );
 
   const details: { label: string; value: React.ReactNode }[] = [];
   const push = (label: string, value: unknown, node?: React.ReactNode) => {

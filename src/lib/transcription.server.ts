@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  combineTranscriptionPages,
+  flowingCombinedTranscription,
+} from "@/lib/transcription-format";
 
 /**
  * Server-only helpers for AI transcription. The API key never leaves the
@@ -190,7 +194,8 @@ export function isEnvelope(label: string | null) {
   return (label ?? "").toLowerCase().includes("envelope");
 }
 
-const norm = (s: string | null | undefined) => (s ?? "").replace(/\s+/g, " ").trim();
+const norm = (s: string | null | undefined) =>
+  flowingCombinedTranscription(s).replace(/\s+/g, " ").trim();
 
 export type RollupResult = {
   updated: boolean;
@@ -238,22 +243,21 @@ export async function rebuildRecordTranscription(
   let withText = 0;
   let verifiedCount = 0;
 
-  ordered.forEach((f: any, i: number) => {
+  ordered.forEach((f: any) => {
     const r: any = byFile.get(f.id);
     if (!r) return;
-    const head = `— Page ${i + 1}${f.label ? ` (${f.label})` : ""} —`;
     const best = (r.verified_text?.trim() || r.ai_text?.trim() || "") as string;
     if (!best) return;
     withText += 1;
     if (r.status === "human_verified") verifiedCount += 1;
-    bestParts.push(`${head}\n\n${best}`);
-    if (r.ai_text?.trim()) aiParts.push(`${head}\n\n${r.ai_text.trim()}`);
+    bestParts.push(best);
+    if (r.ai_text?.trim()) aiParts.push(r.ai_text.trim());
   });
 
   if (!withText) return { updated: false, conflict: false, allVerified: false, pages: 0 };
 
-  const combinedBest = bestParts.join("\n\n");
-  const combinedAi = aiParts.join("\n\n");
+  const combinedBest = combineTranscriptionPages(bestParts);
+  const combinedAi = combineTranscriptionPages(aiParts);
   const allVerified = verifiedCount === withText;
 
   const existingVerified = (letter as any)?.transcription_verified as string | null;
@@ -329,15 +333,15 @@ export async function staleRecordTranscriptions(
     const parts: string[] = [];
     (files ?? [])
       .filter((f: any) => !isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`))
-      .forEach((f: any, i: number) => {
+      .forEach((f: any) => {
         const r: any = byFile.get(f.id);
         const best = (r?.verified_text?.trim() || r?.ai_text?.trim() || "") as string;
         if (!best) return;
-        parts.push(`— Page ${i + 1}${f.label ? ` (${f.label})` : ""} —\n\n${best}`);
+        parts.push(best);
       });
     if (!parts.length) continue;
 
-    const combined = parts.join("\n\n");
+    const combined = combineTranscriptionPages(parts);
     const existing = (letter as any)?.transcription_verified as string | null;
     const snapshot = (letter as any)?.transcription_rollup_text as string | null;
     if (!norm(existing) || norm(existing) === norm(combined)) continue;

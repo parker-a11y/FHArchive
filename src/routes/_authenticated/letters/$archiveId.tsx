@@ -88,6 +88,7 @@ import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { flowingCombinedTranscription } from "@/lib/transcription-format";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
 import { FfnText } from "@/components/ffn/FfnText";
 import { fetchRetirement } from "@/lib/numbering";
@@ -568,7 +569,11 @@ function LetterPage() {
           </div>
           <div className="max-h-96 overflow-auto whitespace-pre-wrap text-sm leading-relaxed">
             {letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim() ? (
-              <FfnText text={letter.transcription_verified?.trim() || letter.transcription_raw_ai || ""} />
+              <FfnText
+                text={flowingCombinedTranscription(
+                  letter.transcription_verified?.trim() || letter.transcription_raw_ai,
+                )}
+              />
             ) : (
               <span className="text-muted-foreground">
                 No transcription available yet. Open the Transcription tab to generate one.
