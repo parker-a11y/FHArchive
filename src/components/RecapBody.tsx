@@ -2,6 +2,9 @@ import { Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
 import { useInlinePhotos } from "@/lib/inline-photos-urls";
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock } from "@/lib/inline-photos";
+import { isRichHtml } from "@/lib/rich-text";
+import { RichTextView } from "@/components/RichTextView";
+
 
 
 /** Turns FH / DS record numbers into links into the archive. */
@@ -54,10 +57,17 @@ export function RecapInline({ text }: { text: string }) {
   );
 }
 
-/** Narrative markdown: headings, paragraphs, bullets and pull quotes. */
+/** Narrative body: rich text from the editor, or the older markdown-ish text. */
 export function RecapBody({ text }: { text: string }) {
+  if (isRichHtml(text))
+    return <RichTextView html={text} className="text-[15px] leading-relaxed" />;
+  return <PlainRecapBody text={text} />;
+}
+
+function PlainRecapBody({ text }: { text: string }) {
   const photos = useInlinePhotos(text);
   const blocks = isolatePhotoTokens(text).trim().split(/\n{2,}/);
+
   return (
     <div className="space-y-4 text-[15px] leading-relaxed">
       {blocks.map((block, i) => {
