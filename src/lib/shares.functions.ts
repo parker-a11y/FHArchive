@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { flowingCombinedTranscription } from "@/lib/transcription-format";
 
 export type SharedPage = {
   id: string;
@@ -161,7 +162,10 @@ export const getSharedRecord = createServerFn({ method: "GET" })
       physicalDescription: str("physical_description"),
       summary: str("summary_long") ?? str("summary_short"),
       // Transcriptions are always visible to share-link viewers.
-      transcription: str("transcription_verified") ?? str("transcription_raw_ai"),
+      transcription:
+        flowingCombinedTranscription(
+          str("transcription_verified") ?? str("transcription_raw_ai"),
+        ) || null,
       notes: share.include_notes ? str("historical_notes") ?? str("notes") : null,
       publicNote: (share.public_note as string | null) ?? null,
       people: pick(people as { data: unknown[] | null }, "people", "name"),

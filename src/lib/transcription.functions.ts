@@ -161,10 +161,10 @@ export const transcribeRecord = createServerFn({ method: "POST" })
     }
 
     // Envelope text stays out of the combined letter body.
-    const body = pages
-      .filter((p) => !isEnvelope(p.label))
-      .map((p, i) => `— Page ${i + 1}${p.label ? ` (${p.label})` : ""} —\n\n${p.text}`)
-      .join("\n\n");
+    const { combineTranscriptionPages } = await import("@/lib/transcription-format");
+    const body = combineTranscriptionPages(
+      pages.filter((p) => !isEnvelope(p.label)).map((p) => p.text),
+    );
 
     if (body.trim()) {
       await supabase

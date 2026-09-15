@@ -4,6 +4,7 @@ import {
   parsePhotoToken,
   type InlinePhoto,
 } from "@/lib/inline-photos";
+import { flowingCombinedTranscription } from "@/lib/transcription-format";
 
 
 /** Emailed links always point at the public archive domain, never a preview URL. */
@@ -290,8 +291,9 @@ export async function buildRecords(
         details,
         summary: str(row['summary_short']) ?? str(row['summary_long']),
         transcription: opts.includeTranscription
-          ? (str(row['transcription_verified']) ?? str(row['transcription_raw_ai']))?.slice(0, 8000) ??
-            null
+          ? flowingCombinedTranscription(
+              str(row['transcription_verified']) ?? str(row['transcription_raw_ai']),
+            ).slice(0, 8000) || null
           : null,
         fff: Boolean(row['starred']),
         url: `${PUBLIC_SITE_URL}/s/${t}`,

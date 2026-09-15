@@ -16,6 +16,45 @@ const DATE_LINE =
 const NUMERIC_DATE = /^\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?$/;
 
 /**
+ * A heading inserted by the record roll-up, not text from the document itself.
+ * Keep this deliberately narrow so an author's ordinary mention of a page is
+ * never removed.
+ */
+const COMBINED_PAGE_MARKER =
+  /^[ \t]*(?:—|---)\s*Page\s+\d+(?:\s*\([^\n)]*\))?\s*(?:—|---)[ \t]*$/gim;
+
+/**
+ * Removes legacy system page headings from a combined transcription. A page
+ * boundary becomes a single space so a sentence that crosses scans continues
+ * naturally; paragraph breaks inside each page remain untouched.
+ */
+export function flowingCombinedTranscription(input: string | null | undefined): string {
+  if (!input) return "";
+  return input
+    .replace(/\r\n?/g, "\n")
+    .replace(COMBINED_PAGE_MARKER, "")
+    .replace(/\n{2,}[ \t]*\n*/g, "\n\n")
+    .replace(/(^|\S)[ \t]*\n{2}(?=\S)/g, (_match, before: string) =>
+      before ? `${before}\n\n` : "",
+    )
+    .replace(/(^|\S)[ \t]*\n(?=\S)/g, (_match, before: string) =>
+      before ? `${before} ` : "",
+    )
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+/** Combines page text without introducing an artificial page boundary. */
+export function combineTranscriptionPages(pages: Array<string | null | undefined>): string {
+  return pages
+    .map((page) => flowingCombinedTranscription(page).trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+/**
  * A line that should never be merged with its neighbours.
  *
  * `inHeaderRun` is true while we are still in the opening run of the first
