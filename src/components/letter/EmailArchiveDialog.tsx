@@ -15,10 +15,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
-import { ArchivePhotoPicker, insertAtCursor } from "@/components/media/ArchivePhotoPicker";
+import { ArchivePhotoPicker } from "@/components/media/ArchivePhotoPicker";
+import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTextEditor";
+
 
 import { fetchContacts } from "@/lib/archive-email";
 import { sendArchiveEmail } from "@/lib/archive-email.functions";
@@ -85,7 +86,7 @@ export function EmailArchiveDialog({
   const [message, setMessage] = useState(defaultMessage ?? "");
   const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
-  const messageRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
   const [includeEnvelope, setIncludeEnvelope] = useState(false);
   const hasLetter = recordList.some((r) => r.kind === "letter");
