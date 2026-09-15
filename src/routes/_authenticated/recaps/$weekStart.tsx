@@ -21,7 +21,9 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArchivePhotoPicker, insertAtCursor } from "@/components/media/ArchivePhotoPicker";
+import { ArchivePhotoPicker } from "@/components/media/ArchivePhotoPicker";
+import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTextEditor";
+
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -100,7 +102,7 @@ function RecapPage() {
   const [draft, setDraft] = useState({ title: "", lede: "", body_md: "" });
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const recapEditorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
   const [addOpen, setAddOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
