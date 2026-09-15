@@ -157,6 +157,8 @@ const ArchiveRecordEmail = ({
   senderName,
   thumbnails = false,
   shareLinks = {},
+  inlinePhotos = {},
+
 }: ArchiveRecordEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -176,7 +178,10 @@ const ArchiveRecordEmail = ({
           {headerSubtitle ? <Text style={subtitle}>{headerSubtitle}</Text> : null}
         </Section>
 
-        {message ? <MessageBody message={message} shareLinks={shareLinks} /> : null}
+        {message ? (
+          <MessageBody message={message} shareLinks={shareLinks} inlinePhotos={inlinePhotos} />
+        ) : null}
+
 
         {research?.answer ? (
           <Section style={researchCard}>
