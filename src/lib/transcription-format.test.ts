@@ -32,4 +32,11 @@ describe("flowingCombinedTranscription", () => {
       "First half second half",
     );
   });
+
+  test("preserves formatted pages in a combined transcription", () => {
+    assert.equal(
+      combineTranscriptionPages(["<p>Dear <u>Jaq</u>,</p>", "Second page."]),
+      "<p>Dear <u>Jaq</u>,</p><p>Second page.</p>",
+    );
+  });
 });

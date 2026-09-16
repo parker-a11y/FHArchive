@@ -47,6 +47,17 @@ export function escapeHtml(text: string) {
     .replace(/"/g, "&quot;");
 }
 
+/** Converts legacy plain text to the small HTML subset used by visual editors. */
+export function plainTextToRichHtml(value: string) {
+  const text = String(value ?? "");
+  if (!text.trim()) return "";
+  if (isRichHtml(text)) return sanitizeRichHtml(text);
+  return text
+    .split(/\n{2,}/)
+    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br />")}</p>`)
+    .join("");
+}
+
 /** Keeps only the handful of declarations the toolbar can produce. */
 export function safeStyle(style: string | undefined) {
   if (!style) return "";

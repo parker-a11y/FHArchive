@@ -274,7 +274,11 @@ const ArchiveRecordEmail = ({
             {r.transcription ? (
               <>
                 <Text style={label}>Transcription</Text>
-                <Text style={transcript}>{r.transcription}</Text>
+                {isRichHtml(r.transcription) ? (
+                  <div dangerouslySetInnerHTML={{ __html: richHtmlToEmail(r.transcription) }} />
+                ) : (
+                  <Text style={transcript}>{r.transcription}</Text>
+                )}
               </>
             ) : null}
             {r.url ? (

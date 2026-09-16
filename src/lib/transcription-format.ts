@@ -41,6 +41,22 @@ export function flowingCombinedTranscription(input: string | null | undefined): 
 
 /** Combines page text without introducing an artificial page boundary. */
 export function combineTranscriptionPages(pages: Array<string | null | undefined>): string {
+  const usable = pages.map((page) => flowingCombinedTranscription(page).trim()).filter(Boolean);
+  if (usable.some((page) => /<(p|div|br|strong|em|u|s|span)\b/i.test(page))) {
+    // Loaded lazily through simple local helpers to keep this module usable in
+    // browser and server bundles without losing legacy plain-text pages.
+    return usable
+      .map((page) =>
+        /<[a-z][\s\S]*>/i.test(page)
+          ? page
+          : `<p>${page
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/\n/g, "<br />")}</p>`,
+      )
+      .join("");
+  }
   return pages
     .map((page) => flowingCombinedTranscription(page).trim())
     .filter(Boolean)

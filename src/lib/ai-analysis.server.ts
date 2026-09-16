@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { richTextToPlain } from "@/lib/rich-text";
 
 /**
  * Server-only helpers for AI record analysis. The archive key never leaves the
@@ -72,19 +73,19 @@ export async function buildAnalysisContext(
 
   const pageText = (pages ?? [])
     .map((p, i) => {
-      const text = (p.verified_text ?? p.ai_text ?? "").trim();
+      const text = richTextToPlain(p.verified_text ?? p.ai_text ?? "").trim();
       if (!text) return "";
       return `--- Page ${i + 1}${p.page_label ? ` (${p.page_label})` : ""} ---\n${text}`;
     })
     .filter(Boolean)
     .join("\n\n");
 
-  const transcript = (
+  const transcript = richTextToPlain(
     letter.transcription_verified?.trim() ||
     pageText ||
     letter.transcription_raw_ai?.trim() ||
     letter.ocr_text?.trim() ||
-    ""
+    "",
   ).slice(0, 60000);
 
   const headerLines = [
