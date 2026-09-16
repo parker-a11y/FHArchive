@@ -2026,6 +2026,10 @@ export type Database = {
           salutation_as_written: string | null
           scan_both_sides: boolean
           scan_status: string
+          second_proof_at: string | null
+          second_proof_by: string | null
+          second_proof_notes: string | null
+          second_proof_status: string
           sheets: number | null
           signature_as_written: string | null
           sort_date: string | null
@@ -2113,6 +2117,10 @@ export type Database = {
           salutation_as_written?: string | null
           scan_both_sides?: boolean
           scan_status?: string
+          second_proof_at?: string | null
+          second_proof_by?: string | null
+          second_proof_notes?: string | null
+          second_proof_status?: string
           sheets?: number | null
           signature_as_written?: string | null
           sort_date?: string | null
@@ -2200,6 +2208,10 @@ export type Database = {
           salutation_as_written?: string | null
           scan_both_sides?: boolean
           scan_status?: string
+          second_proof_at?: string | null
+          second_proof_by?: string | null
+          second_proof_notes?: string | null
+          second_proof_status?: string
           sheets?: number | null
           signature_as_written?: string | null
           sort_date?: string | null
