@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { FfnText } from "@/components/ffn/FfnText";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { RichTextView } from "@/components/RichTextView";
-import { Textarea } from "@/components/ui/textarea";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
 import { logEdits, type Letter } from "@/lib/queries";
 import { fetchDigitalFiles } from "@/lib/digital-files";
