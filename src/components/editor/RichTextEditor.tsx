@@ -112,7 +112,7 @@ function Toolbar({
         <Strikethrough className="size-4" />
       </ToolButton>
 
-      {mode === "full" ? <span className="mx-1 h-5 w-px bg-border" /> : null}
+      <span className="mx-1 h-5 w-px bg-border" />
 
       {mode === "full" ? <ToolButton
         label="Subheading"
@@ -152,13 +152,13 @@ function Toolbar({
 
       <span className="mx-1 h-5 w-px bg-border" />
 
-      {mode === "full" ? <ToolButton
+      <ToolButton
         label="Align left"
         active={editor.isActive({ textAlign: "left" })}
         onClick={() => editor.chain().focus().setTextAlign("left").run()}
       >
         <AlignLeft className="size-4" />
-      </ToolButton> : null}
+      </ToolButton>
       <ToolButton
         label="Align centre"
         active={editor.isActive({ textAlign: "center" })}
@@ -181,9 +181,9 @@ function Toolbar({
         <AlignJustify className="size-4" />
       </ToolButton>
 
-      <span className="mx-1 h-5 w-px bg-border" />
+      {mode === "full" ? <span className="mx-1 h-5 w-px bg-border" /> : null}
 
-      <ToolButton
+      {mode === "full" ? <ToolButton
         label="Link"
         active={editor.isActive("link")}
         onClick={() => {
@@ -197,7 +197,7 @@ function Toolbar({
         }}
       >
         <Link2 className="size-4" />
-      </ToolButton>
+      </ToolButton> : null}
 
       {mode === "full" ? <Select
         value={font}

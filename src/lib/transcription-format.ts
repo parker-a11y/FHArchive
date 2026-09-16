@@ -7,6 +7,8 @@
  * Pure text transform — no AI, no network, no mutation of stored text.
  */
 
+import { isRichHtml, plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
+
 const SALUTATION = /^(my\s+)?(dear|darling|dearest|hi|hello|beloved)\b/i;
 const CLOSING =
   /^(love|all my love|lots of love|yours|yours truly|sincerely|affectionately|fondly|as ever|ever yours|so long|goodnight|good night|bye|xoxo)\b[^.]{0,40}[,-]?\s*$/i;
@@ -42,19 +44,9 @@ export function flowingCombinedTranscription(input: string | null | undefined): 
 /** Combines page text without introducing an artificial page boundary. */
 export function combineTranscriptionPages(pages: Array<string | null | undefined>): string {
   const usable = pages.map((page) => flowingCombinedTranscription(page).trim()).filter(Boolean);
-  if (usable.some((page) => /<(p|div|br|strong|em|u|s|span)\b/i.test(page))) {
-    // Loaded lazily through simple local helpers to keep this module usable in
-    // browser and server bundles without losing legacy plain-text pages.
+  if (usable.some((page) => isRichHtml(page))) {
     return usable
-      .map((page) =>
-        /<[a-z][\s\S]*>/i.test(page)
-          ? page
-          : `<p>${page
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/\n/g, "<br />")}</p>`,
-      )
+      .map((page) => (isRichHtml(page) ? sanitizeRichHtml(page) : plainTextToRichHtml(page)))
       .join("");
   }
   return pages

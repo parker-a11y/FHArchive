@@ -6,6 +6,7 @@
  * never rewritten, so the source text stays historically faithful.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { richTextToPlain } from "@/lib/rich-text";
 import { searchLetters } from "@/lib/queries";
 
 export type FfnStatus = "draft" | "published";
@@ -310,8 +311,9 @@ export async function findArchiveMatches(terms: string[]): Promise<ArchiveMatch[
     const { rows } = await searchLetters({ q: term, limit: 200 });
     for (const l of rows) {
       if (out.has(l.id)) continue;
-      const text =
-        l.transcription_verified || l.transcription_raw_ai || l.summary_short || l.notes || "";
+      const text = richTextToPlain(
+        l.transcription_verified || l.transcription_raw_ai || l.summary_short || l.notes || "",
+      );
       out.set(l.id, {
         letter_id: l.id,
         archive_id: l.archive_id,

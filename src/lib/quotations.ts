@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { richTextToPlain } from "@/lib/rich-text";
 
 /**
  * Important quotations are derived from the AI analysis suggestions stored in
@@ -121,7 +122,7 @@ export async function findQuoteSource(
     .order("page_index");
 
   for (const p of pages ?? []) {
-    const text = (p.verified_text ?? p.ai_text ?? "").trim();
+    const text = richTextToPlain(p.verified_text ?? p.ai_text ?? "").trim();
     if (!text) continue;
     if (normalize(text).includes(needle)) {
       return {
@@ -138,11 +139,11 @@ export async function findQuoteSource(
     .select("transcription_verified, transcription_raw_ai, ocr_text")
     .eq("id", letterId)
     .maybeSingle();
-  const text = (
+  const text = richTextToPlain(
     letter?.transcription_verified ||
     letter?.transcription_raw_ai ||
     letter?.ocr_text ||
-    ""
+    "",
   ).trim();
   if (!text) return null;
   return { fileId: null, pageLabel: null, pageIndex: null, text };
