@@ -601,10 +601,14 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
               {letter.transcription_raw_ai ? (
-                <FfnText
-                  text={flowingCombinedTranscription(letter.transcription_raw_ai)}
-                  searchTerm={highlight}
-                />
+                isRichHtml(flowingCombinedTranscription(letter.transcription_raw_ai)) ? (
+                  <RichTextView html={flowingCombinedTranscription(letter.transcription_raw_ai)} />
+                ) : (
+                  <FfnText
+                    text={flowingCombinedTranscription(letter.transcription_raw_ai)}
+                    searchTerm={highlight}
+                  />
+                )
               ) : (
                 <span className="text-muted-foreground">
                   None yet. “Transcribe Entire Record” assembles the letter pages here in scan
@@ -625,7 +629,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                   {countMatches(verified, highlight) === 1 ? "" : "es"}
                 </summary>
                 <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
-                  <HighlightedText text={verified} term={highlight} />
+                  <HighlightedText text={richTextToPlain(verified)} term={highlight} />
                 </div>
               </details>
             )}
