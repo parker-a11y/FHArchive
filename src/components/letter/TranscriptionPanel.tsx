@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { FfnText } from "@/components/ffn/FfnText";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { RichTextView } from "@/components/RichTextView";
+import { SecondProofPanel } from "@/components/letter/SecondProofPanel";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
 import { logEdits, type Letter } from "@/lib/queries";
 import { fetchDigitalFiles } from "@/lib/digital-files";
@@ -563,6 +564,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
           />
         ))}
       </div>
+
+      <SecondProofPanel letter={letter} />
 
       {/* Combined record-level transcription */}
       <div className="rounded border border-border bg-card p-4">
