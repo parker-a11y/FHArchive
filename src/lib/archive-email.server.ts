@@ -279,7 +279,7 @@ export async function buildRecords(
   opts: { includeTranscription: boolean; includeImages: boolean; includeEnvelope?: boolean },
 ): Promise<BuiltRecord[]> {
   const out: BuiltRecord[] = [];
-  const imageLimit = opts.includeImages ? (opts.includeEnvelope ? 6 : 4) : 0;
+  const imageLimit = opts.includeImages ? PAGE_IMAGE_CAP : 0;
 
   for (const ref of refs) {
     if (ref.kind === "letter") {
