@@ -1100,12 +1100,27 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                             </button>
                           );
                         })}
-                        <button
-                          onClick={() => identifyCustom(f)}
-                          className="rounded border border-dashed border-border px-1.5 py-0.5 text-[10px] hover:bg-secondary"
-                        >
-                          + Custom
-                        </button>
+                        {(() => {
+                          const customCurrent =
+                            !!f.label && !quickChoices.includes(f.label);
+                          return (
+                            <button
+                              onClick={() => identifyCustom(f)}
+                              className={`rounded px-1.5 py-0.5 text-[10px] transition ${
+                                customCurrent
+                                  ? "border border-primary bg-primary font-medium text-primary-foreground"
+                                  : "border border-dashed border-border hover:bg-secondary"
+                              }`}
+                              title={
+                                customCurrent
+                                  ? `Current custom label: ${f.label} — click to change`
+                                  : "Add a custom label"
+                              }
+                            >
+                              {customCurrent ? f.label : "+ Custom"}
+                            </button>
+                          );
+                        })()}
                        </>
                      )}
                    </div>
