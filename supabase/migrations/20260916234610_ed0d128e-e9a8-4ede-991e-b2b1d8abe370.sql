@@ -1,0 +1,1 @@
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS second_reviewed boolean NOT NULL DEFAULT false; UPDATE public.letters SET second_reviewed = true WHERE second_proof_status = 'done'; ALTER TABLE public.letters DROP COLUMN IF EXISTS second_proof_status, DROP COLUMN IF EXISTS second_proof_notes, DROP COLUMN IF EXISTS second_proof_at, DROP COLUMN IF EXISTS second_proof_by;
