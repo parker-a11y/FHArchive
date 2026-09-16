@@ -978,6 +978,15 @@ function QuickEntry() {
                     >
                       Worcester
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
+                      onClick={() => set("destination", "Miami, Florida")}
+                    >
+                      Miami
+                    </Button>
                   </div>
                 </div>
               </>
