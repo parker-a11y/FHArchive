@@ -308,7 +308,12 @@ export async function buildRecords(
           : null,
         fff: Boolean(row['starred']),
         url: `${PUBLIC_SITE_URL}/s/${t}`,
-        images: await letterImages(db, ref.id, imageLimit, Boolean(opts.includeEnvelope)),
+        images: await letterImages(
+          db,
+          ref.id,
+          Boolean(opts.includeImages),
+          Boolean(opts.includeEnvelope),
+        ),
       });
     } else {
       const { data: s } = await db.from("digital_sources").select("*").eq("id", ref.id).maybeSingle();
