@@ -254,7 +254,7 @@ const ArchiveRecordEmail = ({
               <Text style={meta}>{(r.details ?? []).join(' · ')}</Text>
             ) : null}
             {r.summary ? <Text style={body}>{r.summary}</Text> : null}
-            {(r.images ?? []).slice(0, thumbnails ? 1 : 4).map((src, j) => {
+            {(thumbnails ? (r.images ?? []).slice(0, 1) : (r.images ?? [])).map((src, j) => {
               const img = (
                 <Img
                   key={j}
