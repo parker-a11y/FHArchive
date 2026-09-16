@@ -4,6 +4,7 @@ import {
   combineTranscriptionPages,
   flowingCombinedTranscription,
 } from "./transcription-format";
+import { richTextToPlain } from "./rich-text";
 
 describe("flowingCombinedTranscription", () => {
   test("removes labeled and unlabeled system page headings", () => {
@@ -30,6 +31,20 @@ describe("flowingCombinedTranscription", () => {
     assert.equal(
       flowingCombinedTranscription("First half\n\n--- Page 2 (Reverse) ---\n\nsecond half"),
       "First half second half",
+    );
+  });
+
+  test("preserves formatted pages in a combined transcription", () => {
+    assert.equal(
+      combineTranscriptionPages(["<p>Dear <u>Jaq</u>,</p>", "Second page."]),
+      "<p>Dear <u>Jaq</u>,</p><p>Second page.</p>",
+    );
+  });
+
+  test("keeps formatting out of text-only consumers", () => {
+    assert.equal(
+      richTextToPlain('<p style="text-align:center">Dear <u>Jaq</u>,</p><p><s>Cary</s> Gary</p>'),
+      "Dear Jaq,\n\nCary Gary",
     );
   });
 });

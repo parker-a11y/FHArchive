@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { escapeHtml, isRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
+import { plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
 
 const FONTS: { label: string; value: string }[] = [
   { label: "Default", value: "" },
@@ -40,13 +40,7 @@ const FONTS: { label: string; value: string }[] = [
 
 /** Plain notes written before the editor existed still open cleanly. */
 export function toEditorHtml(value: string) {
-  const text = String(value ?? "");
-  if (!text.trim()) return "";
-  if (isRichHtml(text)) return sanitizeRichHtml(text);
-  return text
-    .split(/\n{2,}/)
-    .map((block) => `<p>${escapeHtml(block).replace(/\n/g, "<br />")}</p>`)
-    .join("");
+  return plainTextToRichHtml(value);
 }
 
 function ToolButton({
@@ -76,7 +70,16 @@ function ToolButton({
   );
 }
 
-function Toolbar({ editor, extras }: { editor: Editor; extras?: React.ReactNode }) {
+function Toolbar({
+  editor,
+  extras,
+  mode = "full",
+}: {
+  editor: Editor;
+  extras?: React.ReactNode;
+  mode?: "full" | "transcription" | "none";
+}) {
+  if (mode === "none") return null;
   const font = (editor.getAttributes("textStyle")["fontFamily"] as string) ?? "";
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 px-1 py-1">
@@ -111,41 +114,41 @@ function Toolbar({ editor, extras }: { editor: Editor; extras?: React.ReactNode 
 
       <span className="mx-1 h-5 w-px bg-border" />
 
-      <ToolButton
+      {mode === "full" ? <ToolButton
         label="Subheading"
         active={editor.isActive("heading", { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
       >
         <Heading2 className="size-4" />
-      </ToolButton>
-      <ToolButton
+      </ToolButton> : null}
+      {mode === "full" ? <ToolButton
         label="Small heading"
         active={editor.isActive("heading", { level: 3 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
       >
         <Heading3 className="size-4" />
-      </ToolButton>
-      <ToolButton
+      </ToolButton> : null}
+      {mode === "full" ? <ToolButton
         label="Bulleted list"
         active={editor.isActive("bulletList")}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         <List className="size-4" />
-      </ToolButton>
-      <ToolButton
+      </ToolButton> : null}
+      {mode === "full" ? <ToolButton
         label="Numbered list"
         active={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <ListOrdered className="size-4" />
-      </ToolButton>
-      <ToolButton
+      </ToolButton> : null}
+      {mode === "full" ? <ToolButton
         label="Quotation"
         active={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
         <Quote className="size-4" />
-      </ToolButton>
+      </ToolButton> : null}
 
       <span className="mx-1 h-5 w-px bg-border" />
 
@@ -178,9 +181,9 @@ function Toolbar({ editor, extras }: { editor: Editor; extras?: React.ReactNode 
         <AlignJustify className="size-4" />
       </ToolButton>
 
-      <span className="mx-1 h-5 w-px bg-border" />
+      {mode === "full" ? <span className="mx-1 h-5 w-px bg-border" /> : null}
 
-      <ToolButton
+      {mode === "full" ? <ToolButton
         label="Link"
         active={editor.isActive("link")}
         onClick={() => {
@@ -194,9 +197,9 @@ function Toolbar({ editor, extras }: { editor: Editor; extras?: React.ReactNode 
         }}
       >
         <Link2 className="size-4" />
-      </ToolButton>
+      </ToolButton> : null}
 
-      <Select
+      {mode === "full" ? <Select
         value={font}
         onValueChange={(v) =>
           v
@@ -214,7 +217,7 @@ function Toolbar({ editor, extras }: { editor: Editor; extras?: React.ReactNode 
             </SelectItem>
           ))}
         </SelectContent>
-      </Select>
+      </Select> : null}
 
       {extras ? <div className="ml-auto flex items-center gap-1">{extras}</div> : null}
     </div>
@@ -233,6 +236,7 @@ export function RichTextEditor({
   minHeight = "10rem",
   toolbarExtras,
   onEditorReady,
+  toolbarMode = "full",
 }: {
   value: string;
   onChange: (html: string) => void;
@@ -241,6 +245,7 @@ export function RichTextEditor({
   minHeight?: string;
   toolbarExtras?: React.ReactNode;
   onEditorReady?: (editor: Editor | null) => void;
+  toolbarMode?: "full" | "transcription" | "none";
 }) {
   const editor = useEditor({
     immediatelyRender: false,
@@ -290,7 +295,7 @@ export function RichTextEditor({
 
   return (
     <div className={cn("overflow-hidden rounded-md border border-input bg-background", className)}>
-      <Toolbar editor={editor} extras={toolbarExtras} />
+      <Toolbar editor={editor} extras={toolbarExtras} mode={toolbarMode} />
       <EditorContent editor={editor} className="px-3 py-2 text-sm" />
     </div>
   );

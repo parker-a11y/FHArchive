@@ -11,6 +11,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { richTextToPlain } from "@/lib/rich-text";
 
 const BUCKET = "research-snapshots";
 
@@ -380,7 +381,7 @@ function recordMarkdown(r: ComposedRecord): string {
 
   const block = (title: string, text?: string | null) => {
     if (!text || !String(text).trim()) return;
-    lines.push("", `## ${title}`, "", String(text).trim());
+    lines.push("", `## ${title}`, "", richTextToPlain(String(text)).trim());
   };
   block("Summary", r["summary_short"]);
   block("Extended summary", r["summary_long"]);
@@ -403,7 +404,7 @@ function recordMarkdown(r: ComposedRecord): string {
     lines.push("", "## Page transcriptions", "");
     for (const p of r["pages"]) {
       lines.push(`### ${p.page_label ?? `Page ${(p.page_index ?? 0) + 1}`} (${p.status})`, "");
-      lines.push((p.verified_text || p.ai_text || "").trim(), "");
+      lines.push(richTextToPlain(p.verified_text || p.ai_text || "").trim(), "");
     }
   }
   if ((r["files"] ?? []).length) {
@@ -835,7 +836,7 @@ async function rebuildResearchIndex(
       // to the meaning index without changing what the text says.
       const pageText = ((r["pages"] ?? []) as any[])
         .map((p: any, i: number) => {
-          const text = (p.verified_text || p.ai_text || "").trim();
+          const text = richTextToPlain(p.verified_text || p.ai_text || "").trim();
           if (!text) return "";
           const label = String(p.page_label ?? "").trim() || `Page ${(p.page_index ?? i) + 1}`;
           return `[${label}]\n${text}`;
@@ -864,6 +865,7 @@ async function rebuildResearchIndex(
         (r["tones"] ?? []).join(", "),
       ]
         .filter((x) => x && String(x).trim())
+        .map((x) => richTextToPlain(String(x)))
         .join("\n\n")
         .slice(0, 200000);
       return {

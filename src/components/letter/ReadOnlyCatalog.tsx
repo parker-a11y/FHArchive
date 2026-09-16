@@ -13,6 +13,8 @@ import {
 } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
 import { flowingCombinedTranscription } from "@/lib/transcription-format";
+import { isRichHtml } from "@/lib/rich-text";
+import { RichTextView } from "@/components/RichTextView";
 
 /**
  * Read-only catalog for view-only accounts. Guests never see form controls,
@@ -190,7 +192,7 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
       {transcription && (
         <Section title="Transcription" columns={false}>
           <article className="max-w-3xl font-display text-lg leading-8 whitespace-pre-wrap sm:text-xl sm:leading-9">
-            <FfnText text={transcription} />
+            {isRichHtml(transcription) ? <RichTextView html={transcription} /> : <FfnText text={transcription} />}
           </article>
         </Section>
       )}

@@ -20,6 +20,7 @@ import {
 import { useRecordTypeOptions } from "@/lib/categories";
 import { HighlightedText, buildSnippets, countMatches, type Snippet } from "@/lib/highlight";
 import { FfnText } from "@/components/ffn/FfnText";
+import { richTextToPlain } from "@/lib/rich-text";
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
@@ -311,7 +312,7 @@ function SearchPage() {
 
   function matchesFor(l: Letter): { snippets: Snippet[]; tags: string[] } {
     if (!debouncedQ) {
-      const text = (l.transcription_verified ?? l.summary_short ?? "").replace(/\s+/g, " ");
+      const text = richTextToPlain(l.transcription_verified ?? l.summary_short ?? "").replace(/\s+/g, " ");
       return text
         ? { snippets: [{ label: "Summary", text: text.slice(0, 160), full: text.slice(0, 900) }], tags: [] }
         : { snippets: [], tags: [] };

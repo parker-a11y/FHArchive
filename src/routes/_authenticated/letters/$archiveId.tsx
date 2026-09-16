@@ -91,6 +91,7 @@ import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { flowingCombinedTranscription } from "@/lib/transcription-format";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
 import { FfnText } from "@/components/ffn/FfnText";
+import { RichTextView } from "@/components/RichTextView";
 import { fetchRetirement } from "@/lib/numbering";
 
 import {
@@ -569,8 +570,8 @@ function LetterPage() {
           </div>
           <div className="max-h-96 overflow-auto whitespace-pre-wrap text-sm leading-relaxed">
             {letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim() ? (
-              <FfnText
-                text={flowingCombinedTranscription(
+              <RichTextView
+                html={flowingCombinedTranscription(
                   letter.transcription_verified?.trim() || letter.transcription_raw_ai,
                 )}
               />

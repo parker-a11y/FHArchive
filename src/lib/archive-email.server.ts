@@ -293,7 +293,7 @@ export async function buildRecords(
         transcription: opts.includeTranscription
           ? flowingCombinedTranscription(
               str(row['transcription_verified']) ?? str(row['transcription_raw_ai']),
-            ).slice(0, 8000) || null
+            ) || null
           : null,
         fff: Boolean(row['starred']),
         url: `${PUBLIC_SITE_URL}/s/${t}`,

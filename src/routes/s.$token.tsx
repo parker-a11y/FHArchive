@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { getSharedRecord } from "@/lib/shares.functions";
 import { RECORD_TYPES, labelOf } from "@/lib/archive";
 import { FfnText } from "@/components/ffn/FfnText";
+import { RichTextView } from "@/components/RichTextView";
+import { isRichHtml } from "@/lib/rich-text";
 
 export const Route = createFileRoute("/s/$token")({
   loader: ({ params }) => getSharedRecord({ data: { token: params.token } }),
@@ -136,7 +138,11 @@ function SharedRecordPage() {
     >
       <h2 className="font-display text-lg">Transcription</h2>
       <div className="mt-2 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded border border-border bg-card p-4 text-sm leading-relaxed lg:max-h-[80vh]">
-        <FfnText text={record.transcription} />
+        {isRichHtml(record.transcription) ? (
+          <RichTextView html={record.transcription} />
+        ) : (
+          <FfnText text={record.transcription} />
+        )}
       </div>
     </section>
   ) : null;

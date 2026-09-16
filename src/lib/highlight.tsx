@@ -1,4 +1,5 @@
 /** Shared text-match helpers used by search results and transcription panels. */
+import { richTextToPlain } from "@/lib/rich-text";
 
 export function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -6,7 +7,7 @@ export function escapeRegExp(s: string) {
 
 export function countMatches(text: string | null | undefined, term: string | undefined): number {
   if (!text || !term) return 0;
-  const m = text.match(new RegExp(escapeRegExp(term), "gi"));
+  const m = richTextToPlain(text).match(new RegExp(escapeRegExp(term), "gi"));
   return m?.length ?? 0;
 }
 
@@ -53,7 +54,7 @@ export function buildSnippets(
   max = 3,
 ): Snippet[] {
   if (!raw || !term) return [];
-  const text = raw.replace(/\s+/g, " ").trim();
+  const text = richTextToPlain(raw).replace(/\s+/g, " ").trim();
   const hay = text.toLowerCase();
   const needle = term.toLowerCase();
   const out: Snippet[] = [];

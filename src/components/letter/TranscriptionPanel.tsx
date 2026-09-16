@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { FfnText } from "@/components/ffn/FfnText";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { RichTextView } from "@/components/RichTextView";
 import { TRANSCRIPTION_STATUS } from "@/lib/archive";
 import { logEdits, type Letter } from "@/lib/queries";
 import { fetchDigitalFiles } from "@/lib/digital-files";
@@ -32,6 +33,7 @@ import {
 } from "@/lib/transcription-format";
 
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
+import { isRichHtml, richTextToPlain } from "@/lib/rich-text";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
   return (
@@ -95,6 +97,7 @@ function PageEditor({
   }, [text, dirty]);
 
   function doReflow() {
+    if (isRichHtml(text)) return;
     setText((cur) => {
       const next = reflowTranscription(cur);
       if (next !== cur) {
@@ -139,7 +142,7 @@ function PageEditor({
               size="sm"
               variant="outline"
               onClick={doReflow}
-              disabled={!needsReflow(text)}
+              disabled={isRichHtml(text) || !needsReflow(text)}
               title="Join wrapped handwriting lines into flowing paragraphs (nothing is saved until you save)"
             >
               <WrapText className="mr-1 size-3.5" /> Remove line breaks
@@ -184,27 +187,28 @@ function PageEditor({
                 {countMatches(text, highlight) === 1 ? "" : "es"} in this page
               </summary>
               <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
-                <HighlightedText text={text} term={highlight} />
+                <HighlightedText text={richTextToPlain(text)} term={highlight} />
               </div>
             </details>
           )}
           {readOnly ? (
             <div className="max-h-[28rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
               {text ? (
-                <FfnText text={text} />
+                isRichHtml(text) ? <RichTextView html={text} /> : <FfnText text={text} />
               ) : (
                 <span className="text-muted-foreground">No transcription yet.</span>
               )}
             </div>
           ) : (
             <>
-              <Textarea
-                rows={16}
+              <RichTextEditor
                 className="font-mono text-sm"
+                minHeight="24rem"
+                toolbarMode="transcription"
                 placeholder="Transcription — AI output appears here and can be corrected."
                 value={text}
-                onChange={(e) => {
-                  setText(e.target.value);
+                onChange={(value) => {
+                  setText(value);
                   setDirty(true);
                   setSavedVerified(false);
                 }}
@@ -596,10 +600,14 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
               {letter.transcription_raw_ai ? (
-                <FfnText
-                  text={flowingCombinedTranscription(letter.transcription_raw_ai)}
-                  searchTerm={highlight}
-                />
+                isRichHtml(flowingCombinedTranscription(letter.transcription_raw_ai)) ? (
+                  <RichTextView html={flowingCombinedTranscription(letter.transcription_raw_ai)} />
+                ) : (
+                  <FfnText
+                    text={flowingCombinedTranscription(letter.transcription_raw_ai)}
+                    searchTerm={highlight}
+                  />
+                )
               ) : (
                 <span className="text-muted-foreground">
                   None yet. “Transcribe Entire Record” assembles the letter pages here in scan
@@ -620,25 +628,26 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                   {countMatches(verified, highlight) === 1 ? "" : "es"}
                 </summary>
                 <div className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap font-mono">
-                  <HighlightedText text={verified} term={highlight} />
+                  <HighlightedText text={richTextToPlain(verified)} term={highlight} />
                 </div>
               </details>
             )}
             {isGuestViewer ? (
               <div className="mt-1.5 max-h-[26rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
                 {verified ? (
-                  <FfnText text={verified} />
+                  isRichHtml(verified) ? <RichTextView html={verified} /> : <FfnText text={verified} />
                 ) : (
                   <span className="text-muted-foreground">No verified transcription yet.</span>
                 )}
               </div>
             ) : (
               <>
-                <Textarea
-                  rows={14}
+                <RichTextEditor
                   className="mt-1.5 font-mono text-sm"
+                  minHeight="21rem"
+                  toolbarMode="none"
                   value={verified}
-                  onChange={(e) => setVerified(e.target.value)}
+                  onChange={setVerified}
                 />
               </>
             )}

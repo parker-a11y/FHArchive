@@ -3,6 +3,7 @@ import {
   combineTranscriptionPages,
   flowingCombinedTranscription,
 } from "@/lib/transcription-format";
+import { richTextToPlain } from "@/lib/rich-text";
 
 /**
  * Server-only helpers for AI transcription. The API key never leaves the
@@ -195,7 +196,7 @@ export function isEnvelope(label: string | null) {
 }
 
 const norm = (s: string | null | undefined) =>
-  flowingCombinedTranscription(s).replace(/\s+/g, " ").trim();
+  richTextToPlain(flowingCombinedTranscription(s)).replace(/\s+/g, " ").trim();
 
 export type RollupResult = {
   updated: boolean;
