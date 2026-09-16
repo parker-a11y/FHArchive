@@ -195,7 +195,7 @@ function PageEditor({
           {readOnly ? (
             <div className="max-h-[28rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
               {text ? (
-                {isRichHtml(text) ? <RichTextView html={text} /> : <FfnText text={text} />}
+                isRichHtml(text) ? <RichTextView html={text} /> : <FfnText text={text} />
               ) : (
                 <span className="text-muted-foreground">No transcription yet.</span>
               )}
@@ -632,7 +632,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             {isGuestViewer ? (
               <div className="mt-1.5 max-h-[26rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
                 {verified ? (
-                  {isRichHtml(verified) ? <RichTextView html={verified} /> : <FfnText text={verified} />}
+                  isRichHtml(verified) ? <RichTextView html={verified} /> : <FfnText text={verified} />
                 ) : (
                   <span className="text-muted-foreground">No verified transcription yet.</span>
                 )}
