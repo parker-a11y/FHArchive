@@ -1128,11 +1128,11 @@ function LettersTable() {
           variant="outline"
           size="sm"
           className="gap-2"
-          onClick={resetFilters}
-          disabled={activeFilterCount === 0}
+          onClick={resetAll}
+          disabled={!canReset}
         >
           <RotateCcw className="size-4" />
-          Reset filters
+          Reset all
           {activeFilterCount > 0 && (
             <span className="ml-1 rounded-full bg-primary px-1.5 py-0 text-[10px] text-primary-foreground">
               {activeFilterCount}
