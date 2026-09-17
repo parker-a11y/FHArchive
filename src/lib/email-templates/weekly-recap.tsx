@@ -77,6 +77,7 @@ function linkify(text: string, shareLinks: Record<string, string>) {
 
 export const WeeklyRecapEmail = ({
   weekRange = '',
+  kind = 'weekly',
   title = 'Weekly Recap',
   lede = null,
   body = '',
@@ -92,16 +93,18 @@ export const WeeklyRecapEmail = ({
 }: WeeklyRecapEmailProps) => (
   <Html>
     <Head />
-    <Preview>{`${title}${weekRange ? ` — week of ${weekRange}` : ''}`}</Preview>
+    <Preview>{`${title}${kind === 'weekly' && weekRange ? ` — week of ${weekRange}` : ''}`}</Preview>
     <Body style={main}>
       <Container style={container}>
         {/* ---- Masthead ---- */}
         <Section style={masthead}>
           <Img src={LOGO} width="56" height="56" alt="The Francis Files" style={logoImg} />
           <Text style={eyebrow}>The Francis Files</Text>
-          <Text style={mastheadTitle}>WEEKLY RECAP</Text>
+          <Text style={mastheadTitle}>
+            {kind === 'blog' ? "FROM THE ARCHIVIST'S DESK" : 'WEEKLY RECAP'}
+          </Text>
           <Text style={rule}>&nbsp;</Text>
-          {weekRange ? <Text style={weekLine}>{weekRange}</Text> : null}
+          {weekRange && kind !== 'blog' ? <Text style={weekLine}>{weekRange}</Text> : null}
         </Section>
 
         {message ? <Text style={note}>{message}</Text> : null}
