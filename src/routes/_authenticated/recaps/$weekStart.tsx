@@ -5,8 +5,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  Check,
   Eye,
   EyeOff,
+  Link2,
   Loader2,
   Mail,
   PenLine,
@@ -62,6 +64,7 @@ import {
   generateWeeklyRecap,
   refineWeeklyRecapFn,
 } from "@/lib/recaps.functions";
+import { ensureRecapShareLink } from "@/lib/recap-share.functions";
 
 export const Route = createFileRoute("/_authenticated/recaps/$weekStart")({
   head: ({ params }) => ({
