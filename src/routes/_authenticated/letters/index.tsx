@@ -773,7 +773,7 @@ function LettersTable() {
     qc.invalidateQueries({ queryKey: ["letters-page"] });
   }
 
-  function resetFilters() {
+  function resetAll() {
     setQ("");
     setPeriod("");
     setTStatus("");
@@ -796,6 +796,18 @@ function LettersTable() {
     setSort({ key: "archive_id", dir: 1 });
     setStarredOnly(false);
     setPage(0);
+    setSelected(new Map());
+    setCompact(false);
+    setShowCorrespondence(false);
+    setHidden([]);
+    setWidths({});
+    pendingPage.current = null;
+    try {
+      localStorage.removeItem("letters_col_widths");
+      localStorage.removeItem(VIEW_STATE_KEY);
+    } catch {
+      /* ignore storage errors */
+    }
     navigate({ to: "/letters", search: () => ({}) });
   }
 
@@ -821,6 +833,15 @@ function LettersTable() {
     starredOnly ? "starred" : "",
     ...tones,
   ].filter(Boolean).length;
+
+  const canReset =
+    activeFilterCount > 0 ||
+    selected.size > 0 ||
+    compact ||
+    hidden.length > 0 ||
+    Object.keys(widths).length > 0 ||
+    sort.key !== "archive_id" ||
+    sort.dir !== 1;
 
   function cellValue(l: Letter, key: string) {
     switch (key) {
