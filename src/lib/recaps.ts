@@ -26,7 +26,7 @@ export type WeeklyRecap = {
 };
 
 const COLUMNS =
-  "id, kind, slug, range_label, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_archive_id, image_caption, stats, model, status, public_visible, manually_edited, generated_at, updated_at";
+  "id, kind, slug, range_label, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_archive_id, image_caption, stats, model, status, public_visible, share_token, manually_edited, generated_at, updated_at";
 
 /** The address a recap lives at: its week for weekly recaps, its slug for custom ones. */
 export function recapKey(r: WeeklyRecap): string {
