@@ -277,15 +277,17 @@ function RecapPage() {
       <PageHeader
         title={
           recap.kind === "blog"
-            ? "Francis Files — Blog Post"
+            ? "From the Archivist's Desk"
             : recap.kind === "custom"
               ? "Francis Files — Custom Recap"
               : "Francis Files — Weekly Recap"
         }
         description={
-          recap.kind === "custom"
-            ? recapRangeLabel(recap)
-            : `Week of ${formatWeekRange(recap.week_start, recap.week_end)}`
+          recap.kind === "blog"
+            ? "From the Archivist's Desk"
+            : recap.kind === "custom"
+              ? recapRangeLabel(recap)
+              : `Week of ${formatWeekRange(recap.week_start, recap.week_end)}`
         }
 
         actions={

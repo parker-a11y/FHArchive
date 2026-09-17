@@ -23,6 +23,8 @@ const LOGO =
 
 export interface WeeklyRecapEmailProps {
   weekRange?: string
+  /** 'weekly' | 'custom' | 'blog' — drives the masthead wording. */
+  kind?: string
   title?: string
   lede?: string | null
   /** Recap body as markdown-ish text — headings, bullets and paragraphs. */
@@ -77,6 +79,7 @@ function linkify(text: string, shareLinks: Record<string, string>) {
 
 export const WeeklyRecapEmail = ({
   weekRange = '',
+  kind = 'weekly',
   title = 'Weekly Recap',
   lede = null,
   body = '',
@@ -92,16 +95,18 @@ export const WeeklyRecapEmail = ({
 }: WeeklyRecapEmailProps) => (
   <Html>
     <Head />
-    <Preview>{`${title}${weekRange ? ` — week of ${weekRange}` : ''}`}</Preview>
+    <Preview>{`${title}${kind === 'weekly' && weekRange ? ` — week of ${weekRange}` : ''}`}</Preview>
     <Body style={main}>
       <Container style={container}>
         {/* ---- Masthead ---- */}
         <Section style={masthead}>
           <Img src={LOGO} width="56" height="56" alt="The Francis Files" style={logoImg} />
           <Text style={eyebrow}>The Francis Files</Text>
-          <Text style={mastheadTitle}>WEEKLY RECAP</Text>
+          <Text style={mastheadTitle}>
+            {kind === 'blog' ? "FROM THE ARCHIVIST'S DESK" : 'WEEKLY RECAP'}
+          </Text>
           <Text style={rule}>&nbsp;</Text>
-          {weekRange ? <Text style={weekLine}>{weekRange}</Text> : null}
+          {weekRange && kind !== 'blog' ? <Text style={weekLine}>{weekRange}</Text> : null}
         </Section>
 
         {message ? <Text style={note}>{message}</Text> : null}
@@ -226,8 +231,9 @@ export const WeeklyRecapEmail = ({
         ) : null}
 
         <Text style={footer}>
-          The Francis Files — a private family archive. Weekly recaps are written from the week&rsquo;s
-          catalog work.
+          {kind === 'blog'
+            ? 'The Francis Files — a private family archive. Written from the archivist\u2019s desk, drawing on the catalogued letters.'
+            : 'The Francis Files — a private family archive. Weekly recaps are written from the week\u2019s catalog work.'}
         </Text>
       </Container>
     </Body>

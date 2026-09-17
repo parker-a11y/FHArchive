@@ -45,7 +45,18 @@ export async function buildRecapTemplateData(
   recap: any,
   options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
 ) {
-  const ownerId = recap.owner_id as string | null;
+  // Older recaps were stored without an owner; fall back to the archive owner so
+  // record links can still be minted.
+  let ownerId = (recap.owner_id as string | null) ?? null;
+  if (!ownerId) {
+    const { data: anyLetter } = await db
+      .from("letters")
+      .select("owner_id")
+      .not("owner_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    ownerId = (anyLetter as { owner_id?: string } | null)?.owner_id ?? null;
+  }
   const weekRange = recap.range_label || formatWeekRange(recap.week_start, recap.week_end);
 
   let imageUrl: string | null = null;
@@ -89,7 +100,10 @@ export async function buildRecapTemplateData(
     subject:
       recap.kind === "weekly"
         ? `Francis Files Weekly Recap — ${weekRange}`
-        : `The Francis Files — ${recap.title}`,
+        : recap.kind === "blog"
+          ? `From the Archivist's Desk — ${recap.title}`
+          : `The Francis Files — ${recap.title}`,
+    kind: String(recap.kind ?? "weekly"),
     weekRange,
     title: recap.title,
     lede: recap.lede,
@@ -173,7 +187,8 @@ export async function sendRecapEmail(
       subject: templateData.subject,
       message_body: message || null,
       header_title: recap.title,
-      header_subtitle: `Weekly Recap — ${weekRange}`,
+      header_subtitle:
+        recap.kind === "blog" ? "From the Archivist's Desk" : `Weekly Recap — ${weekRange}`,
       recipients,
       attachment_count: 0,
       status: "sending",

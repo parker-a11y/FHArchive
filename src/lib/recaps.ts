@@ -35,6 +35,7 @@ export function recapKey(r: WeeklyRecap): string {
 
 /** The period a recap covers, in words. */
 export function recapRangeLabel(r: WeeklyRecap): string {
+  if (r.kind === "blog") return "From the Archivist's Desk";
   return r.range_label || formatWeekRange(r.week_start, r.week_end);
 }
 

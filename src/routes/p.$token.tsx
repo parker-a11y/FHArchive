@@ -58,7 +58,7 @@ function SharedRecapPage() {
         <iframe
           title={recap.title}
           srcDoc={html}
-          sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
           className="h-[80vh] w-full rounded border border-border bg-white"
           onLoad={(ev) => {
             const frame = ev.currentTarget;

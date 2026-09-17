@@ -142,7 +142,7 @@ function RecapsIndex() {
                   <span className="field-label">{recapRangeLabel(r)}</span>
                   {r.kind === "blog" && (
                     <span className="rounded-full bg-archive-gold/15 px-2 py-0.5 text-[11px] font-medium text-archive-gold">
-                      Blog post
+                      From the Archivist&rsquo;s Desk
                     </span>
                   )}
                   {r.kind === "custom" && (
