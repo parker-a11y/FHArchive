@@ -277,17 +277,19 @@ function LettersTable() {
   const [compact, setCompact] = useState(false);
 
   // Keep filters in sync when arriving from a dashboard stat link.
+  // Only keys actually present in the URL are applied, so the remembered view survives.
+  const searchKey = JSON.stringify(search ?? {});
   useEffect(() => {
-    setRType(search.type ?? "");
-    setPeriod(search.period ?? "");
-    setTStatus(search.tstatus ?? "");
-    setReview(search.review ?? "");
-    setScanF(search.scan ?? "");
-    setHealth((search.health as HealthFilter) ?? "");
-
-    setUncertainOnly(search.uncertain === "1");
-    setStarredOnly(search.starred === "1");
-  }, [search]);
+    if (search.type !== undefined) setRType(search.type);
+    if (search.period !== undefined) setPeriod(search.period);
+    if (search.tstatus !== undefined) setTStatus(search.tstatus);
+    if (search.review !== undefined) setReview(search.review);
+    if (search.scan !== undefined) setScanF(search.scan);
+    if (search.health !== undefined) setHealth(search.health as HealthFilter);
+    if (search.uncertain !== undefined) setUncertainOnly(search.uncertain === "1");
+    if (search.starred !== undefined) setStarredOnly(search.starred === "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchKey]);
 
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
