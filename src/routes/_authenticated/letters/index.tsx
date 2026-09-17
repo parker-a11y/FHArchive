@@ -210,6 +210,46 @@ async function fetchAiStateForLetters(
   return out;
 }
 
+/** Saved All Records view (filters, chips, sort, page, layout) — survives navigation and reloads. */
+const VIEW_STATE_KEY = "letters_view_state_v1";
+
+type SavedViewState = {
+  q?: string;
+  period?: string;
+  tStatus?: string;
+  rType?: string;
+  review?: string;
+  scanF?: string;
+  health?: HealthFilter;
+  uncertainOnly?: boolean;
+  starredOnly?: boolean;
+  idStatus?: string;
+  dStatus?: string;
+  digStatus?: string;
+  tones?: string[];
+  view?: "" | "undated" | "unidphoto";
+  salutation?: string;
+  addressee?: string;
+  closing?: string;
+  signature?: string;
+  postal?: string;
+  forwardedOnly?: boolean;
+  sort?: { key: string; dir: 1 | -1 };
+  page?: number;
+  compact?: boolean;
+  showCorrespondence?: boolean;
+  hidden?: string[];
+};
+
+function loadViewState(): SavedViewState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(VIEW_STATE_KEY);
+    return raw ? (JSON.parse(raw) as SavedViewState) : null;
+  } catch {
+    return null;
+  }
+}
 
 
 function LettersTable() {
@@ -237,17 +277,19 @@ function LettersTable() {
   const [compact, setCompact] = useState(false);
 
   // Keep filters in sync when arriving from a dashboard stat link.
+  // Only keys actually present in the URL are applied, so the remembered view survives.
+  const searchKey = JSON.stringify(search ?? {});
   useEffect(() => {
-    setRType(search.type ?? "");
-    setPeriod(search.period ?? "");
-    setTStatus(search.tstatus ?? "");
-    setReview(search.review ?? "");
-    setScanF(search.scan ?? "");
-    setHealth((search.health as HealthFilter) ?? "");
-
-    setUncertainOnly(search.uncertain === "1");
-    setStarredOnly(search.starred === "1");
-  }, [search]);
+    if (search.type !== undefined) setRType(search.type);
+    if (search.period !== undefined) setPeriod(search.period);
+    if (search.tstatus !== undefined) setTStatus(search.tstatus);
+    if (search.review !== undefined) setReview(search.review);
+    if (search.scan !== undefined) setScanF(search.scan);
+    if (search.health !== undefined) setHealth(search.health as HealthFilter);
+    if (search.uncertain !== undefined) setUncertainOnly(search.uncertain === "1");
+    if (search.starred !== undefined) setStarredOnly(search.starred === "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchKey]);
 
   const [idStatus, setIdStatus] = useState("");
   const [dStatus, setDStatus] = useState("");
@@ -284,10 +326,85 @@ function LettersTable() {
   const [selected, setSelected] = useState<Map<string, SelectedRecord>>(new Map());
   const [exporting, setExporting] = useState(false);
 
-  // Any filter change goes back to page 1.
+  // Restore the saved view once on mount. URL search params (dashboard links) win.
+  const restored = useRef(false);
+  const pendingPage = useRef<number | null>(null);
+  const lastFilterSig = useRef<string | null>(null);
   useEffect(() => {
-    setPage(0);
-  }, [
+    if (restored.current) return;
+    restored.current = true;
+    const s = loadViewState();
+    if (!s) return;
+    const urlHas = (k: keyof typeof search) => search[k] !== undefined;
+    const pick = <T,>(urlKey: keyof typeof search, current: T, saved: T | undefined): T =>
+      urlHas(urlKey) || saved === undefined ? current : saved;
+
+    const nextQ = s.q ?? "";
+    const nextPeriod = pick("period", period, s.period);
+    const nextT = pick("tstatus", tStatus, s.tStatus);
+    const nextType = pick("type", rType, s.rType);
+    const nextReview = pick("review", review, s.review);
+    const nextScan = pick("scan", scanF, s.scanF);
+    const nextHealth = pick("health", health, s.health);
+    const nextUncertain = pick("uncertain", uncertainOnly, s.uncertainOnly);
+    const nextStarred = pick("starred", starredOnly, s.starredOnly);
+    const nextTones = s.tones ?? [];
+    const nextSort = s.sort ?? sort;
+
+    setQ(nextQ);
+    setPeriod(nextPeriod);
+    setTStatus(nextT);
+    setRType(nextType);
+    setReview(nextReview);
+    setScanF(nextScan);
+    setHealth(nextHealth);
+    setUncertainOnly(nextUncertain);
+    setStarredOnly(nextStarred);
+    setIdStatus(s.idStatus ?? "");
+    setDStatus(s.dStatus ?? "");
+    setDigStatus(s.digStatus ?? "");
+    setTones(nextTones);
+    setView(s.view ?? "");
+    setSalutation(s.salutation ?? "");
+    setAddressee(s.addressee ?? "");
+    setClosing(s.closing ?? "");
+    setSignature(s.signature ?? "");
+    setPostal(s.postal ?? "");
+    setForwardedOnly(s.forwardedOnly ?? false);
+    setSort(nextSort);
+    setCompact(s.compact ?? false);
+    setShowCorrespondence(s.showCorrespondence ?? false);
+    setHidden(s.hidden ?? []);
+    if (typeof s.page === "number") pendingPage.current = s.page;
+
+    // Treat the restored values as the baseline so they don't count as a filter change.
+    lastFilterSig.current = JSON.stringify([
+      s.postal ?? "",
+      s.forwardedOnly ?? false,
+      nextQ,
+      nextPeriod,
+      nextT,
+      nextType,
+      nextReview,
+      nextScan,
+      nextHealth,
+      nextUncertain,
+      nextStarred,
+      s.idStatus ?? "",
+      s.dStatus ?? "",
+      s.digStatus ?? "",
+      nextTones,
+      s.view ?? "",
+      nextSort,
+      s.salutation ?? "",
+      s.addressee ?? "",
+      s.closing ?? "",
+      s.signature ?? "",
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const filterSig = JSON.stringify([
     postal,
     forwardedOnly,
     debouncedQ,
@@ -310,6 +427,81 @@ function LettersTable() {
     debouncedClosing,
     debouncedSignature,
   ]);
+
+  // Any real filter change goes back to page 1.
+  useEffect(() => {
+    if (lastFilterSig.current === null) {
+      lastFilterSig.current = filterSig;
+      return;
+    }
+    if (lastFilterSig.current === filterSig) return;
+    lastFilterSig.current = filterSig;
+    setPage(0);
+  }, [filterSig]);
+
+  // Save the view whenever it changes.
+  useEffect(() => {
+    if (!restored.current) return;
+    const state: SavedViewState = {
+      q,
+      period,
+      tStatus,
+      rType,
+      review,
+      scanF,
+      health,
+      uncertainOnly,
+      starredOnly,
+      idStatus,
+      dStatus,
+      digStatus,
+      tones,
+      view,
+      salutation,
+      addressee,
+      closing,
+      signature,
+      postal,
+      forwardedOnly,
+      sort,
+      page,
+      compact,
+      showCorrespondence,
+      hidden,
+    };
+    try {
+      localStorage.setItem(VIEW_STATE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage full or unavailable — the view just won't be remembered */
+    }
+  }, [
+    q,
+    period,
+    tStatus,
+    rType,
+    review,
+    scanF,
+    health,
+    uncertainOnly,
+    starredOnly,
+    idStatus,
+    dStatus,
+    digStatus,
+    tones,
+    view,
+    salutation,
+    addressee,
+    closing,
+    signature,
+    postal,
+    forwardedOnly,
+    sort,
+    page,
+    compact,
+    showCorrespondence,
+    hidden,
+  ]);
+
 
   const params: LetterSearchParams = {
     q: debouncedQ,
@@ -345,11 +537,17 @@ function LettersTable() {
   const total = pageData?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // Default to the highest page number on first load so the newest records appear first.
+  // First load: return to the remembered page, otherwise the highest page number.
   useEffect(() => {
     if (total > 0 && !pageInitialized.current) {
       pageInitialized.current = true;
-      setPage(Math.max(0, pageCount - 1));
+      const saved = pendingPage.current;
+      pendingPage.current = null;
+      setPage(
+        saved !== null
+          ? Math.min(Math.max(0, saved), pageCount - 1)
+          : Math.max(0, pageCount - 1),
+      );
     }
   }, [total, pageCount]);
 
@@ -577,7 +775,7 @@ function LettersTable() {
     qc.invalidateQueries({ queryKey: ["letters-page"] });
   }
 
-  function resetFilters() {
+  function resetAll() {
     setQ("");
     setPeriod("");
     setTStatus("");
@@ -600,6 +798,18 @@ function LettersTable() {
     setSort({ key: "archive_id", dir: 1 });
     setStarredOnly(false);
     setPage(0);
+    setSelected(new Map());
+    setCompact(false);
+    setShowCorrespondence(false);
+    setHidden([]);
+    setWidths({});
+    pendingPage.current = null;
+    try {
+      localStorage.removeItem("letters_col_widths");
+      localStorage.removeItem(VIEW_STATE_KEY);
+    } catch {
+      /* ignore storage errors */
+    }
     navigate({ to: "/letters", search: () => ({}) });
   }
 
@@ -625,6 +835,15 @@ function LettersTable() {
     starredOnly ? "starred" : "",
     ...tones,
   ].filter(Boolean).length;
+
+  const canReset =
+    activeFilterCount > 0 ||
+    selected.size > 0 ||
+    compact ||
+    hidden.length > 0 ||
+    Object.keys(widths).length > 0 ||
+    sort.key !== "archive_id" ||
+    sort.dir !== 1;
 
   function cellValue(l: Letter, key: string) {
     switch (key) {
@@ -911,11 +1130,11 @@ function LettersTable() {
           variant="outline"
           size="sm"
           className="gap-2"
-          onClick={resetFilters}
-          disabled={activeFilterCount === 0}
+          onClick={resetAll}
+          disabled={!canReset}
         >
           <RotateCcw className="size-4" />
-          Reset filters
+          Reset all
           {activeFilterCount > 0 && (
             <span className="ml-1 rounded-full bg-primary px-1.5 py-0 text-[10px] text-primary-foreground">
               {activeFilterCount}
