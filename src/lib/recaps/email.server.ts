@@ -94,7 +94,7 @@ export async function buildRecapTemplateData(
     title: recap.title,
     lede: recap.lede,
     body: recap.body_md,
-    message: null,
+    message: null as string | null,
     imageUrl,
     imageCaption: recap.image_caption,
     relatedIds,
