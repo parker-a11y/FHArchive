@@ -246,7 +246,13 @@ function RecapPage() {
   return (
     <>
       <PageHeader
-        title={recap.kind === "custom" ? "Francis Files — Custom Recap" : "Francis Files — Weekly Recap"}
+        title={
+          recap.kind === "blog"
+            ? "Francis Files — Blog Post"
+            : recap.kind === "custom"
+              ? "Francis Files — Custom Recap"
+              : "Francis Files — Weekly Recap"
+        }
         description={
           recap.kind === "custom"
             ? recapRangeLabel(recap)
