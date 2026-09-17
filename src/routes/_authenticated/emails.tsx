@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { fetchAllEmailRecords, fetchSentEmails } from "@/lib/archive-email";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
+import { RichTextView } from "@/components/RichTextView";
+import { isRichHtml } from "@/lib/rich-text";
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
