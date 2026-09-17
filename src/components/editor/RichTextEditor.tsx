@@ -203,9 +203,9 @@ function Toolbar({
       </ToolButton> : null}
 
       {mode === "full" ? <Select
-        value={font}
+        value={font || DEFAULT_FONT}
         onValueChange={(v) =>
-          v
+          v && v !== DEFAULT_FONT
             ? editor.chain().focus().setFontFamily(v).run()
             : editor.chain().focus().unsetFontFamily().run()
         }
