@@ -29,7 +29,7 @@ const COLUMNS =
 
 /** The address a recap lives at: its week for weekly recaps, its slug for custom ones. */
 export function recapKey(r: WeeklyRecap): string {
-  return r.kind === "custom" && r.slug ? r.slug : r.week_start;
+  return r.kind !== "weekly" && r.slug ? r.slug : r.week_start;
 }
 
 /** The period a recap covers, in words. */
