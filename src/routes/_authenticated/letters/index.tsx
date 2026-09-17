@@ -12,6 +12,7 @@ import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
 import { parseRecordNumber } from "@/lib/box-ranges";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { DateLink } from "@/components/DateLink";
+import { richTextToPlain } from "@/lib/rich-text";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
