@@ -231,8 +231,9 @@ export const WeeklyRecapEmail = ({
         ) : null}
 
         <Text style={footer}>
-          The Francis Files — a private family archive. Weekly recaps are written from the week&rsquo;s
-          catalog work.
+          {kind === 'blog'
+            ? 'The Francis Files — a private family archive. Written from the archivist\u2019s desk, drawing on the catalogued letters.'
+            : 'The Francis Files — a private family archive. Weekly recaps are written from the week\u2019s catalog work.'}
         </Text>
       </Container>
     </Body>
