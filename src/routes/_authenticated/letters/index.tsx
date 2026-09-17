@@ -12,6 +12,7 @@ import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
 import { parseRecordNumber } from "@/lib/box-ranges";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { DateLink } from "@/components/DateLink";
+import { richTextToPlain } from "@/lib/rich-text";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -744,7 +745,7 @@ function LettersTable() {
       tones: (l.tones ?? []).join("; "),
       summary_short: l.summary_short ?? "",
       notes: l.notes ?? "",
-      transcription_verified: l.transcription_verified ?? "",
+      transcription_verified: richTextToPlain(l.transcription_verified ?? ""),
       created_at: l.created_at,
       updated_at: l.updated_at,
     }));
