@@ -3115,6 +3115,7 @@ export type Database = {
           public_visible: boolean
           range_label: string | null
           related_ids: string[]
+          share_token: string | null
           slug: string | null
           stats: Json
           status: string
@@ -3141,6 +3142,7 @@ export type Database = {
           public_visible?: boolean
           range_label?: string | null
           related_ids?: string[]
+          share_token?: string | null
           slug?: string | null
           stats?: Json
           status?: string
@@ -3167,6 +3169,7 @@ export type Database = {
           public_visible?: boolean
           range_label?: string | null
           related_ids?: string[]
+          share_token?: string | null
           slug?: string | null
           stats?: Json
           status?: string
