@@ -3,11 +3,12 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarRange, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { CalendarRange, Loader2, Sparkles, Wand2, PenLine } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CustomRecapDialog } from "@/components/recaps/CustomRecapDialog";
+import { BlogPostDialog } from "@/components/recaps/BlogPostDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchRecaps, recapKey, recapRangeLabel, setRecapPublicVisible } from "@/lib/recaps";
 import { generateWeeklyRecap } from "@/lib/recaps.functions";
@@ -47,6 +48,7 @@ function RecapsIndex() {
   const qc = useQueryClient();
   const generate = useServerFn(generateWeeklyRecap);
   const [customOpen, setCustomOpen] = useState(false);
+  const [blogOpen, setBlogOpen] = useState(false);
 
   const { data: recaps = [], isLoading } = useQuery({ queryKey: ["weekly-recaps"], queryFn: fetchRecaps });
 
@@ -91,11 +93,16 @@ function RecapsIndex() {
                 <Wand2 className="size-4 text-archive-gold" />
                 GENERATE CUSTOM RECAP
               </Button>
+              <Button variant="outline" className="gap-2" onClick={() => setBlogOpen(true)}>
+                <PenLine className="size-4 text-archive-gold" />
+                CREATE BLOG POST
+              </Button>
             </div>
           ) : undefined
         }
       />
       <CustomRecapDialog open={customOpen} onOpenChange={setCustomOpen} />
+      <BlogPostDialog open={blogOpen} onOpenChange={setBlogOpen} />
       <div className="p-4 sm:p-8">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -133,6 +140,11 @@ function RecapsIndex() {
               >
                 <div className="mb-1 flex flex-wrap items-center gap-3">
                   <span className="field-label">{recapRangeLabel(r)}</span>
+                  {r.kind === "blog" && (
+                    <span className="rounded-full bg-archive-gold/15 px-2 py-0.5 text-[11px] font-medium text-archive-gold">
+                      Blog post
+                    </span>
+                  )}
                   {r.kind === "custom" && (
                     <span className="rounded-full bg-archive-gold/15 px-2 py-0.5 text-[11px] font-medium text-archive-gold">
                       Custom

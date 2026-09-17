@@ -85,6 +85,46 @@ export const generateCustomRecap = createServerFn({ method: "POST" })
     return runCustomRecap(data);
   });
 
+/** "Create Blog Post": the archivist's outline, evidenced from the archive. */
+export const generateBlogPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      outline?: string;
+      refs?: string;
+      supporting?: boolean;
+      outsideResearch?: boolean;
+      detail?: "brief" | "standard" | "deep";
+      audience?: string;
+      instructions?: string;
+    }) => {
+      const outline = String(data?.outline ?? "").trim();
+      if (outline.length < 20) throw new Error("Paste an outline for the blog post first.");
+      const refs = Array.from(
+        new Set(
+          (String(data?.refs ?? "").toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? []).map((x) =>
+            x.replace(/[\s-]/g, ""),
+          ),
+        ),
+      ).slice(0, 60);
+      return {
+        outline: outline.slice(0, 20000),
+        refs,
+        supporting: data?.supporting !== false,
+        outsideResearch: data?.outsideResearch === true,
+        detail:
+          data?.detail === "brief" ? ("brief" as const) : data?.detail === "deep" ? ("deep" as const) : ("standard" as const),
+        audience: String(data?.audience ?? "").trim().slice(0, 200),
+        instructions: String(data?.instructions ?? "").trim().slice(0, 2000),
+      };
+    },
+  )
+  .handler(async ({ data, context }) => {
+    await assertArchiveAccess(context);
+    const { runBlogPost } = await import("@/lib/recaps/weekly.server");
+    return runBlogPost(data);
+  });
+
 /** Apply plain-language additions to an existing recap without regenerating it. */
 export const refineWeeklyRecapFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

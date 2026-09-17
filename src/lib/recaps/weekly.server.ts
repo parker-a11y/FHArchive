@@ -737,3 +737,264 @@ If the material does not support the request, say so honestly instead of padding
 
   return { status: "ok", id: data?.id, slug, week_start: data?.week_start, week_end: data?.week_end };
 }
+
+// ----------------------------------------------------------------- blog post
+
+export type BlogPostParams = {
+  outline: string;
+  refs: string[];
+  supporting: boolean;
+  outsideResearch: boolean;
+  detail: "brief" | "standard" | "deep";
+  audience?: string;
+  instructions?: string;
+};
+
+/** Gathers material for an explicit set of record numbers (FH…/DS…). */
+async function gatherByIds(admin: any, ids: string[]): Promise<WeekMaterial> {
+  const fh = ids.filter((i) => i.startsWith("FH")).slice(0, 120);
+  const ds = ids.filter((i) => i.startsWith("DS")).slice(0, 60);
+
+  const [{ data: letters }, { data: sources }] = await Promise.all([
+    fh.length
+      ? admin
+          .from("letters")
+          .select(
+            "id, archive_id, title, record_type, subtype, period, date_as_written, dateline, normalized_date, sort_date, author, recipient, origin, destination, tones, starred, summary_short, summary_long, historical_notes, research_notes, transcription_status",
+          )
+          .in("archive_id", fh)
+      : Promise.resolve({ data: [] }),
+    ds.length
+      ? admin
+          .from("digital_sources")
+          .select(
+            "id, ds_id, title, source_type, creator, institution, original_date, normalized_date, url, description, starred",
+          )
+          .in("ds_id", ds)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const letterRows = (letters ?? []) as any[];
+  const sourceRows = (sources ?? []) as any[];
+  const archiveIds = [
+    ...letterRows.map((l) => l.archive_id as string),
+    ...sourceRows.map((s) => s.ds_id as string),
+  ].filter(Boolean);
+
+  const quotes: { archive_id: string; text: string }[] = [];
+  if (letterRows.length) {
+    const byId = new Map(letterRows.map((l) => [l.id, l.archive_id]));
+    const { data: suggestions } = await admin
+      .from("ai_suggestions")
+      .select("letter_id, content")
+      .eq("field_key", "quotations")
+      .eq("status", "accepted")
+      .in("letter_id", letterRows.map((l) => l.id).slice(0, 120));
+    for (const s of (suggestions ?? []) as any[]) {
+      const archiveId = byId.get(s.letter_id);
+      if (!archiveId) continue;
+      const list = Array.isArray(s.content) ? s.content : typeof s.content === "string" ? [s.content] : [];
+      for (const item of list.slice(0, 3)) {
+        const text = typeof item === "string" ? item : String(item?.text ?? item?.quote ?? "");
+        if (text.trim()) quotes.push({ archive_id: archiveId, text: text.trim().slice(0, 400) });
+      }
+    }
+  }
+
+  let indexRows: any[] = [];
+  if (archiveIds.length) {
+    const { data } = await admin
+      .from("research_index")
+      .select(
+        "archive_id, kind, title, record_type, date_text, sort_date, author, recipient, origin, destination, tones, keywords, people, places, events, organizations, linked_refs, summary, body",
+      )
+      .in("archive_id", archiveIds.slice(0, 150));
+    indexRows = (data ?? []) as any[];
+  }
+
+  let image: WeekMaterial["image"] = null;
+  if (letterRows.length) {
+    const { data: derivs } = await admin
+      .from("file_derivatives")
+      .select("letter_id, storage_path, kind, created_at")
+      .eq("kind", "jpeg")
+      .in("letter_id", letterRows.map((l) => l.id).slice(0, 100))
+      .order("created_at", { ascending: false })
+      .limit(30);
+    const preferred =
+      (derivs ?? []).find((d: any) => letterRows.find((l) => l.id === d.letter_id && l.starred)) ??
+      (derivs ?? []).find((d: any) =>
+        letterRows.find((l) => l.id === d.letter_id && l.record_type === "photograph"),
+      ) ??
+      (derivs ?? [])[0];
+    if (preferred) {
+      const owner = letterRows.find((l) => l.id === preferred.letter_id);
+      image = {
+        bucket: "scans",
+        path: preferred.storage_path,
+        archive_id: owner?.archive_id ?? "",
+        caption: owner?.title || owner?.archive_id || "",
+      };
+    }
+  }
+
+  return {
+    letters: letterRows,
+    sources: sourceRows,
+    quotes,
+    indexRows,
+    counts: { records: letterRows.length, sources: sourceRows.length, transcriptions: 0, files: 0 },
+    image,
+    archiveIds,
+  };
+}
+
+const BLOG_SYSTEM = `You write publishable blog posts for The Francis Files — a private family history archive of the papers of Francis and Jacquelyn Harrington (prewar, wartime and postwar letters, photographs, documents and digital sources).
+
+You are given an OUTLINE written by the archivist, ARCHIVE MATERIAL drawn from the real collection, and sometimes OUTSIDE RESEARCH from published historical sources.
+
+Hard rules:
+- The outline is the spine of the post. Keep its structure, order, argument and emphasis. Expand and evidence it; never rewrite or reorder the archivist's argument.
+- Every archival statement carries its record number inline (FH0042, DS0007). Never state an archival fact without one.
+- Quotations must be verbatim from the supplied material and formatted as blockquotes attributed to the record: > "quoted text" — FH0087
+- Outside historical claims must be attributed to their published source in the sentence or a parenthesis, and must never be blended in as if they came from the family papers.
+- Never invent records, people, places, ships, dates, quotations or events. If a point in the outline is not supported by the archive or the research, say plainly that the papers do not yet document it rather than filling the gap.
+- Separate evidence from interpretation; hedge developing patterns ("the letters suggest", "this may indicate").
+- Write as engaging narrative history for a reader who has never opened the database. Plain markdown: paragraphs, '##' section headings, short bullets and blockquotes. No tables.`;
+
+/** "Create Blog Post": an archivist's outline, evidenced from the archive. */
+export async function runBlogPost(params: BlogPostParams) {
+  const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+
+  const explicitIds = Array.from(
+    new Set(
+      ((params.outline.toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? []) as string[])
+        .concat(params.refs)
+        .map((x) => x.toUpperCase().replace(/[\s-]/g, "")),
+    ),
+  );
+
+  const supportingCap = params.detail === "brief" ? 8 : params.detail === "deep" ? 40 : 20;
+  let candidateIds = [...explicitIds];
+
+  if (params.supporting) {
+    const { semanticPassages } = await import("@/lib/research/embed.server");
+    const passages = await semanticPassages(admin, params.outline.slice(0, 4000), {}, 120);
+    const ranked: string[] = [];
+    for (const p of passages.sort((a, b) => b.score - a.score)) {
+      if (!ranked.includes(p.archive_id)) ranked.push(p.archive_id);
+    }
+    // Keyword fallback so the search never depends on embeddings alone.
+    const terms = Array.from(
+      new Set(
+        params.outline
+          .toLowerCase()
+          .split(/[^a-z0-9']+/i)
+          .filter((t) => t.length > 3),
+      ),
+    ).slice(0, 12);
+    if (terms.length) {
+      const { data } = await admin
+        .from("research_index")
+        .select("archive_id")
+        .textSearch("fts", terms.join(" or "), { type: "websearch" })
+        .limit(40);
+      for (const row of (data ?? []) as any[]) if (!ranked.includes(row.archive_id)) ranked.push(row.archive_id);
+    }
+    for (const id of ranked) {
+      if (candidateIds.length >= explicitIds.length + supportingCap) break;
+      if (!candidateIds.includes(id)) candidateIds.push(id);
+    }
+  }
+
+  const material = await gatherByIds(admin, candidateIds);
+
+  let outside: { text: string; sources: { title: string; url: string; note: string }[]; error?: string } = {
+    text: "",
+    sources: [],
+  };
+  if (params.outsideResearch) {
+    const { searchOutsideHistory } = await import("@/lib/research/agent.server");
+    const headings = params.outline
+      .split("\n")
+      .map((l) => l.replace(/^[\s#*\-•\d.)]+/, "").trim())
+      .filter((l) => l.length > 8)
+      .slice(0, 4);
+    outside = await searchOutsideHistory(headings.length ? headings : [params.outline.slice(0, 300)]);
+  }
+
+  const lengthNote =
+    params.detail === "brief"
+      ? "About 500-700 words."
+      : params.detail === "deep"
+        ? "About 1,600-2,200 words."
+        : "About 900-1,300 words.";
+
+  const prompt = `THE ARCHIVIST'S OUTLINE (follow its structure and order)
+${params.outline}
+
+LENGTH: ${lengthNote}
+${params.audience ? `AUDIENCE AND TONE: ${params.audience}\n` : ""}${params.instructions ? `EXTRA INSTRUCTIONS: ${params.instructions}\n` : ""}
+ARCHIVE MATERIAL (the only archival evidence you may use)
+${materialText(material) || "(no archive material was supplied)"}
+
+ACCEPTED QUOTATIONS
+${material.quotes.map((q) => `${q.archive_id}: "${q.text}"`).join("\n") || "(none)"}
+
+OUTSIDE HISTORICAL RESEARCH (published sources — attribute, never present as archive evidence)
+${outside.text || (outside.error ? `(the outside lookup failed: ${outside.error})` : "(none requested)")}
+
+Return a single JSON object:
+{
+  "title": "the blog post's headline",
+  "lede": "one sentence, max 220 characters, previewing the post",
+  "body_md": "the full post in markdown, following the outline's structure, with record numbers inline and quotes as attributed blockquotes",
+  "related_ids": ["every record number actually cited"],
+  "image_caption": "one short caption for the featured image, or null"
+}`;
+
+  const parsed = parseJson(await callModel(BLOG_SYSTEM, prompt));
+  const known = new Set(material.archiveIds);
+  const today = new Date().toISOString().slice(0, 10);
+  const slug = `blog-${today}-${Math.random().toString(36).slice(2, 8)}`;
+
+  let body = String(parsed.body_md ?? "").trim();
+  if (outside.sources.length) {
+    body += `\n\n## Further reading\n\n${outside.sources
+      .slice(0, 12)
+      .map((s) => `- [${s.title}](${s.url})`)
+      .join("\n")}`;
+  } else if (outside.error) {
+    body += `\n\n_Outside historical research was requested but could not be completed: ${outside.error}_`;
+  }
+
+  const row = {
+    kind: "blog",
+    slug,
+    range_label: "Blog post",
+    params,
+    week_start: today,
+    week_end: today,
+    title: String(parsed.title ?? "").trim().slice(0, 160) || "Blog Post",
+    lede: String(parsed.lede ?? "").trim().slice(0, 400),
+    body_md: body,
+    related_ids: (Array.isArray(parsed.related_ids) ? parsed.related_ids : [])
+      .map((x: any) => String(x).trim().toUpperCase())
+      .filter((x: string) => known.has(x))
+      .slice(0, 60),
+    image_bucket: material.image?.bucket ?? null,
+    image_path: material.image?.path ?? null,
+    image_archive_id: material.image?.archive_id ?? null,
+    image_caption: parsed.image_caption ? String(parsed.image_caption).slice(0, 240) : (material.image?.caption ?? null),
+    stats: material.counts,
+    model: MODEL,
+    manually_edited: false,
+    generated_at: new Date().toISOString(),
+    status: "draft",
+    public_visible: false,
+  };
+
+  const { data, error } = await admin.from("weekly_recaps").insert(row).select("id").single();
+  if (error) throw new Error(`Saving the blog post failed: ${error.message}`);
+  return { status: "ok" as const, id: data?.id, slug };
+}
