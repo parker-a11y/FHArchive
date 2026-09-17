@@ -139,7 +139,12 @@ function EmailsPage() {
                 </span>
               </summary>
               <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
-                {e.message_body && <p className="whitespace-pre-wrap">{e.message_body}</p>}
+                {e.message_body &&
+                  (isRichHtml(e.message_body) ? (
+                    <RichTextView html={e.message_body} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{e.message_body}</p>
+                  ))}
                 {e.error && <p className="text-destructive">{e.error}</p>}
                 {(() => {
                   const recs = emailRecords
