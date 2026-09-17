@@ -81,7 +81,7 @@ function RecapsIndex() {
         title="Weekly Recaps"
         description="What the archive uncovered, week by week — the story behind the records."
         actions={
-          canReadArchive ? (
+          canGenerate ? (
             <div className="flex flex-wrap gap-2">
               <Button className="gap-2" onClick={() => run.mutate()} disabled={run.isPending}>
                 {run.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-archive-gold" />}
