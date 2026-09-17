@@ -868,7 +868,7 @@ export async function runBlogPost(params: BlogPostParams) {
 
   const explicitIds = Array.from(
     new Set(
-      (params.outline.toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? [])
+      ((params.outline.toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? []) as string[])
         .concat(params.refs)
         .map((x) => x.toUpperCase().replace(/[\s-]/g, "")),
     ),
