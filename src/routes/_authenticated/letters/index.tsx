@@ -324,10 +324,85 @@ function LettersTable() {
   const [selected, setSelected] = useState<Map<string, SelectedRecord>>(new Map());
   const [exporting, setExporting] = useState(false);
 
-  // Any filter change goes back to page 1.
+  // Restore the saved view once on mount. URL search params (dashboard links) win.
+  const restored = useRef(false);
+  const pendingPage = useRef<number | null>(null);
+  const lastFilterSig = useRef<string | null>(null);
   useEffect(() => {
-    setPage(0);
-  }, [
+    if (restored.current) return;
+    restored.current = true;
+    const s = loadViewState();
+    if (!s) return;
+    const urlHas = (k: keyof typeof search) => search[k] !== undefined;
+    const pick = <T,>(urlKey: keyof typeof search, current: T, saved: T | undefined): T =>
+      urlHas(urlKey) || saved === undefined ? current : saved;
+
+    const nextQ = s.q ?? "";
+    const nextPeriod = pick("period", period, s.period);
+    const nextT = pick("tstatus", tStatus, s.tStatus);
+    const nextType = pick("type", rType, s.rType);
+    const nextReview = pick("review", review, s.review);
+    const nextScan = pick("scan", scanF, s.scanF);
+    const nextHealth = pick("health", health, s.health);
+    const nextUncertain = pick("uncertain", uncertainOnly, s.uncertainOnly);
+    const nextStarred = pick("starred", starredOnly, s.starredOnly);
+    const nextTones = s.tones ?? [];
+    const nextSort = s.sort ?? sort;
+
+    setQ(nextQ);
+    setPeriod(nextPeriod);
+    setTStatus(nextT);
+    setRType(nextType);
+    setReview(nextReview);
+    setScanF(nextScan);
+    setHealth(nextHealth);
+    setUncertainOnly(nextUncertain);
+    setStarredOnly(nextStarred);
+    setIdStatus(s.idStatus ?? "");
+    setDStatus(s.dStatus ?? "");
+    setDigStatus(s.digStatus ?? "");
+    setTones(nextTones);
+    setView(s.view ?? "");
+    setSalutation(s.salutation ?? "");
+    setAddressee(s.addressee ?? "");
+    setClosing(s.closing ?? "");
+    setSignature(s.signature ?? "");
+    setPostal(s.postal ?? "");
+    setForwardedOnly(s.forwardedOnly ?? false);
+    setSort(nextSort);
+    setCompact(s.compact ?? false);
+    setShowCorrespondence(s.showCorrespondence ?? false);
+    setHidden(s.hidden ?? []);
+    if (typeof s.page === "number") pendingPage.current = s.page;
+
+    // Treat the restored values as the baseline so they don't count as a filter change.
+    lastFilterSig.current = JSON.stringify([
+      s.postal ?? "",
+      s.forwardedOnly ?? false,
+      nextQ,
+      nextPeriod,
+      nextT,
+      nextType,
+      nextReview,
+      nextScan,
+      nextHealth,
+      nextUncertain,
+      nextStarred,
+      s.idStatus ?? "",
+      s.dStatus ?? "",
+      s.digStatus ?? "",
+      nextTones,
+      s.view ?? "",
+      nextSort,
+      s.salutation ?? "",
+      s.addressee ?? "",
+      s.closing ?? "",
+      s.signature ?? "",
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const filterSig = JSON.stringify([
     postal,
     forwardedOnly,
     debouncedQ,
@@ -350,6 +425,81 @@ function LettersTable() {
     debouncedClosing,
     debouncedSignature,
   ]);
+
+  // Any real filter change goes back to page 1.
+  useEffect(() => {
+    if (lastFilterSig.current === null) {
+      lastFilterSig.current = filterSig;
+      return;
+    }
+    if (lastFilterSig.current === filterSig) return;
+    lastFilterSig.current = filterSig;
+    setPage(0);
+  }, [filterSig]);
+
+  // Save the view whenever it changes.
+  useEffect(() => {
+    if (!restored.current) return;
+    const state: SavedViewState = {
+      q,
+      period,
+      tStatus,
+      rType,
+      review,
+      scanF,
+      health,
+      uncertainOnly,
+      starredOnly,
+      idStatus,
+      dStatus,
+      digStatus,
+      tones,
+      view,
+      salutation,
+      addressee,
+      closing,
+      signature,
+      postal,
+      forwardedOnly,
+      sort,
+      page,
+      compact,
+      showCorrespondence,
+      hidden,
+    };
+    try {
+      localStorage.setItem(VIEW_STATE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage full or unavailable — the view just won't be remembered */
+    }
+  }, [
+    q,
+    period,
+    tStatus,
+    rType,
+    review,
+    scanF,
+    health,
+    uncertainOnly,
+    starredOnly,
+    idStatus,
+    dStatus,
+    digStatus,
+    tones,
+    view,
+    salutation,
+    addressee,
+    closing,
+    signature,
+    postal,
+    forwardedOnly,
+    sort,
+    page,
+    compact,
+    showCorrespondence,
+    hidden,
+  ]);
+
 
   const params: LetterSearchParams = {
     q: debouncedQ,
