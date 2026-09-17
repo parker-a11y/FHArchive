@@ -119,6 +119,32 @@ function RecapPage() {
   const [publicLinks, setPublicLinks] = useState(true);
   const [includeTranscription, setIncludeTranscription] = useState(false);
   const emailFn = useServerFn(emailWeeklyRecapFn);
+  const ensureLink = useServerFn(ensureRecapShareLink);
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkDone, setLinkDone] = useState(false);
+
+  const copyShareLink = async () => {
+    if (!recap) return;
+    setLinkBusy(true);
+    try {
+      const res = await ensureLink({ data: { recapId: recap.id } });
+      try {
+        await navigator.clipboard.writeText(res.url);
+        toast.success(res.created ? "Public link created and copied" : "Public link copied", {
+          description: res.url,
+        });
+      } catch {
+        toast.message("Public link ready — copy it below", { description: res.url });
+      }
+      setLinkDone(true);
+      setTimeout(() => setLinkDone(false), 2000);
+      qc.invalidateQueries({ queryKey: ["weekly-recap", weekStart] });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setLinkBusy(false);
+    }
+  };
   const { data: contacts = [] } = useQuery({
     queryKey: ["archive-contacts"],
     queryFn: fetchContacts,
@@ -281,6 +307,22 @@ function RecapPage() {
                   </Button>
                   <Button variant="outline" className="gap-2" onClick={() => setAddOpen(true)}>
                     <Sparkles className="size-4 text-archive-gold" /> Add with AI
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={copyShareLink}
+                    disabled={linkBusy}
+                    title="Copy a public link anyone can open — no account or email needed"
+                  >
+                    {linkBusy ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : linkDone ? (
+                      <Check className="size-4 text-emerald-600" />
+                    ) : (
+                      <Link2 className="size-4" />
+                    )}
+                    Get link
                   </Button>
                   <Button className="gap-2" onClick={() => setEmailOpen(true)}>
                     <Mail className="size-4" /> Email recap
