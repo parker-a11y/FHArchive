@@ -535,11 +535,17 @@ function LettersTable() {
   const total = pageData?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // Default to the highest page number on first load so the newest records appear first.
+  // First load: return to the remembered page, otherwise the highest page number.
   useEffect(() => {
     if (total > 0 && !pageInitialized.current) {
       pageInitialized.current = true;
-      setPage(Math.max(0, pageCount - 1));
+      const saved = pendingPage.current;
+      pendingPage.current = null;
+      setPage(
+        saved !== null
+          ? Math.min(Math.max(0, saved), pageCount - 1)
+          : Math.max(0, pageCount - 1),
+      );
     }
   }, [total, pageCount]);
 
