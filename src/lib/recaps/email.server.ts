@@ -45,7 +45,18 @@ export async function buildRecapTemplateData(
   recap: any,
   options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
 ) {
-  const ownerId = recap.owner_id as string | null;
+  // Older recaps were stored without an owner; fall back to the archive owner so
+  // record links can still be minted.
+  let ownerId = (recap.owner_id as string | null) ?? null;
+  if (!ownerId) {
+    const { data: anyLetter } = await db
+      .from("letters")
+      .select("owner_id")
+      .not("owner_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    ownerId = (anyLetter as { owner_id?: string } | null)?.owner_id ?? null;
+  }
   const weekRange = recap.range_label || formatWeekRange(recap.week_start, recap.week_end);
 
   let imageUrl: string | null = null;
