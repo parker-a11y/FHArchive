@@ -504,8 +504,23 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
               variant="outline"
               disabled={!files.length}
               onClick={() => {
+                const states = [...pageEdits.current.values()];
+                const eligible = states.filter((s) => !isRichHtml(s.text) && needsReflow(s.text)).length;
+                const formatted = states.filter((s) => isRichHtml(s.text)).length;
                 setReflowSignal((n) => n + 1);
-                toast.message("Line breaks cleaned up — review, then save each page.");
+                if (!eligible) {
+                  toast.message(
+                    formatted
+                      ? `No pages changed — ${formatted} formatted page${formatted === 1 ? " keeps its" : "s keep their"} layout.`
+                      : "No line breaks needed cleaning up.",
+                  );
+                  return;
+                }
+                toast.message(
+                  `Line breaks cleaned up on ${eligible} page${eligible === 1 ? "" : "s"}${
+                    formatted ? ` — ${formatted} formatted page${formatted === 1 ? " was" : "s were"} left unchanged` : ""
+                  } — review, then save each page.`,
+                );
               }}
             >
               <WrapText className="mr-1 size-3.5" /> Remove line breaks on all pages
