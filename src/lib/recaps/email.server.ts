@@ -36,6 +36,101 @@ export type RecapEmailResult = {
   failed: { email: string; error: string }[];
 };
 
+const RECAP_COLUMNS =
+  "id, kind, slug, range_label, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_caption, stats, owner_id, share_token";
+
+/** Builds the weekly-recap template data for a recap row — shared by email and the public link page. */
+export async function buildRecapTemplateData(
+  db: any,
+  recap: any,
+  options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
+) {
+  const ownerId = recap.owner_id as string | null;
+  const weekRange = recap.range_label || formatWeekRange(recap.week_start, recap.week_end);
+
+  let imageUrl: string | null = null;
+  if (recap.image_path) {
+    const { data: signed } = await db.storage
+      .from(recap.image_bucket || "scans")
+      .createSignedUrl(recap.image_path, 60 * 60 * 24 * 30);
+    imageUrl = signed?.signedUrl ?? null;
+  }
+
+  const stats = Object.entries((recap.stats ?? {}) as Record<string, number>)
+    .filter(([, v]) => typeof v === "number" && v > 0)
+    .slice(0, 6)
+    .map(([k, v]) => ({ label: STAT_LABELS[k] ?? k.replace(/_/g, " "), value: v }));
+
+  // Unlisted share links so viewers without an archive account can open records.
+  const relatedIds: string[] = (recap.related_ids ?? []).slice(0, 40);
+  let shareLinks: Record<string, string> = {};
+  if (options.publicLinks !== false && ownerId) {
+    const inBody: string[] = (String(recap.body_md ?? "").match(/\b(?:FH-?\d{3,}|DS-?\d{3,})\b/g) ??
+      []) as string[];
+    const { ensureShareLinksForRefs } = await import("@/lib/archive-email.server");
+    shareLinks = await ensureShareLinksForRefs(
+      db,
+      ownerId,
+      [...relatedIds, ...inBody],
+      options.includeTranscription === true,
+    );
+  }
+
+  // Photos embedded in the recap body travel inline.
+  let inlinePhotos: Record<string, unknown> = {};
+  if (ownerId) {
+    const { resolveInlinePhotos } = await import("@/lib/archive-email.server");
+    inlinePhotos = await resolveInlinePhotos(db, ownerId, `${recap.body_md ?? ""}`, {
+      includeTranscription: options.includeTranscription === true,
+    });
+  }
+
+  return {
+    subject:
+      recap.kind === "weekly"
+        ? `Francis Files Weekly Recap — ${weekRange}`
+        : `The Francis Files — ${recap.title}`,
+    weekRange,
+    title: recap.title,
+    lede: recap.lede,
+    body: recap.body_md,
+    message: null,
+    imageUrl,
+    imageCaption: recap.image_caption,
+    relatedIds,
+    shareLinks,
+    inlinePhotos,
+    stats,
+    recapUrl: `${SITE_URL}/recaps/${recap.slug || recap.week_start}`,
+  };
+}
+
+/** Renders a recap as standalone HTML using the Weekly Recap template. */
+export async function renderRecapHtml(
+  db: any,
+  recap: any,
+  options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
+): Promise<string> {
+  const templateData = await buildRecapTemplateData(db, recap, options);
+  const [{ render }, { template }, React] = await Promise.all([
+    import("@react-email/render"),
+    import("@/lib/email-templates/weekly-recap"),
+    import("react"),
+  ]);
+  const element = React.createElement(template.component, templateData as never);
+  return await render(element as never);
+}
+
+/** Loads a recap by its public share token. */
+export async function recapByShareToken(db: any, token: string) {
+  const { data } = await db
+    .from("weekly_recaps")
+    .select(RECAP_COLUMNS)
+    .eq("share_token", token)
+    .maybeSingle();
+  return data;
+}
+
 export async function sendRecapEmail(
   db: any,
   ownerId: string,
@@ -45,11 +140,7 @@ export async function sendRecapEmail(
   options: { publicLinks?: boolean; includeTranscription?: boolean } = {},
 ): Promise<RecapEmailResult> {
   const isWeek = /^\d{4}-\d{2}-\d{2}$/.test(weekStart);
-  let query = db
-    .from("weekly_recaps")
-    .select(
-      "id, kind, slug, range_label, week_start, week_end, title, lede, body_md, related_ids, image_bucket, image_path, image_caption, stats",
-    );
+  let query = db.from("weekly_recaps").select(RECAP_COLUMNS);
   query = isWeek ? query.eq("week_start", weekStart).eq("kind", "weekly") : query.eq("slug", weekStart);
   const { data: recap } = await query.maybeSingle();
 
