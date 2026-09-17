@@ -210,6 +210,46 @@ async function fetchAiStateForLetters(
   return out;
 }
 
+/** Saved All Records view (filters, chips, sort, page, layout) — survives navigation and reloads. */
+const VIEW_STATE_KEY = "letters_view_state_v1";
+
+type SavedViewState = {
+  q?: string;
+  period?: string;
+  tStatus?: string;
+  rType?: string;
+  review?: string;
+  scanF?: string;
+  health?: HealthFilter;
+  uncertainOnly?: boolean;
+  starredOnly?: boolean;
+  idStatus?: string;
+  dStatus?: string;
+  digStatus?: string;
+  tones?: string[];
+  view?: "" | "undated" | "unidphoto";
+  salutation?: string;
+  addressee?: string;
+  closing?: string;
+  signature?: string;
+  postal?: string;
+  forwardedOnly?: boolean;
+  sort?: { key: string; dir: 1 | -1 };
+  page?: number;
+  compact?: boolean;
+  showCorrespondence?: boolean;
+  hidden?: string[];
+};
+
+function loadViewState(): SavedViewState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(VIEW_STATE_KEY);
+    return raw ? (JSON.parse(raw) as SavedViewState) : null;
+  } catch {
+    return null;
+  }
+}
 
 
 function LettersTable() {
