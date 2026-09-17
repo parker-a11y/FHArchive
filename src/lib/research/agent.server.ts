@@ -607,7 +607,7 @@ function responsesText(json: any): string {
  * Real web research via the Perplexity Agent API. Returns an `error` message when
  * the lookup fails, so the answer can say so instead of looking like nothing was found.
  */
-async function searchOutsideHistory(
+export async function searchOutsideHistory(
   queries: string[],
 ): Promise<{ text: string; sources: WebSource[]; error?: string }> {
   const key = process.env["PERPLEXITY_API_KEY"];
