@@ -148,64 +148,20 @@ export async function sendRecapEmail(
 
   const weekRange = recap.range_label || formatWeekRange(recap.week_start, recap.week_end);
 
-
-  let imageUrl: string | null = null;
-  if (recap.image_path) {
-    const { data: signed } = await db.storage
-      .from(recap.image_bucket || "scans")
-      .createSignedUrl(recap.image_path, 60 * 60 * 24 * 30);
-    imageUrl = signed?.signedUrl ?? null;
-  }
-
-  const stats = Object.entries((recap.stats ?? {}) as Record<string, number>)
-    .filter(([, v]) => typeof v === "number" && v > 0)
-    .slice(0, 6)
-    .map(([k, v]) => ({ label: STAT_LABELS[k] ?? k.replace(/_/g, " "), value: v }));
-
-  // Unlisted share links so recipients without an archive account can open records.
-  const relatedIds: string[] = (recap.related_ids ?? []).slice(0, 40);
-  let shareLinks: Record<string, string> = {};
-  if (options.publicLinks !== false) {
-    const inBody: string[] = (String(recap.body_md ?? "").match(/\b(?:FH-?\d{3,}|DS-?\d{3,})\b/g) ??
-      []) as string[];
-    const { ensureShareLinksForRefs } = await import("@/lib/archive-email.server");
-    shareLinks = await ensureShareLinksForRefs(
+  const templateData = await buildRecapTemplateData(db, recap, options);
+  templateData.message = message || null;
+  if (message) {
+    // Photos embedded in the personal note travel inline too.
+    const { resolveInlinePhotos } = await import("@/lib/archive-email.server");
+    templateData.inlinePhotos = await resolveInlinePhotos(
       db,
       ownerId,
-      [...relatedIds, ...inBody],
-      options.includeTranscription === true,
+      `${recap.body_md ?? ""}\n${message}`,
+      { includeTranscription: options.includeTranscription === true },
     );
   }
 
-  // Photos the archivist embedded in the recap body travel inline.
-  const { resolveInlinePhotos } = await import("@/lib/archive-email.server");
-  const inlinePhotos = await resolveInlinePhotos(
-    db,
-    ownerId,
-    `${recap.body_md ?? ""}\n${message ?? ""}`,
-    { includeTranscription: options.includeTranscription === true },
-  );
 
-  const templateData = {
-
-    subject:
-      recap.kind === "custom"
-        ? `The Francis Files — ${recap.title}`
-        : `Francis Files Weekly Recap — ${weekRange}`,
-    weekRange,
-    title: recap.title,
-    lede: recap.lede,
-    body: recap.body_md,
-    message: message || null,
-    imageUrl,
-    imageCaption: recap.image_caption,
-    relatedIds,
-    shareLinks,
-    inlinePhotos,
-
-    stats,
-    recapUrl: `${SITE_URL}/recaps/${recap.slug || recap.week_start}`,
-  };
 
 
   const result: RecapEmailResult = { sent: [], suppressed: [], failed: [] };
