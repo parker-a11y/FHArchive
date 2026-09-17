@@ -19,6 +19,7 @@ export type WeeklyRecap = {
   model: string | null;
   status: string;
   public_visible: boolean;
+  share_token: string | null;
   manually_edited: boolean;
   generated_at: string;
   updated_at: string;
