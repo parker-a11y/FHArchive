@@ -31,8 +31,11 @@ import {
 } from "@/components/ui/select";
 import { plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
 
+/** Radix Select items cannot use an empty value, so "Default" uses a sentinel. */
+const DEFAULT_FONT = "__default__";
+
 const FONTS: { label: string; value: string }[] = [
-  { label: "Default", value: "" },
+  { label: "Default", value: DEFAULT_FONT },
   { label: "Serif (Georgia)", value: "Georgia, 'Times New Roman', serif" },
   { label: "Sans (Helvetica)", value: "Helvetica, Arial, sans-serif" },
   { label: "Typewriter", value: "'Courier New', Courier, monospace" },
