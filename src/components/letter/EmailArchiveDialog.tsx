@@ -88,7 +88,7 @@ export function EmailArchiveDialog({
   const [includeImages, setIncludeImages] = useState(true);
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
-  const [includeEnvelope, setIncludeEnvelope] = useState(false);
+  const [includeEnvelope, setIncludeEnvelope] = useState(true);
   const hasLetter = recordList.some((r) => r.kind === "letter");
 
 
