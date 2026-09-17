@@ -897,7 +897,7 @@ export async function runBlogPost(params: BlogPostParams) {
       const { data } = await admin
         .from("research_index")
         .select("archive_id")
-        .textSearch("search_tsv", terms.join(" or "), { type: "websearch" })
+        .textSearch("fts", terms.join(" or "), { type: "websearch" })
         .limit(40);
       for (const row of (data ?? []) as any[]) if (!ranked.includes(row.archive_id)) ranked.push(row.archive_id);
     }
