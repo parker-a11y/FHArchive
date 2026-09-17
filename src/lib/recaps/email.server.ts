@@ -100,7 +100,10 @@ export async function buildRecapTemplateData(
     subject:
       recap.kind === "weekly"
         ? `Francis Files Weekly Recap — ${weekRange}`
-        : `The Francis Files — ${recap.title}`,
+        : recap.kind === "blog"
+          ? `From the Archivist's Desk — ${recap.title}`
+          : `The Francis Files — ${recap.title}`,
+    kind: String(recap.kind ?? "weekly"),
     weekRange,
     title: recap.title,
     lede: recap.lede,
