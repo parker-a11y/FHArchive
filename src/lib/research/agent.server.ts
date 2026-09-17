@@ -590,19 +590,6 @@ Return JSON: {"needed": true|false, "queries": ["at most two short web search qu
   }
 }
 
-/** Pulls the answer text out of a Perplexity Agent API (/v1/responses) payload. */
-function responsesText(json: any): string {
-  if (typeof json?.output_text === "string" && json.output_text.trim()) return json.output_text.trim();
-  const parts: string[] = [];
-  for (const item of Array.isArray(json?.output) ? json.output : []) {
-    for (const c of Array.isArray(item?.content) ? item.content : []) {
-      const t = c?.text ?? c?.output_text;
-      if (typeof t === "string" && t.trim()) parts.push(t.trim());
-    }
-  }
-  return parts.join("\n\n").trim();
-}
-
 /**
  * Real web research via the Perplexity Agent API. Returns an `error` message when
  * the lookup fails, so the answer can say so instead of looking like nothing was found.
@@ -617,29 +604,32 @@ export async function searchOutsideHistory(
   const runs = await Promise.all(
     queries.map(async (query) => {
       try {
-        const res = await fetch("https://api.perplexity.ai/v1/responses", {
+        const res = await fetch("https://api.perplexity.ai/chat/completions", {
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "sonar",
-            input: [
+            messages: [
               {
                 role: "system",
                 content:
                   "You are a historical reference desk. Answer factually and concisely, with dates and specifics. If sources disagree or are thin, say so. Never speculate.",
               },
-              { role: "user", content: query },
+              { role: "user", content: query.slice(0, 900) },
             ],
           }),
         });
         if (!res.ok) {
           const body = (await res.text()).slice(0, 300);
           console.error(`Perplexity request failed [${res.status}]: ${body}`);
-          failure = `Outside web research was unavailable (search service returned ${res.status}).`;
+          failure =
+            res.status === 401 && body.includes("insufficient_quota")
+              ? "Outside web research is out of credits on the connected Perplexity account."
+              : `Outside web research was unavailable (search service returned ${res.status}).`;
           return null;
         }
         const json: any = await res.json();
-        const content = responsesText(json);
+        const content = String(json?.choices?.[0]?.message?.content ?? "").trim();
         const rawSources = Array.isArray(json?.search_results)
           ? json.search_results
           : Array.isArray(json?.citations)
