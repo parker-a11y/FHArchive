@@ -33,6 +33,7 @@ import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as ETokenRouteImport } from './routes/e.$token'
 import { Route as NotesIndexRouteImport } from './routes/notes/index'
 import { Route as NotesSlugRouteImport } from './routes/notes/$slug'
+import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -187,6 +188,11 @@ const NotesIndexRoute = NotesIndexRouteImport.update({
 const NotesSlugRoute = NotesSlugRouteImport.update({
   id: '/notes/$slug',
   path: '/notes/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PTokenRoute = PTokenRouteImport.update({
+  id: '/p/$token',
+  path: '/p/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const STokenRoute = STokenRouteImport.update({
@@ -411,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/d/$token': typeof DTokenRoute
   '/e/$token': typeof ETokenRoute
   '/notes/$slug': typeof NotesSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/s/$token': typeof STokenRoute
   '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/d/$token': typeof DTokenRoute
   '/e/$token': typeof ETokenRoute
   '/notes/$slug': typeof NotesSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/notes': typeof NotesIndexRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/d/$token': typeof DTokenRoute
   '/e/$token': typeof ETokenRoute
   '/notes/$slug': typeof NotesSlugRoute
+  '/p/$token': typeof PTokenRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/notes/': typeof NotesIndexRoute
@@ -592,6 +601,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/e/$token'
     | '/notes/$slug'
+    | '/p/$token'
     | '/s/$token'
     | '/notes/'
     | '/.lovable/oauth/consent'
@@ -650,6 +660,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/e/$token'
     | '/notes/$slug'
+    | '/p/$token'
     | '/s/$token'
     | '/'
     | '/notes'
@@ -710,6 +721,7 @@ export interface FileRouteTypes {
     | '/d/$token'
     | '/e/$token'
     | '/notes/$slug'
+    | '/p/$token'
     | '/s/$token'
     | '/_authenticated/'
     | '/notes/'
@@ -760,6 +772,7 @@ export interface RootRouteChildren {
   DTokenRoute: typeof DTokenRoute
   ETokenRoute: typeof ETokenRoute
   NotesSlugRoute: typeof NotesSlugRoute
+  PTokenRoute: typeof PTokenRoute
   STokenRoute: typeof STokenRoute
   NotesIndexRoute: typeof NotesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -940,6 +953,13 @@ declare module '@tanstack/react-router' {
       path: '/notes/$slug'
       fullPath: '/notes/$slug'
       preLoaderRoute: typeof NotesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$token': {
+      id: '/p/$token'
+      path: '/p/$token'
+      fullPath: '/p/$token'
+      preLoaderRoute: typeof PTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$token': {
@@ -1279,6 +1299,7 @@ const rootRouteChildren: RootRouteChildren = {
   DTokenRoute: DTokenRoute,
   ETokenRoute: ETokenRoute,
   NotesSlugRoute: NotesSlugRoute,
+  PTokenRoute: PTokenRoute,
   STokenRoute: STokenRoute,
   NotesIndexRoute: NotesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,

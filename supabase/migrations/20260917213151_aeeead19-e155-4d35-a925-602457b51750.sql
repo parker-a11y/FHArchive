@@ -1,0 +1,2 @@
+alter table public.weekly_recaps add column if not exists share_token text;
+create unique index if not exists weekly_recaps_share_token_key on public.weekly_recaps (share_token) where share_token is not null;
