@@ -744,7 +744,7 @@ function LettersTable() {
       tones: (l.tones ?? []).join("; "),
       summary_short: l.summary_short ?? "",
       notes: l.notes ?? "",
-      transcription_verified: l.transcription_verified ?? "",
+      transcription_verified: richTextToPlain(l.transcription_verified ?? ""),
       created_at: l.created_at,
       updated_at: l.updated_at,
     }));
