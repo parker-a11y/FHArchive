@@ -187,7 +187,8 @@ export async function sendRecapEmail(
       subject: templateData.subject,
       message_body: message || null,
       header_title: recap.title,
-      header_subtitle: `Weekly Recap — ${weekRange}`,
+      header_subtitle:
+        recap.kind === "blog" ? "From the Archivist's Desk" : `Weekly Recap — ${weekRange}`,
       recipients,
       attachment_count: 0,
       status: "sending",
