@@ -23,6 +23,8 @@ const LOGO =
 
 export interface WeeklyRecapEmailProps {
   weekRange?: string
+  /** 'weekly' | 'custom' | 'blog' — drives the masthead wording. */
+  kind?: string
   title?: string
   lede?: string | null
   /** Recap body as markdown-ish text — headings, bullets and paragraphs. */
