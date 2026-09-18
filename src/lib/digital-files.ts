@@ -30,6 +30,8 @@ export type DigitalFile = {
   rotation: number;
   notes: string | null;
   created_at: string;
+  /** Opt-in: include a normally excluded scan (e.g. an envelope) in the record transcription. */
+  include_in_transcription?: boolean | null;
 };
 
 export type DigitalFileWithDerivatives = DigitalFile & {

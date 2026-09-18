@@ -611,6 +611,7 @@ export type Database = {
           created_at: string
           filename_matches: boolean
           id: string
+          include_in_transcription: boolean
           label: string | null
           letter_id: string
           master_mime: string | null
@@ -628,6 +629,7 @@ export type Database = {
           created_at?: string
           filename_matches?: boolean
           id?: string
+          include_in_transcription?: boolean
           label?: string | null
           letter_id: string
           master_mime?: string | null
@@ -645,6 +647,7 @@ export type Database = {
           created_at?: string
           filename_matches?: boolean
           id?: string
+          include_in_transcription?: boolean
           label?: string | null
           letter_id?: string
           master_mime?: string | null

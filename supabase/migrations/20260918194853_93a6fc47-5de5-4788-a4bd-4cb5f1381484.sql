@@ -1,0 +1,1 @@
+ALTER TABLE public.digital_files ADD COLUMN IF NOT EXISTS include_in_transcription boolean NOT NULL DEFAULT false;

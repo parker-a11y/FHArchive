@@ -66,7 +66,11 @@ import {
   sanitizeLabel,
 } from "@/lib/scan-rename";
 import { rotateStoredImage } from "@/lib/rotate";
-import { transcribeScans, transcribeRecord } from "@/lib/transcription.functions";
+import {
+  transcribeScans,
+  transcribeRecord,
+  setScanIncludedInTranscription,
+} from "@/lib/transcription.functions";
 import { isEnvelopePage } from "@/lib/transcription";
 import {
   AlertDialog,
@@ -116,6 +120,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [transcribing, setTranscribing] = useState<string[]>([]);
+  const [includingId, setIncludingId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [lastLabel, setLastLabel] = useState<string | null>(null);
   const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
@@ -370,6 +375,29 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     } finally {
       setTranscribing((t) => t.filter((id) => id !== fileId));
       qc.invalidateQueries({ queryKey: ["scan-transcriptions", letter.id] });
+    }
+  }
+
+  /** Add an envelope (or other excluded scan) to the record's transcription, or take it back out. */
+  async function toggleIncluded(fileId: string, include: boolean) {
+    setIncludingId(fileId);
+    try {
+      const res = await setScanIncludedInTranscription({ data: { fileId, include } });
+      if (res.error) toast.error(res.error);
+      else if (include)
+        toast.success(
+          res.transcribed
+            ? "Transcribed and added to the record transcription."
+            : "Added to the record transcription.",
+        );
+      else toast.success("Removed from the record transcription.");
+      refresh();
+      qc.invalidateQueries({ queryKey: ["scan-transcriptions", letter.id] });
+      refreshLetter();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setIncludingId(null);
     }
   }
 
@@ -1167,6 +1195,36 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                           )}
                           Transcribe
                         </Button>
+                        {isEnvelopePage(f.label, f.original_filename) &&
+                          (f.include_in_transcription ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-1.5 text-[11px] text-archive-gold-strong"
+                              title="This scan is part of the record transcription — click to remove it"
+                              disabled={includingId === f.id}
+                              onClick={() => toggleIncluded(f.id, false)}
+                            >
+                              {includingId === f.id ? (
+                                <Loader2 className="mr-1 size-3.5 animate-spin" />
+                              ) : null}
+                              Included — remove
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-1.5 text-[11px]"
+                              title="Transcribe this scan and add its text to the record transcription"
+                              disabled={includingId === f.id}
+                              onClick={() => toggleIncluded(f.id, true)}
+                            >
+                              {includingId === f.id ? (
+                                <Loader2 className="mr-1 size-3.5 animate-spin" />
+                              ) : null}
+                              Add to transcription
+                            </Button>
+                          ))}
                         {isAdmin && (
                           <Button
                             size="sm"
