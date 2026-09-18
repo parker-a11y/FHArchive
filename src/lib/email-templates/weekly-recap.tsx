@@ -299,20 +299,6 @@ const image = {
   margin: '4px 0 6px',
 }
 const caption = { fontSize: '12px', color: '#8a8f7d', margin: '0 0 18px' }
-const statsBar = {
-  backgroundColor: '#faf7f0',
-  border: '1px solid #e4dcc7',
-  borderRadius: '8px',
-  padding: '12px 16px',
-  margin: '18px 0',
-}
-const statLine = {
-  margin: '0 0 4px',
-  fontSize: '13px',
-  color: '#6b7060',
-  fontFamily: 'Helvetica, Arial, sans-serif',
-}
-const statValue = { color: '#2f3327', fontWeight: 'bold' as const, fontSize: '15px' }
 const label = {
   margin: '18px 0 4px',
   fontSize: '11px',
@@ -336,7 +322,6 @@ const hint = {
   fontFamily: 'Helvetica, Arial, sans-serif',
   fontStyle: 'italic' as const,
 }
-const linkStyle = { color: '#5d6b4a' }
 const hr = { borderColor: '#e4dcc7', margin: '28px 0 14px' }
 const footer = {
   fontSize: '12px',
