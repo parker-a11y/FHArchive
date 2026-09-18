@@ -32,6 +32,7 @@ import { FfnSelectionMenu } from "@/components/ffn/FfnSelectionMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { toast } from "sonner";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -80,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Global shortcuts:
   //   Ctrl+Option+0 → Quick Entry, Ctrl+Option+9 → All Records
-  //   Ctrl+Option+P → activate the page's Print Label button (folder/box label)
+  //   Ctrl+Option+L → activate the page's Print Label button (folder/box label)
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
@@ -98,22 +99,23 @@ export function AppShell({ children }: { children: ReactNode }) {
       const key = e.key ? e.key.toLowerCase() : "";
       const isZero = code === "Digit0" || key === "0";
       const isNine = code === "Digit9" || key === "9";
-      const isP = code === "KeyP" || key === "p";
+      const isL = code === "KeyL" || key === "l";
       if (isZero && canEdit) {
         e.preventDefault();
         navigate({ to: "/catalog" });
       } else if (isNine) {
         e.preventDefault();
         navigate({ to: "/letters" });
-      } else if (isP) {
-        // Print label: click whichever label button the current page exposes.
+      } else if (isL) {
+        // Label: open whichever label button the current page exposes.
+        // Always swallow the keystroke so the browser never runs its own action.
+        e.preventDefault();
+        e.stopPropagation();
         const btn = document.querySelector<HTMLElement>(
           'button[data-shortcut="print-label"]:not([disabled])',
         );
-        if (btn) {
-          e.preventDefault();
-          btn.click();
-        }
+        if (btn) btn.click();
+        else toast.info("No label button on this page.");
       }
     }
     window.addEventListener("keydown", onKey);
