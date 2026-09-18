@@ -77,8 +77,13 @@ export async function resolveScanTargets(
 
   const targets: ScanTarget[] = [];
   for (const f of files ?? []) {
-    // Envelopes are read by eye in Envelope Review — never transcribed.
-    if (isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`)) continue;
+    // Envelopes are read by eye in Envelope Review — never transcribed, unless
+    // the archivist explicitly added that scan to the transcription.
+    if (
+      isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`) &&
+      !(f as any).include_in_transcription
+    )
+      continue;
     // A PDF master renders to one JPEG per page — transcribe all of them together.
     const jpegs = (derivatives ?? [])
       .filter(
@@ -220,7 +225,7 @@ export async function rebuildRecordTranscription(
   const [{ data: files }, { data: rows }, { data: letter }] = await Promise.all([
     supabase
       .from("digital_files")
-      .select("id, label, original_filename, sort_order")
+      .select("id, label, original_filename, sort_order, include_in_transcription")
       .eq("letter_id", letterId)
       .order("sort_order", { ascending: true }),
     supabase
@@ -238,7 +243,9 @@ export async function rebuildRecordTranscription(
 
   const byFile = new Map((rows ?? []).map((r: any) => [r.file_id, r]));
   const ordered = (files ?? []).filter(
-    (f: any) => !isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`),
+    (f: any) =>
+      !isEnvelope(`${f.label ?? ""} ${f.original_filename ?? ""}`) ||
+      Boolean(f.include_in_transcription),
   );
 
   const aiParts: string[] = [];
