@@ -1195,6 +1195,36 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                           )}
                           Transcribe
                         </Button>
+                        {isEnvelopePage(f.label, f.original_filename) &&
+                          (f.include_in_transcription ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-1.5 text-[11px] text-archive-gold-strong"
+                              title="This scan is part of the record transcription — click to remove it"
+                              disabled={includingId === f.id}
+                              onClick={() => toggleIncluded(f.id, false)}
+                            >
+                              {includingId === f.id ? (
+                                <Loader2 className="mr-1 size-3.5 animate-spin" />
+                              ) : null}
+                              Included — remove
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-1.5 text-[11px]"
+                              title="Transcribe this scan and add its text to the record transcription"
+                              disabled={includingId === f.id}
+                              onClick={() => toggleIncluded(f.id, true)}
+                            >
+                              {includingId === f.id ? (
+                                <Loader2 className="mr-1 size-3.5 animate-spin" />
+                              ) : null}
+                              Add to transcription
+                            </Button>
+                          ))}
                         {isAdmin && (
                           <Button
                             size="sm"
