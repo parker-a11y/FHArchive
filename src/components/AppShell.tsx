@@ -80,6 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Global shortcuts:
   //   Ctrl+Option+0 → Quick Entry, Ctrl+Option+9 → All Records
+  //   Ctrl+Option+P → activate the page's Print Label button (folder/box label)
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
