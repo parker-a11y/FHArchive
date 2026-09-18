@@ -80,6 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Global shortcuts:
   //   Ctrl+Option+0 → Quick Entry, Ctrl+Option+9 → All Records
+  //   Ctrl+Option+P → activate the page's Print Label button (folder/box label)
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
@@ -97,12 +98,22 @@ export function AppShell({ children }: { children: ReactNode }) {
       const key = e.key ? e.key.toLowerCase() : "";
       const isZero = code === "Digit0" || key === "0";
       const isNine = code === "Digit9" || key === "9";
+      const isP = code === "KeyP" || key === "p";
       if (isZero && canEdit) {
         e.preventDefault();
         navigate({ to: "/catalog" });
       } else if (isNine) {
         e.preventDefault();
         navigate({ to: "/letters" });
+      } else if (isP) {
+        // Print label: click whichever label button the current page exposes.
+        const btn = document.querySelector<HTMLElement>(
+          'button[data-shortcut="print-label"]:not([disabled])',
+        );
+        if (btn) {
+          e.preventDefault();
+          btn.click();
+        }
       }
     }
     window.addEventListener("keydown", onKey);

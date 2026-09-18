@@ -927,7 +927,7 @@ function LettersTable() {
                 records={boxRecords}
                 onApplied={() => qc.invalidateQueries({ queryKey: ["letters-page"] })}
                 trigger={
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2" data-shortcut="print-label">
                     <Boxes className="size-4" /> Assign to box ({selectedRecords.length})
                   </Button>
                 }

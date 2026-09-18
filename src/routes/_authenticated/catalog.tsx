@@ -568,7 +568,13 @@ function QuickEntry() {
                 {startedLetter?.archive_id ?? next?.archive_id ?? "……"}
               </div>
               <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" onClick={printLabel} disabled={busy}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={printLabel}
+                  disabled={busy}
+                  data-shortcut="print-label"
+                >
                   <Printer className="mr-2 size-4" />
                   Print label
                 </Button>
