@@ -65,7 +65,9 @@ export async function resolveScanTargets(
   const [{ data: files }, { data: derivatives }] = await Promise.all([
     supabase
       .from("digital_files")
-      .select("id, letter_id, label, sort_order, original_filename, master_path, master_mime")
+      .select(
+        "id, letter_id, label, sort_order, original_filename, master_path, master_mime, include_in_transcription",
+      )
       .in("id", fileIds),
     supabase
       .from("file_derivatives")
