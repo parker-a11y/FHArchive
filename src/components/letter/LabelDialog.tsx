@@ -74,21 +74,23 @@ function LabelFace({ archiveId, dateText, title = "", lines = [] }: LabelProps) 
   );
 }
 
+export function printLabelNow(onDone: () => void) {
+  // Printing blocks; close once the browser's print dialog is dismissed.
+  const close = () => onDone();
+  window.addEventListener("afterprint", close, { once: true });
+  window.print();
+  setTimeout(() => {
+    window.removeEventListener("afterprint", close);
+    onDone();
+  }, 300);
+}
+
 function PrintButton({ onDone, size = "default" }: { onDone: () => void; size?: "default" | "large" }) {
   const isLarge = size === "large";
   return (
     <Button
       className={`no-print gap-2 ${isLarge ? "h-40 w-48 flex-col text-xl" : ""}`}
-      onClick={() => {
-        // Printing blocks; close once the browser's print dialog is dismissed.
-        const close = () => onDone();
-        window.addEventListener("afterprint", close, { once: true });
-        window.print();
-        setTimeout(() => {
-          window.removeEventListener("afterprint", close);
-          onDone();
-        }, 300);
-      }}
+      onClick={() => printLabelNow(onDone)}
     >
       <Printer className={isLarge ? "size-10" : "size-4"} />
       <span className="text-center leading-tight">
@@ -98,6 +100,15 @@ function PrintButton({ onDone, size = "default" }: { onDone: () => void; size?: 
       </span>
     </Button>
   );
+}
+
+/** Enter anywhere in the label dialog prints the label (unless a button/textarea has focus). */
+function handleEnterToPrint(e: React.KeyboardEvent, onDone: () => void) {
+  if (e.key !== "Enter" || e.shiftKey) return;
+  const target = e.target as HTMLElement;
+  if (target.closest("textarea") || target.closest("button")) return;
+  e.preventDefault();
+  printLabelNow(onDone);
 }
 
 export function labelLines(letter: Partial<Letter>): string[] {
