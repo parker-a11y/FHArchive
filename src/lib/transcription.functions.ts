@@ -211,3 +211,96 @@ export const checkStaleTranscriptions = createServerFn({ method: "POST" })
     const { staleRecordTranscriptions } = await import("@/lib/transcription.server");
     return staleRecordTranscriptions(context.supabase, data.letterIds);
   });
+
+/**
+ * Adds one scan to (or removes it from) the record transcription. Used on the
+ * scans page for envelopes, which are otherwise never transcribed. Adding a
+ * scan transcribes it if it has no text yet; removing keeps the page text but
+ * drops it out of the combined record transcription.
+ */
+export const setScanIncludedInTranscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { fileId: string; include: boolean }) => ({
+    fileId: String(data.fileId),
+    include: Boolean(data.include),
+  }))
+  .handler(async ({ data, context }) => {
+    const { resolveScanTargets, toDataUrl, transcribeImage, TRANSCRIPTION_MODEL, rebuildRecordTranscription } =
+      await import("@/lib/transcription.server");
+    const supabase = context.supabase;
+
+    const { data: file, error: fileError } = await supabase
+      .from("digital_files")
+      .select("id, letter_id, label, sort_order")
+      .eq("id", data.fileId)
+      .maybeSingle();
+    if (fileError || !file) throw new Error(fileError?.message ?? "Scan not found");
+
+    const { error: flagError } = await supabase
+      .from("digital_files")
+      .update({ include_in_transcription: data.include } as never)
+      .eq("id", data.fileId);
+    if (flagError) throw new Error(flagError.message);
+
+    let transcribed = false;
+    let error: string | null = null;
+
+    if (data.include) {
+      const { data: existing } = await supabase
+        .from("scan_transcriptions")
+        .select("ai_text, verified_text")
+        .eq("file_id", data.fileId)
+        .maybeSingle();
+      const hasText = Boolean(
+        (existing as any)?.verified_text?.trim() || (existing as any)?.ai_text?.trim(),
+      );
+
+      if (!hasText) {
+        const [target] = await resolveScanTargets(supabase, [data.fileId]);
+        if (!target) {
+          error = "No web-viewable copy available for this scan";
+        } else {
+          await supabase.from("scan_transcriptions").upsert(
+            {
+              letter_id: target.letterId,
+              file_id: target.fileId,
+              page_label: target.label,
+              page_index: target.sortOrder,
+              status: "processing",
+              error: null,
+              owner_id: context.userId,
+            } as never,
+            { onConflict: "file_id" },
+          );
+          try {
+            const urls = await Promise.all(
+              (target.paths?.length ? target.paths : [target.path]).map((p) =>
+                toDataUrl(supabase, p, target.mime),
+              ),
+            );
+            const text = await transcribeImage(urls, target.label ?? "Scan");
+            await supabase
+              .from("scan_transcriptions")
+              .update({
+                ai_text: text,
+                status: "ai_transcribed",
+                model: TRANSCRIPTION_MODEL,
+                error: null,
+                ai_generated_at: new Date().toISOString(),
+              } as never)
+              .eq("file_id", target.fileId);
+            transcribed = true;
+          } catch (e) {
+            error = e instanceof Error ? e.message : "Transcription failed";
+            await supabase
+              .from("scan_transcriptions")
+              .update({ status: "failed", error } as never)
+              .eq("file_id", target.fileId);
+          }
+        }
+      }
+    }
+
+    await rebuildRecordTranscription(supabase, (file as any).letter_id as string);
+    return { include: data.include, transcribed, error };
+  });
