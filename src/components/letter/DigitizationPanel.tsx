@@ -66,7 +66,11 @@ import {
   sanitizeLabel,
 } from "@/lib/scan-rename";
 import { rotateStoredImage } from "@/lib/rotate";
-import { transcribeScans, transcribeRecord } from "@/lib/transcription.functions";
+import {
+  transcribeScans,
+  transcribeRecord,
+  setScanIncludedInTranscription,
+} from "@/lib/transcription.functions";
 import { isEnvelopePage } from "@/lib/transcription";
 import {
   AlertDialog,
