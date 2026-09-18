@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BadgeCheck, Loader2, Sparkles, WrapText } from "lucide-react";
+import { BadgeCheck, Loader2, Maximize2, Minimize2, Sparkles, WrapText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,8 @@ function PageEditor({
   readOnly,
   onTextState,
   reflowSignal,
+  full,
+  onToggleFull,
 
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
@@ -75,6 +77,9 @@ function PageEditor({
   onTextState?: (fileId: string, state: { text: string; dirty: boolean }) => void;
   /** Increments when the record-level "Remove line breaks on all pages" action fires. */
   reflowSignal?: number;
+  /** Full screen: just this scan and its editor, everything else hidden. */
+  full?: boolean;
+  onToggleFull?: () => void;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -130,7 +135,14 @@ function PageEditor({
   }
 
   return (
-    <div className="rounded border border-border bg-card p-3">
+    <div
+      data-page-editor={file.id}
+      className={
+        full
+          ? "fixed inset-0 z-50 overflow-auto bg-background p-4"
+          : "rounded border border-border bg-card p-3"
+      }
+    >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {!readOnly && (
           <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
@@ -156,6 +168,24 @@ function PageEditor({
               )}
               Transcribe with ChatGPT
             </Button>
+            {onToggleFull && (
+              <Button
+                size="sm"
+                variant={full ? "default" : "outline"}
+                onClick={onToggleFull}
+                title="Show just this scan and its editor (Ctrl+Option+F / Ctrl+Alt+F, Esc to exit)"
+              >
+                {full ? (
+                  <>
+                    <Minimize2 className="mr-1 size-3.5" /> Exit full screen
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="mr-1 size-3.5" /> Full screen
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
 
@@ -170,7 +200,7 @@ function PageEditor({
               src={file.viewUrl}
               alt={file.label || file.original_filename}
               style={{ transform: `rotate(${file.rotation}deg)` }}
-              className="max-h-[60vh] w-full object-contain"
+              className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
             />
           ) : (
             <p className="p-6 text-sm text-muted-foreground">No web-viewable copy for this scan.</p>
@@ -204,7 +234,7 @@ function PageEditor({
             <>
               <RichTextEditor
                 className="font-mono text-sm"
-                minHeight="24rem"
+                minHeight={full ? "70vh" : "24rem"}
                 toolbarMode="transcription"
                 placeholder="Transcription — AI output appears here and can be corrected."
                 value={text}
@@ -259,6 +289,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   const [selected, setSelected] = useState<string[]>([]);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [recordBusy, setRecordBusy] = useState(false);
+  /** Scan whose image + editor fills the screen on its own; null when off. */
+  const [fullId, setFullId] = useState<string | null>(null);
   const [rollupConflict, setRollupConflict] = useState(false);
 
   useEffect(() => {
@@ -276,6 +308,40 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     [allFiles],
   );
   const envelopeCount = allFiles.length - files.length;
+
+  /**
+   * Ctrl+Option+F (Ctrl+Alt+F on Windows) puts the page you are working on —
+   * the one holding the cursor, otherwise the first — on screen by itself.
+   * Esc brings the rest of the page back.
+   */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && fullId) {
+        setFullId(null);
+        return;
+      }
+      const f = e.key === "f" || e.key === "F" || e.code === "KeyF";
+      if (!f || !e.ctrlKey || !e.altKey || e.metaKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (fullId) return setFullId(null);
+      const active = document.activeElement as HTMLElement | null;
+      const card = active?.closest?.("[data-page-editor]") as HTMLElement | null;
+      const id = card?.dataset.pageEditor ?? files[0]?.id ?? null;
+      if (!id) return toast.message("No scans on this record to show full screen.");
+      setFullId(id);
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [fullId, files]);
+
+  useEffect(() => {
+    if (!fullId) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [fullId]);
   const { data: allTranscripts = [], refetch } = useQuery({
     queryKey: ["scan-transcriptions", letter.id],
     queryFn: () => fetchScanTranscriptions(letter.id),
@@ -575,7 +641,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             readOnly={isGuestViewer}
             onTextState={handleTextState}
             reflowSignal={reflowSignal}
-
+            full={fullId === f.id}
+            onToggleFull={() => setFullId((cur) => (cur === f.id ? null : f.id))}
           />
         ))}
       </div>
