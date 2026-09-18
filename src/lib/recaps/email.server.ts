@@ -4,8 +4,6 @@
 
 import { sendTemplateEmail } from "@/lib/email-templates/send-email";
 
-const SITE_URL = "https://fharchive.com";
-
 function formatWeekRange(weekStart: string, weekEnd: string): string {
   const fmt = (s: string, withYear: boolean) =>
     new Date(`${s}T12:00:00Z`).toLocaleDateString("en-US", {
@@ -18,17 +16,6 @@ function formatWeekRange(weekStart: string, weekEnd: string): string {
   return `${fmt(weekStart, !sameYear)} – ${fmt(weekEnd, true)}`;
 }
 
-const STAT_LABELS: Record<string, string> = {
-  records: "records added",
-  letters: "records added",
-  sources: "digital sources added",
-  scans: "scans uploaded",
-  files: "files uploaded",
-  transcriptions: "transcriptions completed",
-  people: "people added",
-  places: "places added",
-  quotations: "quotations captured",
-};
 
 export type RecapEmailResult = {
   sent: string[];
@@ -66,11 +53,6 @@ export async function buildRecapTemplateData(
       .createSignedUrl(recap.image_path, 60 * 60 * 24 * 30);
     imageUrl = signed?.signedUrl ?? null;
   }
-
-  const stats = Object.entries((recap.stats ?? {}) as Record<string, number>)
-    .filter(([, v]) => typeof v === "number" && v > 0)
-    .slice(0, 6)
-    .map(([k, v]) => ({ label: STAT_LABELS[k] ?? k.replace(/_/g, " "), value: v }));
 
   // Unlisted share links so viewers without an archive account can open records.
   const relatedIds: string[] = (recap.related_ids ?? []).slice(0, 40);
@@ -114,8 +96,6 @@ export async function buildRecapTemplateData(
     relatedIds,
     shareLinks,
     inlinePhotos,
-    stats,
-    recapUrl: `${SITE_URL}/recaps/${recap.slug || recap.week_start}`,
   };
 }
 

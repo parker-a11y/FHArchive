@@ -37,8 +37,6 @@ export interface WeeklyRecapEmailProps {
   shareLinks?: Record<string, string>
   /** Photos embedded in the body, keyed by their `[[photo:…]]` token. */
   inlinePhotos?: Record<string, InlinePhoto>
-  stats?: { label: string; value: string | number }[]
-  recapUrl?: string | null
 }
 
 /** Splits the recap body into renderable blocks (heading / bullet / paragraph / photo). */
@@ -89,9 +87,6 @@ export const WeeklyRecapEmail = ({
   relatedIds = [],
   shareLinks = {},
   inlinePhotos = {},
-
-  stats = [],
-  recapUrl = null,
 }: WeeklyRecapEmailProps) => (
   <Html>
     <Head />
@@ -177,16 +172,6 @@ export const WeeklyRecapEmail = ({
           })}
         </Section>
 
-        {stats.length ? (
-          <Section style={statsBar}>
-            {stats.map((s) => (
-              <Text key={s.label} style={statLine}>
-                <span style={statValue}>{s.value}</span> {s.label}
-              </Text>
-            ))}
-          </Section>
-        ) : null}
-
         {relatedIds.length ? (
           <Section>
             <Text style={label}>Records in this recap</Text>
@@ -214,26 +199,16 @@ export const WeeklyRecapEmail = ({
           </Section>
         ) : null}
 
-        {recapUrl ? (
-          <Text style={para}>
-            <Link href={recapUrl} style={linkStyle}>
-              Open this recap in the archive
-            </Link>
-          </Text>
-        ) : null}
-
         <Hr style={hr} />
         {Object.keys(shareLinks).length ? (
           <Text style={footer}>
-            Record links above open a private, read-only view of that item — no account needed.
-            Please don&rsquo;t forward them outside the family.
+            Record links above open a private, read-only view of that item, no account needed.
           </Text>
         ) : null}
 
         <Text style={footer}>
-          {kind === 'blog'
-            ? 'The Francis Files — a private family archive. Written from the archivist\u2019s desk, drawing on the catalogued letters.'
-            : 'The Francis Files — a private family archive. Weekly recaps are written from the week\u2019s catalog work.'}
+          The Francis Files, a family archive of Francis A Harrington. Recap written from the
+          archivist&rsquo;s desk, drawing on the catalogued letters.
         </Text>
       </Container>
     </Body>
@@ -254,11 +229,6 @@ export const template = {
       'This week the archive added nine records, most of them wartime correspondence from the Pacific.\n\n## Threads\n\n- FH0042 confirms Francis was still aboard ship in March.\n- FH0048 adds a Miami forwarding address.\n\nThe strongest new find is a four-page letter describing the fruit markets ashore.',
     message: 'Here is this week&rsquo;s recap — Parker',
     relatedIds: ['FH0042', 'FH0048', 'DS0007'],
-    stats: [
-      { label: 'records added', value: 9 },
-      { label: 'transcriptions', value: 2 },
-    ],
-    recapUrl: 'https://fharchive.com/recaps/2026-08-24',
   },
 } satisfies TemplateEntry
 
@@ -329,20 +299,6 @@ const image = {
   margin: '4px 0 6px',
 }
 const caption = { fontSize: '12px', color: '#8a8f7d', margin: '0 0 18px' }
-const statsBar = {
-  backgroundColor: '#faf7f0',
-  border: '1px solid #e4dcc7',
-  borderRadius: '8px',
-  padding: '12px 16px',
-  margin: '18px 0',
-}
-const statLine = {
-  margin: '0 0 4px',
-  fontSize: '13px',
-  color: '#6b7060',
-  fontFamily: 'Helvetica, Arial, sans-serif',
-}
-const statValue = { color: '#2f3327', fontWeight: 'bold' as const, fontSize: '15px' }
 const label = {
   margin: '18px 0 4px',
   fontSize: '11px',
@@ -366,7 +322,6 @@ const hint = {
   fontFamily: 'Helvetica, Arial, sans-serif',
   fontStyle: 'italic' as const,
 }
-const linkStyle = { color: '#5d6b4a' }
 const hr = { borderColor: '#e4dcc7', margin: '28px 0 14px' }
 const footer = {
   fontSize: '12px',
