@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BadgeCheck, Loader2, Sparkles, WrapText } from "lucide-react";
+import { BadgeCheck, Loader2, Maximize2, Minimize2, Sparkles, WrapText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,8 @@ function PageEditor({
   readOnly,
   onTextState,
   reflowSignal,
+  full,
+  onToggleFull,
 
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
