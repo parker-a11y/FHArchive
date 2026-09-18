@@ -172,6 +172,33 @@ export const WeeklyRecapEmail = ({
           })}
         </Section>
 
+        {relatedIds.length ? (
+          <Section>
+            <Text style={label}>Records in this recap</Text>
+            <Text style={ids}>
+              {relatedIds.map((id, i) => {
+                const url = shareLinks[id.toUpperCase()]
+                return (
+                  <React.Fragment key={id}>
+                    {i > 0 ? '  ·  ' : ''}
+                    {url ? (
+                      <Link href={url} style={recordLink}>
+                        {id}
+                      </Link>
+                    ) : (
+                      id
+                    )}
+                  </React.Fragment>
+                )
+              })}
+            </Text>
+            <Text style={hint}>
+              Open any record above to view the letter and its transcription side by side — no
+              account needed.
+            </Text>
+          </Section>
+        ) : null}
+
         <Hr style={hr} />
         {Object.keys(shareLinks).length ? (
           <Text style={footer}>
@@ -202,11 +229,6 @@ export const template = {
       'This week the archive added nine records, most of them wartime correspondence from the Pacific.\n\n## Threads\n\n- FH0042 confirms Francis was still aboard ship in March.\n- FH0048 adds a Miami forwarding address.\n\nThe strongest new find is a four-page letter describing the fruit markets ashore.',
     message: 'Here is this week&rsquo;s recap — Parker',
     relatedIds: ['FH0042', 'FH0048', 'DS0007'],
-    stats: [
-      { label: 'records added', value: 9 },
-      { label: 'transcriptions', value: 2 },
-    ],
-    recapUrl: 'https://fharchive.com/recaps/2026-08-24',
   },
 } satisfies TemplateEntry
 
