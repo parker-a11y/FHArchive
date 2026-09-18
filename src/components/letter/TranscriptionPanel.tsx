@@ -168,6 +168,24 @@ function PageEditor({
               )}
               Transcribe with ChatGPT
             </Button>
+            {onToggleFull && (
+              <Button
+                size="sm"
+                variant={full ? "default" : "outline"}
+                onClick={onToggleFull}
+                title="Show just this scan and its editor (Ctrl+Option+F / Ctrl+Alt+F, Esc to exit)"
+              >
+                {full ? (
+                  <>
+                    <Minimize2 className="mr-1 size-3.5" /> Exit full screen
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="mr-1 size-3.5" /> Full screen
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
 
