@@ -98,7 +98,7 @@ export const transcribeRecord = createServerFn({ method: "POST" })
 
     const { data: files } = await supabase
       .from("digital_files")
-      .select("id")
+      .select("id, include_in_transcription")
       .eq("letter_id", data.letterId)
       .order("sort_order", { ascending: true });
     const ids = (files ?? []).map((f) => f.id);
@@ -160,10 +160,16 @@ export const transcribeRecord = createServerFn({ method: "POST" })
       }
     }
 
-    // Envelope text stays out of the combined letter body.
+    // Envelope text stays out of the combined letter body, unless that scan was
+    // explicitly added to the transcription from the scans page.
+    const included = new Set(
+      (files ?? []).filter((f: any) => f.include_in_transcription).map((f: any) => f.id as string),
+    );
     const { combineTranscriptionPages } = await import("@/lib/transcription-format");
     const body = combineTranscriptionPages(
-      pages.filter((p) => !isEnvelope(p.label)).map((p) => p.text),
+      pages
+        .filter((p) => !isEnvelope(p.label) || included.has(p.fileId))
+        .map((p) => p.text),
     );
 
     if (body.trim()) {
