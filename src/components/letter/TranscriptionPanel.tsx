@@ -641,7 +641,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             readOnly={isGuestViewer}
             onTextState={handleTextState}
             reflowSignal={reflowSignal}
-
+            full={fullId === f.id}
+            onToggleFull={() => setFullId((cur) => (cur === f.id ? null : f.id))}
           />
         ))}
       </div>
