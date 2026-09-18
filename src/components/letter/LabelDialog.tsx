@@ -159,7 +159,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           <Printer className="size-4" /> Print Folder Label
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl" onKeyDown={(e) => handleEnterToPrint(e, () => setOpen(false))}>
         <DialogTitle>4 × 6 Folder Label</DialogTitle>
         <div className="no-print space-y-2">
           <label className="field-label">Title / short description</label>
