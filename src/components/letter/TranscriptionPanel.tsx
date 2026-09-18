@@ -200,7 +200,7 @@ function PageEditor({
               src={file.viewUrl}
               alt={file.label || file.original_filename}
               style={{ transform: `rotate(${file.rotation}deg)` }}
-              className="max-h-[60vh] w-full object-contain"
+              className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
             />
           ) : (
             <p className="p-6 text-sm text-muted-foreground">No web-viewable copy for this scan.</p>
@@ -234,7 +234,7 @@ function PageEditor({
             <>
               <RichTextEditor
                 className="font-mono text-sm"
-                minHeight="24rem"
+                minHeight={full ? "70vh" : "24rem"}
                 toolbarMode="transcription"
                 placeholder="Transcription — AI output appears here and can be corrected."
                 value={text}
