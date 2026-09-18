@@ -144,7 +144,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" data-shortcut="print-label">
           <Printer className="size-4" /> Print Folder Label
         </Button>
       </DialogTrigger>
