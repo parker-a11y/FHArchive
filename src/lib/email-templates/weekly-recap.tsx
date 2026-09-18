@@ -37,8 +37,6 @@ export interface WeeklyRecapEmailProps {
   shareLinks?: Record<string, string>
   /** Photos embedded in the body, keyed by their `[[photo:…]]` token. */
   inlinePhotos?: Record<string, InlinePhoto>
-  stats?: { label: string; value: string | number }[]
-  recapUrl?: string | null
 }
 
 /** Splits the recap body into renderable blocks (heading / bullet / paragraph / photo). */
@@ -89,9 +87,6 @@ export const WeeklyRecapEmail = ({
   relatedIds = [],
   shareLinks = {},
   inlinePhotos = {},
-
-  stats = [],
-  recapUrl = null,
 }: WeeklyRecapEmailProps) => (
   <Html>
     <Head />
@@ -177,63 +172,16 @@ export const WeeklyRecapEmail = ({
           })}
         </Section>
 
-        {stats.length ? (
-          <Section style={statsBar}>
-            {stats.map((s) => (
-              <Text key={s.label} style={statLine}>
-                <span style={statValue}>{s.value}</span> {s.label}
-              </Text>
-            ))}
-          </Section>
-        ) : null}
-
-        {relatedIds.length ? (
-          <Section>
-            <Text style={label}>Records in this recap</Text>
-            <Text style={ids}>
-              {relatedIds.map((id, i) => {
-                const url = shareLinks[id.toUpperCase()]
-                return (
-                  <React.Fragment key={id}>
-                    {i > 0 ? '  ·  ' : ''}
-                    {url ? (
-                      <Link href={url} style={recordLink}>
-                        {id}
-                      </Link>
-                    ) : (
-                      id
-                    )}
-                  </React.Fragment>
-                )
-              })}
-            </Text>
-            <Text style={hint}>
-              Open any record above to view the letter and its transcription side by side — no
-              account needed.
-            </Text>
-          </Section>
-        ) : null}
-
-        {recapUrl ? (
-          <Text style={para}>
-            <Link href={recapUrl} style={linkStyle}>
-              Open this recap in the archive
-            </Link>
-          </Text>
-        ) : null}
-
         <Hr style={hr} />
         {Object.keys(shareLinks).length ? (
           <Text style={footer}>
-            Record links above open a private, read-only view of that item — no account needed.
-            Please don&rsquo;t forward them outside the family.
+            Record links above open a private, read-only view of that item, no account needed.
           </Text>
         ) : null}
 
         <Text style={footer}>
-          {kind === 'blog'
-            ? 'The Francis Files — a private family archive. Written from the archivist\u2019s desk, drawing on the catalogued letters.'
-            : 'The Francis Files — a private family archive. Weekly recaps are written from the week\u2019s catalog work.'}
+          The Francis Files, a family archive of Francis A Harrington. Recap written from the
+          archivist&rsquo;s desk, drawing on the catalogued letters.
         </Text>
       </Container>
     </Body>
