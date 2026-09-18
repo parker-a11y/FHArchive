@@ -111,13 +111,13 @@ export const transcribeRecord = createServerFn({ method: "POST" })
       .eq("letter_id", data.letterId);
 
     let failed = 0;
-    const pages: { label: string | null; text: string }[] = [];
+    const pages: { fileId: string; label: string | null; text: string }[] = [];
 
     for (const [i, t] of targets.entries()) {
       const prior = (existing ?? []).find((e) => e.file_id === t.fileId);
       const priorText = prior?.verified_text?.trim() || prior?.ai_text?.trim() || "";
       if (!data.force && priorText) {
-        pages.push({ label: t.label, text: priorText });
+        pages.push({ fileId: t.fileId, label: t.label, text: priorText });
         continue;
       }
 
@@ -149,7 +149,7 @@ export const transcribeRecord = createServerFn({ method: "POST" })
             ai_generated_at: new Date().toISOString(),
           } as never)
           .eq("file_id", t.fileId);
-        pages.push({ label: t.label, text });
+        pages.push({ fileId: t.fileId, label: t.label, text });
       } catch (e) {
         failed += 1;
         const message = e instanceof Error ? e.message : "Transcription failed";
