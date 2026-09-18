@@ -308,6 +308,40 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     [allFiles],
   );
   const envelopeCount = allFiles.length - files.length;
+
+  /**
+   * Ctrl+Option+F (Ctrl+Alt+F on Windows) puts the page you are working on —
+   * the one holding the cursor, otherwise the first — on screen by itself.
+   * Esc brings the rest of the page back.
+   */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && fullId) {
+        setFullId(null);
+        return;
+      }
+      const f = e.key === "f" || e.key === "F" || e.code === "KeyF";
+      if (!f || !e.ctrlKey || !e.altKey || e.metaKey) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (fullId) return setFullId(null);
+      const active = document.activeElement as HTMLElement | null;
+      const card = active?.closest?.("[data-page-editor]") as HTMLElement | null;
+      const id = card?.dataset.pageEditor ?? files[0]?.id ?? null;
+      if (!id) return toast.message("No scans on this record to show full screen.");
+      setFullId(id);
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [fullId, files]);
+
+  useEffect(() => {
+    if (!fullId) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [fullId]);
   const { data: allTranscripts = [], refetch } = useQuery({
     queryKey: ["scan-transcriptions", letter.id],
     queryFn: () => fetchScanTranscriptions(letter.id),
