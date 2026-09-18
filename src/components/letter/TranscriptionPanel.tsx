@@ -77,6 +77,9 @@ function PageEditor({
   onTextState?: (fileId: string, state: { text: string; dirty: boolean }) => void;
   /** Increments when the record-level "Remove line breaks on all pages" action fires. */
   reflowSignal?: number;
+  /** Full screen: just this scan and its editor, everything else hidden. */
+  full?: boolean;
+  onToggleFull?: () => void;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
