@@ -135,7 +135,14 @@ function PageEditor({
   }
 
   return (
-    <div className="rounded border border-border bg-card p-3">
+    <div
+      data-page-editor={file.id}
+      className={
+        full
+          ? "fixed inset-0 z-50 overflow-auto bg-background p-4"
+          : "rounded border border-border bg-card p-3"
+      }
+    >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {!readOnly && (
           <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} />
