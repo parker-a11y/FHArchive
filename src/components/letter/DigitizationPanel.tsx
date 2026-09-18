@@ -120,6 +120,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [transcribing, setTranscribing] = useState<string[]>([]);
+  const [includingId, setIncludingId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [lastLabel, setLastLabel] = useState<string | null>(null);
   const [generating, setGenerating] = useState<{ done: number; total: number } | null>(null);
