@@ -289,6 +289,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
   const [selected, setSelected] = useState<string[]>([]);
   const [busyIds, setBusyIds] = useState<string[]>([]);
   const [recordBusy, setRecordBusy] = useState(false);
+  /** Scan whose image + editor fills the screen on its own; null when off. */
+  const [fullId, setFullId] = useState<string | null>(null);
   const [rollupConflict, setRollupConflict] = useState(false);
 
   useEffect(() => {
