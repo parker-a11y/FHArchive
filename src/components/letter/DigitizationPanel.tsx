@@ -378,6 +378,29 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     }
   }
 
+  /** Add an envelope (or other excluded scan) to the record's transcription, or take it back out. */
+  async function toggleIncluded(fileId: string, include: boolean) {
+    setIncludingId(fileId);
+    try {
+      const res = await setScanIncludedInTranscription({ data: { fileId, include } });
+      if (res.error) toast.error(res.error);
+      else if (include)
+        toast.success(
+          res.transcribed
+            ? "Transcribed and added to the record transcription."
+            : "Added to the record transcription.",
+        );
+      else toast.success("Removed from the record transcription.");
+      refresh();
+      qc.invalidateQueries({ queryKey: ["scan-transcriptions", letter.id] });
+      refreshLetter();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setIncludingId(null);
+    }
+  }
+
   /* -------------------------------- edits -------------------------------- */
 
   async function patchFile(id: string, patch: Record<string, unknown>) {
