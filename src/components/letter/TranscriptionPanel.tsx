@@ -302,9 +302,14 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     queryKey: ["digital-files", letter.id],
     queryFn: () => fetchDigitalFiles(letter.id),
   });
-  // Envelopes are never transcribed — they are reviewed by eye in Envelope Review.
+  // Envelopes are normally reviewed by eye in Envelope Review, so they stay out
+  // of here — unless one was explicitly added to the record's transcription.
   const files = useMemo(
-    () => allFiles.filter((f) => !isEnvelopePage(f.label, f.original_filename)),
+    () =>
+      allFiles.filter(
+        (f) =>
+          !isEnvelopePage(f.label, f.original_filename) || Boolean(f.include_in_transcription),
+      ),
     [allFiles],
   );
   const envelopeCount = allFiles.length - files.length;
