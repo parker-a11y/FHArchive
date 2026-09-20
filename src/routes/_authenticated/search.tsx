@@ -112,7 +112,7 @@ function ResultCard({
                 {s.label}
               </span>
               <span className="text-muted-foreground">
-                <FfnText text={expanded ? s.full : s.text} searchTerm={term} year={yearFromDate(letter.normalized_date)} estimatedYear={letter.date_certainty !== "certain"} />
+                <FfnText text={expanded ? s.full : s.text} searchTerm={term} year={yearFromDate(letter.normalized_date)} estimatedYear={letter.date_certainty !== "confirmed" || letter.date_precision === "approximate"} />
               </span>
             </Link>
           ))}

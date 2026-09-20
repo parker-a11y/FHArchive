@@ -179,6 +179,12 @@ function MoneyTerm({
           aria-label={`${label}: estimate value in today's dollars`}
           className="money-term cursor-pointer rounded-[2px] px-[1px] underline decoration-dotted underline-offset-[3px] focus-visible:ring-2 focus-visible:ring-archive-gold focus-visible:outline-none"
           onMouseEnter={() => setOpen(true)}
+          onClick={(event) => {
+            // Money can appear inside a linked search excerpt; open the card instead of navigating.
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen((value) => !value);
+          }}
         >
           {label}
         </button>

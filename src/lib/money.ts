@@ -25,7 +25,8 @@ const SMALL: Record<string, number> = {
 };
 
 const WORD = "(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|and)";
-const WORD_AMOUNT = `${WORD}(?:[ -]+${WORD}){0,8}`;
+const WORD_START = "(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand)";
+const WORD_AMOUNT = `${WORD_START}(?:[ -]+${WORD}){0,8}`;
 const NUMBER = String.raw`(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?`;
 const MONEY_RE = new RegExp(
   String.raw`\$(?:\s*)${NUMBER}(?:\s*(?:dollars?|bucks?))?|${NUMBER}\s*(?:dollars?|bucks?|cents?|¢)|${WORD_AMOUNT}\s+(?:dollars?|bucks?|cents?)`,

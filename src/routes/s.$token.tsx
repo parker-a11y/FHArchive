@@ -74,7 +74,7 @@ function SharedRecordPage() {
 
   const page = record.pages[index];
   const moneyYear = yearFromDate(record.normalizedDate);
-  const estimatedYear = record.dateCertainty !== "certain";
+  const estimatedYear = record.dateCertainty !== "confirmed" || record.datePrecision === "approximate";
   const dateLine =
     record.dateAsWritten ||
     [record.normalizedDate, record.dateEnd].filter(Boolean).join(" – ") ||

@@ -54,7 +54,7 @@ const has = (v: unknown) => v !== null && v !== undefined && String(v).trim() !=
 
 export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
   const moneyYear = yearFromDate(letter.normalized_date);
-  const estimatedYear = letter.date_certainty !== "certain";
+  const estimatedYear = letter.date_certainty !== "confirmed" || letter.date_precision === "approximate";
   const isLetter = isLetterType(letter.record_type);
   const transcription = flowingCombinedTranscription(
     letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim(),

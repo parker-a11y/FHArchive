@@ -286,7 +286,7 @@ function PageEditor({
 
 export function TranscriptionPanel({ letter, highlight }: { letter: Letter; highlight?: string }) {
   const moneyYear = yearFromDate(letter.normalized_date);
-  const estimatedYear = letter.date_certainty !== "certain";
+  const estimatedYear = letter.date_certainty !== "confirmed" || letter.date_precision === "approximate";
   const qc = useQueryClient();
   const { isGuestViewer } = useAuth();
   const [verified, setVerified] = useState(
