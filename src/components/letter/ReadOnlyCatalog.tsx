@@ -15,6 +15,7 @@ import type { Letter } from "@/lib/queries";
 import { flowingCombinedTranscription } from "@/lib/transcription-format";
 import { isRichHtml } from "@/lib/rich-text";
 import { RichTextView } from "@/components/RichTextView";
+import { yearFromDate } from "@/lib/money";
 
 /**
  * Read-only catalog for view-only accounts. Guests never see form controls,
@@ -52,6 +53,8 @@ function Section({
 const has = (v: unknown) => v !== null && v !== undefined && String(v).trim() !== "";
 
 export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
+  const moneyYear = yearFromDate(letter.normalized_date);
+  const estimatedYear = letter.date_certainty !== "certain";
   const isLetter = isLetterType(letter.record_type);
   const transcription = flowingCombinedTranscription(
     letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim(),
@@ -182,7 +185,7 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
             <div key={d.label}>
               <div className="field-label">{d.label}</div>
               <p className="mt-1 text-sm whitespace-pre-wrap">
-                <FfnText text={String(d.value)} />
+                <FfnText text={String(d.value)} year={moneyYear} estimatedYear={estimatedYear} />
               </p>
             </div>
           ))}
@@ -192,7 +195,7 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
       {transcription && (
         <Section title="Transcription" columns={false}>
           <article className="max-w-3xl font-display text-lg leading-8 whitespace-pre-wrap sm:text-xl sm:leading-9">
-            {isRichHtml(transcription) ? <RichTextView html={transcription} /> : <FfnText text={transcription} />}
+            {isRichHtml(transcription) ? <RichTextView html={transcription} year={moneyYear} estimatedYear={estimatedYear} /> : <FfnText text={transcription} year={moneyYear} estimatedYear={estimatedYear} />}
           </article>
         </Section>
       )}

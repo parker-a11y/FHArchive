@@ -574,6 +574,8 @@ function LetterPage() {
                 html={flowingCombinedTranscription(
                   letter.transcription_verified?.trim() || letter.transcription_raw_ai,
                 )}
+                year={letter.normalized_date ? Number(letter.normalized_date.slice(0, 4)) : undefined}
+                estimatedYear={letter.date_certainty !== "certain"}
               />
             ) : (
               <span className="text-muted-foreground">

@@ -21,6 +21,7 @@ import { useRecordTypeOptions } from "@/lib/categories";
 import { HighlightedText, buildSnippets, countMatches, type Snippet } from "@/lib/highlight";
 import { FfnText } from "@/components/ffn/FfnText";
 import { richTextToPlain } from "@/lib/rich-text";
+import { yearFromDate } from "@/lib/money";
 
 export const Route = createFileRoute("/_authenticated/search")({
   head: () => ({
@@ -111,7 +112,7 @@ function ResultCard({
                 {s.label}
               </span>
               <span className="text-muted-foreground">
-                <FfnText text={expanded ? s.full : s.text} searchTerm={term} />
+                <FfnText text={expanded ? s.full : s.text} searchTerm={term} year={yearFromDate(letter.normalized_date)} estimatedYear={letter.date_certainty !== "certain"} />
               </span>
             </Link>
           ))}
