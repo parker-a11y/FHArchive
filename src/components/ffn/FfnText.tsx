@@ -20,6 +20,12 @@ import {
 } from "@/lib/ffn";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import {
+  CPI_YEARS,
+  LATEST_CPI_YEAR,
+  convertMoney,
+  parseMoneyMentions,
+} from "@/lib/money";
 
 function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -39,9 +45,11 @@ function annotate(
   entries: { alias: string; noteId: string }[],
   notes: Record<string, FfnNote>,
   searchTerm?: string,
+  year?: number,
+  estimatedYear = false,
 ): ReactNode[] {
-  const plain = (value: string, key: string): ReactNode => {
-    if (!searchTerm?.trim()) return value;
+  const searched = (value: string, key: string): ReactNode => {
+    if (!searchTerm?.trim()) return <Fragment key={key}>{value}</Fragment>;
     const pieces = value.split(new RegExp(`(${escapeRe(searchTerm.trim())})`, "gi"));
     return (
       <Fragment key={key}>
@@ -56,6 +64,28 @@ function annotate(
         )}
       </Fragment>
     );
+  };
+  const plain = (value: string, key: string): ReactNode => {
+    const mentions = parseMoneyMentions(value);
+    if (!mentions.length) return searched(value, key);
+    const result: ReactNode[] = [];
+    let cursor = 0;
+    mentions.forEach((mention, index) => {
+      if (mention.start > cursor)
+        result.push(searched(value.slice(cursor, mention.start), `${key}-text-${index}`));
+      result.push(
+        <MoneyTerm
+          key={`${key}-money-${index}`}
+          label={mention.original}
+          amountCents={mention.amountCents}
+          year={year}
+          estimatedYear={estimatedYear}
+        />,
+      );
+      cursor = mention.end;
+    });
+    if (cursor < value.length) result.push(searched(value.slice(cursor), `${key}-tail`));
+    return <Fragment key={key}>{result}</Fragment>;
   };
   if (!text || !entries.length) return [plain(text, "plain")];
   // Longest aliases first so "USS Doyle C. Barnes" wins over "Barnes".
@@ -89,13 +119,117 @@ function annotate(
 }
 
 /** Plain archive text with Francis File Note terms made interactive. */
-export function FfnText({ text, searchTerm }: { text: string; searchTerm?: string }) {
+export function FfnText({
+  text,
+  searchTerm,
+  year,
+  estimatedYear = false,
+}: {
+  text: string;
+  searchTerm?: string;
+  year?: number;
+  estimatedYear?: boolean;
+}) {
   const { data } = useAliasIndex();
   const nodes = useMemo(
-    () => annotate(text, data?.entries ?? [], data?.notes ?? {}, searchTerm),
-    [text, data, searchTerm],
+    () => annotate(text, data?.entries ?? [], data?.notes ?? {}, searchTerm, year, estimatedYear),
+    [text, data, searchTerm, year, estimatedYear],
   );
   return <>{nodes}</>;
+}
+
+function dollars(cents: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: cents % 100 ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
+}
+
+function presentDollars(value: number) {
+  const rounded = value >= 100 ? Math.round(value) : value >= 10 ? Math.round(value * 10) / 10 : Math.round(value * 100) / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: rounded < 100 ? 2 : 0,
+  }).format(rounded);
+}
+
+/** An unobtrusive currency marker whose popover works by hover, tap and keyboard. */
+function MoneyTerm({
+  label,
+  amountCents,
+  year,
+  estimatedYear,
+}: {
+  label: string;
+  amountCents: number;
+  year?: number;
+  estimatedYear: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number | "">(year ?? "");
+  const converted = selectedYear ? convertMoney(amountCents, selectedYear) : null;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`${label}: estimate value in today's dollars`}
+          className="money-term cursor-pointer rounded-[2px] px-[1px] underline decoration-dotted underline-offset-[3px] focus-visible:ring-2 focus-visible:ring-archive-gold focus-visible:outline-none"
+          onMouseEnter={() => setOpen(true)}
+          onClick={(event) => {
+            // Money can appear inside a linked search excerpt; open the card instead of navigating.
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen((value) => !value);
+          }}
+        >
+          {label}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[min(21rem,92vw)] p-4"
+        onMouseLeave={() => setOpen(false)}
+      >
+        <div className="space-y-3">
+          <div>
+            <div className="text-[11px] font-bold tracking-[0.14em] text-archive-gold uppercase">
+              Historical money
+            </div>
+            <div className="mt-1 text-sm">Original amount: <strong>{dollars(amountCents)}</strong></div>
+          </div>
+          <label className="block text-xs font-medium text-muted-foreground">
+            Year of amount
+            <select
+              className="mt-1 block h-9 w-full rounded border border-input bg-background px-2 text-sm text-foreground"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value ? Number(event.target.value) : "")}
+            >
+              <option value="">Select a year</option>
+              {CPI_YEARS.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          {converted == null ? (
+            <p className="text-sm text-muted-foreground">Choose the year this amount was written to estimate its value today.</p>
+          ) : (
+            <div className="rounded border border-border bg-muted/50 p-3">
+              <div className="text-xs text-muted-foreground">Approximate value in {LATEST_CPI_YEAR} dollars</div>
+              <div className="font-display text-2xl font-semibold">{presentDollars(converted)}</div>
+              {estimatedYear && selectedYear === year && (
+                <div className="mt-1 text-xs text-muted-foreground">Using the record’s estimated date.</div>
+              )}
+            </div>
+          )}
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            Estimate based on annual U.S. CPI-U from the Bureau of Labor Statistics. Purchasing power varies by item and location.
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function FfnTerm({ note, label }: { note: FfnNote; label: string }) {

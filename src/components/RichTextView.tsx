@@ -35,7 +35,7 @@ function PhotoFigure({ photo }: { photo: InlinePhoto }) {
 }
 
 /** Photo tokens, record numbers and Francis Files Notes inside one text run. */
-function TextRun({ text, photos }: { text: string; photos?: Record<string, InlinePhoto> }) {
+function TextRun({ text, photos, year, estimatedYear }: { text: string; photos?: Record<string, InlinePhoto>; year?: number; estimatedYear?: boolean }) {
   const parts = text.split(new RegExp(`(${PHOTO_TOKEN_SRC}|FH-?\\d{3,}|DS-?\\d{3,})`, "gi"));
   return (
     <>
@@ -46,23 +46,23 @@ function TextRun({ text, photos }: { text: string; photos?: Record<string, Inlin
           return photo ? <PhotoFigure key={i} photo={photo} /> : null;
         }
         if (/^(FH|DS)-?\d{3,}$/i.test(part)) return <RecordLink key={i} id={part} />;
-        return <FfnText key={i} text={part} />;
+        return <FfnText key={i} text={part} year={year} estimatedYear={estimatedYear} />;
       })}
     </>
   );
 }
 
 /** Renders a note written in the rich-text editor. */
-export function RichTextView({ html, className }: { html: string; className?: string }) {
+export function RichTextView({ html, className, year, estimatedYear }: { html: string; className?: string; year?: number; estimatedYear?: boolean }) {
   const photos = useInlinePhotos(html);
   const nodes = parse(sanitizeRichHtml(html), {
     replace: (node) => {
-      if (node instanceof TextNode) return <TextRun text={node.data} photos={photos} />;
+      if (node instanceof TextNode) return <TextRun text={node.data} photos={photos} year={year} estimatedYear={estimatedYear} />;
       if (node instanceof Element && node.name === "a") {
         const href = node.attribs["href"];
         return (
           <a href={href} target="_blank" rel="noopener noreferrer">
-            {domToReact(node.children as DOMNode[], { replace: (n) => (n instanceof TextNode ? <TextRun text={n.data} photos={photos} /> : undefined) })}
+            {domToReact(node.children as DOMNode[], { replace: (n) => (n instanceof TextNode ? <TextRun text={n.data} photos={photos} year={year} estimatedYear={estimatedYear} /> : undefined) })}
           </a>
         );
       }

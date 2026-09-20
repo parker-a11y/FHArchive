@@ -35,6 +35,7 @@ import {
 
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 import { isRichHtml, richTextToPlain } from "@/lib/rich-text";
+import { yearFromDate } from "@/lib/money";
 
 function StatusPill({ status }: { status: string | null | undefined }) {
   return (
@@ -62,6 +63,8 @@ function PageEditor({
   reflowSignal,
   full,
   onToggleFull,
+  year,
+  estimatedYear,
 
 }: {
   file: { id: string; label: string | null; original_filename: string; viewUrl: string; rotation: number };
@@ -80,6 +83,8 @@ function PageEditor({
   /** Full screen: just this scan and its editor, everything else hidden. */
   full?: boolean;
   onToggleFull?: () => void;
+  year?: number;
+  estimatedYear?: boolean;
 }) {
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -225,7 +230,7 @@ function PageEditor({
           {readOnly ? (
             <div className="max-h-[28rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
               {text ? (
-                isRichHtml(text) ? <RichTextView html={text} /> : <FfnText text={text} />
+                isRichHtml(text) ? <RichTextView html={text} year={year} estimatedYear={estimatedYear} /> : <FfnText text={text} year={year} estimatedYear={estimatedYear} />
               ) : (
                 <span className="text-muted-foreground">No transcription yet.</span>
               )}
@@ -280,6 +285,8 @@ function PageEditor({
 }
 
 export function TranscriptionPanel({ letter, highlight }: { letter: Letter; highlight?: string }) {
+  const moneyYear = yearFromDate(letter.normalized_date);
+  const estimatedYear = letter.date_certainty !== "confirmed" || letter.date_precision === "approximate";
   const qc = useQueryClient();
   const { isGuestViewer } = useAuth();
   const [verified, setVerified] = useState(
@@ -648,6 +655,8 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             reflowSignal={reflowSignal}
             full={fullId === f.id}
             onToggleFull={() => setFullId((cur) => (cur === f.id ? null : f.id))}
+            year={moneyYear}
+            estimatedYear={estimatedYear}
           />
         ))}
       </div>
@@ -691,11 +700,13 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
               {letter.transcription_raw_ai ? (
                 isRichHtml(flowingCombinedTranscription(letter.transcription_raw_ai)) ? (
-                  <RichTextView html={flowingCombinedTranscription(letter.transcription_raw_ai)} />
+                  <RichTextView html={flowingCombinedTranscription(letter.transcription_raw_ai)} year={moneyYear} estimatedYear={estimatedYear} />
                 ) : (
                   <FfnText
                     text={flowingCombinedTranscription(letter.transcription_raw_ai)}
                     searchTerm={highlight}
+                    year={moneyYear}
+                    estimatedYear={estimatedYear}
                   />
                 )
               ) : (
@@ -725,7 +736,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             {isGuestViewer ? (
               <div className="mt-1.5 max-h-[26rem] overflow-auto rounded border bg-card p-3 font-mono text-sm whitespace-pre-wrap">
                 {verified ? (
-                  isRichHtml(verified) ? <RichTextView html={verified} /> : <FfnText text={verified} />
+                  isRichHtml(verified) ? <RichTextView html={verified} year={moneyYear} estimatedYear={estimatedYear} /> : <FfnText text={verified} year={moneyYear} estimatedYear={estimatedYear} />
                 ) : (
                   <span className="text-muted-foreground">No verified transcription yet.</span>
                 )}
