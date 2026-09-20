@@ -668,11 +668,30 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h4 className="text-sm font-semibold">Combined record transcription</h4>
           <StatusPill status={letter.transcription_status} />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto"
+            disabled={!verified && !letter.transcription_raw_ai}
+            onClick={async () => {
+              const text =
+                richTextToPlain(verified) ||
+                richTextToPlain(flowingCombinedTranscription(letter.transcription_raw_ai || ""));
+              if (!text.trim()) return;
+              try {
+                await navigator.clipboard.writeText(text);
+                toast.success("Transcription copied to clipboard");
+              } catch {
+                toast.error("Couldn't copy — your browser blocked clipboard access");
+              }
+            }}
+          >
+            Copy to clipboard
+          </Button>
           {!isGuestViewer && (
             <Button
               size="sm"
               variant="ghost"
-              className="ml-auto"
               disabled={!letter.transcription_raw_ai}
               onClick={copyAiIntoVerified}
             >
