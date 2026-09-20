@@ -7,6 +7,7 @@ import { RECORD_TYPES, labelOf } from "@/lib/archive";
 import { FfnText } from "@/components/ffn/FfnText";
 import { RichTextView } from "@/components/RichTextView";
 import { isRichHtml } from "@/lib/rich-text";
+import { yearFromDate } from "@/lib/money";
 
 export const Route = createFileRoute("/s/$token")({
   loader: ({ params }) => getSharedRecord({ data: { token: params.token } }),
@@ -29,12 +30,12 @@ export const Route = createFileRoute("/s/$token")({
   component: SharedRecordPage,
 });
 
-function Meta({ label, value }: { label: string; value: string | null }) {
+function Meta({ label, value, year, estimatedYear }: { label: string; value: string | null; year?: number; estimatedYear?: boolean }) {
   if (!value) return null;
   return (
     <div>
       <div className="field-label">{label}</div>
-      <div className="text-sm"><FfnText text={value} /></div>
+      <div className="text-sm"><FfnText text={value} year={year} estimatedYear={estimatedYear} /></div>
     </div>
   );
 }
@@ -72,6 +73,8 @@ function SharedRecordPage() {
   }
 
   const page = record.pages[index];
+  const moneyYear = yearFromDate(record.normalizedDate);
+  const estimatedYear = record.dateCertainty !== "certain";
   const dateLine =
     record.dateAsWritten ||
     [record.normalizedDate, record.dateEnd].filter(Boolean).join(" – ") ||
@@ -139,9 +142,9 @@ function SharedRecordPage() {
       <h2 className="font-display text-lg">Transcription</h2>
       <div className="mt-2 max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded border border-border bg-card p-4 text-sm leading-relaxed lg:max-h-[80vh]">
         {isRichHtml(record.transcription) ? (
-          <RichTextView html={record.transcription} />
+          <RichTextView html={record.transcription} year={moneyYear} estimatedYear={estimatedYear} />
         ) : (
-          <FfnText text={record.transcription} />
+          <FfnText text={record.transcription} year={moneyYear} estimatedYear={estimatedYear} />
         )}
       </div>
     </section>
@@ -149,22 +152,22 @@ function SharedRecordPage() {
 
   const metaAside = (
     <>
-      <Meta label="Date" value={dateLine} />
-      <Meta label="From" value={record.author} />
-      <Meta label="To" value={record.recipient} />
-      <Meta label="Location line (written at)" value={record.dateline} />
-      <Meta label="Mailing origin" value={record.origin} />
-      <Meta label="Destination" value={record.destination} />
-      <Meta label="Primary person" value={record.primaryPerson} />
-      <Meta label="Description" value={record.physicalDescription} />
-      <Meta label="Summary" value={record.summary} />
+      <Meta label="Date" value={dateLine} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="From" value={record.author} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="To" value={record.recipient} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Location line (written at)" value={record.dateline} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Mailing origin" value={record.origin} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Destination" value={record.destination} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Primary person" value={record.primaryPerson} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Description" value={record.physicalDescription} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Summary" value={record.summary} year={moneyYear} estimatedYear={estimatedYear} />
       <Tags label="People" items={record.people} />
       <Tags label="Places" items={record.places} />
       <Tags label="Organizations · ships · units" items={record.organizations} />
       <Tags label="Events" items={record.events} />
       <Tags label="Subjects · tags" items={record.keywords} />
-      <Meta label="Notes" value={record.notes} />
-      <Meta label="Note from the archivist" value={record.publicNote} />
+      <Meta label="Notes" value={record.notes} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="Note from the archivist" value={record.publicNote} year={moneyYear} estimatedYear={estimatedYear} />
     </>
   );
 

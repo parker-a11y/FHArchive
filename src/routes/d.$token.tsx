@@ -3,6 +3,7 @@ import { useState } from "react";
 import { getSharedSource } from "@/lib/source-shares.functions";
 import { dsTypeLabel } from "@/lib/sources";
 import { FfnText } from "@/components/ffn/FfnText";
+import { yearFromDate } from "@/lib/money";
 
 export const Route = createFileRoute("/d/$token")({
   loader: ({ params }) => getSharedSource({ data: { token: params.token } }),
@@ -25,12 +26,12 @@ export const Route = createFileRoute("/d/$token")({
   component: SharedSourcePage,
 });
 
-function Meta({ label, value }: { label: string; value: string | null }) {
+function Meta({ label, value, year }: { label: string; value: string | null; year?: number }) {
   if (!value) return null;
   return (
     <div>
       <div className="field-label">{label}</div>
-      <div className="text-sm break-words"><FfnText text={value} /></div>
+      <div className="text-sm break-words"><FfnText text={value} year={year} /></div>
     </div>
   );
 }
@@ -94,6 +95,7 @@ function SharedSourcePage() {
   }
 
   const file = source.files[index];
+  const moneyYear = yearFromDate(source.normalizedDate ?? source.historicalDateRange ?? source.originalDate);
   const dateLine =
     source.originalDate || source.historicalDateRange || source.normalizedDate || "Undated";
 
@@ -169,7 +171,7 @@ function SharedSourcePage() {
             <section className="mt-8">
               <h2 className="font-display text-lg">Description</h2>
               <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
-                <FfnText text={source.description} />
+                <FfnText text={source.description} year={moneyYear} />
               </p>
             </section>
           )}
@@ -177,15 +179,15 @@ function SharedSourcePage() {
           {source.transcript && (
             <section className="mt-8">
               <h2 className="font-display text-lg">Transcript</h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={source.transcript} /></p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed"><FfnText text={source.transcript} year={moneyYear} /></p>
             </section>
           )}
         </section>
 
         <aside className="space-y-5">
-          <Meta label="Date" value={dateLine} />
-          <Meta label="Creator" value={source.creator} />
-          <Meta label="Institution / repository" value={source.institution} />
+          <Meta label="Date" value={dateLine} year={moneyYear} />
+          <Meta label="Creator" value={source.creator} year={moneyYear} />
+          <Meta label="Institution / repository" value={source.institution} year={moneyYear} />
           <Meta label="Date accessed" value={source.dateAccessed} />
           {source.url && (
             <div>
