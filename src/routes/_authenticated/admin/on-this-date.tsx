@@ -1,9 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchDateContexts, prettyDate } from "@/lib/on-this-date";
+import {
+  enqueueMissingDatesFn,
+  getBackfillStatusFn,
+  retryQueuedDateFn,
+  setBackfillPausedFn,
+} from "@/lib/on-this-date.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/on-this-date")({
   head: () => ({
