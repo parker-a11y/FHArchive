@@ -151,3 +151,93 @@ function OnThisDateReview() {
     </>
   );
 }
+
+/** Progress of the slow background filling of every archive date. */
+function BackfillProgress() {
+  const qc = useQueryClient();
+  const status = useServerFn(getBackfillStatusFn);
+  const enqueue = useServerFn(enqueueMissingDatesFn);
+  const setPaused = useServerFn(setBackfillPausedFn);
+  const retry = useServerFn(retryQueuedDateFn);
+  const [busy, setBusy] = useState(false);
+
+  const { data } = useQuery({
+    queryKey: ["date_context_backfill"],
+    queryFn: () => status({ data: undefined as never }),
+    refetchInterval: 30_000,
+  });
+
+  const run = async (fn: () => Promise<unknown>, message: string) => {
+    setBusy(true);
+    try {
+      await fn();
+      await qc.invalidateQueries({ queryKey: ["date_context_backfill"] });
+      await qc.invalidateQueries({ queryKey: ["date_contexts"] });
+      toast.success(message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!data) return null;
+  const totalDays = data.written + data.pending;
+
+  return (
+    <div className="border-b border-border bg-muted/30 px-4 py-3 text-sm sm:px-8">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span>
+          <strong>{data.written}</strong> of {totalDays} days written
+          {data.pending > 0
+            ? ` — ${data.pending} waiting, ${data.paused ? "paused" : "filling about 3 an hour"}`
+            : " — all caught up"}
+          {data.failed > 0 ? ` · ${data.failed} need attention` : ""}
+        </span>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() =>
+              run(
+                () => setPaused({ data: { paused: !data.paused } }),
+                data.paused ? "Filling resumed." : "Filling paused.",
+              )
+            }
+          >
+            {data.paused ? "Resume" : "Pause"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() =>
+              run(() => enqueue({ data: undefined as never }), "Waiting list updated.")
+            }
+          >
+            Add missing days
+          </Button>
+        </div>
+      </div>
+
+      {data.errors.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {data.errors.map((e) => (
+            <div key={e.on_date} className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-medium">{prettyDate(e.on_date)}</span>
+              <span className="text-muted-foreground">{e.last_error}</span>
+              <button
+                className="underline hover:text-primary"
+                disabled={busy}
+                onClick={() => run(() => retry({ data: { date: e.on_date } }), "Put back in line.")}
+              >
+                Try again
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
