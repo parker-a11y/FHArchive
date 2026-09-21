@@ -83,6 +83,63 @@ export const saveDateContextFn = createServerFn({ method: "POST" })
     return row;
   });
 
+/** Progress of the slow background backfill. */
+export const getBackfillStatusFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await assertAccess(context, true);
+    const { dateContextBackfillStatus } = await import("@/lib/on-this-date.server");
+    return dateContextBackfillStatus(supabaseAdmin);
+  });
+
+/** Adds newly catalogued dates that still have no narrative. */
+export const enqueueMissingDatesFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await assertAccess(context, true);
+    const { enqueueMissingDateContexts, dateContextBackfillStatus } = await import(
+      "@/lib/on-this-date.server"
+    );
+    await enqueueMissingDateContexts(supabaseAdmin);
+    return dateContextBackfillStatus(supabaseAdmin);
+  });
+
+/** Pauses or resumes the background backfill. */
+export const setBackfillPausedFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { paused: boolean }) => ({ paused: Boolean(data?.paused) }))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await assertAccess(context, true);
+    const { error } = await supabaseAdmin
+      .from("job_config")
+      .upsert(
+        { key: "on_this_date_backfill", value: data.paused ? "paused" : "running" } as never,
+        { onConflict: "key" },
+      );
+    if (error) throw error;
+    const { dateContextBackfillStatus } = await import("@/lib/on-this-date.server");
+    return dateContextBackfillStatus(supabaseAdmin);
+  });
+
+/** Puts a failed date back in the waiting list. */
+export const retryQueuedDateFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { date: string }) => {
+    const date = String(data?.date ?? "");
+    if (!ISO.test(date)) throw new Error("Invalid date.");
+    return { date };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await assertAccess(context, true);
+    const { error } = await supabaseAdmin
+      .from("date_context_queue")
+      .update({ status: "pending", attempts: 0, last_error: null } as never)
+      .eq("on_date", data.date);
+    if (error) throw error;
+    const { dateContextBackfillStatus } = await import("@/lib/on-this-date.server");
+    return dateContextBackfillStatus(supabaseAdmin);
+  });
+
 /** Internal editorial status only — it never affects who can see the narrative. */
 export const setDateReviewedFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

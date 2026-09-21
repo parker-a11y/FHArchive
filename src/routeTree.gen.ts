@@ -62,6 +62,7 @@ import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
 import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
+import { Route as ApiPublicOnThisDateBackfillRouteImport } from './routes/api/public/on-this-date-backfill'
 import { Route as ApiPublicResearchReindexRouteImport } from './routes/api/public/research-reindex'
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
 import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
@@ -358,6 +359,12 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   path: '/api/public/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicOnThisDateBackfillRoute =
+  ApiPublicOnThisDateBackfillRouteImport.update({
+    id: '/api/public/on-this-date-backfill',
+    path: '/api/public/on-this-date-backfill',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicResearchReindexRoute =
   ApiPublicResearchReindexRouteImport.update({
     id: '/api/public/research-reindex',
@@ -438,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
@@ -498,6 +506,7 @@ export interface FileRoutesByTo {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
@@ -560,6 +569,7 @@ export interface FileRoutesById {
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
@@ -622,6 +632,7 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
     | '/api/public/weekly-recap'
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
     | '/api/public/weekly-recap'
@@ -743,6 +755,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
     | '/api/public/weekly-recap'
@@ -779,6 +792,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  ApiPublicOnThisDateBackfillRoute: typeof ApiPublicOnThisDateBackfillRoute
   ApiPublicResearchReindexRoute: typeof ApiPublicResearchReindexRoute
   ApiPublicResearchSnapshotRoute: typeof ApiPublicResearchSnapshotRoute
   ApiPublicWeeklyRecapRoute: typeof ApiPublicWeeklyRecapRoute
@@ -1158,6 +1172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/on-this-date-backfill': {
+      id: '/api/public/on-this-date-backfill'
+      path: '/api/public/on-this-date-backfill'
+      fullPath: '/api/public/on-this-date-backfill'
+      preLoaderRoute: typeof ApiPublicOnThisDateBackfillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/research-reindex': {
       id: '/api/public/research-reindex'
       path: '/api/public/research-reindex'
@@ -1306,6 +1327,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  ApiPublicOnThisDateBackfillRoute: ApiPublicOnThisDateBackfillRoute,
   ApiPublicResearchReindexRoute: ApiPublicResearchReindexRoute,
   ApiPublicResearchSnapshotRoute: ApiPublicResearchSnapshotRoute,
   ApiPublicWeeklyRecapRoute: ApiPublicWeeklyRecapRoute,
