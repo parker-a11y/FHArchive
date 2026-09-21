@@ -318,10 +318,3 @@ export const setScanIncludedInTranscription = createServerFn({ method: "POST" })
     return { include: data.include, transcribed, error };
   });
 
-/** Idempotent archive maintenance for repeated Navy letterhead on later pages. */
-export const cleanupExistingNavyLetterheads = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { cleanExistingNavyLetterheads } = await import("@/lib/transcription.server");
-    return cleanExistingNavyLetterheads(context.supabase);
-  });

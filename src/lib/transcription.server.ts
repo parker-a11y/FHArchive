@@ -152,63 +152,6 @@ export async function cleanTranscribedPage(
   return removeRepeatedNavyLetterhead(firstText, text).trim();
 }
 
-/** One-time/idempotent cleanup for already-stored later-page transcriptions. */
-export async function cleanExistingNavyLetterheads(supabase: SupabaseClient) {
-  const [{ data: files, error: filesError }, { data: rows, error: rowsError }] = await Promise.all([
-    supabase
-      .from("digital_files")
-      .select("id, letter_id, label, original_filename, sort_order, include_in_transcription")
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("scan_transcriptions")
-      .select("id, letter_id, file_id, ai_text, verified_text, status"),
-  ]);
-  if (filesError) throw new Error(filesError.message);
-  if (rowsError) throw new Error(rowsError.message);
-
-  const rowsByFile = new Map((rows ?? []).map((row: any) => [row.file_id as string, row]));
-  const letterIds = [...new Set((files ?? []).map((file) => file.letter_id as string))];
-  const affectedLetters = new Set<string>();
-  let pages = 0;
-
-  for (const letterId of letterIds) {
-    const included = (files ?? []).filter(
-      (file: any) =>
-        file.letter_id === letterId &&
-        (!isEnvelope(`${file.label ?? ""} ${file.original_filename ?? ""}`) ||
-          Boolean(file.include_in_transcription)),
-    );
-    const firstRow: any = included[0] ? rowsByFile.get(included[0].id) : null;
-    const firstText = firstRow?.verified_text?.trim() || firstRow?.ai_text?.trim() || "";
-    if (!firstText) continue;
-
-    for (const file of included.slice(1)) {
-      const row: any = rowsByFile.get(file.id);
-      if (!row) continue;
-      const nextAi = row.ai_text
-        ? removeRepeatedNavyLetterhead(firstText, row.ai_text).trim()
-        : row.ai_text;
-      const nextVerified = row.verified_text
-        ? removeRepeatedNavyLetterhead(firstText, row.verified_text).trim()
-        : row.verified_text;
-      if (nextAi === row.ai_text && nextVerified === row.verified_text) continue;
-
-      const { error } = await supabase
-        .from("scan_transcriptions")
-        .update({ ai_text: nextAi, verified_text: nextVerified } as never)
-        .eq("id", row.id);
-      if (error) throw new Error(error.message);
-      pages += 1;
-      affectedLetters.add(letterId);
-    }
-  }
-
-  for (const letterId of affectedLetters) {
-    await rebuildRecordTranscription(supabase, letterId);
-  }
-  return { pages, records: affectedLetters.size };
-}
-
 export async function toDataUrl(supabase: SupabaseClient, path: string, mime: string) {
   const { data, error } = await supabase.storage.from("scans").download(path);
   if (error || !data) throw new Error(error?.message ?? "Could not read the scan file");
