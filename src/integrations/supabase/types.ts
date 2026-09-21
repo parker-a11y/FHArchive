@@ -549,6 +549,33 @@ export type Database = {
           },
         ]
       }
+      date_context_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          last_error: string | null
+          on_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          on_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          last_error?: string | null
+          on_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       date_contexts: {
         Row: {
           created_at: string

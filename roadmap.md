@@ -18,3 +18,5 @@
 - [x] Tech debt: drop duplicate Postgres indexes on junction tables
 - [x] Tech debt: gitignore .env, add .env.example placeholders
 - [x] Tech debt: document storage buckets (scans, ds-files) in AGENTS.md
+
+- [x] "What was happening this day" backfill: hourly job writes 3 archive dates/run, queue + pause/resume + retry on the On This Date Review page (publish required for the live cron route)
