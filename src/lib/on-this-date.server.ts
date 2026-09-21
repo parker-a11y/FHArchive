@@ -314,7 +314,7 @@ export async function dateContextBackfillStatus(admin: any) {
     failed,
     written,
     paused: (cfg?.data?.value ?? "running") === "paused",
-    errors: errors ?? [],
+    errors: (errors ?? []) as { on_date: string; attempts: number; last_error: string | null }[],
   };
 }
 
