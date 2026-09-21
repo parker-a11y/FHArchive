@@ -750,10 +750,16 @@ export type BlogPostParams = {
   instructions?: string;
 };
 
+function normalizeArchiveRef(value: string) {
+  const compact = value.toUpperCase().replace(/[\s-]/g, "");
+  return compact.startsWith("DS") ? compact.replace(/^DS/, "DS-") : compact;
+}
+
 /** Gathers material for an explicit set of record numbers (FH…/DS…). */
 async function gatherByIds(admin: any, ids: string[]): Promise<WeekMaterial> {
-  const fh = ids.filter((i) => i.startsWith("FH")).slice(0, 120);
-  const ds = ids.filter((i) => i.startsWith("DS")).slice(0, 60);
+  const normalizedIds = ids.map(normalizeArchiveRef);
+  const fh = normalizedIds.filter((i) => i.startsWith("FH")).slice(0, 120);
+  const ds = normalizedIds.filter((i) => i.startsWith("DS-")).slice(0, 60);
 
   const [{ data: letters }, { data: sources }] = await Promise.all([
     fh.length
@@ -870,7 +876,7 @@ export async function runBlogPost(params: BlogPostParams) {
     new Set(
       ((params.outline.toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? []) as string[])
         .concat(params.refs)
-        .map((x) => x.toUpperCase().replace(/[\s-]/g, "")),
+        .map(normalizeArchiveRef),
     ),
   );
 
@@ -979,7 +985,7 @@ Return a single JSON object:
     lede: String(parsed.lede ?? "").trim().slice(0, 400),
     body_md: body,
     related_ids: (Array.isArray(parsed.related_ids) ? parsed.related_ids : [])
-      .map((x: any) => String(x).trim().toUpperCase())
+      .map((x: any) => normalizeArchiveRef(String(x).trim()))
       .filter((x: string) => known.has(x))
       .slice(0, 60),
     image_bucket: material.image?.bucket ?? null,

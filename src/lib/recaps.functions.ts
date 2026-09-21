@@ -3,6 +3,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+function normalizeArchiveRef(value: string) {
+  const compact = value.toUpperCase().replace(/[\s-]/g, "");
+  return compact.startsWith("DS") ? compact.replace(/^DS/, "DS-") : compact;
+}
+
 async function assertAdmin(context: any) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
@@ -103,7 +108,7 @@ export const generateBlogPost = createServerFn({ method: "POST" })
       const refs = Array.from(
         new Set(
           (String(data?.refs ?? "").toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? []).map((x) =>
-            x.replace(/[\s-]/g, ""),
+            normalizeArchiveRef(x),
           ),
         ),
       ).slice(0, 60);

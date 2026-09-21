@@ -5,7 +5,7 @@
  * against the published alias index. Only the first occurrence of each note
  * inside one block is marked so a paragraph never looks heavily annotated.
  */
-import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useFfnImageUrls } from "@/lib/ffn-images";
 import { Link } from "@tanstack/react-router";
@@ -170,7 +170,16 @@ function MoneyTerm({
 }) {
   const [open, setOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | "">(year ?? "");
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const converted = selectedYear ? convertMoney(amountCents, selectedYear) : null;
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setOpen(false), 150);
+  };
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -178,7 +187,11 @@ function MoneyTerm({
           type="button"
           aria-label={`${label}: estimate value in today's dollars`}
           className="money-term cursor-pointer rounded-[2px] px-[1px] underline decoration-dotted underline-offset-[3px] focus-visible:ring-2 focus-visible:ring-archive-gold focus-visible:outline-none"
-          onMouseEnter={() => setOpen(true)}
+          onMouseEnter={() => {
+            cancelClose();
+            setOpen(true);
+          }}
+          onMouseLeave={scheduleClose}
           onClick={(event) => {
             // Money can appear inside a linked search excerpt; open the card instead of navigating.
             event.preventDefault();
@@ -192,7 +205,9 @@ function MoneyTerm({
       <PopoverContent
         align="start"
         className="w-[min(21rem,92vw)] p-4"
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <div className="space-y-3">
           <div>
