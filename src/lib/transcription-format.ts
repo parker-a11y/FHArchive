@@ -9,6 +9,64 @@
 
 import { isRichHtml, plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
 
+const NAVY_LETTERHEAD = /\b(?:u\.?\s*s\.?|united\s+states)\s+(?:navy|naval)\b/i;
+
+function normalizedLetterhead(value: string) {
+  return value
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function navyBlockFromOpening(value: string, laterPage = false) {
+  const input = String(value ?? "");
+  if (isRichHtml(input)) {
+    const blocks = [...input.matchAll(/<p\b[^>]*>[\s\S]*?<\/p>/gi)].slice(0, laterPage ? 1 : 3);
+    const match = blocks.find((block) => NAVY_LETTERHEAD.test(normalizedLetterhead(block[0])));
+    if (!match || match.index === undefined) return null;
+    return { raw: match[0], start: match.index, end: match.index + match[0].length };
+  }
+
+  const blocks = [...input.matchAll(/(?:^|\n{2,})([^\n]+(?:\n(?!\n)[^\n]+)*)/g)].slice(
+    0,
+    laterPage ? 1 : 3,
+  );
+  const match = blocks.find((block) => NAVY_LETTERHEAD.test(normalizedLetterhead(block[1])));
+  if (!match || match.index === undefined) return null;
+  const offset = match[0].length - match[1].length;
+  const start = match.index + offset;
+  return { raw: match[1], start, end: start + match[1].length };
+}
+
+/**
+ * Removes repeated Navy stationery from a later page only when the first page
+ * establishes that the record uses that letterhead. The match is restricted to
+ * the opening block, so ordinary references to the Navy remain untouched.
+ */
+export function removeRepeatedNavyLetterhead(
+  firstPage: string | null | undefined,
+  laterPage: string | null | undefined,
+) {
+  const first = navyBlockFromOpening(String(firstPage ?? ""));
+  const repeated = navyBlockFromOpening(String(laterPage ?? ""), true);
+  if (!first || !repeated) return String(laterPage ?? "");
+
+  const firstNormalized = normalizedLetterhead(first.raw);
+  const repeatedNormalized = normalizedLetterhead(repeated.raw);
+  if (!NAVY_LETTERHEAD.test(firstNormalized) || !NAVY_LETTERHEAD.test(repeatedNormalized)) {
+    return String(laterPage ?? "");
+  }
+
+  const input = String(laterPage ?? "");
+  const before = input.slice(0, repeated.start);
+  const after = input.slice(repeated.end);
+  if (isRichHtml(input)) return sanitizeRichHtml(`${before}${after}`);
+  return `${before}${after}`.replace(/^\s*\n+/, "").trimEnd();
+}
+
 const SALUTATION = /^(my\s+)?(dear|darling|dearest|hi|hello|beloved)\b/i;
 const CLOSING =
   /^(love|all my love|lots of love|yours|yours truly|sincerely|affectionately|fondly|as ever|ever yours|so long|goodnight|good night|bye|xoxo)\b[^.]{0,40}[,-]?\s*$/i;

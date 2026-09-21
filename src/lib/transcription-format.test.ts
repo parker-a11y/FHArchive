@@ -3,6 +3,7 @@ import { describe, test } from "node:test";
 import {
   combineTranscriptionPages,
   flowingCombinedTranscription,
+  removeRepeatedNavyLetterhead,
 } from "./transcription-format";
 import { richTextToPlain } from "./rich-text";
 
@@ -45,6 +46,41 @@ describe("flowingCombinedTranscription", () => {
     assert.equal(
       richTextToPlain('<p style="text-align:center">Dear <u>Jaq</u>,</p><p><s>Cary</s> Gary</p>'),
       "Dear Jaq,\n\nCary Gary",
+    );
+  });
+});
+
+describe("removeRepeatedNavyLetterhead", () => {
+  test("keeps the first page and removes the repeated heading from a later page", () => {
+    const first = "UNITED STATES NAVY\n\n14 Nov.\n\nDarling,";
+    assert.equal(removeRepeatedNavyLetterhead(first, first), "14 Nov.\n\nDarling,");
+    assert.equal(
+      removeRepeatedNavyLetterhead(first, "UNITED STATES NAVY\n\nover the harbor we sailed."),
+      "over the harbor we sailed.",
+    );
+  });
+
+  test("supports formatted pages and Navy wording variants", () => {
+    assert.equal(
+      removeRepeatedNavyLetterhead(
+        '<p style="text-align:center">U.S. NAVY</p><p>Dearest,</p>',
+        "<p>UNITED STATES NAVY</p><p>The second page.</p>",
+      ),
+      "<p>The second page.</p>",
+    );
+  });
+
+  test("does not remove body references or a heading absent from page one", () => {
+    assert.equal(
+      removeRepeatedNavyLetterhead("Dearest,", "UNITED STATES NAVY\n\nThe song begins."),
+      "UNITED STATES NAVY\n\nThe song begins.",
+    );
+    assert.equal(
+      removeRepeatedNavyLetterhead(
+        "UNITED STATES NAVY\n\nDearest,",
+        "We all think the Navy is nuts at this point.",
+      ),
+      "We all think the Navy is nuts at this point.",
     );
   });
 });
