@@ -19,13 +19,13 @@ export const transcribeScans = createServerFn({ method: "POST" })
     fileIds: (data.fileIds ?? []).slice(0, 50).map(String),
   }))
   .handler(async ({ data, context }): Promise<TranscribeResult[]> => {
-    const { resolveScanTargets, toDataUrl, transcribeImage, TRANSCRIPTION_MODEL, rebuildRecordTranscription } =
+    const { resolveScanTargets, toDataUrl, transcribeImage, cleanTranscribedPage, TRANSCRIPTION_MODEL, rebuildRecordTranscription } =
       await import("@/lib/transcription.server");
     const supabase = context.supabase;
     const targets = await resolveScanTargets(supabase, data.fileIds);
     const results: TranscribeResult[] = [];
 
-    for (const [i, t] of targets.entries()) {
+    for (const t of targets) {
       await supabase.from("scan_transcriptions").upsert(
         {
           letter_id: t.letterId,
@@ -43,7 +43,11 @@ export const transcribeScans = createServerFn({ method: "POST" })
         const urls = await Promise.all(
           (t.paths?.length ? t.paths : [t.path]).map((p) => toDataUrl(supabase, p, t.mime)),
         );
-        const text = await transcribeImage(urls, `Page ${i + 1}${t.label ? ` — ${t.label}` : ""}`);
+        const rawText = await transcribeImage(
+          urls,
+          `Page ${t.pageNumber}${t.label ? ` — ${t.label}` : ""}${t.pageNumber > 1 ? ". Do not include printed letterhead repeated from the first page." : ""}`,
+        );
+        const text = await cleanTranscribedPage(supabase, t, rawText);
         await supabase
           .from("scan_transcriptions")
           .update({
@@ -91,6 +95,7 @@ export const transcribeRecord = createServerFn({ method: "POST" })
       resolveScanTargets,
       toDataUrl,
       transcribeImage,
+      cleanTranscribedPage,
       isEnvelope,
       TRANSCRIPTION_MODEL,
     } = await import("@/lib/transcription.server");
@@ -113,7 +118,7 @@ export const transcribeRecord = createServerFn({ method: "POST" })
     let failed = 0;
     const pages: { fileId: string; label: string | null; text: string }[] = [];
 
-    for (const [i, t] of targets.entries()) {
+    for (const t of targets) {
       const prior = (existing ?? []).find((e) => e.file_id === t.fileId);
       const priorText = prior?.verified_text?.trim() || prior?.ai_text?.trim() || "";
       if (!data.force && priorText) {
@@ -138,7 +143,11 @@ export const transcribeRecord = createServerFn({ method: "POST" })
         const urls = await Promise.all(
           (t.paths?.length ? t.paths : [t.path]).map((p) => toDataUrl(supabase, p, t.mime)),
         );
-        const text = await transcribeImage(urls, `Page ${i + 1}${t.label ? ` — ${t.label}` : ""}`);
+        const rawText = await transcribeImage(
+          urls,
+          `Page ${t.pageNumber}${t.label ? ` — ${t.label}` : ""}${t.pageNumber > 1 ? ". Do not include printed letterhead repeated from the first page." : ""}`,
+        );
+        const text = await cleanTranscribedPage(supabase, t, rawText);
         await supabase
           .from("scan_transcriptions")
           .update({
@@ -225,7 +234,7 @@ export const setScanIncludedInTranscription = createServerFn({ method: "POST" })
     include: Boolean(data.include),
   }))
   .handler(async ({ data, context }) => {
-    const { resolveScanTargets, toDataUrl, transcribeImage, TRANSCRIPTION_MODEL, rebuildRecordTranscription } =
+    const { resolveScanTargets, toDataUrl, transcribeImage, cleanTranscribedPage, TRANSCRIPTION_MODEL, rebuildRecordTranscription } =
       await import("@/lib/transcription.server");
     const supabase = context.supabase;
 
@@ -278,7 +287,11 @@ export const setScanIncludedInTranscription = createServerFn({ method: "POST" })
                 toDataUrl(supabase, p, target.mime),
               ),
             );
-            const text = await transcribeImage(urls, target.label ?? "Scan");
+            const rawText = await transcribeImage(
+              urls,
+              `Page ${target.pageNumber}${target.label ? ` — ${target.label}` : ""}${target.pageNumber > 1 ? ". Do not include printed letterhead repeated from the first page." : ""}`,
+            );
+            const text = await cleanTranscribedPage(supabase, target, rawText);
             await supabase
               .from("scan_transcriptions")
               .update({
@@ -304,3 +317,4 @@ export const setScanIncludedInTranscription = createServerFn({ method: "POST" })
     await rebuildRecordTranscription(supabase, (file as any).letter_id as string);
     return { include: data.include, transcribed, error };
   });
+

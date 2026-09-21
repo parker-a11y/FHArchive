@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   combineTranscriptionPages,
   flowingCombinedTranscription,
+  removeRepeatedNavyLetterhead,
 } from "@/lib/transcription-format";
 import { richTextToPlain } from "@/lib/rich-text";
 
@@ -54,6 +55,8 @@ export type ScanTarget = {
   /** All page images for this master (one entry unless it's a multi-page PDF). */
   paths: string[];
   mime: string;
+  pageNumber: number;
+  firstPageFileId: string;
 };
 
 /** Picks the web derivative for a master, never the archival TIFF itself. */
@@ -76,6 +79,28 @@ export async function resolveScanTargets(
   ]);
 
   const targets: ScanTarget[] = [];
+  const letterIds = [...new Set((files ?? []).map((file) => file.letter_id))];
+  const { data: recordFiles } = letterIds.length
+    ? await supabase
+        .from("digital_files")
+        .select("id, letter_id, label, original_filename, sort_order, include_in_transcription")
+        .in("letter_id", letterIds)
+        .order("sort_order", { ascending: true })
+    : { data: [] };
+  const pageOrder = new Map<string, { pageNumber: number; firstPageFileId: string }>();
+  for (const letterId of letterIds) {
+    const included = (recordFiles ?? []).filter(
+      (file) =>
+        file.letter_id === letterId &&
+        (!isEnvelope(`${file.label ?? ""} ${file.original_filename ?? ""}`) ||
+          Boolean((file as any).include_in_transcription)),
+    );
+    const firstPageFileId = included[0]?.id;
+    if (!firstPageFileId) continue;
+    included.forEach((file, index) =>
+      pageOrder.set(file.id, { pageNumber: index + 1, firstPageFileId }),
+    );
+  }
   for (const f of files ?? []) {
     // Envelopes are read by eye in Envelope Review — never transcribed, unless
     // the archivist explicitly added that scan to the transcription.
@@ -94,6 +119,8 @@ export async function resolveScanTargets(
     const browserViewable = /^image\/(jpeg|png|webp|gif)$/i.test(f.master_mime ?? "");
     const path = jpeg?.storage_path ?? (browserViewable ? f.master_path : null);
     if (!path) continue;
+    const position = pageOrder.get(f.id);
+    if (!position) continue;
     targets.push({
       fileId: f.id,
       letterId: f.letter_id,
@@ -102,9 +129,27 @@ export async function resolveScanTargets(
       path,
       paths: jpegs.length ? jpegs.map((d) => String(d.storage_path)) : [path],
       mime: jpeg?.mime_type ?? f.master_mime ?? "image/jpeg",
+      pageNumber: position.pageNumber,
+      firstPageFileId: position.firstPageFileId,
     });
   }
   return targets.sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+/** Applies record-aware cleanup before an AI page transcription is stored. */
+export async function cleanTranscribedPage(
+  supabase: SupabaseClient,
+  target: ScanTarget,
+  text: string,
+) {
+  if (target.pageNumber <= 1 || target.fileId === target.firstPageFileId) return text.trim();
+  const { data: first } = await supabase
+    .from("scan_transcriptions")
+    .select("verified_text, ai_text")
+    .eq("file_id", target.firstPageFileId)
+    .maybeSingle();
+  const firstText = first?.verified_text?.trim() || first?.ai_text?.trim() || "";
+  return removeRepeatedNavyLetterhead(firstText, text).trim();
 }
 
 export async function toDataUrl(supabase: SupabaseClient, path: string, mime: string) {
