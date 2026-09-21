@@ -248,3 +248,150 @@ export async function regenerateDateContext(admin: any, date: string) {
   if (error) throw error;
   return data;
 }
+
+/* ------------------------------------------------------------------ *
+ * Background backfill: slowly writes the narrative for every archive
+ * date, a few at a time, so the AI service is never hammered.
+ * ------------------------------------------------------------------ */
+
+const MAX_ATTEMPTS = 3;
+
+/** Adds every archive date that still has no narrative to the waiting list. */
+export async function enqueueMissingDateContexts(admin: any) {
+  const [{ data: letters }, { data: sources }, { data: written }] = await Promise.all([
+    admin.from("letters").select("normalized_date").not("normalized_date", "is", null).limit(5000),
+    admin
+      .from("digital_sources")
+      .select("normalized_date")
+      .not("normalized_date", "is", null)
+      .limit(5000),
+    admin.from("date_contexts").select("on_date").limit(5000),
+  ]);
+  const have = new Set((written ?? []).map((r: any) => r.on_date));
+  const dates = new Set<string>();
+  for (const r of [...(letters ?? []), ...(sources ?? [])]) {
+    const d = String(r.normalized_date).slice(0, 10);
+    if (!have.has(d)) dates.add(d);
+  }
+  if (!dates.size) return { added: 0 };
+  const rows = [...dates].map((on_date) => ({ on_date }));
+  const { error } = await admin
+    .from("date_context_queue")
+    .upsert(rows, { onConflict: "on_date", ignoreDuplicates: true });
+  if (error) throw error;
+  return { added: rows.length };
+}
+
+/** Counts for the admin progress strip. */
+export async function dateContextBackfillStatus(admin: any) {
+  const count = async (status?: string) => {
+    let q = admin.from("date_context_queue").select("on_date", { count: "exact", head: true });
+    if (status) q = q.eq("status", status);
+    const { count: n } = await q;
+    return n ?? 0;
+  };
+  const [total, pending, done, failed, written, cfg] = await Promise.all([
+    count(),
+    count("pending"),
+    count("done"),
+    count("error"),
+    admin
+      .from("date_contexts")
+      .select("id", { count: "exact", head: true })
+      .then((r: any) => r.count ?? 0),
+    admin.from("job_config").select("value").eq("key", "on_this_date_backfill").maybeSingle(),
+  ]);
+  const { data: errors } = await admin
+    .from("date_context_queue")
+    .select("on_date, attempts, last_error")
+    .eq("status", "error")
+    .order("on_date")
+    .limit(50);
+  return {
+    total,
+    pending,
+    done,
+    failed,
+    written,
+    paused: (cfg?.data?.value ?? "running") === "paused",
+    errors: errors ?? [],
+  };
+}
+
+/** Processes a small batch of waiting dates. Safe to call on a schedule. */
+export async function runDateContextBackfill(admin: any, limit = 3) {
+  const { data: cfg } = await admin
+    .from("job_config")
+    .select("value")
+    .eq("key", "on_this_date_backfill")
+    .maybeSingle();
+  if ((cfg?.value ?? "running") === "paused") return { status: "paused" as const };
+
+  const { data: batch } = await admin
+    .from("date_context_queue")
+    .select("on_date, attempts")
+    .eq("status", "pending")
+    .order("on_date")
+    .limit(limit);
+
+  const rows = batch ?? [];
+  if (!rows.length) return { status: "idle" as const, processed: 0, remaining: 0 };
+
+  let done = 0;
+  let failed = 0;
+  for (const row of rows) {
+    const date = String(row.on_date).slice(0, 10);
+    try {
+      const { data: existing } = await admin
+        .from("date_contexts")
+        .select("id")
+        .eq("on_date", date)
+        .maybeSingle();
+      if (!existing) {
+        const { narrative, sources, model } = await generateDateNarrative(admin, date);
+        const { error } = await admin.from("date_contexts").upsert(
+          {
+            on_date: date,
+            narrative_md: narrative,
+            sources,
+            model,
+            view_count: 0,
+            generated_at: new Date().toISOString(),
+          },
+          { onConflict: "on_date" },
+        );
+        if (error) throw error;
+      }
+      await admin
+        .from("date_context_queue")
+        .update({ status: "done", last_error: null })
+        .eq("on_date", date);
+      done += 1;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const attempts = (row.attempts ?? 0) + 1;
+      await admin
+        .from("date_context_queue")
+        .update({
+          attempts,
+          last_error: message.slice(0, 500),
+          status: attempts >= MAX_ATTEMPTS ? "error" : "pending",
+        })
+        .eq("on_date", date);
+      failed += 1;
+      // Credits exhausted or the service is blocked: stop the whole run.
+      if (/\b(402|403)\b|credit|blocked|disabled/i.test(message)) {
+        return { status: "halted" as const, processed: done + failed, done, failed, error: message };
+      }
+    }
+    // Space the calls out so a batch never bursts against the AI service.
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+
+  const { count: remaining } = await admin
+    .from("date_context_queue")
+    .select("on_date", { count: "exact", head: true })
+    .eq("status", "pending");
+
+  return { status: "ok" as const, processed: rows.length, done, failed, remaining: remaining ?? 0 };
+}
