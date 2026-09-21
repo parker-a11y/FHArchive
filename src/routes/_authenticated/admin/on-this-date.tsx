@@ -87,6 +87,7 @@ function OnThisDateReview() {
         title="On This Date Review"
         description="Historical narratives readers have generated. Reviewing is optional — every narrative is already visible to guests."
       />
+      <BackfillProgress />
       <div className="flex flex-wrap gap-2 border-b border-border px-4 py-3 sm:px-8">
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
