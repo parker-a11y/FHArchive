@@ -25,7 +25,10 @@ function navyBlockFromOpening(value: string, laterPage = false) {
   const input = String(value ?? "");
   if (isRichHtml(input)) {
     const blocks = [...input.matchAll(/<p\b[^>]*>[\s\S]*?<\/p>/gi)].slice(0, laterPage ? 1 : 3);
-    const match = blocks.find((block) => NAVY_LETTERHEAD.test(normalizedLetterhead(block[0])));
+    const match = blocks.find((block) => {
+      const plain = normalizedLetterhead(block[0]);
+      return plain.length <= 160 && NAVY_LETTERHEAD.test(plain);
+    });
     if (!match || match.index === undefined) return null;
     return { raw: match[0], start: match.index, end: match.index + match[0].length };
   }
@@ -34,7 +37,11 @@ function navyBlockFromOpening(value: string, laterPage = false) {
     0,
     laterPage ? 1 : 3,
   );
-  const match = blocks.find((block) => NAVY_LETTERHEAD.test(normalizedLetterhead(block[1])));
+  const match = blocks.find((block) => {
+    const plain = normalizedLetterhead(block[1]);
+    const lines = block[1].split("\n").length;
+    return plain.length <= 160 && lines <= 4 && NAVY_LETTERHEAD.test(plain);
+  });
   if (!match || match.index === undefined) return null;
   const offset = match[0].length - match[1].length;
   const start = match.index + offset;

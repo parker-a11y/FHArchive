@@ -25,7 +25,7 @@ export const transcribeScans = createServerFn({ method: "POST" })
     const targets = await resolveScanTargets(supabase, data.fileIds);
     const results: TranscribeResult[] = [];
 
-    for (const [i, t] of targets.entries()) {
+    for (const t of targets) {
       await supabase.from("scan_transcriptions").upsert(
         {
           letter_id: t.letterId,
@@ -118,7 +118,7 @@ export const transcribeRecord = createServerFn({ method: "POST" })
     let failed = 0;
     const pages: { fileId: string; label: string | null; text: string }[] = [];
 
-    for (const [i, t] of targets.entries()) {
+    for (const t of targets) {
       const prior = (existing ?? []).find((e) => e.file_id === t.fileId);
       const priorText = prior?.verified_text?.trim() || prior?.ai_text?.trim() || "";
       if (!data.force && priorText) {
@@ -316,4 +316,12 @@ export const setScanIncludedInTranscription = createServerFn({ method: "POST" })
 
     await rebuildRecordTranscription(supabase, (file as any).letter_id as string);
     return { include: data.include, transcribed, error };
+  });
+
+/** Idempotent archive maintenance for repeated Navy letterhead on later pages. */
+export const cleanupExistingNavyLetterheads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { cleanExistingNavyLetterheads } = await import("@/lib/transcription.server");
+    return cleanExistingNavyLetterheads(context.supabase);
   });
