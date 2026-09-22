@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -29,7 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
+import {
+  plainTextToRichHtml,
+  quotedPasteToRichHtml,
+  sanitizeRichHtml,
+} from "@/lib/rich-text";
 
 /** Radix Select items cannot use an empty value, so "Default" uses a sentinel. */
 const DEFAULT_FONT = "__default__";
@@ -264,6 +269,17 @@ export function RichTextEditor({
         class: "rich-text-editor focus:outline-none",
         style: `min-height:${minHeight}`,
         ...(placeholder ? { "data-placeholder": placeholder } : {}),
+      },
+      handlePaste(view, event) {
+        const pasted = event.clipboardData?.getData("text/plain") ?? "";
+        const formatted = quotedPasteToRichHtml(pasted);
+        if (!formatted) return false;
+        event.preventDefault();
+        const container = document.createElement("div");
+        container.innerHTML = formatted;
+        const slice = ProseMirrorDOMParser.fromSchema(view.state.schema).parseSlice(container);
+        view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView());
+        return true;
       },
     },
     onUpdate: ({ editor: e }) => {
