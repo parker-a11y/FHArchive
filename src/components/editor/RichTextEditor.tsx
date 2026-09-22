@@ -29,7 +29,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
+import {
+  plainTextToRichHtml,
+  quotedPasteToRichHtml,
+  sanitizeRichHtml,
+} from "@/lib/rich-text";
 
 /** Radix Select items cannot use an empty value, so "Default" uses a sentinel. */
 const DEFAULT_FONT = "__default__";
@@ -264,6 +268,18 @@ export function RichTextEditor({
         class: "rich-text-editor focus:outline-none",
         style: `min-height:${minHeight}`,
         ...(placeholder ? { "data-placeholder": placeholder } : {}),
+      },
+      handlePaste(view, event) {
+        const pasted = event.clipboardData?.getData("text/plain") ?? "";
+        const formatted = quotedPasteToRichHtml(pasted);
+        if (!formatted) return false;
+        event.preventDefault();
+        return view.dispatch(view.state.tr.replaceSelectionWith(
+          view.state.schema.nodeFromJSON({
+            type: "doc",
+            content: [],
+          }),
+        )), true;
       },
     },
     onUpdate: ({ editor: e }) => {

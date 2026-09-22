@@ -20,3 +20,5 @@
 - [x] Tech debt: document storage buckets (scans, ds-files) in AGENTS.md
 
 - [x] "What was happening this day" backfill: hourly job writes 3 archive dates/run, queue + pause/resume + retry on the On This Date Review page (publish required for the live cron route)
+- [ ] Automatically format complete quoted paragraphs when pasted into writing editors
+- [ ] Restrict backup history and file listings to archive editors

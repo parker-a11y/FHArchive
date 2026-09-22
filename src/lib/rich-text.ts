@@ -58,6 +58,31 @@ export function plainTextToRichHtml(value: string) {
     .join("");
 }
 
+/**
+ * Formats a plain-text paste when it contains complete quoted paragraphs.
+ * Returns null when there is nothing to transform so the editor can retain
+ * its normal paste behaviour.
+ */
+export function quotedPasteToRichHtml(value: string) {
+  const text = String(value ?? "").replace(/\r\n?/g, "\n").trim();
+  if (!text) return null;
+
+  const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
+  const isQuotation = (block: string) => {
+    const compact = block.replace(/\s+/g, " ").trim();
+    return /^(?:[“”]|&ldquo;|\")[\s\S]+(?:[“”]|&rdquo;|\")$/.test(compact);
+  };
+
+  if (!blocks.some(isQuotation)) return null;
+
+  return blocks
+    .map((block) => {
+      const content = escapeHtml(block).replace(/\n/g, "<br />");
+      return isQuotation(block) ? `<blockquote>${content}</blockquote>` : `<p>${content}</p>`;
+    })
+    .join("");
+}
+
 /** Keeps only the handful of declarations the toolbar can produce. */
 export function safeStyle(style: string | undefined) {
   if (!style) return "";
