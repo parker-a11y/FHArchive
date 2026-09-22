@@ -274,12 +274,8 @@ export function RichTextEditor({
         const formatted = quotedPasteToRichHtml(pasted);
         if (!formatted) return false;
         event.preventDefault();
-        return view.dispatch(view.state.tr.replaceSelectionWith(
-          view.state.schema.nodeFromJSON({
-            type: "doc",
-            content: [],
-          }),
-        )), true;
+        view.pasteHTML(formatted, event);
+        return true;
       },
     },
     onUpdate: ({ editor: e }) => {
