@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -274,7 +275,10 @@ export function RichTextEditor({
         const formatted = quotedPasteToRichHtml(pasted);
         if (!formatted) return false;
         event.preventDefault();
-        view.pasteHTML(formatted, event);
+        const container = document.createElement("div");
+        container.innerHTML = formatted;
+        const slice = ProseMirrorDOMParser.fromSchema(view.state.schema).parseSlice(container);
+        view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView());
         return true;
       },
     },
