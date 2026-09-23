@@ -132,6 +132,7 @@ function EnvelopeReview() {
   });
 
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
+  const [onlyUnverified, setOnlyUnverified] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [side, setSide] = useState<"front" | "back">("front");
   // Manual quarter-turns per scan, applied on top of the saved orientation
@@ -171,10 +172,11 @@ function EnvelopeReview() {
   const datelineInputRef = useRef<HTMLInputElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
 
-  const list = useMemo(
-    () => (onlyNeedsReview ? records.filter(needsReview) : records),
-    [records, onlyNeedsReview],
-  );
+  const list = useMemo(() => {
+    if (onlyUnverified) return records.filter((r) => !r.envelope_reviewed);
+    if (onlyNeedsReview) return records.filter(needsReview);
+    return records;
+  }, [records, onlyNeedsReview, onlyUnverified]);
 
   const index = list.findIndex((r) => r.id === selectedId);
   const current = index >= 0 ? list[index] : undefined;
@@ -250,6 +252,9 @@ function EnvelopeReview() {
         postal_service: postal.postal_service || null,
         postal_notes: postal.postal_notes.trim() || null,
         censor_mark: postal.censor_mark,
+        // Saving here means this envelope has been gone through and verified.
+        envelope_reviewed: true,
+        envelope_reviewed_at: new Date().toISOString(),
       };
       const { data, error } = await supabase
         .from("letters")
