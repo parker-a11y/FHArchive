@@ -79,7 +79,7 @@ async function fetchEnvelopeRecords(): Promise<EnvelopeRecord[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, title, date_as_written, normalized_date, dateline, dateline_suggested, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
+      "id, archive_id, title, date_as_written, normalized_date, dateline, dateline_suggested, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark, envelope_reviewed, envelope_reviewed_at",
     )
     .in("id", ids)
     .order("archive_id", { ascending: true });
