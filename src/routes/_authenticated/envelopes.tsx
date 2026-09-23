@@ -10,7 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,8 @@ type EnvelopeRecord = {
   postal_service: string | null;
   postal_notes: string | null;
   censor_mark: boolean;
+  envelope_reviewed: boolean;
+  envelope_reviewed_at: string | null;
 };
 
 const isEnvelope = (f: { label: string | null; original_filename: string }) =>
@@ -77,7 +79,7 @@ async function fetchEnvelopeRecords(): Promise<EnvelopeRecord[]> {
   const { data, error } = await supabase
     .from("letters")
     .select(
-      "id, archive_id, title, date_as_written, normalized_date, dateline, dateline_suggested, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark",
+      "id, archive_id, title, date_as_written, normalized_date, dateline, dateline_suggested, origin, destination, forwarded, forwarded_to, postal_service, postal_notes, censor_mark, envelope_reviewed, envelope_reviewed_at",
     )
     .in("id", ids)
     .order("archive_id", { ascending: true });
@@ -130,6 +132,7 @@ function EnvelopeReview() {
   });
 
   const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
+  const [onlyUnverified, setOnlyUnverified] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [side, setSide] = useState<"front" | "back">("front");
   // Manual quarter-turns per scan, applied on top of the saved orientation
@@ -169,10 +172,11 @@ function EnvelopeReview() {
   const datelineInputRef = useRef<HTMLInputElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
 
-  const list = useMemo(
-    () => (onlyNeedsReview ? records.filter(needsReview) : records),
-    [records, onlyNeedsReview],
-  );
+  const list = useMemo(() => {
+    if (onlyUnverified) return records.filter((r) => !r.envelope_reviewed);
+    if (onlyNeedsReview) return records.filter(needsReview);
+    return records;
+  }, [records, onlyNeedsReview, onlyUnverified]);
 
   const index = list.findIndex((r) => r.id === selectedId);
   const current = index >= 0 ? list[index] : undefined;
@@ -248,6 +252,9 @@ function EnvelopeReview() {
         postal_service: postal.postal_service || null,
         postal_notes: postal.postal_notes.trim() || null,
         censor_mark: postal.censor_mark,
+        // Saving here means this envelope has been gone through and verified.
+        envelope_reviewed: true,
+        envelope_reviewed_at: new Date().toISOString(),
       };
       const { data, error } = await supabase
         .from("letters")
@@ -304,9 +311,23 @@ function EnvelopeReview() {
               {backfill ? `Suggesting… ${backfill}` : "Suggest location lines (AI)"}
             </Button>
             <Button
+              variant={onlyUnverified ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setOnlyUnverified((v) => !v);
+                if (!onlyUnverified) setOnlyNeedsReview(false);
+              }}
+              title="Show only envelopes you have not saved and verified yet"
+            >
+              Not reviewed & verified
+            </Button>
+            <Button
               variant={onlyNeedsReview ? "default" : "outline"}
               size="sm"
-              onClick={() => setOnlyNeedsReview((v) => !v)}
+              onClick={() => {
+                setOnlyNeedsReview((v) => !v);
+                if (!onlyNeedsReview) setOnlyUnverified(false);
+              }}
             >
               Needs review only
             </Button>
@@ -336,9 +357,20 @@ function EnvelopeReview() {
                 <span className="flex shrink-0 items-center gap-1.5">
                   <span
                     className={`size-2 rounded-full ${
-                      needsReview(r) ? "bg-amber-500" : "bg-emerald-500"
+                      r.envelope_reviewed
+                        ? "bg-emerald-500"
+                        : needsReview(r)
+                          ? "bg-amber-500"
+                          : "bg-slate-400"
                     }`}
                     aria-hidden
+                    title={
+                      r.envelope_reviewed
+                        ? "Reviewed & verified"
+                        : needsReview(r)
+                          ? "Needs review"
+                          : "Not yet verified"
+                    }
                   />
                   {!r.dateline && (
                     <span
@@ -367,6 +399,11 @@ function EnvelopeReview() {
               </Button>
               <div className="text-sm">
                 <span className="font-mono font-medium">{current.archive_id}</span>
+                {current.envelope_reviewed && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <Check className="size-3" /> Verified
+                  </span>
+                )}
                 <span className="ml-2 text-muted-foreground">
                   {index + 1} of {list.length}
                 </span>
