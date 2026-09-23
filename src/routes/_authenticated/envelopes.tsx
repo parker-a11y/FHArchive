@@ -55,6 +55,8 @@ type EnvelopeRecord = {
   postal_service: string | null;
   postal_notes: string | null;
   censor_mark: boolean;
+  envelope_reviewed: boolean;
+  envelope_reviewed_at: string | null;
 };
 
 const isEnvelope = (f: { label: string | null; original_filename: string }) =>
