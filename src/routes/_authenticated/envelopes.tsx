@@ -10,7 +10,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -311,9 +311,23 @@ function EnvelopeReview() {
               {backfill ? `Suggesting… ${backfill}` : "Suggest location lines (AI)"}
             </Button>
             <Button
+              variant={onlyUnverified ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setOnlyUnverified((v) => !v);
+                if (!onlyUnverified) setOnlyNeedsReview(false);
+              }}
+              title="Show only envelopes you have not saved and verified yet"
+            >
+              Not reviewed & verified
+            </Button>
+            <Button
               variant={onlyNeedsReview ? "default" : "outline"}
               size="sm"
-              onClick={() => setOnlyNeedsReview((v) => !v)}
+              onClick={() => {
+                setOnlyNeedsReview((v) => !v);
+                if (!onlyNeedsReview) setOnlyUnverified(false);
+              }}
             >
               Needs review only
             </Button>
@@ -343,9 +357,20 @@ function EnvelopeReview() {
                 <span className="flex shrink-0 items-center gap-1.5">
                   <span
                     className={`size-2 rounded-full ${
-                      needsReview(r) ? "bg-amber-500" : "bg-emerald-500"
+                      r.envelope_reviewed
+                        ? "bg-emerald-500"
+                        : needsReview(r)
+                          ? "bg-amber-500"
+                          : "bg-slate-400"
                     }`}
                     aria-hidden
+                    title={
+                      r.envelope_reviewed
+                        ? "Reviewed & verified"
+                        : needsReview(r)
+                          ? "Needs review"
+                          : "Not yet verified"
+                    }
                   />
                   {!r.dateline && (
                     <span
@@ -374,6 +399,11 @@ function EnvelopeReview() {
               </Button>
               <div className="text-sm">
                 <span className="font-mono font-medium">{current.archive_id}</span>
+                {current.envelope_reviewed && (
+                  <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    <Check className="size-3" /> Verified
+                  </span>
+                )}
                 <span className="ml-2 text-muted-foreground">
                   {index + 1} of {list.length}
                 </span>
