@@ -1,7 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BadgeCheck, Loader2, Maximize2, Minimize2, Sparkles, WrapText } from "lucide-react";
+import {
+  BadgeCheck,
+  ExternalLink,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  PictureInPicture2,
+  Sparkles,
+  WrapText,
+} from "lucide-react";
+import { openScanWindow, type ScanWindowHandle } from "@/lib/scan-window";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -89,6 +99,53 @@ function PageEditor({
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
   const [savedVerified, setSavedVerified] = useState(record?.status === "human_verified");
+  /** The scan is showing in its own window (draggable to another monitor). */
+  const [poppedOut, setPoppedOut] = useState(false);
+  const scanWindowRef = useRef<ScanWindowHandle | null>(null);
+
+  // Keep the page in step with the detached window: if the user closes it, dock back.
+  useEffect(() => {
+    if (!poppedOut) return;
+    const t = setInterval(() => {
+      if (!scanWindowRef.current || scanWindowRef.current.window.closed) {
+        scanWindowRef.current = null;
+        setPoppedOut(false);
+      }
+    }, 600);
+    return () => clearInterval(t);
+  }, [poppedOut]);
+
+  useEffect(() => {
+    return () => {
+      scanWindowRef.current?.close();
+      scanWindowRef.current = null;
+    };
+  }, []);
+
+  function togglePopOut() {
+    if (poppedOut) {
+      scanWindowRef.current?.close();
+      scanWindowRef.current = null;
+      setPoppedOut(false);
+      return;
+    }
+    if (!file.viewUrl) {
+      toast.error("No web-viewable copy for this scan.");
+      return;
+    }
+    const handle = openScanWindow({
+      url: file.viewUrl,
+      title: file.label || file.original_filename,
+      rotation: file.rotation,
+    });
+    if (!handle) {
+      toast.error("Your browser blocked the pop-up. Allow pop-ups for this site and try again.");
+      return;
+    }
+    scanWindowRef.current = handle;
+    setPoppedOut(true);
+  }
+
 
   useEffect(() => {
     if (!dirty) {
@@ -173,6 +230,22 @@ function PageEditor({
               )}
               Transcribe with ChatGPT
             </Button>
+            <Button
+              size="sm"
+              variant={poppedOut ? "default" : "outline"}
+              onClick={togglePopOut}
+              title="Open this scan in its own window you can move to another monitor and zoom freely"
+            >
+              {poppedOut ? (
+                <>
+                  <PictureInPicture2 className="mr-1 size-3.5" /> Dock scan
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="mr-1 size-3.5" /> Pop out scan
+                </>
+              )}
+            </Button>
             {onToggleFull && (
               <Button
                 size="sm"
@@ -198,19 +271,31 @@ function PageEditor({
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded border border-border bg-muted/30 p-2">
-          {file.viewUrl ? (
-            <img
-              src={file.viewUrl}
-              alt={file.label || file.original_filename}
-              style={{ transform: `rotate(${file.rotation}deg)` }}
-              className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
-            />
-          ) : (
-            <p className="p-6 text-sm text-muted-foreground">No web-viewable copy for this scan.</p>
-          )}
-        </div>
+      <div className={`grid grid-cols-1 gap-4 ${poppedOut ? "" : "lg:grid-cols-2"}`}>
+        {poppedOut ? (
+          <div className="rounded border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
+            This scan is open in its own window — drag it to another monitor and zoom freely.{" "}
+            <button type="button" className="underline" onClick={togglePopOut}>
+              Bring it back here
+            </button>
+          </div>
+        ) : (
+          <div className="rounded border border-border bg-muted/30 p-2">
+            {file.viewUrl ? (
+              <img
+                src={file.viewUrl}
+                alt={file.label || file.original_filename}
+                style={{ transform: `rotate(${file.rotation}deg)` }}
+                className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
+              />
+            ) : (
+              <p className="p-6 text-sm text-muted-foreground">
+                No web-viewable copy for this scan.
+              </p>
+            )}
+          </div>
+        )}
+
 
         <div className="space-y-2">
           {highlight && countMatches(text, highlight) > 0 && (
