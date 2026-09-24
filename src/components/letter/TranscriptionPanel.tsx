@@ -1,7 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { BadgeCheck, Loader2, Maximize2, Minimize2, Sparkles, WrapText } from "lucide-react";
+import {
+  BadgeCheck,
+  ExternalLink,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  PictureInPicture2,
+  Sparkles,
+  WrapText,
+} from "lucide-react";
+import { openScanWindow, type ScanWindowHandle } from "@/lib/scan-window";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
