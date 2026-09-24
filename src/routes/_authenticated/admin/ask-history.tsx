@@ -205,6 +205,7 @@ function AskHistory() {
                             </div>
                           )}
 
+                          <ShareAnswerButton queryId={r.id} />
                         </>
                       )}
                     </div>
