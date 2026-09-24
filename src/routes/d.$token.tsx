@@ -1,3 +1,4 @@
+import { retryUntilFound, NO_STORE_HEADERS } from "@/lib/share-retry";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { getSharedSource } from "@/lib/source-shares.functions";
@@ -6,7 +7,9 @@ import { FfnText } from "@/components/ffn/FfnText";
 import { yearFromDate } from "@/lib/money";
 
 export const Route = createFileRoute("/d/$token")({
-  loader: ({ params }) => getSharedSource({ data: { token: params.token } }),
+  loader: ({ params }) =>
+    retryUntilFound(() => getSharedSource({ data: { token: params.token } })),
+  headers: () => NO_STORE_HEADERS,
   head: ({ loaderData }) => ({
     meta: [
       {
