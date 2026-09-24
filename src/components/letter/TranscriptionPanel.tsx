@@ -271,19 +271,31 @@ function PageEditor({
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded border border-border bg-muted/30 p-2">
-          {file.viewUrl ? (
-            <img
-              src={file.viewUrl}
-              alt={file.label || file.original_filename}
-              style={{ transform: `rotate(${file.rotation}deg)` }}
-              className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
-            />
-          ) : (
-            <p className="p-6 text-sm text-muted-foreground">No web-viewable copy for this scan.</p>
-          )}
-        </div>
+      <div className={`grid grid-cols-1 gap-4 ${poppedOut ? "" : "lg:grid-cols-2"}`}>
+        {poppedOut ? (
+          <div className="rounded border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
+            This scan is open in its own window — drag it to another monitor and zoom freely.{" "}
+            <button type="button" className="underline" onClick={togglePopOut}>
+              Bring it back here
+            </button>
+          </div>
+        ) : (
+          <div className="rounded border border-border bg-muted/30 p-2">
+            {file.viewUrl ? (
+              <img
+                src={file.viewUrl}
+                alt={file.label || file.original_filename}
+                style={{ transform: `rotate(${file.rotation}deg)` }}
+                className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
+              />
+            ) : (
+              <p className="p-6 text-sm text-muted-foreground">
+                No web-viewable copy for this scan.
+              </p>
+            )}
+          </div>
+        )}
+
 
         <div className="space-y-2">
           {highlight && countMatches(text, highlight) > 0 && (
