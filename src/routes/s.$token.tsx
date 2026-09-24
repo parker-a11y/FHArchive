@@ -1,3 +1,4 @@
+import { retryUntilFound, NO_STORE_HEADERS } from "@/lib/share-retry";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookOpenText, X } from "lucide-react";
@@ -10,7 +11,9 @@ import { isRichHtml } from "@/lib/rich-text";
 import { yearFromDate } from "@/lib/money";
 
 export const Route = createFileRoute("/s/$token")({
-  loader: ({ params }) => getSharedRecord({ data: { token: params.token } }),
+  loader: ({ params }) =>
+    retryUntilFound(() => getSharedRecord({ data: { token: params.token } })),
+  headers: () => NO_STORE_HEADERS,
   head: ({ loaderData }) => ({
     meta: [
       {

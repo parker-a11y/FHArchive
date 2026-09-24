@@ -1,14 +1,16 @@
+import { retryUntilFound, NO_STORE_HEADERS } from "@/lib/share-retry";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSharedRecap, getSharedRecapHtml } from "@/lib/recap-share.functions";
 
 export const Route = createFileRoute("/p/$token")({
   loader: async ({ params }) => {
     const [recap, html] = await Promise.all([
-      getSharedRecap({ data: { token: params.token } }),
-      getSharedRecapHtml({ data: { token: params.token } }),
+      retryUntilFound(() => getSharedRecap({ data: { token: params.token } })),
+      retryUntilFound(() => getSharedRecapHtml({ data: { token: params.token } })),
     ]);
     return { recap, html };
   },
+  headers: () => NO_STORE_HEADERS,
   head: ({ loaderData }) => ({
     meta: [
       {

@@ -1,14 +1,16 @@
+import { retryUntilFound, NO_STORE_HEADERS } from "@/lib/share-retry";
 import { createFileRoute } from "@tanstack/react-router";
 import { getSharedEmail, getSharedEmailHtml } from "@/lib/email-share.functions";
 
 export const Route = createFileRoute("/e/$token")({
   loader: async ({ params }) => {
     const [email, html] = await Promise.all([
-      getSharedEmail({ data: { token: params.token } }),
-      getSharedEmailHtml({ data: { token: params.token } }),
+      retryUntilFound(() => getSharedEmail({ data: { token: params.token } })),
+      retryUntilFound(() => getSharedEmailHtml({ data: { token: params.token } })),
     ]);
     return { email, html };
   },
+  headers: () => NO_STORE_HEADERS,
   head: ({ loaderData }) => ({
     meta: [
       {
