@@ -230,6 +230,22 @@ function PageEditor({
               )}
               Transcribe with ChatGPT
             </Button>
+            <Button
+              size="sm"
+              variant={poppedOut ? "default" : "outline"}
+              onClick={togglePopOut}
+              title="Open this scan in its own window you can move to another monitor and zoom freely"
+            >
+              {poppedOut ? (
+                <>
+                  <PictureInPicture2 className="mr-1 size-3.5" /> Dock scan
+                </>
+              ) : (
+                <>
+                  <ExternalLink className="mr-1 size-3.5" /> Pop out scan
+                </>
+              )}
+            </Button>
             {onToggleFull && (
               <Button
                 size="sm"
