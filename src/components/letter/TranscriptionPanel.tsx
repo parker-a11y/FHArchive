@@ -99,6 +99,53 @@ function PageEditor({
   const [text, setText] = useState(record?.verified_text ?? record?.ai_text ?? "");
   const [dirty, setDirty] = useState(false);
   const [savedVerified, setSavedVerified] = useState(record?.status === "human_verified");
+  /** The scan is showing in its own window (draggable to another monitor). */
+  const [poppedOut, setPoppedOut] = useState(false);
+  const scanWindowRef = useRef<ScanWindowHandle | null>(null);
+
+  // Keep the page in step with the detached window: if the user closes it, dock back.
+  useEffect(() => {
+    if (!poppedOut) return;
+    const t = setInterval(() => {
+      if (!scanWindowRef.current || scanWindowRef.current.window.closed) {
+        scanWindowRef.current = null;
+        setPoppedOut(false);
+      }
+    }, 600);
+    return () => clearInterval(t);
+  }, [poppedOut]);
+
+  useEffect(() => {
+    return () => {
+      scanWindowRef.current?.close();
+      scanWindowRef.current = null;
+    };
+  }, []);
+
+  function togglePopOut() {
+    if (poppedOut) {
+      scanWindowRef.current?.close();
+      scanWindowRef.current = null;
+      setPoppedOut(false);
+      return;
+    }
+    if (!file.viewUrl) {
+      toast.error("No web-viewable copy for this scan.");
+      return;
+    }
+    const handle = openScanWindow({
+      url: file.viewUrl,
+      title: file.label || file.original_filename,
+      rotation: file.rotation,
+    });
+    if (!handle) {
+      toast.error("Your browser blocked the pop-up. Allow pop-ups for this site and try again.");
+      return;
+    }
+    scanWindowRef.current = handle;
+    setPoppedOut(true);
+  }
+
 
   useEffect(() => {
     if (!dirty) {
