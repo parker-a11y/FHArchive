@@ -28,6 +28,7 @@ import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
+import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
 import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as ETokenRouteImport } from './routes/e.$token'
@@ -165,6 +166,11 @@ const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ATokenRoute = ATokenRouteImport.update({
+  id: '/a/$token',
+  path: '/a/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSendSampleEmailRoute = ApiSendSampleEmailRouteImport.update({
   id: '/api/send-sample-email',
@@ -420,6 +426,7 @@ export interface FileRoutesByFullPath {
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/timeline': typeof AuthenticatedTimelineRoute
+  '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/e/$token': typeof ETokenRoute
@@ -480,6 +487,7 @@ export interface FileRoutesByTo {
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
   '/timeline': typeof AuthenticatedTimelineRoute
+  '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/e/$token': typeof ETokenRoute
@@ -543,6 +551,7 @@ export interface FileRoutesById {
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
+  '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
   '/e/$token': typeof ETokenRoute
@@ -607,6 +616,7 @@ export interface FileRouteTypes {
     | '/quotations'
     | '/search'
     | '/timeline'
+    | '/a/$token'
     | '/api/send-sample-email'
     | '/d/$token'
     | '/e/$token'
@@ -667,6 +677,7 @@ export interface FileRouteTypes {
     | '/quotations'
     | '/search'
     | '/timeline'
+    | '/a/$token'
     | '/api/send-sample-email'
     | '/d/$token'
     | '/e/$token'
@@ -729,6 +740,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quotations'
     | '/_authenticated/search'
     | '/_authenticated/timeline'
+    | '/a/$token'
     | '/api/send-sample-email'
     | '/d/$token'
     | '/e/$token'
@@ -781,6 +793,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  ATokenRoute: typeof ATokenRoute
   ApiSendSampleEmailRoute: typeof ApiSendSampleEmailRoute
   DTokenRoute: typeof DTokenRoute
   ETokenRoute: typeof ETokenRoute
@@ -933,6 +946,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/timeline'
       preLoaderRoute: typeof AuthenticatedTimelineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/a/$token': {
+      id: '/a/$token'
+      path: '/a/$token'
+      fullPath: '/a/$token'
+      preLoaderRoute: typeof ATokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/send-sample-email': {
       id: '/api/send-sample-email'
@@ -1316,6 +1336,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  ATokenRoute: ATokenRoute,
   ApiSendSampleEmailRoute: ApiSendSampleEmailRoute,
   DTokenRoute: DTokenRoute,
   ETokenRoute: ETokenRoute,

@@ -1,4 +1,13 @@
-import parse, { domToReact, Element, Text as TextNode, type DOMNode } from "html-react-parser";
+import parse, { domToReact, type DOMNode } from "html-react-parser";
+
+/** Duck-typed node checks: instanceof fails across bundled parser copies. */
+function isText(node: unknown): node is { type: "text"; data: string } {
+  return !!node && (node as { type?: string }).type === "text";
+}
+function isElement(node: unknown): node is { type: string; name: string; attribs: Record<string, string>; children: unknown[] } {
+  const t = (node as { type?: string } | null)?.type;
+  return !!node && (t === "tag" || t === "script" || t === "style");
+}
 import { Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
 import { useInlinePhotos } from "@/lib/inline-photos-urls";
@@ -57,16 +66,16 @@ export function RichTextView({ html, className, year, estimatedYear }: { html: s
   const photos = useInlinePhotos(html);
   const nodes = parse(sanitizeRichHtml(html), {
     replace: (node) => {
-      if (node instanceof TextNode) return <TextRun text={node.data} photos={photos} year={year} estimatedYear={estimatedYear} />;
-      if (node instanceof Element && node.name === "a") {
+      if (isText(node)) return <TextRun text={node.data} photos={photos} year={year} estimatedYear={estimatedYear} />;
+      if (isElement(node) && node.name === "a") {
         const href = node.attribs["href"];
         return (
           <a href={href} target="_blank" rel="noopener noreferrer">
-            {domToReact(node.children as DOMNode[], { replace: (n) => (n instanceof TextNode ? <TextRun text={n.data} photos={photos} year={year} estimatedYear={estimatedYear} /> : undefined) })}
+            {domToReact(node.children as DOMNode[], { replace: (n) => (isText(n) ? <TextRun text={n.data} photos={photos} year={year} estimatedYear={estimatedYear} /> : undefined) })}
           </a>
         );
       }
-      if (node instanceof Element) {
+      if (isElement(node)) {
         const style = safeStyle(node.attribs["style"]);
         if (!style) node.attribs = {};
         else node.attribs = { style };

@@ -339,6 +339,7 @@ export type Database = {
           id: string
           model: string | null
           question: string
+          share_token: string | null
           sources: Json
           updated_at: string
           user_email: string | null
@@ -355,6 +356,7 @@ export type Database = {
           id?: string
           model?: string | null
           question: string
+          share_token?: string | null
           sources?: Json
           updated_at?: string
           user_email?: string | null
@@ -371,6 +373,7 @@ export type Database = {
           id?: string
           model?: string | null
           question?: string
+          share_token?: string | null
           sources?: Json
           updated_at?: string
           user_email?: string | null

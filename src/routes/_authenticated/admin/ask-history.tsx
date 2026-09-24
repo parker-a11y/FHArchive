@@ -2,9 +2,12 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Loader2, MessageSquareText, AlertTriangle } from "lucide-react";
+import { ChevronDown, Loader2, MessageSquareText, AlertTriangle, Link2 as LinkIcon } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell, AdminOnly, PageHeader } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ensureAskShareLink } from "@/lib/ask-share.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin/ask-history")({
@@ -46,6 +49,45 @@ const CONFIDENCE_TONE: Record<string, string> = {
   possible: "bg-tone-amber-soft text-tone-amber",
   uncertain: "bg-tone-rose-soft text-tone-rose",
 };
+
+function ShareAnswerButton({ queryId }: { queryId: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function makeLink() {
+    setBusy(true);
+    try {
+      const res = await ensureAskShareLink({ data: { queryId } });
+      setUrl(res.url);
+      try {
+        await navigator.clipboard.writeText(res.url);
+        toast.success("Public link copied to your clipboard");
+      } catch {
+        toast.success("Public link ready — copy it below");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not create the link");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-4 border-t border-border pt-3">
+      <Button type="button" variant="outline" size="sm" onClick={makeLink} disabled={busy}>
+        {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <LinkIcon className="mr-2 size-4" />}
+        Get public link
+      </Button>
+      {url && (
+        <p className="mt-2 break-all text-xs text-muted-foreground">
+          <a href={url} target="_blank" rel="noreferrer noopener" className="text-archive-gold hover:underline">
+            {url}
+          </a>
+        </p>
+      )}
+    </div>
+  );
+}
 
 function AskHistory() {
   const [q, setQ] = useState("");
@@ -205,6 +247,7 @@ function AskHistory() {
                             </div>
                           )}
 
+                          <ShareAnswerButton queryId={r.id} />
                         </>
                       )}
                     </div>

@@ -22,3 +22,5 @@
 - [x] "What was happening this day" backfill: hourly job writes 3 archive dates/run, queue + pause/resume + retry on the On This Date Review page (publish required for the live cron route)
 - [x] Automatically format complete quoted paragraphs when pasted into writing editors
 - [x] Restrict backup history and file listings to archive editors
+- [x] Money amounts highlight and convert inside formatted transcriptions
+- [x] Ask Francis history: "Get public link" button for sharing an answer
