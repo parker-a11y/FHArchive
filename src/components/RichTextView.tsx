@@ -1,4 +1,13 @@
-import parse, { domToReact, Element, Text as TextNode, type DOMNode } from "html-react-parser";
+import parse, { domToReact, type DOMNode } from "html-react-parser";
+
+/** Duck-typed node checks: instanceof fails across bundled parser copies. */
+function isText(node: unknown): node is { type: "text"; data: string } {
+  return !!node && (node as { type?: string }).type === "text";
+}
+function isElement(node: unknown): node is { type: string; name: string; attribs: Record<string, string>; children: unknown[] } {
+  const t = (node as { type?: string } | null)?.type;
+  return !!node && (t === "tag" || t === "script" || t === "style");
+}
 import { Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
 import { useInlinePhotos } from "@/lib/inline-photos-urls";
