@@ -100,6 +100,7 @@ const blank = {
   // Letters are assumed to have an envelope; uncheck for NO ENVELOPE.
   has_envelope: true,
   has_enclosures: false,
+  enclosure_description: "",
   starred: false,
   transcription_not_required: false,
   storage_type: "file_jacket",
@@ -329,6 +330,7 @@ function QuickEntry() {
     return {
       identification_status: form.identification_status,
       date_from_postmark: form.date_from_postmark,
+      enclosure_description: form.has_enclosures ? form.enclosure_description.trim() || null : null,
       forwarded: isLetter ? form.forwarded : false,
       forwarded_to: isLetter && form.forwarded ? form.forwarded_to || null : null,
       postal_service: isLetter ? form.postal_service || null : null,
@@ -1122,6 +1124,14 @@ function QuickEntry() {
                 />
                 Enclosures
               </label>
+              {form.has_enclosures && (
+                <input
+                  className="h-8 w-64 rounded-md border border-input bg-background px-2 text-sm"
+                  placeholder="Enclosure (optional) — e.g. Newspaper clipping, Photo of Skip"
+                  value={form.enclosure_description}
+                  onChange={(e) => set("enclosure_description", e.target.value)}
+                />
+              )}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"

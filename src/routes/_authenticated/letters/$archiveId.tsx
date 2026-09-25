@@ -224,6 +224,7 @@ function LetterPage() {
       sheets: letter.sheets === null ? "" : String(letter.sheets),
       has_envelope: letter.has_envelope,
       has_enclosures: letter.has_enclosures,
+      enclosure_description: (letter as { enclosure_description?: string | null }).enclosure_description ?? "",
       notes: letter.notes ?? "",
       summary_short: letter.summary_short ?? "",
       summary_long: letter.summary_long ?? "",
@@ -1083,6 +1084,14 @@ function LetterPage() {
                 />
                 Enclosures
               </label>
+              {!!form.has_enclosures && (
+                <input
+                  className="h-8 w-64 rounded-md border border-input bg-background px-2 text-sm"
+                  placeholder="Enclosure (optional) — e.g. Newspaper clipping, Photo of Skip"
+                  value={String(form.enclosure_description ?? "")}
+                  onChange={(e) => set("enclosure_description", e.target.value)}
+                />
+              )}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
