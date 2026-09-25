@@ -2018,6 +2018,7 @@ export type Database = {
           digitization_notes: string | null
           digitization_override: boolean
           digitization_status: string
+          enclosure_description: string | null
           envelope_reviewed: boolean
           envelope_reviewed_at: string | null
           expected_scan_count: number | null
@@ -2108,6 +2109,7 @@ export type Database = {
           digitization_notes?: string | null
           digitization_override?: boolean
           digitization_status?: string
+          enclosure_description?: string | null
           envelope_reviewed?: boolean
           envelope_reviewed_at?: string | null
           expected_scan_count?: number | null
@@ -2198,6 +2200,7 @@ export type Database = {
           digitization_notes?: string | null
           digitization_override?: boolean
           digitization_status?: string
+          enclosure_description?: string | null
           envelope_reviewed?: boolean
           envelope_reviewed_at?: string | null
           expected_scan_count?: number | null

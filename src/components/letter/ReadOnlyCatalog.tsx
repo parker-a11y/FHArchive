@@ -96,7 +96,7 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
   push("Sheets", letter.sheets);
   if (letter.image_count) push("Scanned images", letter.image_count);
   if (letter.has_envelope) push("Envelope", "Yes");
-  if (letter.has_enclosures) push("Enclosures", "Yes");
+  if (letter.has_enclosures) push("Enclosures", (letter as { enclosure_description?: string | null }).enclosure_description || "Yes");
   if (letter.tones?.length) push("Tone / sentiment", letter.tones.join(", "));
 
   const postal: { label: string; value: React.ReactNode }[] = [];
