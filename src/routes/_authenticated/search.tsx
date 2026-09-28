@@ -50,7 +50,7 @@ const SNIPPETS_SHOWN = 3;
 function ResultCard({
   letter,
   term,
-  snippets,
+  snippets: rawSnippets,
   tags,
   hits,
   meta,
@@ -64,6 +64,19 @@ function ResultCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  // The same passage appears in the verified transcription, each page, and the
+  // AI draft — keep only the first occurrence of each matched passage.
+  const snippets = (() => {
+    const seen = new Set<string>();
+    const norm = (t: string) =>
+      t.replace(/<[^>]*>/g, " ").replace(/[^a-z0-9]+/gi, " ").trim().toLowerCase();
+    return rawSnippets.filter((s) => {
+      const key = norm(s.text).replace(/^\S*\s|\s\S*$/g, "");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })();
   const shown = showAll ? snippets : snippets.slice(0, SNIPPETS_SHOWN);
   const jump = {
     to: "/letters/$archiveId" as const,
