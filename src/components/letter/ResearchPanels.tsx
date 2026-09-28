@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Trash2 } from "lucide-react";
+import { CheckCircle2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
 import {
@@ -731,6 +731,12 @@ export function AiPanel({ letter }: { letter: Letter }) {
     toast.message("Kept the wording you had already accepted.");
   }
 
+  const allReviewed =
+    rows.length > 0 &&
+    !busy &&
+    !error &&
+    rows.every((r) => r.status === "accepted" || r.status === "rejected");
+
   const acceptable = rows.filter(
     (r) => r.status !== "rejected" && (editing[r.id] ?? r.content ?? "").trim() !== "",
   );
@@ -794,11 +800,27 @@ export function AiPanel({ letter }: { letter: Letter }) {
           toast.success(n ? "Tone / sentiment saved" : "No tones saved");
         }}
       />
-      <div className="rounded border border-archive-ai/40 bg-archive-ai-surface px-3 py-3">
+      <div
+        className={`rounded border px-3 py-3 ${
+          allReviewed
+            ? "border-tone-emerald/40 bg-tone-emerald-soft"
+            : "border-archive-ai/40 bg-archive-ai-surface"
+        }`}
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-archive-ai">
-            AI analysis reads this record&apos;s transcription and proposes suggestions. Nothing is
-            written to archival metadata until you accept it.
+          <p className={`text-sm ${allReviewed ? "text-tone-emerald" : "text-archive-ai"}`}>
+            {allReviewed ? (
+              <>
+                <CheckCircle2 className="mr-1.5 inline h-4 w-4" />
+                AI analysis saved &mdash; all fields reviewed. Nothing is written to archival
+                metadata until you accept it.
+              </>
+            ) : (
+              <>
+                AI analysis reads this record's transcription and proposes suggestions.
+                Nothing is written to archival metadata until you accept it.
+              </>
+            )}
           </p>
           <div className="flex gap-2">
             {acceptable.length > 0 && (
