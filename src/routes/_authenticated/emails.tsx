@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { fetchAllEmailRecords, fetchSentEmails } from "@/lib/archive-email";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
+import { cancelScheduledEmail } from "@/lib/archive-email.functions";
+import { useQueryClient } from "@tanstack/react-query";
 import { RichTextView } from "@/components/RichTextView";
 import { isRichHtml } from "@/lib/rich-text";
 
@@ -44,6 +46,8 @@ const STATUS_STYLES: Record<string, string> = {
   failed: "border-destructive/40 bg-destructive/10 text-destructive",
   suppressed: "border-border bg-secondary text-muted-foreground",
   sending: "border-border bg-secondary text-muted-foreground",
+  scheduled: "border-accent bg-accent text-accent-foreground",
+  cancelled: "border-border bg-secondary text-muted-foreground line-through",
 };
 
 /** Creates (or reuses) the public view-only page for this email and copies its link. */
@@ -83,6 +87,33 @@ function GetEmailLinkButton({ emailId }: { emailId: string }) {
         <Link2 className="size-4" />
       )}
       Get link
+    </Button>
+  );
+}
+
+function CancelScheduledButton({ emailId }: { emailId: string }) {
+  const cancel = useServerFn(cancelScheduledEmail);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await cancel({ data: { emailId } });
+          toast.success("Scheduled email cancelled");
+          qc.invalidateQueries({ queryKey: ["archive-emails"] });
+        } catch (e) {
+          toast.error((e as Error).message);
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      Cancel send
     </Button>
   );
 }
@@ -129,8 +160,15 @@ function EmailsPage() {
                   {(e.recipients ?? []).map((r) => r.email).join(", ")}
                 </span>
                 <span className="ml-auto text-xs text-muted-foreground">
-                  {new Date(e.sent_at).toLocaleString()}
+                  {e.status === "scheduled" && e.scheduled_for
+                    ? `Sends ${new Date(e.scheduled_for).toLocaleString()}`
+                    : new Date(e.sent_at).toLocaleString()}
                 </span>
+                {e.status === "scheduled" && (
+                  <span onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}>
+                    <CancelScheduledButton emailId={e.id} />
+                  </span>
+                )}
                 <span
                   onClick={(ev) => {
                     ev.preventDefault();
