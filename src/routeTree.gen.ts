@@ -66,6 +66,7 @@ import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
 import { Route as ApiPublicOnThisDateBackfillRouteImport } from './routes/api/public/on-this-date-backfill'
 import { Route as ApiPublicResearchReindexRouteImport } from './routes/api/public/research-reindex'
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
+import { Route as ApiPublicScheduledEmailsRouteImport } from './routes/api/public/scheduled-emails'
 import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
 import { Route as AuthenticatedAdminNotesIndexRouteImport } from './routes/_authenticated/admin/notes/index'
 import { Route as AuthenticatedAdminNotesNoteIdRouteImport } from './routes/_authenticated/admin/notes/$noteId'
@@ -383,6 +384,12 @@ const ApiPublicResearchSnapshotRoute =
     path: '/api/public/research-snapshot',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicScheduledEmailsRoute =
+  ApiPublicScheduledEmailsRouteImport.update({
+    id: '/api/public/scheduled-emails',
+    path: '/api/public/scheduled-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWeeklyRecapRoute = ApiPublicWeeklyRecapRouteImport.update({
   id: '/api/public/weekly-recap',
   path: '/api/public/weekly-recap',
@@ -455,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
+  '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
@@ -517,6 +525,7 @@ export interface FileRoutesByTo {
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
+  '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
@@ -581,6 +590,7 @@ export interface FileRoutesById {
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
+  '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
+    | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/containers/'
     | '/events/'
@@ -707,6 +718,7 @@ export interface FileRouteTypes {
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
+    | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/containers'
     | '/events'
@@ -770,6 +782,7 @@ export interface FileRouteTypes {
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
+    | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
@@ -808,6 +821,7 @@ export interface RootRouteChildren {
   ApiPublicOnThisDateBackfillRoute: typeof ApiPublicOnThisDateBackfillRoute
   ApiPublicResearchReindexRoute: typeof ApiPublicResearchReindexRoute
   ApiPublicResearchSnapshotRoute: typeof ApiPublicResearchSnapshotRoute
+  ApiPublicScheduledEmailsRoute: typeof ApiPublicScheduledEmailsRoute
   ApiPublicWeeklyRecapRoute: typeof ApiPublicWeeklyRecapRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
@@ -1213,6 +1227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicResearchSnapshotRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/scheduled-emails': {
+      id: '/api/public/scheduled-emails'
+      path: '/api/public/scheduled-emails'
+      fullPath: '/api/public/scheduled-emails'
+      preLoaderRoute: typeof ApiPublicScheduledEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/weekly-recap': {
       id: '/api/public/weekly-recap'
       path: '/api/public/weekly-recap'
@@ -1351,6 +1372,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicOnThisDateBackfillRoute: ApiPublicOnThisDateBackfillRoute,
   ApiPublicResearchReindexRoute: ApiPublicResearchReindexRoute,
   ApiPublicResearchSnapshotRoute: ApiPublicResearchSnapshotRoute,
+  ApiPublicScheduledEmailsRoute: ApiPublicScheduledEmailsRoute,
   ApiPublicWeeklyRecapRoute: ApiPublicWeeklyRecapRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
