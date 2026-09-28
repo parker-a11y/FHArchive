@@ -73,144 +73,31 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     if (data.recipients.length === 0) throw new Error("Add at least one valid email address.");
     if (!data.subject) throw new Error("A subject is required.");
 
-    const { buildRecords, rememberContacts, ensureShareLinksForRefs, resolveInlinePhotos } =
-      await import("@/lib/archive-email.server");
+    const { deliverArchiveEmail, scheduleArchiveEmail } = await import("@/lib/archive-email-send.server");
+    const { scheduledFor, ...payload } = data;
+    if (scheduledFor) {
+      const when = new Date(scheduledFor);
+      if (Number.isNaN(when.getTime())) throw new Error("That scheduled time is not valid.");
+      if (when.getTime() < Date.now() + 60_000) throw new Error("Pick a time at least a minute from now.");
+      const emailId = await scheduleArchiveEmail(db, context.userId, payload, when);
+      return { emailId, sent: [], suppressed: [], failed: [], scheduledFor: when.toISOString() };
+    }
+    return deliverArchiveEmail(db, context.userId, payload);
+  });
 
-    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
-
-    const records = await buildRecords(db as never, context.userId, data.records, {
-      includeTranscription: data.includeTranscription,
-      includeImages: data.includeImages,
-      includeEnvelope: data.includeEnvelope,
-    });
-
-    /**
-     * Any FH / DS number written in the message body (e.g. Ask Francis
-     * citations) becomes a clickable public link in the email — the same
-     * unlisted share tokens the weekly recap uses.
-     */
-    const linkableText = [data.message, data.research?.answer ?? "", data.research?.question ?? ""].join(
-      "\n",
-    );
-    const mentionedRefs = linkableText.match(/(FH|DS)-?\d{3,}/gi) ?? [];
-    const shareLinks =
-      mentionedRefs.length > 0
-        ? await ensureShareLinksForRefs(
-            db as never,
-            context.userId,
-            mentionedRefs,
-            data.includeTranscription,
-          )
-        : {};
-
-    // Photos the archivist embedded in the note itself.
-    const inlinePhotos = await resolveInlinePhotos(
-      db as never,
-      context.userId,
-      linkableText,
-      { includeTranscription: data.includeTranscription },
-    );
-
-
-    const { data: logRow } = await db
+/** Cancels a scheduled (not yet sent) email. Admin only. */
+export const cancelScheduledEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { emailId: string }) => ({ emailId: String(data.emailId) }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can cancel email.");
+    const { error } = await db
       .from("archive_emails")
-      .insert({
-        owner_id: context.userId,
-        subject: data.subject,
-        message_body:
-          [
-            data.message,
-            data.research?.question ? `Research question: ${data.research.question}` : "",
-            data.research?.answer ?? "",
-          ]
-            .filter(Boolean)
-            .join("\n\n") || null,
-        header_title: data.headerTitle || null,
-        header_subtitle: data.headerSubtitle || null,
-        recipients: data.recipients,
-        attachment_count: 0,
-        status: "sending",
-      } as never)
-      .select("id")
-      .maybeSingle();
-    const emailId = (logRow as { id?: string } | null)?.id ?? null;
-
-    if (emailId) {
-      for (const [i, r] of records.entries()) {
-        if (r.kind !== "letter") continue;
-        await db.from("archive_email_records").insert({
-          owner_id: context.userId,
-          email_id: emailId,
-          letter_id: r.id,
-          archive_id: r.identifier,
-          sort_order: i,
-        } as never);
-      }
-    }
-
-    const result: SendArchiveEmailResult = { emailId, sent: [], suppressed: [], failed: [] };
-
-    for (const recipient of data.recipients) {
-      try {
-        const res = await sendTemplateEmail("archive-record", recipient.email, {
-          idempotencyKey: `archive-email-${emailId ?? crypto.randomUUID()}-${recipient.email}`,
-          templateData: {
-            subject: data.subject,
-            headerTitle: data.headerTitle || data.subject,
-            headerSubtitle: data.headerSubtitle || undefined,
-            message: data.message || undefined,
-            research: data.research ?? undefined,
-            thumbnails: data.thumbnails,
-            shareLinks,
-            inlinePhotos,
-
-            senderName: "The Francis Files",
-            records: records.map((r) => ({
-              identifier: r.identifier,
-              title: r.title,
-              date: r.date,
-              details: r.details,
-              summary: r.summary,
-              transcription: r.transcription,
-              url: r.url,
-              images: r.images,
-              fff: r.fff,
-            })),
-          },
-        });
-        if (res.sent) result.sent.push(recipient.email);
-        else result.suppressed.push(recipient.email);
-      } catch (error) {
-        const err = error as { code?: string; message?: string };
-        result.failed.push({
-          email: recipient.email,
-          error:
-            err.code === "domain_not_verified"
-              ? "Sender domain is still verifying — try again once DNS finishes."
-              : err.message || "Send failed",
-        });
-      }
-    }
-
-    if (emailId) {
-      const status =
-        result.failed.length === 0
-          ? result.sent.length > 0
-            ? "sent"
-            : "suppressed"
-          : result.sent.length > 0
-            ? "partial"
-            : "failed";
-      await db
-        .from("archive_emails")
-        .update({
-          status,
-          error: result.failed.length ? result.failed.map((f) => `${f.email}: ${f.error}`).join("; ") : null,
-        } as never)
-        .eq("id", emailId);
-    }
-
-    await rememberContacts(db as never, context.userId, data.recipients);
-
-    return result;
+      .update({ status: "cancelled", send_payload: null } as never)
+      .eq("id", data.emailId)
+      .eq("status", "scheduled");
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
