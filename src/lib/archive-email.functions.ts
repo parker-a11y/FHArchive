@@ -22,6 +22,8 @@ export type SendArchiveEmailInput = {
   } | null;
   /** One small clickable thumbnail per record instead of full-width scans. */
   thumbnails?: boolean;
+  /** ISO time to send later; omitted = send now. */
+  scheduledFor?: string | null;
 };
 
 export type SendArchiveEmailResult = {
@@ -29,6 +31,7 @@ export type SendArchiveEmailResult = {
   sent: string[];
   suppressed: string[];
   failed: { email: string; error: string }[];
+  scheduledFor?: string;
 };
 
 /**
@@ -53,6 +56,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     includeImages: data.includeImages !== false,
     includeEnvelope: Boolean(data.includeEnvelope),
     thumbnails: Boolean(data.thumbnails),
+    scheduledFor: data.scheduledFor ? String(data.scheduledFor) : null,
     research: data.research?.answer
       ? {
           question: String(data.research.question ?? "").slice(0, 2000),
