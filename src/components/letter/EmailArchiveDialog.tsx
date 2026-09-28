@@ -89,6 +89,8 @@ export function EmailArchiveDialog({
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
   const [includeEnvelope, setIncludeEnvelope] = useState(true);
+  const [later, setLater] = useState(false);
+  const [sendAt, setSendAt] = useState("");
   const hasLetter = recordList.some((r) => r.kind === "letter");
 
 
@@ -187,6 +189,7 @@ export function EmailArchiveDialog({
 
   const submit = async () => {
     if (recipients.length === 0) return toast.error("Add at least one recipient");
+    if (later && !sendAt) return toast.error("Pick a date and time to send");
     setBusy(true);
     try {
       const res = await send({
@@ -202,8 +205,16 @@ export function EmailArchiveDialog({
           includeEnvelope: includeImages && includeEnvelope,
           research: research?.answer ? research : null,
           thumbnails: Boolean(thumbnails),
+          scheduledFor: later && sendAt ? new Date(sendAt).toISOString() : null,
         },
       });
+      if (res.scheduledFor) {
+        toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
+        setOpen(false);
+        setLater(false);
+        setMessage(defaultMessage ?? "");
+        return;
+      }
       if (res.sent.length) toast.success(`Sent to ${res.sent.join(", ")}`);
       if (res.suppressed.length)
         toast.warning(`Skipped (previously unsubscribed or bounced): ${res.suppressed.join(", ")}`);
@@ -386,12 +397,31 @@ export function EmailArchiveDialog({
           </div>
         </div>
 
+        <div className="space-y-2 rounded border border-border px-3 py-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={later} onCheckedChange={(v) => setLater(Boolean(v))} />
+            Send later
+          </label>
+          {later && (
+            <Input
+              type="datetime-local"
+              value={sendAt}
+              onChange={(e) => setSendAt(e.target.value)}
+              aria-label="Scheduled send time"
+            />
+          )}
+          {later && (
+            <p className="text-xs text-muted-foreground">
+              Goes out within about 5 minutes of this time. You can cancel it from Sent Email.
+            </p>
+          )}
+        </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={busy}>
-            {busy ? "Sending…" : "Send email"}
+            {busy ? (later ? "Scheduling…" : "Sending…") : later ? "Schedule email" : "Send email"}
           </Button>
         </DialogFooter>
       </DialogContent>

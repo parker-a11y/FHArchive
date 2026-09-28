@@ -18,6 +18,7 @@ export type ArchiveEmail = {
   status: string;
   error: string | null;
   sent_at: string;
+  scheduled_for?: string | null;
 };
 
 export async function fetchContacts(): Promise<ArchiveContact[]> {
@@ -33,7 +34,7 @@ export async function fetchContacts(): Promise<ArchiveContact[]> {
 export async function fetchSentEmails(): Promise<ArchiveEmail[]> {
   const { data, error } = await supabase
     .from("archive_emails")
-    .select("id, subject, message_body, header_title, header_subtitle, recipients, status, error, sent_at")
+    .select("id, subject, message_body, header_title, header_subtitle, recipients, status, error, sent_at, scheduled_for")
     .order("sent_at", { ascending: false })
     .limit(200);
   if (error) throw error;

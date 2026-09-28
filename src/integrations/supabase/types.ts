@@ -222,6 +222,8 @@ export type Database = {
           message_body: string | null
           owner_id: string
           recipients: Json
+          scheduled_for: string | null
+          send_payload: Json | null
           sender_email: string | null
           sent_at: string
           share_token: string | null
@@ -239,6 +241,8 @@ export type Database = {
           message_body?: string | null
           owner_id: string
           recipients?: Json
+          scheduled_for?: string | null
+          send_payload?: Json | null
           sender_email?: string | null
           sent_at?: string
           share_token?: string | null
@@ -256,6 +260,8 @@ export type Database = {
           message_body?: string | null
           owner_id?: string
           recipients?: Json
+          scheduled_for?: string | null
+          send_payload?: Json | null
           sender_email?: string | null
           sent_at?: string
           share_token?: string | null
