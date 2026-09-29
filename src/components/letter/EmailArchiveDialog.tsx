@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
 import { Mail, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -299,7 +300,10 @@ export function EmailArchiveDialog({
                   }
                 }}
                 placeholder="name@example.com"
+                list={CONTACT_EMAIL_LIST_ID}
+                autoComplete="off"
               />
+              <ContactEmailList />
               <Button type="button" variant="secondary" onClick={() => addRecipient(entry)}>
                 <Plus className="size-4" />
               </Button>

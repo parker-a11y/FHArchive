@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
 import { Check, ChevronLeft, ChevronRight, Link2, Loader2, Send } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -136,6 +137,7 @@ function AddRecipientsButton({ emailId }: { emailId: string }) {
     );
   return (
     <span className="flex gap-1">
+      <ContactEmailList />
       <Input
         autoFocus
         value={text}
@@ -145,6 +147,8 @@ function AddRecipientsButton({ emailId }: { emailId: string }) {
           if (ev.key === "Escape") setOpen(false);
         }}
         placeholder="name@example.com, …"
+        list={CONTACT_EMAIL_LIST_ID}
+        autoComplete="off"
         className="h-8 w-56"
       />
       <Button size="sm" onClick={submit} disabled={busy}>
