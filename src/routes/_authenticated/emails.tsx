@@ -239,7 +239,17 @@ function Calendar({
         {cells.map((day, i) => {
           if (day === null) return <div key={`b${i}`} className="min-h-16 rounded" />;
           const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const entries = byDay.get(key) ?? [];
+          // One email per recipient means the same dispatch repeats — show it once.
+          const all = byDay.get(key) ?? [];
+          const seen = new Set<string>();
+          const unique = all.filter((e) => {
+            const sig = `${e.kind}|${e.ids.join(",")}|${e.subject}`;
+            if (seen.has(sig)) return false;
+            seen.add(sig);
+            return true;
+          });
+          const entries = unique.slice(0, 3);
+          const extra = unique.length - entries.length;
           const empty = entries.length === 0;
           const isToday = key === todayKey;
           const isSelected = key === selectedDay;
