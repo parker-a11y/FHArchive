@@ -16,7 +16,7 @@ import {
   type EmailRecordRef,
 } from "@/lib/archive-email";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
-import { cancelScheduledEmail } from "@/lib/archive-email.functions";
+import { addScheduledRecipients, cancelScheduledEmail } from "@/lib/archive-email.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { RichTextView } from "@/components/RichTextView";
 import { isRichHtml } from "@/lib/rich-text";
@@ -103,6 +103,57 @@ function GetEmailLinkButton({ emailId }: { emailId: string }) {
       )}
       Get link
     </Button>
+  );
+}
+
+function AddRecipientsButton({ emailId }: { emailId: string }) {
+  const add = useServerFn(addScheduledRecipients);
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    const emails = text.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
+    if (emails.length === 0) return toast.error("Type at least one email address");
+    setBusy(true);
+    try {
+      await add({ data: { emailId, recipients: emails.map((email) => ({ email })) } });
+      toast.success("Recipients added");
+      qc.invalidateQueries({ queryKey: ["archive-emails"] });
+      setText("");
+      setOpen(false);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!open)
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        Add recipients
+      </Button>
+    );
+  return (
+    <span className="flex gap-1">
+      <Input
+        autoFocus
+        value={text}
+        onChange={(ev) => setText(ev.target.value)}
+        onKeyDown={(ev) => {
+          if (ev.key === "Enter") submit();
+          if (ev.key === "Escape") setOpen(false);
+        }}
+        placeholder="name@example.com, …"
+        className="h-8 w-56"
+      />
+      <Button size="sm" onClick={submit} disabled={busy}>
+        {busy ? "Adding…" : "Add"}
+      </Button>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
+        Cancel
+      </Button>
+    </span>
   );
 }
 
@@ -524,7 +575,12 @@ function EmailsPage() {
                       : new Date(e.sent_at).toLocaleString()}
                   </span>
                   {e.status === "scheduled" && (
-                    <span onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}>
+                    <span
+                      className="flex gap-2"
+                      onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
+                      onKeyDown={(ev) => ev.stopPropagation()}
+                    >
+                      <AddRecipientsButton emailId={e.id} />
                       <CancelScheduledButton emailId={e.id} />
                     </span>
                   )}
