@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
 import {
   ArrowLeft,
   Check,
@@ -537,7 +538,10 @@ function RecapPage() {
                   }}
                   placeholder="name@example.com"
                   type="email"
+                  list={CONTACT_EMAIL_LIST_ID}
+                  autoComplete="off"
                 />
+                <ContactEmailList />
                 <Button variant="outline" className="gap-1.5" onClick={() => addRecipient(newEmail)}>
                   <Plus className="size-4" /> Add
                 </Button>

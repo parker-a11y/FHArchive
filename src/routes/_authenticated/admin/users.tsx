@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
 import { CheckCircle, XCircle, Trash2, UserPlus, Copy } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -391,7 +392,10 @@ function AddAccountDialog() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
+                list={CONTACT_EMAIL_LIST_ID}
+                autoComplete="off"
               />
+              <ContactEmailList />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="new-name">Full name (optional)</Label>
