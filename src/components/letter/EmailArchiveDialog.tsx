@@ -92,8 +92,8 @@ export function EmailArchiveDialog({
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
   const [includeEnvelope, setIncludeEnvelope] = useState(true);
-  const [later, setLater] = useState(false);
-  const [sendAt, setSendAt] = useState("");
+  const [later, setLater] = useState(Boolean(defaultSendAt));
+  const [sendAt, setSendAt] = useState(defaultSendAt ?? "");
   const hasLetter = recordList.some((r) => r.kind === "letter");
 
 
