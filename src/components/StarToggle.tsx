@@ -107,6 +107,9 @@ export function StarToggle({
   showLabel?: boolean;
   className?: string;
 }) {
+  // FFF concept removed — the toggle no longer renders anywhere.
+  if (table || !table) return null;
+
   const { isAdmin, isGuestViewer } = useAuth();
   const qc = useQueryClient();
   const [noteOpen, setNoteOpen] = useState(false);
