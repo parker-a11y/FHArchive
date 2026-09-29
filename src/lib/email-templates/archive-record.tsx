@@ -235,7 +235,7 @@ const ArchiveRecordEmail = ({
 
         {records.map((r, i) => (
           <Section key={i} style={card}>
-            {r.fff ? (
+            {false && r.fff ? (
               <Section style={fffRow}>
                 <Img
                   src="https://fharchive.com/fff-badge.png"

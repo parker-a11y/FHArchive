@@ -114,7 +114,7 @@ export function ArchiveNotes() {
           <>
             <div className="mb-2 flex items-start gap-3">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-tone-amber-soft text-tone-amber">
-                {isFffNote(latest.title) ? <FffBadge size={20} /> : <NotebookPen className="size-4" />}
+                <NotebookPen className="size-4" />
               </div>
               <div className="min-w-0">
                 {latest.title && <h3 className="font-display text-lg font-semibold">{latest.title}</h3>}

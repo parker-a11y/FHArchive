@@ -466,9 +466,6 @@ function QuickEntry() {
       toast.success(`${created.archive_id} cataloged`);
     }
     setSession((s) => [created.archive_id, ...s]);
-    if (form.starred) {
-      setStarNoteFor(`${created.archive_id}${form.title ? ` — ${form.title}` : ""}`);
-    }
     if (mode === "open") {
       navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
       return;
@@ -1132,15 +1129,6 @@ function QuickEntry() {
                   onChange={(e) => set("enclosure_description", e.target.value)}
                 />
               )}
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.starred}
-                  onChange={(e) => set("starred", e.target.checked)}
-                />
-                <FffBadge size={18} muted={!form.starred} />
-                FFF — Francis File Find
-              </label>
               <label
                 className="flex items-center gap-2 text-sm"
                 title="Artwork, objects, currency, photographs without meaningful text — no OCR/AI transcription needed."

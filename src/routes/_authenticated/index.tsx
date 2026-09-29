@@ -375,18 +375,6 @@ function Dashboard() {
       icon: Newspaper,
       to: "/recaps",
     },
-    {
-      label: (
-        <>
-          <span className="sm:hidden">FFF — Finds</span>
-          <span className="hidden sm:inline">FFF — Francis File Finds</span>
-        </>
-      ),
-      value: (stats0?.starred_records ?? 0) + (stats0?.starred_sources ?? 0),
-      tone: "amber",
-      icon: Star,
-      to: "/fff",
-    },
 
     { label: "Total scans", value: stats0?.total_scans ?? 0, tone: "emerald", icon: Layers, to: "/letters?scan=has" },
     {

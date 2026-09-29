@@ -122,7 +122,6 @@ const COLUMNS: Col[] = [
   { key: "digitization_status", label: "Digitization", width: 160 },
   { key: "scan_status", label: "Scan", width: 110 },
   { key: "transcription_status", label: "Transcription", width: 130 },
-  { key: "starred", label: "FFF", width: 90 },
   { key: "tones", label: "Tone / sentiment", width: 200 },
   { key: "keywords", label: "Keywords", width: 180 },
   { key: "notes", label: "Notes", width: 220, editable: true },
@@ -1205,12 +1204,6 @@ function LettersTable() {
             label: "Needs AI review",
             active: health === "purple",
             onClick: () => setHealth((h) => (h === "purple" ? "" : "purple")),
-          },
-          {
-            key: "starred",
-            label: "Starred",
-            active: starredOnly,
-            onClick: () => setStarredOnly((v) => !v),
           },
 
         ].map((chip) => (
