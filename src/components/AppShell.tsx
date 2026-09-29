@@ -52,13 +52,13 @@ const NAV = [
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
   { to: "/categories", label: "Categories", icon: Tags, adminOnly: true },
-  { to: "/emails", label: "Sent Email", icon: Mail, adminOnly: true },
+  { to: "/emails", label: "Email Admin", icon: Mail, adminOnly: true },
   { to: "/backups", label: "Backups", icon: ShieldCheck, adminOnly: true },
 ];
 
 const ADMIN_NAV = [
   { to: "/admin/users", label: "Account Control", icon: UserCog },
-  { to: "/emails", label: "Sent Email", icon: Mail },
+  { to: "/emails", label: "Email Admin", icon: Mail },
   { to: "/admin/on-this-date", label: "On This Date Review", icon: CalendarDays },
   { to: "/admin/numbering", label: "Numbering & Gaps", icon: ListChecks },
   { to: "/admin/notes", label: "Francis File Notes", icon: BookOpen },

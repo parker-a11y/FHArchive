@@ -50,6 +50,7 @@ export function EmailArchiveDialog({
   defaultSubject,
   defaultMessage,
   description,
+  defaultSendAt,
   research,
   thumbnails,
 }: {
@@ -62,6 +63,8 @@ export function EmailArchiveDialog({
   defaultSubject?: string;
   defaultMessage?: string;
   description?: ReactNode;
+  /** Pre-arms "Send later" with this local datetime (yyyy-MM-ddTHH:mm). */
+  defaultSendAt?: string;
   /** Ask Francis result sent as its own block, independent of the note. */
   research?: EmailResearchPayload;
   /** Show one small clickable thumbnail per record instead of full scans. */
@@ -89,8 +92,8 @@ export function EmailArchiveDialog({
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
   const [includeEnvelope, setIncludeEnvelope] = useState(true);
-  const [later, setLater] = useState(false);
-  const [sendAt, setSendAt] = useState("");
+  const [later, setLater] = useState(Boolean(defaultSendAt));
+  const [sendAt, setSendAt] = useState(defaultSendAt ?? "");
   const hasLetter = recordList.some((r) => r.kind === "letter");
 
 

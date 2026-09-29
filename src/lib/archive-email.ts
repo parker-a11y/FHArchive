@@ -65,3 +65,22 @@ export async function fetchAllEmailRecords(): Promise<EmailRecordRef[]> {
   if (error) throw error;
   return (data ?? []) as unknown as EmailRecordRef[];
 }
+
+export type EmailLetterRow = {
+  id: string;
+  archive_id: string;
+  title: string | null;
+  normalized_date: string | null;
+  date_as_written: string | null;
+};
+
+/** Lightweight letter list for the Email Admin queue — number, date, title only. */
+export async function fetchEmailLetterList(): Promise<EmailLetterRow[]> {
+  const { data, error } = await supabase
+    .from("letters")
+    .select("id, archive_id, title, normalized_date, date_as_written")
+    .order("archive_id", { ascending: true })
+    .limit(5000);
+  if (error) throw error;
+  return (data ?? []) as unknown as EmailLetterRow[];
+}
