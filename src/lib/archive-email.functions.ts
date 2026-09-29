@@ -105,3 +105,45 @@ export const cancelScheduledEmail = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Adds recipients to a scheduled (not yet sent) email. Admin only. */
+export const addScheduledRecipients = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { emailId: string; recipients: { email: string; name?: string | null }[] }) => ({
+    emailId: String(data.emailId),
+    recipients: (data.recipients ?? [])
+      .slice(0, 25)
+      .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
+      .filter((r) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email)),
+  }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can change email.");
+    if (data.recipients.length === 0) throw new Error("Add at least one valid email address.");
+
+    const { data: row, error: readError } = await db
+      .from("archive_emails")
+      .select("recipients, send_payload, status")
+      .eq("id", data.emailId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!row || (row as { status?: string }).status !== "scheduled")
+      throw new Error("That email is no longer waiting to be sent.");
+
+    const current = ((row as { recipients?: { email: string; name?: string | null }[] }).recipients ?? []);
+    const merged = [...current];
+    for (const r of data.recipients) {
+      if (!merged.some((m) => m.email === r.email)) merged.push(r);
+    }
+    const payload = (row as { send_payload?: Record<string, unknown> | null }).send_payload ?? null;
+    const nextPayload = payload ? { ...payload, recipients: merged } : payload;
+
+    const { error } = await db
+      .from("archive_emails")
+      .update({ recipients: merged, send_payload: nextPayload } as never)
+      .eq("id", data.emailId)
+      .eq("status", "scheduled");
+    if (error) throw new Error(error.message);
+    return { recipients: merged };
+  });
