@@ -288,6 +288,9 @@ function Calendar({
                   {e.ids.length ? e.ids.join(", ") : e.subject}
                 </span>
               ))}
+              {extra > 0 && (
+                <span className="mt-1 block text-muted-foreground">+{extra} more</span>
+              )}
               {empty && <span className="mt-1 block text-muted-foreground">open</span>}
             </button>
           );
