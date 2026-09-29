@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
+import { MonthYearInput, YearInput } from "@/components/letter/PartialDateInputs";
 import { toast } from "sonner";
 import { EditorOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -659,27 +660,16 @@ function QuickEntry() {
                     : "Date (optional)"}
               </Label>
               {form.date_precision === "year" ? (
-                <Input
-                  ref={dateRef}
-                  type="number"
-                  min={1700}
-                  max={2100}
-                  placeholder="e.g. 1944"
-                  value={form.normalized_date ? form.normalized_date.slice(0, 4) : ""}
-                  onChange={(e) => {
-                    const y = e.target.value.replace(/\D/g, "").slice(0, 4);
-                    set("normalized_date", y ? `${y}-01-01` : "");
-                  }}
+                <YearInput
+                  inputRef={dateRef}
+                  value={form.normalized_date}
+                  onChange={(d) => set("normalized_date", d)}
                 />
               ) : form.date_precision === "month" ? (
-                <Input
-                  ref={dateRef}
-                  type="month"
-                  value={form.normalized_date ? form.normalized_date.slice(0, 7) : ""}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    set("normalized_date", v ? `${v}-01` : "");
-                  }}
+                <MonthYearInput
+                  inputRef={dateRef}
+                  value={form.normalized_date}
+                  onChange={(d) => set("normalized_date", d)}
                 />
               ) : (
                 <Input
