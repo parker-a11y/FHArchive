@@ -11,6 +11,11 @@ import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
 import { parseRecordNumber } from "@/lib/box-ranges";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
+import {
+  EmailScratchpadButton,
+  SCRATCHPAD_QUERY_KEY,
+  fetchEmailScratchpads,
+} from "@/components/letter/EmailScratchpadButton";
 import { DateLink } from "@/components/DateLink";
 import { richTextToPlain } from "@/lib/rich-text";
 import { Button } from "@/components/ui/button";
@@ -561,6 +566,11 @@ function LettersTable() {
   });
 
   // AI-analysis review state drives the purple/green distinction.
+  const { data: scratchpads = {} } = useQuery({
+    queryKey: SCRATCHPAD_QUERY_KEY,
+    enabled: isAdmin,
+    queryFn: fetchEmailScratchpads,
+  });
   const { data: aiByLetter = {} } = useQuery({
     queryKey: ["letters-page-ai-state", pageIds],
     enabled: pageIds.length > 0,
@@ -1449,6 +1459,13 @@ function LettersTable() {
                             <CopyShareLinkButton
                               letterId={l.id}
                               className="size-6 rounded-full border border-border/60 bg-muted/40 p-0 text-muted-foreground hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+                            />
+                          )}
+                          {isAdmin && (
+                            <EmailScratchpadButton
+                              letterId={l.id}
+                              archiveId={l.archive_id}
+                              body={scratchpads[l.id]}
                             />
                           )}
                          </span>
