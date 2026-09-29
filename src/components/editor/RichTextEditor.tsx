@@ -271,6 +271,9 @@ export function RichTextEditor({
         ...(placeholder ? { "data-placeholder": placeholder } : {}),
       },
       handlePaste(view, event) {
+        const html = event.clipboardData?.getData("text/html") ?? "";
+        // Rich clipboard content keeps the editor's normal formatting-preserving paste.
+        if (/<(strong|b|em|i|u|s|a|ul|ol|li|h[1-6]|blockquote)\b/i.test(html)) return false;
         const pasted = event.clipboardData?.getData("text/plain") ?? "";
         const formatted = quotedPasteToRichHtml(pasted);
         if (!formatted) return false;

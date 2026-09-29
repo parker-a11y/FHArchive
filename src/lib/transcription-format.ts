@@ -61,11 +61,17 @@ export function removeRepeatedNavyLetterhead(
   const repeated = navyBlockFromOpening(String(laterPage ?? ""), true);
   if (!first || !repeated) return String(laterPage ?? "");
 
-  const firstNormalized = normalizedLetterhead(first.raw);
-  const repeatedNormalized = normalizedLetterhead(repeated.raw);
+  const canon = (v: string) =>
+    ` ${normalizedLetterhead(v)
+      .replace(/\bunited states\b/g, "us")
+      .replace(/\bu s\b/g, "us")} `;
+  const firstNormalized = canon(first.raw);
+  const repeatedNormalized = canon(repeated.raw);
   if (!NAVY_LETTERHEAD.test(firstNormalized) || !NAVY_LETTERHEAD.test(repeatedNormalized)) {
     return String(laterPage ?? "");
   }
+  // Only remove a block that actually repeats the first page's letterhead.
+  if (!firstNormalized.includes(repeatedNormalized)) return String(laterPage ?? "");
 
   const input = String(laterPage ?? "");
   const before = input.slice(0, repeated.start);

@@ -69,11 +69,15 @@ export function openScanWindow(opts: {
   function fit() {
     var sw = stage.clientWidth, sh = stage.clientHeight;
     var w = img.naturalWidth || sw, h = img.naturalHeight || sh;
-    var swap = ((rot % 180) + 180) % 180 === 90;
+    var r = ((rot % 360) + 360) % 360;
+    var swap = r === 90 || r === 270;
     var iw = swap ? h : w, ih = swap ? w : h;
     scale = Math.min(sw / iw, sh / ih) * 0.96;
-    x = (sw - w * scale) / 2; y = (sh - h * scale) / 2;
-    if (swap) { x = (sw - h * scale) / 2 + (h * scale); y = (sh - w * scale) / 2; }
+    var bx = (sw - iw * scale) / 2, by = (sh - ih * scale) / 2;
+    x = bx; y = by;
+    if (r === 90) { x = bx + h * scale; }
+    else if (r === 180) { x = bx + w * scale; y = by + h * scale; }
+    else if (r === 270) { y = by + w * scale; }
     apply();
   }
   img.addEventListener('load', fit);
