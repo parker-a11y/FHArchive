@@ -112,7 +112,6 @@ function rankByFocus<T extends Record<string, any>>(rows: T[], focus: string | u
   const scored = rows.map((r) => {
     const hay = textOf(r).toLowerCase();
     let score = terms.reduce((n, t) => n + (hay.includes(t) ? 1 : 0), 0);
-    if (r["starred"]) score += 0.5;
     return { r, score };
   });
   const hits = scored.filter((s) => s.score > 0);
@@ -354,7 +353,7 @@ function materialText(m: WeekMaterial) {
         l.dateline ? `Location line (written at): ${l.dateline}` : "",
         l.origin ? `Mailing origin: ${l.origin}` : "",
         l.destination ? `Destination: ${l.destination}` : "",
-        l.starred ? "Flagged as a Francis File Find" : "",
+        "",
         (l.tones ?? []).length ? `Tones: ${(l.tones ?? []).join(", ")}` : "",
         idx?.people?.length ? `People: ${idx.people.join(", ")}` : "",
         idx?.places?.length ? `Places: ${idx.places.join(", ")}` : "",

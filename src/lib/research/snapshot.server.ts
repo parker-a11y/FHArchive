@@ -368,7 +368,6 @@ function recordMarkdown(r: ComposedRecord): string {
     ["Scan status", r["scan_status"]],
     ["Review status", r["review_status"]],
     ["Publication status", r["publication_status"]],
-    ["Starred (FFF)", r["starred"] ? "yes" : "no"],
     ["Scans", (r["files"] ?? []).length],
   ];
 
@@ -482,7 +481,6 @@ function schemaJson(dump: Dump) {
       transcription_raw_ai: "AI transcription before human verification.",
       tones: "Emotional tone/sentiment values assigned by an archivist (AI-suggested, human-confirmed).",
       linked_records: "Cross-references between FH records and/or Digital Sources.",
-      starred: "Flagged as an FFF — Francis File Find (item of extreme interest).",
       historical_claims: "Research conclusions saved from Ask Francis. NOT catalog fact.",
     },
     tables: Object.fromEntries(

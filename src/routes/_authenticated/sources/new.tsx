@@ -233,15 +233,6 @@ function NewSource() {
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
-            checked={starred}
-            onChange={(e) => setStarred(e.target.checked)}
-          />
-          <FffBadge size={18} muted={!starred} />
-          FFF — Francis File Find
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
             checked={noTranscription}
             onChange={(e) => setNoTranscription(e.target.checked)}
           />
