@@ -131,12 +131,12 @@ export const addScheduledRecipients = createServerFn({ method: "POST" })
     if (!row || (row as { status?: string }).status !== "scheduled")
       throw new Error("That email is no longer waiting to be sent.");
 
-    const current = ((row as { recipients?: { email: string; name?: string | null }[] }).recipients ?? []);
+    const current = ((row as unknown as { recipients?: { email: string; name?: string | null }[] }).recipients ?? []);
     const merged = [...current];
     for (const r of data.recipients) {
       if (!merged.some((m) => m.email === r.email)) merged.push(r);
     }
-    const payload = (row as { send_payload?: Record<string, unknown> | null }).send_payload ?? null;
+    const payload = (row as unknown as { send_payload?: Record<string, unknown> | null }).send_payload ?? null;
     const nextPayload = payload ? { ...payload, recipients: merged } : payload;
 
     const { error } = await db
