@@ -166,7 +166,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     f.derivatives.some((d) => d.status === "failed"),
   );
   const mismatched = files.filter((f) => !f.filename_matches);
-  const isLetterType = (letter.record_type ?? "letter") === "letter";
   const labels = suggestedLabels(letter.record_type);
   const quickChoices = quickIdentifyChoices(letter.record_type, letter.subtype);
   const lastIdentified =
