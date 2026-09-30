@@ -147,3 +147,66 @@ export const addScheduledRecipients = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { recipients: merged };
   });
+
+/** Edits a scheduled (not yet sent) email: subject, note, recipients and send time. Admin only. */
+export const updateScheduledEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      emailId: string;
+      subject: string;
+      message: string;
+      scheduledFor: string;
+      recipients: { email: string; name?: string | null }[];
+    }) => ({
+      emailId: String(data.emailId),
+      subject: String(data.subject ?? "").trim().slice(0, 200),
+      message: String(data.message ?? "").slice(0, 10000),
+      scheduledFor: String(data.scheduledFor ?? ""),
+      recipients: (data.recipients ?? [])
+        .slice(0, 25)
+        .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
+        .filter((r) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email)),
+    }),
+  )
+  .handler(async ({ data, context }) => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can change email.");
+    if (!data.subject) throw new Error("A subject is required.");
+    if (data.recipients.length === 0) throw new Error("Add at least one valid email address.");
+    const when = new Date(data.scheduledFor);
+    if (Number.isNaN(when.getTime())) throw new Error("That scheduled time is not valid.");
+    if (when.getTime() < Date.now() + 60_000) throw new Error("Pick a time at least a minute from now.");
+
+    const { data: row, error: readError } = await db
+      .from("archive_emails")
+      .select("send_payload, status")
+      .eq("id", data.emailId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!row || (row as { status?: string }).status !== "scheduled")
+      throw new Error("That email is no longer waiting to be sent.");
+    const payload = ((row as unknown as { send_payload?: Record<string, unknown> | null }).send_payload ?? {}) as Record<string, unknown>;
+    const oldSubject = String(payload["subject"] ?? "");
+    const nextPayload = {
+      ...payload,
+      subject: data.subject,
+      headerTitle: !payload["headerTitle"] || payload["headerTitle"] === oldSubject ? data.subject : payload["headerTitle"],
+      message: data.message,
+      recipients: data.recipients,
+    };
+    const { error } = await db
+      .from("archive_emails")
+      .update({
+        subject: data.subject,
+        message_body: data.message || null,
+        recipients: data.recipients,
+        scheduled_for: when.toISOString(),
+        send_payload: nextPayload,
+      } as never)
+      .eq("id", data.emailId)
+      .eq("status", "scheduled");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

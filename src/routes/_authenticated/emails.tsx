@@ -27,6 +27,7 @@ import {
   SCRATCHPAD_QUERY_KEY,
 } from "@/components/letter/EmailScratchpadButton";
 import { cn } from "@/lib/utils";
+import { EditScheduledEmailButton } from "@/components/letter/EditScheduledEmailButton";
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
@@ -584,6 +585,7 @@ function EmailsPage() {
                       onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
                       onKeyDown={(ev) => ev.stopPropagation()}
                     >
+                      <EditScheduledEmailButton emailId={e.id} />
                       <AddRecipientsButton emailId={e.id} />
                       <CancelScheduledButton emailId={e.id} />
                     </span>
