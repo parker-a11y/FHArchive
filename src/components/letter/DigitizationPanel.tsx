@@ -688,32 +688,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         )}
 
 
-        {expected !== null && (
-          <p
-            className={`mt-3 text-sm ${
-              masters >= expected ? "text-emerald-700" : "text-amber-700"
-            }`}
-          >
-            {masters >= expected ? (
-              <>
-                <CheckCircle2 className="mr-1.5 inline size-4" />
-                Master scans: {masters} of {expected} ✓
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="mr-1.5 inline size-4" />
-                Expected scans: {expected} · Master scans uploaded: {masters} —{" "}
-                {expected - masters} scan{expected - masters === 1 ? "" : "s"} may be missing. This
-                is advisory only; you can still mark the record complete.
-              </>
-            )}
-          </p>
-        )}
-        {letter.digitization_override && complete && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Marked complete manually, overriding the calculated expectation.
-          </p>
-        )}
         {failedDerivatives.length > 0 && (
           <p className="mt-2 text-sm text-amber-700">
             <FileWarning className="mr-1.5 inline size-4" />
