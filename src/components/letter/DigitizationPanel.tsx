@@ -9,7 +9,6 @@ import {
   FileWarning,
   GripVertical,
   ImageIcon,
-  Layers,
   Loader2,
   RotateCw,
   Sparkles,
@@ -20,7 +19,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import {
   SCAN_STATUS_LABEL,
@@ -39,12 +37,9 @@ import {
 import {
   DIGITIZATION_STATUS,
   MASTER_ACCEPT,
-  digitizationHint,
-  expectedScans,
   formatSeq,
   sortByFilename,
   suggestedLabels,
-  usesPhotoSides,
 } from "@/lib/digitization";
 import {
   deleteDigitalFile,
@@ -145,15 +140,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     if (error) return toast.error(error.message);
     refreshLetter();
   }
-
-  const { expected, breakdown, source } = expectedScans({
-    record_type: letter.record_type,
-    has_envelope: letter.has_envelope,
-    sheets: letter.sheets,
-    scan_both_sides: letter.scan_both_sides ?? true,
-    completeness_check: letter.completeness_check ?? false,
-    expected_scan_count: letter.expected_scan_count ?? null,
-  });
 
   const masters = files.length;
 
