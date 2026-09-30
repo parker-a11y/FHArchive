@@ -99,30 +99,6 @@ export function suggestedLabels(recordType: string | null | undefined): string[]
   }
 }
 
-/** One-line, record-type-appropriate guidance shown above the uploader. */
-export function digitizationHint(recordType: string | null | undefined): string {
-  switch (recordType ?? "letter") {
-    case "letter":
-      return "Correspondence can use the completeness assistant below (envelope + sheets). It is advisory only — irregular letters are normal.";
-    case "photograph":
-      return "Track front and back if useful. Neither is required — many photographs only need one scan.";
-    case "newspaper":
-      return "Any number of scans. No expected count is assumed for clippings.";
-    case "artifact":
-    case "medal":
-    case "insignia":
-      return "Images here are usually different views of the same object rather than pages.";
-    case "program":
-      return "Any number of images. You may set an optional expected page count.";
-    default:
-      return "Any number of files. Set an optional expected count only if it is useful for this record.";
-  }
-}
-
-export function usesPhotoSides(recordType: string | null | undefined) {
-  return (recordType ?? "") === "photograph";
-}
-
 /** Stable, human-friendly filename sort so dropped batches import in page order. */
 export function sortByFilename<T extends { name: string }>(items: T[]): T[] {
   const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
