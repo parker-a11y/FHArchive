@@ -62,45 +62,6 @@ export function formatSeq(seq: number | null | undefined) {
   return seq === null || seq === undefined ? "—" : String(seq).padStart(3, "0");
 }
 
-type CompletenessShape = {
-  record_type: string | null;
-  has_envelope: boolean;
-  sheets: number | null;
-  scan_both_sides: boolean;
-  completeness_check: boolean;
-  expected_scan_count: number | null;
-};
-
-/**
- * Advisory expected-scan count. Letters get a structured calculation from
- * envelope + sheets; every other record type only ever uses a count the
- * cataloguer chose to enter. Never a hard requirement.
- */
-export function expectedScans(l: CompletenessShape): {
-  expected: number | null;
-  breakdown: string[];
-  source: "calculated" | "manual" | null;
-} {
-  const isLetter = (l.record_type ?? "letter") === "letter";
-  if (isLetter && l.completeness_check) {
-    const breakdown: string[] = [];
-    const sides = l.scan_both_sides ? 2 : 1;
-    if (l.has_envelope) {
-      breakdown.push("Envelope Front");
-      if (l.scan_both_sides) breakdown.push("Envelope Back");
-    }
-    const sheets = Math.max(0, l.sheets ?? 0);
-    for (let i = 1; i <= sheets; i++) {
-      breakdown.push(`Sheet ${i} Front`);
-      if (l.scan_both_sides) breakdown.push(`Sheet ${i} Back`);
-    }
-    const calculated = (l.has_envelope ? sides : 0) + sheets * sides;
-    if (calculated > 0) return { expected: calculated, breakdown, source: "calculated" };
-  }
-  if (l.expected_scan_count && l.expected_scan_count > 0)
-    return { expected: l.expected_scan_count, breakdown: [], source: "manual" };
-  return { expected: null, breakdown: [], source: null };
-}
 
 /** Suggested (never required) labels, chosen by record type. */
 export function suggestedLabels(recordType: string | null | undefined): string[] {
@@ -136,30 +97,6 @@ export function suggestedLabels(recordType: string | null | undefined): string[]
     default:
       return ["Front", "Back", "Detail", "Page 1", "Page 2", "Other"];
   }
-}
-
-/** One-line, record-type-appropriate guidance shown above the uploader. */
-export function digitizationHint(recordType: string | null | undefined): string {
-  switch (recordType ?? "letter") {
-    case "letter":
-      return "Correspondence can use the completeness assistant below (envelope + sheets). It is advisory only — irregular letters are normal.";
-    case "photograph":
-      return "Track front and back if useful. Neither is required — many photographs only need one scan.";
-    case "newspaper":
-      return "Any number of scans. No expected count is assumed for clippings.";
-    case "artifact":
-    case "medal":
-    case "insignia":
-      return "Images here are usually different views of the same object rather than pages.";
-    case "program":
-      return "Any number of images. You may set an optional expected page count.";
-    default:
-      return "Any number of files. Set an optional expected count only if it is useful for this record.";
-  }
-}
-
-export function usesPhotoSides(recordType: string | null | undefined) {
-  return (recordType ?? "") === "photograph";
 }
 
 /** Stable, human-friendly filename sort so dropped batches import in page order. */

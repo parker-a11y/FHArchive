@@ -9,7 +9,6 @@ import {
   FileWarning,
   GripVertical,
   ImageIcon,
-  Layers,
   Loader2,
   RotateCw,
   Sparkles,
@@ -20,7 +19,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MediaLightbox, type LightboxItem } from "@/components/ui/media-lightbox";
 import {
   SCAN_STATUS_LABEL,
@@ -39,12 +37,9 @@ import {
 import {
   DIGITIZATION_STATUS,
   MASTER_ACCEPT,
-  digitizationHint,
-  expectedScans,
   formatSeq,
   sortByFilename,
   suggestedLabels,
-  usesPhotoSides,
 } from "@/lib/digitization";
 import {
   deleteDigitalFile,
@@ -146,15 +141,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     refreshLetter();
   }
 
-  const { expected, breakdown, source } = expectedScans({
-    record_type: letter.record_type,
-    has_envelope: letter.has_envelope,
-    sheets: letter.sheets,
-    scan_both_sides: letter.scan_both_sides ?? true,
-    completeness_check: letter.completeness_check ?? false,
-    expected_scan_count: letter.expected_scan_count ?? null,
-  });
-
   const masters = files.length;
 
   // Keep the record's scan count in step with the digital files it holds.
@@ -180,7 +166,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     f.derivatives.some((d) => d.status === "failed"),
   );
   const mismatched = files.filter((f) => !f.filename_matches);
-  const isLetterType = (letter.record_type ?? "letter") === "letter";
   const labels = suggestedLabels(letter.record_type);
   const quickChoices = quickIdentifyChoices(letter.record_type, letter.subtype);
   const lastIdentified =
@@ -570,14 +555,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 onClick={() =>
                   patchLetter({
                     digitization_status: "complete",
-                    digitization_override: expected !== null && masters !== expected,
                     digitization_completed_at: new Date().toISOString(),
                   })
                 }
               >
                 <CheckCircle2 className="mr-1.5 size-4" />
                 Mark Digitization Complete
-                {expected !== null && masters !== expected ? " Anyway" : ""}
               </Button>
             )}
           </div>
@@ -596,7 +579,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
             }
           />
           <Stat label="Archival masters" value={String(masters)} />
-          <Stat label="Expected" value={expected === null ? "Not set" : String(expected)} />
           <Stat
             label="Viewing JPGs"
             value={`${jpegCount} of ${masters}`}
@@ -706,32 +688,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         )}
 
 
-        {expected !== null && (
-          <p
-            className={`mt-3 text-sm ${
-              masters >= expected ? "text-emerald-700" : "text-amber-700"
-            }`}
-          >
-            {masters >= expected ? (
-              <>
-                <CheckCircle2 className="mr-1.5 inline size-4" />
-                Master scans: {masters} of {expected} ✓
-              </>
-            ) : (
-              <>
-                <AlertTriangle className="mr-1.5 inline size-4" />
-                Expected scans: {expected} · Master scans uploaded: {masters} —{" "}
-                {expected - masters} scan{expected - masters === 1 ? "" : "s"} may be missing. This
-                is advisory only; you can still mark the record complete.
-              </>
-            )}
-          </p>
-        )}
-        {letter.digitization_override && complete && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Marked complete manually, overriding the calculated expectation.
-          </p>
-        )}
         {failedDerivatives.length > 0 && (
           <p className="mt-2 text-sm text-amber-700">
             <FileWarning className="mr-1.5 inline size-4" />
@@ -748,118 +704,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           </p>
         )}
       </div>
-
-      {/* Record-type helper */}
-      <fieldset disabled={isGuestViewer} className="contents">
-      <div className="rounded border border-border p-4">
-        <h4 className="field-label mb-2 flex items-center gap-2">
-          <Layers className="size-4" /> Completeness helper
-        </h4>
-        <p className="mb-3 max-w-3xl text-sm text-muted-foreground">
-          {digitizationHint(letter.record_type)}
-        </p>
-
-        {isLetterType ? (
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={letter.completeness_check ?? false}
-                onChange={(e) => patchLetter({ completeness_check: e.target.checked })}
-              />
-              Completeness checking
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={letter.has_envelope}
-                onChange={(e) => patchLetter({ has_envelope: e.target.checked })}
-              />
-              Envelope present
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={letter.scan_both_sides ?? true}
-                onChange={(e) => patchLetter({ scan_both_sides: e.target.checked })}
-              />
-              Scanning both sides
-            </label>
-            <div>
-              <label className="field-label">Physical sheets</label>
-              <Input
-                type="number"
-                min={0}
-                className="w-28"
-                defaultValue={letter.sheets ?? ""}
-                onBlur={(e) =>
-                  patchLetter({ sheets: e.target.value ? Number(e.target.value) : null })
-                }
-              />
-            </div>
-            <div>
-              <label className="field-label">Override expected count</label>
-              <Input
-                type="number"
-                min={0}
-                className="w-36"
-                placeholder="optional"
-                defaultValue={letter.expected_scan_count ?? ""}
-                onBlur={(e) =>
-                  patchLetter({
-                    expected_scan_count: e.target.value ? Number(e.target.value) : null,
-                  })
-                }
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-end gap-4">
-            {usesPhotoSides(letter.record_type) && (
-              <>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={letter.photo_front_scanned ?? false}
-                    onChange={(e) => patchLetter({ photo_front_scanned: e.target.checked })}
-                  />
-                  Front scanned
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={letter.photo_back_scanned ?? false}
-                    onChange={(e) => patchLetter({ photo_back_scanned: e.target.checked })}
-                  />
-                  Back scanned
-                </label>
-              </>
-            )}
-            <div>
-              <label className="field-label">Expected images (optional)</label>
-              <Input
-                type="number"
-                min={0}
-                className="w-40"
-                placeholder="not required"
-                defaultValue={letter.expected_scan_count ?? ""}
-                onBlur={(e) =>
-                  patchLetter({
-                    expected_scan_count: e.target.value ? Number(e.target.value) : null,
-                  })
-                }
-              />
-            </div>
-          </div>
-        )}
-
-        {source === "calculated" && breakdown.length > 0 && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            Suggested sequence: {breakdown.join(" · ")}
-          </p>
-        )}
-      </div>
-      </fieldset>
 
       {/* Uploader — admins only */}
       {isAdmin && (
