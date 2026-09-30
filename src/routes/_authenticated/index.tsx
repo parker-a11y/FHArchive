@@ -310,6 +310,26 @@ function Dashboard() {
     queryKey: ["daily-summary"],
     queryFn: fetchDailySummary,
   });
+  const [allOpen, setAllOpen] = useState(false);
+  const { data: allToDate } = useQuery({
+    queryKey: ["records-created-by-day"],
+    enabled: dailyOpen,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("letters")
+        .select("created_at")
+        .order("created_at", { ascending: true })
+        .limit(100000);
+      if (error) throw error;
+      const counts = new Map<string, number>();
+      for (const r of data ?? []) {
+        const d = new Date(r.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      }
+      return { total: data?.length ?? 0, days: [...counts.entries()] };
+    },
+  });
   const { data: quotations = [] } = useQuery({
     queryKey: ["quotations"],
     queryFn: fetchQuotations,
@@ -524,12 +544,44 @@ function Dashboard() {
                     })}
                   </span>
                 </div>
-                <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+                <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
                   <Stat label="New FH records" value={daily?.records ?? 0} tone="blue" icon={Hash} />
                   <Stat label="New digital sources" value={daily?.dsRecords ?? 0} tone="teal" icon={Globe} />
                   <Stat label="Files uploaded" value={daily?.filesUploaded ?? 0} tone="amber" icon={Paperclip} />
                   <Stat label="Transcriptions generated" value={daily?.transcriptions ?? 0} tone="emerald" icon={PenLine} />
+                  <Stat
+                    label="All to date"
+                    value={allToDate?.total ?? 0}
+                    sub={allOpen ? "Click to collapse" : "Records created by day"}
+                    tone="plum"
+                    icon={CalendarDays}
+                    onClick={() => setAllOpen((v) => !v)}
+                    active={allOpen}
+                  />
                 </div>
+                {allOpen && (
+                  <div className="mt-4 rounded-xl border border-border">
+                    <div className="flex justify-between border-b border-border px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">
+                      <span>Date</span>
+                      <span>New records</span>
+                    </div>
+                    <ul className="max-h-96 divide-y divide-border overflow-auto">
+                      {(allToDate?.days ?? []).map(([day, n]) => (
+                        <li key={day} className="flex justify-between px-3 py-1.5 text-sm">
+                          <span>
+                            {new Date(day + "T12:00:00").toLocaleDateString(undefined, {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="font-semibold tabular-nums">{n}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
