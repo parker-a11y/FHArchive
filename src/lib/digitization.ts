@@ -62,45 +62,6 @@ export function formatSeq(seq: number | null | undefined) {
   return seq === null || seq === undefined ? "—" : String(seq).padStart(3, "0");
 }
 
-type CompletenessShape = {
-  record_type: string | null;
-  has_envelope: boolean;
-  sheets: number | null;
-  scan_both_sides: boolean;
-  completeness_check: boolean;
-  expected_scan_count: number | null;
-};
-
-/**
- * Advisory expected-scan count. Letters get a structured calculation from
- * envelope + sheets; every other record type only ever uses a count the
- * cataloguer chose to enter. Never a hard requirement.
- */
-export function expectedScans(l: CompletenessShape): {
-  expected: number | null;
-  breakdown: string[];
-  source: "calculated" | "manual" | null;
-} {
-  const isLetter = (l.record_type ?? "letter") === "letter";
-  if (isLetter && l.completeness_check) {
-    const breakdown: string[] = [];
-    const sides = l.scan_both_sides ? 2 : 1;
-    if (l.has_envelope) {
-      breakdown.push("Envelope Front");
-      if (l.scan_both_sides) breakdown.push("Envelope Back");
-    }
-    const sheets = Math.max(0, l.sheets ?? 0);
-    for (let i = 1; i <= sheets; i++) {
-      breakdown.push(`Sheet ${i} Front`);
-      if (l.scan_both_sides) breakdown.push(`Sheet ${i} Back`);
-    }
-    const calculated = (l.has_envelope ? sides : 0) + sheets * sides;
-    if (calculated > 0) return { expected: calculated, breakdown, source: "calculated" };
-  }
-  if (l.expected_scan_count && l.expected_scan_count > 0)
-    return { expected: l.expected_scan_count, breakdown: [], source: "manual" };
-  return { expected: null, breakdown: [], source: null };
-}
 
 /** Suggested (never required) labels, chosen by record type. */
 export function suggestedLabels(recordType: string | null | undefined): string[] {
