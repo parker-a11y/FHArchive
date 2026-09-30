@@ -555,14 +555,12 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 onClick={() =>
                   patchLetter({
                     digitization_status: "complete",
-                    digitization_override: expected !== null && masters !== expected,
                     digitization_completed_at: new Date().toISOString(),
                   })
                 }
               >
                 <CheckCircle2 className="mr-1.5 size-4" />
                 Mark Digitization Complete
-                {expected !== null && masters !== expected ? " Anyway" : ""}
               </Button>
             )}
           </div>
@@ -581,7 +579,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
             }
           />
           <Stat label="Archival masters" value={String(masters)} />
-          <Stat label="Expected" value={expected === null ? "Not set" : String(expected)} />
           <Stat
             label="Viewing JPGs"
             value={`${jpegCount} of ${masters}`}
