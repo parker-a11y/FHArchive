@@ -95,6 +95,25 @@ export function EmailArchiveDialog({
   const [includeEnvelope, setIncludeEnvelope] = useState(true);
   const [later, setLater] = useState(Boolean(defaultSendAt));
   const [sendAt, setSendAt] = useState(defaultSendAt ?? "");
+  const pickNextSlot = async () => {
+    const { data, error } = await supabase
+      .from("archive_emails")
+      .select("scheduled_for")
+      .eq("status", "scheduled")
+      .not("scheduled_for", "is", null);
+    if (error) return toast.error(error.message);
+    const key = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const busy = new Set((data ?? []).map((r) => key(new Date(r.scheduled_for as string))));
+    const d = new Date();
+    d.setHours(11, 0, 0, 0);
+    if (d.getTime() <= Date.now() + 60_000) d.setDate(d.getDate() + 1);
+    while (busy.has(key(d))) d.setDate(d.getDate() + 1);
+    setSendAt(`${key(d)}T11:00`);
+    toast.success(
+      `Next open day: ${d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} at 11:00am`,
+    );
+  };
   const hasLetter = recordList.some((r) => r.kind === "letter");
 
 
@@ -410,12 +429,18 @@ export function EmailArchiveDialog({
             Send later
           </label>
           {later && (
-            <Input
-              type="datetime-local"
-              value={sendAt}
-              onChange={(e) => setSendAt(e.target.value)}
-              aria-label="Scheduled send time"
-            />
+            <div className="flex flex-wrap gap-2">
+              <Input
+                type="datetime-local"
+                value={sendAt}
+                onChange={(e) => setSendAt(e.target.value)}
+                aria-label="Scheduled send time"
+                className="min-w-0 flex-1"
+              />
+              <Button type="button" variant="outline" onClick={pickNextSlot}>
+                Next available slot
+              </Button>
+            </div>
           )}
           {later && (
             <p className="text-xs text-muted-foreground">
