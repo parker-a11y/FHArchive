@@ -271,22 +271,23 @@ function PageEditor({
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
 
-      <div className={`grid grid-cols-1 gap-4 ${poppedOut ? "" : "lg:grid-cols-2"}`}>
+      {/* Scan panel hugs the scan's real width (no letterbox blank), editor takes the rest. */}
+      <div className={`flex flex-col gap-4 ${poppedOut ? "" : "lg:flex-row lg:items-start"}`}>
         {poppedOut ? (
-          <div className="rounded border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
+          <div className="min-w-0 flex-1 rounded border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
             This scan is open in its own window — drag it to another monitor and zoom freely.{" "}
             <button type="button" className="underline" onClick={togglePopOut}>
               Bring it back here
             </button>
           </div>
         ) : (
-          <div className="rounded border border-border bg-muted/30 p-2">
+          <div className="w-fit max-w-full rounded border border-border bg-muted/30 p-2 lg:max-w-[55%]">
             {file.viewUrl ? (
               <img
                 src={file.viewUrl}
                 alt={file.label || file.original_filename}
                 style={{ transform: `rotate(${file.rotation}deg)` }}
-                className={`w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
+                className={`mx-auto block w-auto max-w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
               />
             ) : (
               <p className="p-6 text-sm text-muted-foreground">
@@ -297,7 +298,7 @@ function PageEditor({
         )}
 
 
-        <div className="space-y-2">
+        <div className="min-w-0 flex-1 space-y-2">
           {highlight && countMatches(text, highlight) > 0 && (
             <details
               open
