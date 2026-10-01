@@ -66,7 +66,9 @@ export async function deliverArchiveEmail(
   userId: string,
   data: ArchiveEmailPayload,
   existingId?: string,
+  opts: { proofTo?: string; proofKey?: string } = {},
 ): Promise<SendArchiveEmailResult> {
+  const proof = Boolean(opts.proofTo);
   const { buildRecords, rememberContacts, ensureShareLinksForRefs, resolveInlinePhotos } =
     await import("@/lib/archive-email.server");
   const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
@@ -88,7 +90,9 @@ export async function deliverArchiveEmail(
   });
 
   let emailId: string | null = existingId ?? null;
-  if (emailId) {
+  if (proof) {
+    // Proof copy: no logging, no status changes.
+  } else if (emailId) {
     await db
       .from("archive_emails")
       .update({ status: "sending", sent_at: new Date().toISOString() })
@@ -111,7 +115,7 @@ export async function deliverArchiveEmail(
     emailId = (logRow as { id?: string } | null)?.id ?? null;
   }
 
-  if (emailId) {
+  if (emailId && !proof) {
     for (const [i, r] of records.entries()) {
       if (r.kind !== "letter") continue;
       await db.from("archive_email_records").insert({
@@ -126,12 +130,15 @@ export async function deliverArchiveEmail(
 
   const result: SendArchiveEmailResult = { emailId, sent: [], suppressed: [], failed: [] };
 
-  for (const recipient of data.recipients) {
+  const targets = proof ? [{ email: opts.proofTo!, name: null }] : data.recipients;
+  for (const recipient of targets) {
     try {
       const res = await sendTemplateEmail("archive-record", recipient.email, {
-        idempotencyKey: `archive-email-${emailId ?? crypto.randomUUID()}-${recipient.email}`,
+        idempotencyKey: proof
+          ? `archive-proof-${opts.proofKey ?? crypto.randomUUID()}`
+          : `archive-email-${emailId ?? crypto.randomUUID()}-${recipient.email}`,
         templateData: {
-          subject: data.subject,
+          subject: proof ? `[Proof — sends tomorrow] ${data.subject}` : data.subject,
           headerTitle: data.headerTitle || data.subject,
           headerSubtitle: data.headerSubtitle || undefined,
           message: data.message || undefined,
@@ -166,6 +173,8 @@ export async function deliverArchiveEmail(
       });
     }
   }
+
+  if (proof) return result;
 
   if (emailId) {
     const status =

@@ -62,6 +62,7 @@ import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
 import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
+import { Route as ApiPublicEmailProofsRouteImport } from './routes/api/public/email-proofs'
 import { Route as ApiPublicOnThisDateBackfillRouteImport } from './routes/api/public/on-this-date-backfill'
 import { Route as ApiPublicResearchReindexRouteImport } from './routes/api/public/research-reindex'
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
@@ -360,6 +361,11 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   path: '/api/public/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEmailProofsRoute = ApiPublicEmailProofsRouteImport.update({
+  id: '/api/public/email-proofs',
+  path: '/api/public/email-proofs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicOnThisDateBackfillRoute =
   ApiPublicOnThisDateBackfillRouteImport.update({
     id: '/api/public/on-this-date-backfill',
@@ -452,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
@@ -514,6 +521,7 @@ export interface FileRoutesByTo {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
@@ -578,6 +586,7 @@ export interface FileRoutesById {
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
@@ -642,6 +651,7 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
@@ -704,6 +714,7 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
@@ -767,6 +778,7 @@ export interface FileRouteTypes {
     | '/_authenticated/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
     | '/api/public/research-snapshot'
@@ -806,6 +818,7 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  ApiPublicEmailProofsRoute: typeof ApiPublicEmailProofsRoute
   ApiPublicOnThisDateBackfillRoute: typeof ApiPublicOnThisDateBackfillRoute
   ApiPublicResearchReindexRoute: typeof ApiPublicResearchReindexRoute
   ApiPublicResearchSnapshotRoute: typeof ApiPublicResearchSnapshotRoute
@@ -1187,6 +1200,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/email-proofs': {
+      id: '/api/public/email-proofs'
+      path: '/api/public/email-proofs'
+      fullPath: '/api/public/email-proofs'
+      preLoaderRoute: typeof ApiPublicEmailProofsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/on-this-date-backfill': {
       id: '/api/public/on-this-date-backfill'
       path: '/api/public/on-this-date-backfill'
@@ -1348,6 +1368,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  ApiPublicEmailProofsRoute: ApiPublicEmailProofsRoute,
   ApiPublicOnThisDateBackfillRoute: ApiPublicOnThisDateBackfillRoute,
   ApiPublicResearchReindexRoute: ApiPublicResearchReindexRoute,
   ApiPublicResearchSnapshotRoute: ApiPublicResearchSnapshotRoute,
