@@ -95,6 +95,12 @@ export function EmailArchiveDialog({
   const [includeEnvelope, setIncludeEnvelope] = useState(true);
   const [later, setLater] = useState(Boolean(defaultSendAt));
   const [sendAt, setSendAt] = useState(defaultSendAt ?? "");
+  // Keep the scheduled time in step with a day picked after this dialog mounted.
+  useEffect(() => {
+    if (!defaultSendAt) return;
+    setLater(true);
+    setSendAt(defaultSendAt);
+  }, [defaultSendAt]);
   const pickNextSlot = async () => {
     const { data, error } = await supabase
       .from("archive_emails")
