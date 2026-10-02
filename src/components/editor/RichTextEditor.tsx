@@ -33,6 +33,7 @@ import {
 import {
   plainTextToRichHtml,
   quotedPasteToRichHtml,
+  isQuotedParagraph,
   sanitizeRichHtml,
 } from "@/lib/rich-text";
 
