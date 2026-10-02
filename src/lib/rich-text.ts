@@ -63,15 +63,18 @@ export function plainTextToRichHtml(value: string) {
  * Returns null when there is nothing to transform so the editor can retain
  * its normal paste behaviour.
  */
+/** True when a whole paragraph is wrapped in straight or curly quotes. */
+export function isQuotedParagraph(block: string) {
+  const compact = String(block ?? "").replace(/\s+/g, " ").trim();
+  return compact.length > 2 && /^(?:[“”]|&ldquo;|\")[\s\S]+(?:[“”]|&rdquo;|\")$/.test(compact);
+}
+
 export function quotedPasteToRichHtml(value: string) {
   const text = String(value ?? "").replace(/\r\n?/g, "\n").trim();
   if (!text) return null;
 
   const blocks = text.split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean);
-  const isQuotation = (block: string) => {
-    const compact = block.replace(/\s+/g, " ").trim();
-    return /^(?:[“”]|&ldquo;|\")[\s\S]+(?:[“”]|&rdquo;|\")$/.test(compact);
-  };
+  const isQuotation = isQuotedParagraph;
 
   if (!blocks.some(isQuotation)) return null;
 

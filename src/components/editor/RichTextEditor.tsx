@@ -272,8 +272,27 @@ export function RichTextEditor({
       },
       handlePaste(view, event) {
         const html = event.clipboardData?.getData("text/html") ?? "";
-        // Rich clipboard content keeps the editor's normal formatting-preserving paste.
-        if (/<(strong|b|em|i|u|s|a|ul|ol|li|h[1-6]|blockquote)\b/i.test(html)) return false;
+        if (/<(strong|b|em|i|u|s|a|ul|ol|li|h[1-6]|blockquote)\b/i.test(html)) {
+          // Rich paste: keep inline formatting, but wrap fully quoted paragraphs as quotations.
+          const container = document.createElement("div");
+          container.innerHTML = sanitizeRichHtml(
+            html.replace(/<div\b/gi, "<p").replace(/<\/div>/gi, "</p>"),
+          );
+          let changed = false;
+          for (const el of Array.from(container.children)) {
+            if (el.tagName === "P" && isQuotedParagraph(el.textContent ?? "")) {
+              const bq = document.createElement("blockquote");
+              el.replaceWith(bq);
+              bq.appendChild(el);
+              changed = true;
+            }
+          }
+          if (!changed) return false;
+          event.preventDefault();
+          const slice = ProseMirrorDOMParser.fromSchema(view.state.schema).parseSlice(container);
+          view.dispatch(view.state.tr.replaceSelection(slice).scrollIntoView());
+          return true;
+        }
         const pasted = event.clipboardData?.getData("text/plain") ?? "";
         const formatted = quotedPasteToRichHtml(pasted);
         if (!formatted) return false;
