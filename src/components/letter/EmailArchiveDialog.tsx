@@ -91,6 +91,31 @@ export function EmailArchiveDialog({
   const [includeTranscription, setIncludeTranscription] = useState(true);
   const [includeImages, setIncludeImages] = useState(true);
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
+  // Reset the subject whenever the dialog switches to a different record,
+  // so a previous record's title can never carry over.
+  const recordKey = recordList.map((r) => r.identifier).join("|");
+  const singleTitle = single?.title ?? null;
+  useEffect(() => {
+    setSubject(
+      defaultSubject ??
+        (single?.title
+          ? `${single.identifier} — ${single.title}`
+          : `${identifiers || "A note"} from The Francis Files`),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recordKey, singleTitle, defaultSubject]);
+  // Warn when the subject names an FH/DS number or ISO date that doesn't
+  // belong to any record being sent.
+  const subjectMismatch = (() => {
+    const known = recordList.map((r) => `${r.identifier} ${r.title ?? ""}`).join(" ").toUpperCase();
+    const ids = subject.toUpperCase().match(/\b(?:FH|DS)-?\d{3,5}\b/g) ?? [];
+    const dates = subject.match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? [];
+    const bad = [
+      ...ids.filter((x) => !known.includes(x.replace("-", ""))),
+      ...dates.filter((x) => !known.includes(x)),
+    ];
+    return bad.length ? bad : null;
+  })();
 
   const [includeEnvelope, setIncludeEnvelope] = useState(true);
   const [later, setLater] = useState(Boolean(defaultSendAt));
@@ -219,6 +244,13 @@ export function EmailArchiveDialog({
   const submit = async () => {
     if (recipients.length === 0) return toast.error("Add at least one recipient");
     if (later && !sendAt) return toast.error("Pick a date and time to send");
+    if (
+      subjectMismatch &&
+      !window.confirm(
+        `The subject mentions ${subjectMismatch.join(", ")}, which doesn't match the record being sent. Send anyway?`,
+      )
+    )
+      return;
     setBusy(true);
     try {
       const res = await send({
@@ -352,6 +384,12 @@ export function EmailArchiveDialog({
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase">Subject</label>
             <Input className="mt-1" value={subject} onChange={(e) => setSubject(e.target.value)} />
+            {subjectMismatch && (
+              <p className="mt-1 text-xs font-medium text-destructive">
+                Heads up: the subject mentions {subjectMismatch.join(", ")}, which doesn't match the
+                record being sent{single ? ` (${single.identifier}${single.title ? ` — ${single.title}` : ""})` : ""}.
+              </p>
+            )}
           </div>
 
           <div>
