@@ -281,13 +281,13 @@ function PageEditor({
             </button>
           </div>
         ) : (
-          <div className="w-full rounded border border-border bg-muted/30 p-2">
+          <div className="flex w-full justify-end rounded border border-border bg-muted/30 p-2">
             {file.viewUrl ? (
               <img
                 src={file.viewUrl}
                 alt={file.label || file.original_filename}
                 style={{ transform: `rotate(${file.rotation}deg)` }}
-                className={`mx-auto block w-auto max-w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[78vh]"}`}
+                className={`ml-auto block w-auto max-w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[78vh]"}`}
               />
             ) : (
               <p className="p-6 text-sm text-muted-foreground">
