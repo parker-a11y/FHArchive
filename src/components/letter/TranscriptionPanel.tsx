@@ -271,8 +271,8 @@ function PageEditor({
 
       {record?.error && <p className="mb-2 text-xs text-destructive">{record.error}</p>}
 
-      {/* Scan panel hugs the scan's real width (no letterbox blank), editor takes the rest. */}
-      <div className={`flex flex-col gap-4 ${poppedOut ? "" : "lg:flex-row lg:items-start"}`}>
+      {/* Equal 50/50 split: scan and editor each get half the width for comfortable line length. */}
+      <div className={`flex flex-col gap-4 ${poppedOut ? "" : "lg:flex-row lg:items-start [&>*]:lg:basis-1/2 [&>*]:lg:min-w-0"}`}>
         {poppedOut ? (
           <div className="min-w-0 flex-1 rounded border border-dashed border-border bg-muted/20 p-2 text-xs text-muted-foreground">
             This scan is open in its own window — drag it to another monitor and zoom freely.{" "}
@@ -281,13 +281,13 @@ function PageEditor({
             </button>
           </div>
         ) : (
-          <div className="w-fit max-w-full rounded border border-border bg-muted/30 p-2 lg:max-w-[55%]">
+          <div className="w-full rounded border border-border bg-muted/30 p-2">
             {file.viewUrl ? (
               <img
                 src={file.viewUrl}
                 alt={file.label || file.original_filename}
                 style={{ transform: `rotate(${file.rotation}deg)` }}
-                className={`mx-auto block w-auto max-w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[60vh]"}`}
+                className={`mx-auto block w-auto max-w-full object-contain ${full ? "max-h-[82vh]" : "max-h-[78vh]"}`}
               />
             ) : (
               <p className="p-6 text-sm text-muted-foreground">
