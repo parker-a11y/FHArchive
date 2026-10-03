@@ -377,6 +377,12 @@ export function EmailArchiveDialog({
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase">Subject</label>
             <Input className="mt-1" value={subject} onChange={(e) => setSubject(e.target.value)} />
+            {subjectMismatch && (
+              <p className="mt-1 text-xs font-medium text-destructive">
+                Heads up: the subject mentions {subjectMismatch.join(", ")}, which doesn't match the
+                record being sent{single ? ` (${single.identifier}${single.title ? ` — ${single.title}` : ""})` : ""}.
+              </p>
+            )}
           </div>
 
           <div>
