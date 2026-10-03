@@ -244,6 +244,13 @@ export function EmailArchiveDialog({
   const submit = async () => {
     if (recipients.length === 0) return toast.error("Add at least one recipient");
     if (later && !sendAt) return toast.error("Pick a date and time to send");
+    if (
+      subjectMismatch &&
+      !window.confirm(
+        `The subject mentions ${subjectMismatch.join(", ")}, which doesn't match the record being sent. Send anyway?`,
+      )
+    )
+      return;
     setBusy(true);
     try {
       const res = await send({
