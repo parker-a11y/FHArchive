@@ -57,6 +57,7 @@ export type SharedEmail = {
   messageBody: string | null;
   senderEmail: string | null;
   sentAt: string;
+  scheduled?: boolean;
   records: SharedEmailRecord[];
 };
 
@@ -72,7 +73,7 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
 
     const { data: email } = await supabaseAdmin
       .from("archive_emails")
-      .select("id, owner_id, subject, header_title, header_subtitle, message_body")
+      .select("id, owner_id, subject, header_title, header_subtitle, message_body, send_payload")
       .eq("share_token", data.token)
       .maybeSingle();
     if (!email) return null;
@@ -85,15 +86,23 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
       .order("sort_order", { ascending: true });
 
     const { buildRecords, resolveInlinePhotos } = await import("@/lib/archive-email.server");
-    const built = await buildRecords(
-      supabaseAdmin as never,
-      String(e['owner_id']),
-      ((recs ?? []) as Record<string, unknown>[]).map((r) => ({
-        kind: "letter" as const,
-        id: String(r['letter_id']),
-      })),
-      { includeTranscription: true, includeImages: true, includeEnvelope: true },
-    );
+    const payload = (e['send_payload'] ?? null) as {
+      records?: { kind: "letter" | "source"; id: string }[];
+      includeTranscription?: boolean;
+      includeImages?: boolean;
+      includeEnvelope?: boolean;
+    } | null;
+    const logged = ((recs ?? []) as Record<string, unknown>[]).map((r) => ({
+      kind: "letter" as const,
+      id: String(r['letter_id']),
+    }));
+    // Queued emails keep their records in the saved payload until they send.
+    const refs = logged.length ? logged : (payload?.records ?? []);
+    const built = await buildRecords(supabaseAdmin as never, String(e['owner_id']), refs as never, {
+      includeTranscription: payload?.includeTranscription ?? true,
+      includeImages: payload?.includeImages ?? true,
+      includeEnvelope: payload?.includeEnvelope ?? true,
+    });
 
     const [{ render }, { template }, React] = await Promise.all([
       import("@react-email/render"),
@@ -139,7 +148,7 @@ export const getSharedEmail = createServerFn({ method: "GET" })
 
     const { data: email } = await supabaseAdmin
       .from("archive_emails")
-      .select("id, subject, header_title, header_subtitle, message_body, sender_email, sent_at")
+      .select("id, subject, header_title, header_subtitle, message_body, sender_email, sent_at, status, scheduled_for, send_payload")
       .eq("share_token", data.token)
       .maybeSingle();
     if (!email) return null;
@@ -151,8 +160,18 @@ export const getSharedEmail = createServerFn({ method: "GET" })
       .eq("email_id", String(e['id']))
       .order("sort_order", { ascending: true });
 
+    let recRows = (recs ?? []) as Record<string, unknown>[];
+    if (!recRows.length) {
+      const p = e['send_payload'] as { records?: { kind: string; id: string }[] } | null;
+      const ids = (p?.records ?? []).filter((r) => r.kind === "letter").map((r) => r.id);
+      if (ids.length) {
+        const { data: ls } = await supabaseAdmin.from("letters").select("id, archive_id").in("id", ids);
+        const byId = new Map(((ls ?? []) as { id: string; archive_id: string }[]).map((l) => [l.id, l.archive_id]));
+        recRows = ids.map((id) => ({ letter_id: id, archive_id: byId.get(id) ?? "" }));
+      }
+    }
     const records: SharedEmailRecord[] = [];
-    for (const r of (recs ?? []) as Record<string, unknown>[]) {
+    for (const r of recRows) {
       const letterId = String(r['letter_id']);
       const [{ data: letter }, { data: share }] = await Promise.all([
         supabaseAdmin
@@ -191,7 +210,8 @@ export const getSharedEmail = createServerFn({ method: "GET" })
       headerSubtitle: e['header_subtitle'] == null ? null : String(e['header_subtitle']),
       messageBody: e['message_body'] == null ? null : String(e['message_body']),
       senderEmail: e['sender_email'] == null ? null : String(e['sender_email']),
-      sentAt: String(e['sent_at']),
+      sentAt: String(e['status'] === "scheduled" && e['scheduled_for'] ? e['scheduled_for'] : e['sent_at']),
+      scheduled: e['status'] === "scheduled",
       records,
     };
   });

@@ -58,7 +58,7 @@ function SharedEmailPage() {
     <main className="min-h-screen bg-[#f6f4ef]">
       <div className="mx-auto max-w-3xl px-2 py-6 sm:px-4">
         <p className="mb-3 px-2 text-xs text-muted-foreground">
-          Sent {new Date(email.sentAt).toLocaleString()}
+          {email.scheduled ? "Scheduled for" : "Sent"} {new Date(email.sentAt).toLocaleString()}
           {email.senderEmail ? ` · from ${email.senderEmail}` : ""}
         </p>
         <iframe
