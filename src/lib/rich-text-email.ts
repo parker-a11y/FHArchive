@@ -4,7 +4,7 @@
  */
 import { Parser } from "htmlparser2";
 import { escapeHtml, safeHref, safeStyle } from "@/lib/rich-text";
-import { PHOTO_TOKEN_SRC, photoKey, type InlinePhoto } from "@/lib/inline-photos";
+import { PHOTO_TOKEN_SRC, IMAGE_URL_TOKEN_SRC, imageUrlOf, photoKey, type InlinePhoto } from "@/lib/inline-photos";
 
 const STYLES: Record<string, string> = {
   p: "font-size:15px;line-height:24px;color:#33372b;margin:0 0 14px;",
@@ -46,8 +46,8 @@ function linkRecords(text: string, shareLinks: Record<string, string>) {
   if (!Object.keys(shareLinks).length) return escapeHtml(text);
   // Photo tokens are replaced later; never link the record number inside one.
   return text
-    .split(new RegExp(`(${PHOTO_TOKEN_SRC})`, "gi"))
-    .map((chunk) => (/^\[\[photo:/i.test(chunk) ? chunk : linkRun(chunk, shareLinks)))
+    .split(new RegExp(`(${PHOTO_TOKEN_SRC}|${IMAGE_URL_TOKEN_SRC})`, "gi"))
+    .map((chunk) => (/^\[\[(photo|image):/i.test(chunk) ? chunk : linkRun(chunk, shareLinks)))
     .join("");
 }
 
@@ -131,6 +131,15 @@ export function richHtmlToEmail(
   while (open.length) out += `</${open.pop()}>`;
 
   // A paragraph that holds nothing but a photo becomes the photo itself.
+  const urlTok = IMAGE_URL_TOKEN_SRC;
+  const urlImg = (t: string) => {
+    const u = imageUrlOf(t);
+    return u
+      ? `<div style="margin:18px 0;"><img src="${escapeHtml(u)}" alt="" style="width:100%;max-width:560px;border-radius:6px;border:1px solid #e4dcc7;" /></div>`
+      : "";
+  };
+  out = out.replace(new RegExp(`<p[^>]*>\\s*(${urlTok})\\s*</p>`, "gi"), (_m, t: string) => urlImg(t));
+  out = out.replace(new RegExp(urlTok, "gi"), urlImg);
   const token = PHOTO_TOKEN_SRC;
   out = out.replace(new RegExp(`<p[^>]*>\\s*(${token})\\s*</p>`, "gi"), (_m, t: string) => {
     const photo = photos[photoKey(t)];

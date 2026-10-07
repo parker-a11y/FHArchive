@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { fetchDigitalFiles, signedScanUrl } from "@/lib/digital-files";
-import { photoToken } from "@/lib/inline-photos";
+import { photoToken, imageUrlToken } from "@/lib/inline-photos";
 
 type PickRecord = { kind: "letter" | "source"; id: string; identifier: string; title: string | null };
 
@@ -138,6 +138,14 @@ export function ArchivePhotoPicker({
       selected!.kind === "letter" ? letterPages(selected!.id) : sourcePages(selected!.id),
   });
 
+  const [imageUrl, setImageUrl] = useState("");
+  const insertUrl = () => {
+    const u = imageUrl.trim();
+    if (!/^https?:\/\/\S+$/i.test(u)) return;
+    onInsert(imageUrlToken(u));
+    setImageUrl("");
+    setOpen(false);
+  };
   const insert = (page: number) => {
     onInsert(photoToken(selected!.identifier, page));
     setOpen(false);
@@ -164,6 +172,28 @@ export function ArchivePhotoPicker({
             your cursor is, captioned with its record number.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                insertUrl();
+              }
+            }}
+            placeholder="Or paste an image web address (https://…)"
+            className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+          />
+          <Button type="button" size="sm" onClick={insertUrl} disabled={!/^https?:\/\/\S+$/i.test(imageUrl.trim())}>
+            Insert URL
+          </Button>
+        </div>
+        {imageUrl && /^https?:\/\/\S+$/i.test(imageUrl.trim()) ? (
+          <img src={imageUrl.trim()} alt="Preview" className="max-h-40 rounded border border-border object-contain" />
+        ) : null}
 
         {selected ? (
           <div className="space-y-3">

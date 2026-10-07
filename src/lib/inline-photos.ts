@@ -27,6 +27,19 @@ export function photoKey(token: string) {
   return token.toUpperCase();
 }
 
+/** An outside picture by web address, e.g. `[[image:https://…/pic.jpg]]`. */
+export const IMAGE_URL_TOKEN_SRC = String.raw`\[\[image:https?:\/\/[^\]\s"<>]+\]\]`;
+
+export function imageUrlToken(url: string) {
+  return `[[image:${url.trim()}]]`;
+}
+
+/** The web address inside an image token, or null. */
+export function imageUrlOf(token: string): string | null {
+  const m = /^\[\[image:(https?:\/\/[^\]\s"<>]+)\]\]$/i.exec(token.trim());
+  return m ? m[1]! : null;
+}
+
 /** Every distinct token in a block of text, uppercased. */
 export function extractPhotoTokens(text: string): string[] {
   const found = String(text ?? "").match(PHOTO_TOKEN_RE) ?? [];
