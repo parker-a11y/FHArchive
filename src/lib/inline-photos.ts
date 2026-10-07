@@ -58,7 +58,9 @@ export function parsePhotoToken(token: string): { identifier: string; page: numb
  * embedded photo as a standalone element rather than part of a sentence.
  */
 export function isolatePhotoTokens(text: string) {
-  return String(text ?? "").replace(PHOTO_TOKEN_RE, (m) => `\n\n${m}\n\n`);
+  return String(text ?? "")
+    .replace(PHOTO_TOKEN_RE, (m) => `\n\n${m}\n\n`)
+    .replace(new RegExp(IMAGE_URL_TOKEN_SRC, "gi"), (m) => `\n\n${m}\n\n`);
 }
 
 /** Resolves a text block that is nothing but a photo token. */
@@ -67,11 +69,13 @@ export function photoOfBlock(
   photos: Record<string, InlinePhoto> | undefined,
 ): InlinePhoto | null {
   const trimmed = block.trim();
+  const url = imageUrlOf(trimmed);
+  if (url) return { url, identifier: "", href: null };
   if (!parsePhotoToken(trimmed)) return null;
   return photos?.[photoKey(trimmed)] ?? null;
 }
 
 /** True when the block is a photo token, resolved or not (so it is never printed raw). */
 export function isPhotoBlock(block: string) {
-  return parsePhotoToken(block.trim()) !== null;
+  return parsePhotoToken(block.trim()) !== null || imageUrlOf(block) !== null;
 }
