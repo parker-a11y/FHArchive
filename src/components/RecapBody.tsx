@@ -83,7 +83,7 @@ function PlainRecapBody({ text }: { text: string }) {
                 loading="lazy"
               />
               <figcaption className="mt-1 text-xs tracking-widest uppercase">
-                {photo.identifier.startsWith("FH") ? (
+                {!photo.identifier ? null : photo.identifier.startsWith("FH") ? (
                   <Link
                     to="/letters/$archiveId"
                     params={{ archiveId: photo.identifier }}

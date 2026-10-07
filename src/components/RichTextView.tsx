@@ -11,7 +11,7 @@ function isElement(node: unknown): node is { type: string; name: string; attribs
 import { Link } from "@tanstack/react-router";
 import { FfnText } from "@/components/ffn/FfnText";
 import { useInlinePhotos } from "@/lib/inline-photos-urls";
-import { PHOTO_TOKEN_SRC, photoKey, type InlinePhoto } from "@/lib/inline-photos";
+import { PHOTO_TOKEN_SRC, IMAGE_URL_TOKEN_SRC, imageUrlOf, photoKey, type InlinePhoto } from "@/lib/inline-photos";
 import { sanitizeRichHtml, safeStyle } from "@/lib/rich-text";
 
 function RecordLink({ id }: { id: string }) {
@@ -45,11 +45,15 @@ function PhotoFigure({ photo }: { photo: InlinePhoto }) {
 
 /** Photo tokens, record numbers and Francis Files Notes inside one text run. */
 function TextRun({ text, photos, year, estimatedYear }: { text: string; photos?: Record<string, InlinePhoto>; year?: number; estimatedYear?: boolean }) {
-  const parts = text.split(new RegExp(`(${PHOTO_TOKEN_SRC}|FH-?\\d{3,}|DS-?\\d{3,})`, "gi"));
+  const parts = text.split(new RegExp(`(${PHOTO_TOKEN_SRC}|${IMAGE_URL_TOKEN_SRC}|FH-?\\d{3,}|DS-?\\d{3,})`, "gi"));
   return (
     <>
       {parts.map((part, i) => {
         if (!part) return null;
+        if (/^\[\[image:/i.test(part)) {
+          const url = imageUrlOf(part);
+          return url ? <img key={i} src={url} alt="" loading="lazy" className="my-4 w-full rounded border border-border" /> : null;
+        }
         if (/^\[\[photo:/i.test(part)) {
           const photo = photos?.[photoKey(part)];
           return photo ? <PhotoFigure key={i} photo={photo} /> : null;
