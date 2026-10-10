@@ -422,6 +422,118 @@ function EmailsPage() {
   const [filter, setFilter] = useState<LetterState | "all">("all");
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [sheetDay, setSheetDay] = useState<string | null>(null);
+  const [lookup, setLookup] = useState("");
+
+  const lookupId = useMemo(() => {
+    const raw = lookup.trim().toUpperCase().replace(/\s|-/g, "");
+    if (!raw) return null;
+    const m = raw.match(/^(FH|DS)?(\d+)$/);
+    if (!m) return raw;
+    return `${m[1] ?? "FH"}${m[2].padStart(4, "0")}`;
+  }, [lookup]);
+
+  const lookupEmails = useMemo(() => {
+    if (!lookupId) return [];
+    const ids = new Set(
+      (emailRecords as EmailRecordRef[])
+        .filter((r) => r.archive_id.toUpperCase() === lookupId)
+        .map((r) => r.email_id),
+    );
+    return emails.filter((e) => ids.has(e.id));
+  }, [lookupId, emailRecords, emails]);
+
+  const sheetEmails = useMemo(() => {
+    if (!sheetDay) return [];
+    return emails.filter((e) => {
+      const scheduled = e.status === "scheduled" && e.scheduled_for;
+      const when = scheduled ? e.scheduled_for! : e.sent_at;
+      if (!when) return false;
+      if (!scheduled && !SENT_STATUSES.has(e.status)) return false;
+      return localDayKey(when) === sheetDay;
+    });
+  }, [sheetDay, emails]);
+
+  const renderEmail = (e: ArchiveEmail, startOpen = false) => {
+    const recs = emailRecords
+      .filter((r) => r.email_id === e.id)
+      .map((r) => ({ kind: "letter" as const, id: r.letter_id, identifier: r.archive_id }));
+    return (
+      <details
+        key={e.id}
+        open={startOpen}
+        className="rounded-lg border border-border bg-card px-4 py-3 open:shadow-sm"
+      >
+        <summary className="flex cursor-pointer flex-wrap items-center gap-3 text-sm">
+          <span
+            className={`rounded border px-1.5 py-0.5 text-xs ${
+              STATUS_STYLES[e.status] ?? STATUS_STYLES["sending"]
+            }`}
+          >
+            {e.status}
+          </span>
+          {recs.length > 0 && (
+            <span className="font-mono text-xs font-semibold">
+              {recs.map((r) => r.identifier).join(", ")}
+            </span>
+          )}
+          <span className="min-w-0 break-words font-medium">{e.subject}</span>
+          <span className="min-w-0 break-all text-muted-foreground">
+            {(e.recipients ?? []).map((r) => r.email).join(", ")}
+          </span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {e.status === "scheduled" && e.scheduled_for
+              ? `Sends ${new Date(e.scheduled_for).toLocaleString()}`
+              : new Date(e.sent_at).toLocaleString()}
+          </span>
+          {e.status === "scheduled" && (
+            <span
+              className="flex flex-wrap gap-2"
+              onClick={(ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+              }}
+              onKeyDown={(ev) => ev.stopPropagation()}
+            >
+              <EditScheduledEmailButton emailId={e.id} />
+              <AddRecipientsButton emailId={e.id} />
+              <CancelScheduledButton emailId={e.id} />
+            </span>
+          )}
+          <span
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }}
+          >
+            <GetEmailLinkButton emailId={e.id} />
+          </span>
+        </summary>
+        <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
+          {e.message_body &&
+            (isRichHtml(e.message_body) ? (
+              <RichTextView html={e.message_body} />
+            ) : (
+              <p className="whitespace-pre-wrap">{e.message_body}</p>
+            ))}
+          {e.error && <p className="text-destructive">{e.error}</p>}
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <EmailArchiveDialog
+              records={recs}
+              defaultSubject={e.subject}
+              defaultMessage={e.message_body ?? ""}
+              description="Send this same email again — add the new recipients below."
+              trigger={
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Send className="size-4" /> Send again
+                </Button>
+              }
+            />
+          </div>
+        </div>
+      </details>
+    );
+  };
 
   const statusById = useMemo(() => new Map(emails.map((e) => [e.id, e.status])), [emails]);
 
