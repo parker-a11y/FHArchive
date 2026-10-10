@@ -330,11 +330,22 @@ function Calendar({
               >
                 {day}
               </span>
+              <span className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
+                {unique.map((e) => (
+                  <span
+                    key={e.emailId}
+                    className={cn(
+                      "size-2 rounded-full",
+                      e.kind === "sent" ? "bg-emerald-500" : "bg-sky-500",
+                    )}
+                  />
+                ))}
+              </span>
               {entries.map((e) => (
                 <span
                   key={e.emailId}
                   className={cn(
-                    "mt-1 block truncate rounded px-1 py-0.5",
+                    "mt-1 hidden truncate rounded px-1 py-0.5 sm:block",
                     e.kind === "sent"
                       ? "bg-emerald-500/15 text-emerald-700"
                       : "bg-sky-500/15 text-sky-700",
@@ -345,9 +356,9 @@ function Calendar({
                 </span>
               ))}
               {extra > 0 && (
-                <span className="mt-1 block text-muted-foreground">+{extra} more</span>
+                <span className="mt-1 hidden text-muted-foreground sm:block">+{extra} more</span>
               )}
-              {empty && <span className="mt-1 block text-muted-foreground">open</span>}
+              {empty && <span className="mt-1 hidden text-muted-foreground sm:block">open</span>}
             </button>
           );
         })}
