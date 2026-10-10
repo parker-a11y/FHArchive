@@ -259,7 +259,7 @@ function Calendar({
         <div>
           <h2 className="text-sm font-semibold">Dispatch calendar</h2>
           <p className="text-xs text-muted-foreground">
-            Pick an empty day to schedule the next letter.
+            Tap a day to see its email, or schedule one.
           </p>
         </div>
         <div className="flex items-center gap-2">
