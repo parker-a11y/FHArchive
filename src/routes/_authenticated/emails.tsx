@@ -27,6 +27,7 @@ import {
   SCRATCHPAD_QUERY_KEY,
 } from "@/components/letter/EmailScratchpadButton";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EditScheduledEmailButton } from "@/components/letter/EditScheduledEmailButton";
 
 export const Route = createFileRoute("/_authenticated/emails")({
@@ -258,7 +259,7 @@ function Calendar({
         <div>
           <h2 className="text-sm font-semibold">Dispatch calendar</h2>
           <p className="text-xs text-muted-foreground">
-            Pick an empty day to schedule the next letter.
+            Tap a day to see its email, or schedule one.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -330,11 +331,22 @@ function Calendar({
               >
                 {day}
               </span>
+              <span className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
+                {unique.map((e) => (
+                  <span
+                    key={e.emailId}
+                    className={cn(
+                      "size-2 rounded-full",
+                      e.kind === "sent" ? "bg-emerald-500" : "bg-sky-500",
+                    )}
+                  />
+                ))}
+              </span>
               {entries.map((e) => (
                 <span
                   key={e.emailId}
                   className={cn(
-                    "mt-1 block truncate rounded px-1 py-0.5",
+                    "mt-1 hidden truncate rounded px-1 py-0.5 sm:block",
                     e.kind === "sent"
                       ? "bg-emerald-500/15 text-emerald-700"
                       : "bg-sky-500/15 text-sky-700",
@@ -345,9 +357,9 @@ function Calendar({
                 </span>
               ))}
               {extra > 0 && (
-                <span className="mt-1 block text-muted-foreground">+{extra} more</span>
+                <span className="mt-1 hidden text-muted-foreground sm:block">+{extra} more</span>
               )}
-              {empty && <span className="mt-1 block text-muted-foreground">open</span>}
+              {empty && <span className="mt-1 hidden text-muted-foreground sm:block">open</span>}
             </button>
           );
         })}
@@ -411,6 +423,118 @@ function EmailsPage() {
   const [filter, setFilter] = useState<LetterState | "all">("all");
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [sheetDay, setSheetDay] = useState<string | null>(null);
+  const [lookup, setLookup] = useState("");
+
+  const lookupId = useMemo(() => {
+    const raw = lookup.trim().toUpperCase().replace(/\s|-/g, "");
+    if (!raw) return null;
+    const m = raw.match(/^(FH|DS)?(\d+)$/);
+    if (!m) return raw;
+    return `${m[1] ?? "FH"}${m[2].padStart(4, "0")}`;
+  }, [lookup]);
+
+  const lookupEmails = useMemo(() => {
+    if (!lookupId) return [];
+    const ids = new Set(
+      (emailRecords as EmailRecordRef[])
+        .filter((r) => r.archive_id.toUpperCase() === lookupId)
+        .map((r) => r.email_id),
+    );
+    return emails.filter((e) => ids.has(e.id));
+  }, [lookupId, emailRecords, emails]);
+
+  const sheetEmails = useMemo(() => {
+    if (!sheetDay) return [];
+    return emails.filter((e) => {
+      const scheduled = e.status === "scheduled" && e.scheduled_for;
+      const when = scheduled ? e.scheduled_for! : e.sent_at;
+      if (!when) return false;
+      if (!scheduled && !SENT_STATUSES.has(e.status)) return false;
+      return localDayKey(when) === sheetDay;
+    });
+  }, [sheetDay, emails]);
+
+  const renderEmail = (e: ArchiveEmail, startOpen = false) => {
+    const recs = emailRecords
+      .filter((r) => r.email_id === e.id)
+      .map((r) => ({ kind: "letter" as const, id: r.letter_id, identifier: r.archive_id }));
+    return (
+      <details
+        key={e.id}
+        open={startOpen}
+        className="rounded-lg border border-border bg-card px-4 py-3 open:shadow-sm"
+      >
+        <summary className="flex cursor-pointer flex-wrap items-center gap-3 text-sm">
+          <span
+            className={`rounded border px-1.5 py-0.5 text-xs ${
+              STATUS_STYLES[e.status] ?? STATUS_STYLES["sending"]
+            }`}
+          >
+            {e.status}
+          </span>
+          {recs.length > 0 && (
+            <span className="font-mono text-xs font-semibold">
+              {recs.map((r) => r.identifier).join(", ")}
+            </span>
+          )}
+          <span className="min-w-0 break-words font-medium">{e.subject}</span>
+          <span className="min-w-0 break-all text-muted-foreground">
+            {(e.recipients ?? []).map((r) => r.email).join(", ")}
+          </span>
+          <span className="ml-auto text-xs text-muted-foreground">
+            {e.status === "scheduled" && e.scheduled_for
+              ? `Sends ${new Date(e.scheduled_for).toLocaleString()}`
+              : new Date(e.sent_at).toLocaleString()}
+          </span>
+          {e.status === "scheduled" && (
+            <span
+              className="flex flex-wrap gap-2"
+              onClick={(ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+              }}
+              onKeyDown={(ev) => ev.stopPropagation()}
+            >
+              <EditScheduledEmailButton emailId={e.id} />
+              <AddRecipientsButton emailId={e.id} />
+              <CancelScheduledButton emailId={e.id} />
+            </span>
+          )}
+          <span
+            onClick={(ev) => {
+              ev.preventDefault();
+              ev.stopPropagation();
+            }}
+          >
+            <GetEmailLinkButton emailId={e.id} />
+          </span>
+        </summary>
+        <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
+          {e.message_body &&
+            (isRichHtml(e.message_body) ? (
+              <RichTextView html={e.message_body} />
+            ) : (
+              <p className="whitespace-pre-wrap">{e.message_body}</p>
+            ))}
+          {e.error && <p className="text-destructive">{e.error}</p>}
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <EmailArchiveDialog
+              records={recs}
+              defaultSubject={e.subject}
+              defaultMessage={e.message_body ?? ""}
+              description="Send this same email again — add the new recipients below."
+              trigger={
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Send className="size-4" /> Send again
+                </Button>
+              }
+            />
+          </div>
+        </div>
+      </details>
+    );
+  };
 
   const statusById = useMemo(() => new Map(emails.map((e) => [e.id, e.status])), [emails]);
 
@@ -461,14 +585,36 @@ function EmailsPage() {
         description="Schedule the next letter, see which records have gone out, and review every send."
       />
       <div className="space-y-6 px-4 py-6 sm:px-8">
+        <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">Has this record been emailed?</h2>
+          <Input
+            value={lookup}
+            onChange={(e) => setLookup(e.target.value)}
+            placeholder="Type an archive number, e.g. 428 or FH0428"
+            className="mt-2 h-9 max-w-sm"
+            inputMode="text"
+          />
+          {lookupId && (
+            <div className="mt-3 space-y-3">
+              <p className="text-sm">
+                <strong className="font-mono">{lookupId}</strong>{" "}
+                {lookupEmails.length === 0
+                  ? "has never been used in an email."
+                  : `appears in ${lookupEmails.length} email${lookupEmails.length === 1 ? "" : "s"}:`}
+              </p>
+              {lookupEmails.map((e) => renderEmail(e))}
+            </div>
+          )}
+        </section>
+
         <Calendar
           emails={emails}
           recordsByEmail={recordsByEmail}
           selectedDay={selectedDay}
-          onPickDay={(key) => setSelectedDay((prev) => (prev === key ? null : key))}
+          onPickDay={(key) => setSheetDay(key)}
         />
 
-        <section className="rounded-lg border border-border bg-card p-4">
+        <section id="letter-coverage" className="rounded-lg border border-border bg-card p-4">
           <header className="mb-3 flex flex-wrap items-center gap-3">
             <div className="mr-auto">
               <h2 className="text-sm font-semibold">Letter coverage</h2>
@@ -556,92 +702,42 @@ function EmailsPage() {
               Nothing sent yet. Open any record and choose Email to send one.
             </p>
           )}
-          <div className="space-y-3">
-            {emails.map((e) => (
-              <details
-                key={e.id}
-                className="rounded-lg border border-border bg-card px-4 py-3 open:shadow-sm"
-              >
-                <summary className="flex cursor-pointer flex-wrap items-center gap-3 text-sm">
-                  <span
-                    className={`rounded border px-1.5 py-0.5 text-xs ${
-                      STATUS_STYLES[e.status] ?? STATUS_STYLES['sending']
-                    }`}
-                  >
-                    {e.status}
-                  </span>
-                  <span className="font-medium">{e.subject}</span>
-                  <span className="text-muted-foreground">
-                    {(e.recipients ?? []).map((r) => r.email).join(", ")}
-                  </span>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {e.status === "scheduled" && e.scheduled_for
-                      ? `Sends ${new Date(e.scheduled_for).toLocaleString()}`
-                      : new Date(e.sent_at).toLocaleString()}
-                  </span>
-                  {e.status === "scheduled" && (
-                    <span
-                      className="flex gap-2"
-                      onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); }}
-                      onKeyDown={(ev) => ev.stopPropagation()}
-                    >
-                      <EditScheduledEmailButton emailId={e.id} />
-                      <AddRecipientsButton emailId={e.id} />
-                      <CancelScheduledButton emailId={e.id} />
-                    </span>
-                  )}
-                  <span
-                    onClick={(ev) => {
-                      ev.preventDefault();
-                      ev.stopPropagation();
-                    }}
-                  >
-                    <GetEmailLinkButton emailId={e.id} />
-                  </span>
-                </summary>
-                <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
-                  {e.message_body &&
-                    (isRichHtml(e.message_body) ? (
-                      <RichTextView html={e.message_body} />
-                    ) : (
-                      <p className="whitespace-pre-wrap">{e.message_body}</p>
-                    ))}
-                  {e.error && <p className="text-destructive">{e.error}</p>}
-                  {(() => {
-                    const recs = emailRecords
-                      .filter((r) => r.email_id === e.id)
-                      .map((r) => ({
-                        kind: "letter" as const,
-                        id: r.letter_id,
-                        identifier: r.archive_id,
-                      }));
-                    return (
-                      <div className="flex flex-wrap items-center gap-3 pt-1">
-                        {recs.length > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            Records: {recs.map((r) => r.identifier).join(", ")}
-                          </span>
-                        )}
-                        <EmailArchiveDialog
-                          records={recs}
-                          defaultSubject={e.subject}
-                          defaultMessage={e.message_body ?? ""}
-                          description="Send this same email again — add the new recipients below."
-                          trigger={
-                            <Button variant="outline" size="sm" className="gap-2">
-                              <Send className="size-4" /> Send again
-                            </Button>
-                          }
-                        />
-                      </div>
-                    );
-                  })()}
-                </div>
-              </details>
-            ))}
-          </div>
+          <div className="space-y-3">{emails.map((e) => renderEmail(e))}</div>
         </section>
       </div>
+
+      <Sheet open={!!sheetDay} onOpenChange={(o) => !o && setSheetDay(null)}>
+        <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>
+              {sheetDay &&
+                new Date(`${sheetDay}T12:00`).toLocaleDateString([], {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="space-y-3 py-4">
+            {sheetEmails.length === 0 && (
+              <p className="text-sm text-muted-foreground">No letter scheduled for this date.</p>
+            )}
+            {sheetEmails.map((e) => renderEmail(e, true))}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setSelectedDay(sheetDay);
+                setSheetDay(null);
+                document.getElementById("letter-coverage")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Schedule a letter for this day
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </AppShell>
   );
 }
