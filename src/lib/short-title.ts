@@ -79,10 +79,10 @@ export function shortLetterTitle(input: ShortTitleInput): string {
   return `Letter from ${from} to ${to}${d ? ` - ${d}` : ""}`;
 }
 
-/** Records eligible for the Create Short Title button. */
+/** Records eligible for the Create Short Title button (personal letters and postcards). */
 export function isPersonalLetter(recordType?: string | null, subtype?: string | null): boolean {
   return (
     (recordType ?? "").toLowerCase() === "letter" &&
-    norm(subtype ?? "") === norm("Personal letter")
+    [norm("Personal letter"), norm("Postcard")].includes(norm(subtype ?? ""))
   );
 }
