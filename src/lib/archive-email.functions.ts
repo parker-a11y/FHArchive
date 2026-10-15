@@ -48,7 +48,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     subject: String(data.subject ?? "").slice(0, 200),
     headerTitle: String(data.headerTitle ?? "").slice(0, 200),
     headerSubtitle: String(data.headerSubtitle ?? "").slice(0, 200),
-    message: String(data.message ?? "").slice(0, 10000),
+    message: String(data.message ?? "").slice(0, 100000),
     records: (data.records ?? [])
       .slice(0, 10)
       .map((r) => ({ kind: r.kind === "source" ? ("source" as const) : ("letter" as const), id: String(r.id) })),
@@ -161,7 +161,7 @@ export const updateScheduledEmail = createServerFn({ method: "POST" })
     }) => ({
       emailId: String(data.emailId),
       subject: String(data.subject ?? "").trim().slice(0, 200),
-      message: String(data.message ?? "").slice(0, 10000),
+      message: String(data.message ?? "").slice(0, 100000),
       scheduledFor: String(data.scheduledFor ?? ""),
       recipients: (data.recipients ?? [])
         .slice(0, 25)
