@@ -405,6 +405,13 @@ export function EmailArchiveDialog({
 
           <div>
             <label className="text-xs font-medium text-muted-foreground uppercase">Message</label>
+            {message.length > 90000 && (
+              <p className="mt-1 text-xs text-destructive">
+                {message.length > 100000
+                  ? "This message is too long — anything past the limit will be cut off. Please shorten it."
+                  : "This message is close to the length limit."}
+              </p>
+            )}
             <RichTextEditor
               className="mt-1"
               value={message}
