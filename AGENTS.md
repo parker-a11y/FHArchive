@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Scan gallery reordering resolves an explicit before/after insertion boundary through `scan-order`; the marker and saved order use the same helper to prevent directional off-by-one drops.
+
 Files live in Supabase Storage, not in the database:
 
 - `scans` — archival masters (TIFF/JPEG/PDF) and their generated JPEG/thumbnail
