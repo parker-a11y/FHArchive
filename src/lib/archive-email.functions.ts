@@ -210,3 +210,32 @@ export const updateScheduledEmail = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Moves scheduled emails to new send times (calendar drag and drop). Admin only. */
+export const rescheduleEmails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { moves: { emailId: string; scheduledFor: string }[] }) => ({
+    moves: (data.moves ?? []).slice(0, 50).map((m) => ({
+      emailId: String(m.emailId),
+      scheduledFor: String(m.scheduledFor),
+    })),
+  }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can change email.");
+    for (const m of data.moves) {
+      const when = new Date(m.scheduledFor);
+      if (Number.isNaN(when.getTime())) throw new Error("That scheduled time is not valid.");
+      if (when.getTime() < Date.now() + 60_000) throw new Error("Pick a day in the future.");
+    }
+    for (const m of data.moves) {
+      const { error } = await db
+        .from("archive_emails")
+        .update({ scheduled_for: new Date(m.scheduledFor).toISOString() } as never)
+        .eq("id", m.emailId)
+        .eq("status", "scheduled");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
