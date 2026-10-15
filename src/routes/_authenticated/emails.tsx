@@ -17,7 +17,7 @@ import {
   type EmailRecordRef,
 } from "@/lib/archive-email";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
-import { addScheduledRecipients, cancelScheduledEmail } from "@/lib/archive-email.functions";
+import { addScheduledRecipients, cancelScheduledEmail, rescheduleEmails } from "@/lib/archive-email.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { RichTextView } from "@/components/RichTextView";
 import { isRichHtml } from "@/lib/rich-text";
@@ -197,7 +197,10 @@ type DayEntry = {
   emailId: string;
   subject: string;
   time: string;
+  when: string;
   ids: string[];
+  /** Every per-recipient copy of this dispatch on the day. */
+  group?: { id: string; when: string }[];
 };
 
 function localDayKey(iso: string) {
@@ -234,6 +237,7 @@ function Calendar({
         emailId: e.id,
         subject: e.subject,
         time: new Date(when).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        when,
         ids: recordsByEmail.get(e.id) ?? [],
       };
       map.set(key, [...(map.get(key) ?? []), entry]);
@@ -252,6 +256,44 @@ function Calendar({
   while (cells.length % 7 !== 0) cells.push(null);
 
   const todayKey = localDayKey(today.toISOString());
+  const qc = useQueryClient();
+  const reschedule = useServerFn(rescheduleEmails);
+  const [dragOver, setDragOver] = useState<string | null>(null);
+  const [moving, setMoving] = useState(false);
+
+  const dropOn = async (key: string, raw: string) => {
+    setDragOver(null);
+    let group: { id: string; when: string }[] = [];
+    try {
+      group = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    if (!group.length || localDayKey(group[0].when) === key) return;
+    const moves = group.map((g) => {
+      const old = new Date(g.when);
+      const [y, m, d] = key.split("-").map(Number);
+      const next = new Date(y, m - 1, d, old.getHours(), old.getMinutes(), 0, 0);
+      return { emailId: g.id, scheduledFor: next.toISOString() };
+    });
+    if (new Date(moves[0].scheduledFor).getTime() < Date.now() + 60_000)
+      return toast.error("You can only move an email to a future day.");
+    const taken = (byDay.get(key) ?? []).some((e) => e.kind === "scheduled");
+    if (taken && !window.confirm("That day already has an email scheduled. Move it there anyway?"))
+      return;
+    setMoving(true);
+    try {
+      await reschedule({ data: { moves } });
+      await qc.invalidateQueries();
+      toast.success(
+        `Moved to ${new Date(moves[0].scheduledFor).toLocaleString([], { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}`,
+      );
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setMoving(false);
+    }
+  };
 
   return (
     <section className="rounded-lg border border-border bg-card p-4">
@@ -259,7 +301,8 @@ function Calendar({
         <div>
           <h2 className="text-sm font-semibold">Dispatch calendar</h2>
           <p className="text-xs text-muted-foreground">
-            Tap a day to see its email, or schedule one.
+            Tap a day to see its email, or schedule one. Drag a blue email to another day to move it.
+            {moving && " Moving…"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -299,12 +342,19 @@ function Calendar({
           // One email per recipient means the same dispatch repeats — show it once.
           const all = byDay.get(key) ?? [];
           const seen = new Set<string>();
-          const unique = all.filter((e) => {
+          const groups = new Map<string, { id: string; when: string }[]>();
+          for (const e of all) {
             const sig = `${e.kind}|${e.ids.join(",")}|${e.subject}`;
-            if (seen.has(sig)) return false;
-            seen.add(sig);
-            return true;
-          });
+            groups.set(sig, [...(groups.get(sig) ?? []), { id: e.emailId, when: e.when }]);
+          }
+          const unique = all
+            .filter((e) => {
+              const sig = `${e.kind}|${e.ids.join(",")}|${e.subject}`;
+              if (seen.has(sig)) return false;
+              seen.add(sig);
+              return true;
+            })
+            .map((e) => ({ ...e, group: groups.get(`${e.kind}|${e.ids.join(",")}|${e.subject}`) }));
           const entries = unique.slice(0, 3);
           const extra = unique.length - entries.length;
           const empty = entries.length === 0;
@@ -315,7 +365,18 @@ function Calendar({
               key={key}
               type="button"
               onClick={() => onPickDay(key)}
+              onDragOver={(ev) => {
+                if (!ev.dataTransfer.types.includes("application/x-archive-email")) return;
+                ev.preventDefault();
+                setDragOver(key);
+              }}
+              onDragLeave={() => setDragOver((k) => (k === key ? null : k))}
+              onDrop={(ev) => {
+                ev.preventDefault();
+                dropOn(key, ev.dataTransfer.getData("application/x-archive-email"));
+              }}
               className={cn(
+                dragOver === key && "ring-2 ring-sky-500 bg-sky-500/10",
                 "min-h-16 rounded border p-1 text-left text-[11px] transition-colors",
                 empty
                   ? "border-dashed border-border bg-background hover:bg-secondary"
@@ -345,8 +406,18 @@ function Calendar({
               {entries.map((e) => (
                 <span
                   key={e.emailId}
+                  draggable={e.kind === "scheduled"}
+                  onDragStart={(ev) => {
+                    ev.stopPropagation();
+                    ev.dataTransfer.effectAllowed = "move";
+                    ev.dataTransfer.setData(
+                      "application/x-archive-email",
+                      JSON.stringify(e.group ?? [{ id: e.emailId, when: e.when }]),
+                    );
+                  }}
                   className={cn(
                     "mt-1 hidden truncate rounded px-1 py-0.5 sm:block",
+                    e.kind === "scheduled" && "cursor-grab active:cursor-grabbing",
                     e.kind === "sent"
                       ? "bg-emerald-500/15 text-emerald-700"
                       : "bg-sky-500/15 text-sky-700",
