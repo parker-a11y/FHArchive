@@ -78,6 +78,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Letter } from "@/lib/queries";
+import { reorderScans, type ScanDropTarget } from "@/lib/scan-order";
 
 type Progress = { total: number; done: number; current: string; stage: string } | null;
 
@@ -110,6 +111,9 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const key = ["digital-files", letter.id];
   const [progress, setProgress] = useState<Progress>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<ScanDropTarget | null>(null);
+  const dropTargetRef = useRef<ScanDropTarget | null>(null);
+  const [reordering, setReordering] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -423,20 +427,35 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     identify(file, clean.replace(/-/g, " "));
   }
 
-  async function reorder(targetId: string) {
-    if (!dragId || dragId === targetId) return;
-    const list = [...files];
-    const from = list.findIndex((f) => f.id === dragId);
-    const to = list.findIndex((f) => f.id === targetId);
-    const [moved] = list.splice(from, 1);
-    list.splice(to, 0, moved);
+  function clearDrag() {
     setDragId(null);
-    await Promise.all(
-      list.map((f, i) =>
-        supabase.from("digital_files").update({ sort_order: i + 1 } as never).eq("id", f.id),
-      ),
-    );
-    refresh();
+    setDropTarget(null);
+    dropTargetRef.current = null;
+  }
+
+  async function reorder() {
+    const target = dropTargetRef.current;
+    if (!dragId || !target || reordering || isGuestViewer) return clearDrag();
+    const list = reorderScans(files, dragId, target);
+    clearDrag();
+    if (list.every((file, index) => file.id === files[index]?.id)) return;
+    setReordering(true);
+    qc.setQueryData(key, list.map((file, index) => ({ ...file, sort_order: index + 1 })));
+    try {
+      const results = await Promise.all(
+        list.map((f, i) =>
+          supabase.from("digital_files").update({ sort_order: i + 1 } as never).eq("id", f.id),
+        ),
+      );
+      const failed = results.find((result) => result.error);
+      if (failed?.error) throw failed.error;
+      toast.success("Scan order saved");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save scan order");
+    } finally {
+      await refresh();
+      setReordering(false);
+    }
   }
 
   async function remove(file: DigitalFileWithDerivatives) {
@@ -794,7 +813,42 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
             No archival masters uploaded for {letter.archive_id} yet.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            aria-busy={reordering}
+            onDragOver={(e) => {
+              if (!dragId) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              const cards = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("[data-scan-id]"));
+              let closest: { id: string; side: "before" | "after"; distance: number } | null = null;
+              for (const card of cards) {
+                const id = card.dataset.scanId;
+                if (!id) continue;
+                const rect = card.getBoundingClientRect();
+                const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+                const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+                const distance = dx * dx + dy * dy;
+                if (!closest || distance < closest.distance) {
+                  closest = { id, side: e.clientX < rect.left + rect.width / 2 ? "before" : "after", distance };
+                }
+              }
+              const target = closest && closest.id !== dragId ? { id: closest.id, side: closest.side } : null;
+              dropTargetRef.current = target;
+              setDropTarget(target);
+            }}
+            onDragLeave={(e) => {
+              if (e.relatedTarget instanceof Node && e.currentTarget.contains(e.relatedTarget)) return;
+              dropTargetRef.current = null;
+              setDropTarget(null);
+            }}
+            onDrop={(e) => {
+              if (!dragId) return;
+              e.preventDefault();
+              e.stopPropagation();
+              void reorder();
+            }}
+          >
             {files.map((f, i) => {
               const jpegOk = hasJpeg(f);
               const derivFailed = derivativeFailed(f);
@@ -802,19 +856,30 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                 <div
                   key={f.id}
                   id={`scan-${f.id}`}
-                  draggable={!isGuestViewer}
-                  onDragStart={() => setDragId(f.id)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    reorder(f.id);
+                  data-scan-id={f.id}
+                  draggable={!isGuestViewer && !reordering}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", f.id);
+                    setDragId(f.id);
                   }}
-                  className={`rounded border bg-card p-2 ${
+                  onDragEnd={clearDrag}
+                  className={`relative rounded border bg-card p-2 ${dragId === f.id ? "opacity-40" : ""} ${
                     highlightId === f.id
                       ? "border-amber-500 ring-2 ring-amber-400"
                       : "border-border"
                   }`}
                 >
+                  {dropTarget?.id === f.id && (
+                    <div
+                      data-scan-drop-marker
+                      className={`pointer-events-none absolute -top-1 -bottom-1 z-10 w-1 rounded bg-primary ${dropTarget.side === "before" ? "-left-2" : "-right-2"}`}
+                    >
+                      <span className={`absolute top-0 whitespace-nowrap rounded bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground shadow-sm ${dropTarget.side === "before" ? "left-0" : "right-0"}`}>
+                        Position {dragId ? reorderScans(files, dragId, dropTarget).findIndex((file) => file.id === dragId) + 1 : i + 1}
+                      </span>
+                    </div>
+                  )}
                   <div className="mb-1 flex items-center gap-1">
                     <GripVertical className="size-3.5 cursor-grab text-muted-foreground" />
                     <span className="archive-id text-xs font-semibold text-primary">
@@ -838,6 +903,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
                     {f.thumbUrl ? (
                       <img
                         src={f.thumbUrl}
+                        draggable={false}
                         alt={f.label || f.original_filename}
                         style={{ transform: `rotate(${displayRotation(f)}deg)` }}
                         className="h-full w-full object-contain"
