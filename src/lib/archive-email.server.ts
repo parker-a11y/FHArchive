@@ -107,7 +107,7 @@ async function letterImages(
   includeImages: boolean,
   includeEnvelope: boolean,
 ): Promise<string[]> {
-  if (!includeImages) return [];
+  if (!includeImages && !includeEnvelope) return [];
   const [{ data: files }, { data: derivatives }] = await Promise.all([
     db
       .from("digital_files")
@@ -124,7 +124,7 @@ async function letterImages(
     : [];
   // An envelope never loses its place to a long letter — it has its own cap.
   const selectable = [
-    ...pages.slice(0, PAGE_IMAGE_CAP),
+    ...(includeImages ? pages.slice(0, PAGE_IMAGE_CAP) : []),
     ...envelopes.slice(0, ENVELOPE_IMAGE_CAP),
   ];
   const urls: string[] = [];
