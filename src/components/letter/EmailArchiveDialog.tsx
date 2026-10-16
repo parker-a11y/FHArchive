@@ -263,7 +263,7 @@ export function EmailArchiveDialog({
           records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
           includeTranscription,
           includeImages,
-          includeEnvelope: includeImages && includeEnvelope,
+          includeEnvelope,
           research: research?.answer ? research : null,
           thumbnails: Boolean(thumbnails),
           scheduledFor: later && sendAt ? new Date(sendAt).toISOString() : null,
@@ -447,7 +447,6 @@ export function EmailArchiveDialog({
               <label className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={includeEnvelope}
-                  disabled={!includeImages}
                   onCheckedChange={(v) => setIncludeEnvelope(Boolean(v))}
                 />
                 Include the envelope scan
