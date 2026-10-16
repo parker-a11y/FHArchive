@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import type { Letter } from "@/lib/archive";
+import type { Letter } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 
 const EXACT_SKIP = new Set(["year", "month", "unknown", "not_applicable", "undated"]);
