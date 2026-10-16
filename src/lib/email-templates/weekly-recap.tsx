@@ -12,6 +12,7 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EmailPhotoFrame } from './photo-frame'
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
 import { isRichHtml } from '@/lib/rich-text'
 import { richHtmlToEmail } from '@/lib/rich-text-email'
@@ -129,23 +130,7 @@ export const WeeklyRecapEmail = ({
             if (block.kind === 'photo') {
               const photo = photoOfBlock(block.token, inlinePhotos)
               if (!photo) return null
-              const img = (
-                <Img src={photo.url} alt={`${photo.identifier} archive photo`} style={image} />
-              )
-              return (
-                <Section key={i}>
-                  {photo.href ? <Link href={photo.href}>{img}</Link> : img}
-                  <Text style={caption}>
-                    {photo.href ? (
-                      <Link href={photo.href} style={recordLink}>
-                        {photo.identifier}
-                      </Link>
-                    ) : (
-                      photo.identifier
-                    )}
-                  </Text>
-                </Section>
-              )
+              return <EmailPhotoFrame key={i} photo={photo} />
             }
             if (block.kind === 'heading')
 

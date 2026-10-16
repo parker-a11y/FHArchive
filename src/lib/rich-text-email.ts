@@ -4,7 +4,7 @@
  */
 import { Parser } from "htmlparser2";
 import { escapeHtml, safeHref, safeStyle } from "@/lib/rich-text";
-import { PHOTO_TOKEN_SRC, IMAGE_URL_TOKEN_SRC, imageUrlOf, photoKey, type InlinePhoto } from "@/lib/inline-photos";
+import { PHOTO_TOKEN_SRC, IMAGE_URL_TOKEN_SRC, resolvePhotoToken, type InlinePhoto } from "@/lib/inline-photos";
 
 const STYLES: Record<string, string> = {
   p: "font-size:15px;line-height:24px;color:#33372b;margin:0 0 14px;",
@@ -66,17 +66,21 @@ function linkRun(text: string, shareLinks: Record<string, string>) {
 }
 
 function photoHtml(photo: InlinePhoto) {
-  const img = `<img src="${escapeHtml(photo.url)}" alt="${escapeHtml(
-    photo.identifier,
-  )} archive photo" style="width:100%;max-width:560px;border-radius:6px;border:1px solid #e4dcc7;" />`;
-  const caption = photo.href
-    ? `<a href="${escapeHtml(photo.href)}" style="${STYLES["a"]}font-weight:bold;">${escapeHtml(
-        photo.identifier,
-      )}</a>`
-    : escapeHtml(photo.identifier);
-  return `<div style="margin:18px 0;">${
+  const alt = photo.caption || (photo.identifier ? `${photo.identifier} archive photo` : "Photo");
+  const img = `<img src="${escapeHtml(photo.url)}" alt="${escapeHtml(alt)}" style="display:block;width:100%;max-width:536px;border:1px solid #e9dfc6;border-radius:2px;" />`;
+  const mat = `<div style="background-color:#fbf7ee;border:1px solid #d6c08a;padding:12px;border-radius:4px;box-shadow:0 6px 18px rgba(60,45,20,0.18);">${
     photo.href ? `<a href="${escapeHtml(photo.href)}">${img}</a>` : img
-  }<div style="margin:6px 0 0;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#a08a3f;font-family:Helvetica,Arial,sans-serif;">${caption}</div></div>`;
+  }</div>`;
+  const title = photo.caption
+    ? `<div style="margin:12px 0 0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:16px;line-height:22px;color:#3a2f1d;">${escapeHtml(photo.caption)}</div>`
+    : "";
+  const idText = photo.href
+    ? `<a href="${escapeHtml(photo.href)}" style="color:#8a6a1f;text-decoration:none;font-weight:bold;">${escapeHtml(photo.identifier)}</a>`
+    : escapeHtml(photo.identifier);
+  const id = photo.identifier
+    ? `<div style="margin:6px 0 0;text-align:center;font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#a08a3f;">${idText}</div>`
+    : "";
+  return `<div style="margin:28px auto;max-width:560px;">${mat}${title}${id}</div>`;
 }
 
 export function richHtmlToEmail(
@@ -131,23 +135,12 @@ export function richHtmlToEmail(
   while (open.length) out += `</${open.pop()}>`;
 
   // A paragraph that holds nothing but a photo becomes the photo itself.
-  const urlTok = IMAGE_URL_TOKEN_SRC;
-  const urlImg = (t: string) => {
-    const u = imageUrlOf(t);
-    return u
-      ? `<div style="margin:18px 0;"><img src="${escapeHtml(u)}" alt="" style="width:100%;max-width:560px;border-radius:6px;border:1px solid #e4dcc7;" /></div>`
-      : "";
+  const anyTok = `${PHOTO_TOKEN_SRC}|${IMAGE_URL_TOKEN_SRC}`;
+  const render = (t: string) => {
+    const photo = resolvePhotoToken(t, photos);
+    return photo ? photoHtml(photo) : "";
   };
-  out = out.replace(new RegExp(`<p[^>]*>\\s*(${urlTok})\\s*</p>`, "gi"), (_m, t: string) => urlImg(t));
-  out = out.replace(new RegExp(urlTok, "gi"), urlImg);
-  const token = PHOTO_TOKEN_SRC;
-  out = out.replace(new RegExp(`<p[^>]*>\\s*(${token})\\s*</p>`, "gi"), (_m, t: string) => {
-    const photo = photos[photoKey(t)];
-    return photo ? photoHtml(photo) : "";
-  });
-  out = out.replace(new RegExp(token, "gi"), (t) => {
-    const photo = photos[photoKey(t)];
-    return photo ? photoHtml(photo) : "";
-  });
+  out = out.replace(new RegExp(`<p[^>]*>\\s*(${anyTok})\\s*</p>`, "gi"), (_m, t: string) => render(t));
+  out = out.replace(new RegExp(anyTok, "gi"), render);
   return out;
 }
