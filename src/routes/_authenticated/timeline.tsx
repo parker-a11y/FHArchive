@@ -7,6 +7,7 @@ import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
+import { WeekInHistory } from "@/components/WeekInHistory";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -77,6 +78,7 @@ function Timeline() {
   return (
     <>
       <PageHeader title="Timeline" description={`${rows.length} letters in chronological order`} />
+      <WeekInHistory letters={letters} />
       <div className="flex gap-2 border-b border-border px-4 sm:px-8 py-3">
         <Input
           className="h-8 w-72"
