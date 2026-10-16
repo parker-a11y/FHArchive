@@ -527,18 +527,22 @@ function EmailsPage() {
   }, [sheetDay, emails]);
 
   const renderEmail = (e: ArchiveEmail, startOpen = false) => {
-    const recs = emailRecords
-      .filter((r) => r.email_id === e.id)
-      .map((r) => {
-        const l = letters.find((x) => x.id === r.letter_id);
-        return {
-          kind: "letter" as const,
-          id: r.letter_id,
-          identifier: r.archive_id,
-          title: l?.title ?? null,
-          date: l?.normalized_date ?? null,
-        };
-      });
+    const logged = emailRecords.filter((r) => r.email_id === e.id);
+    // Queued emails have no logged records yet — use the ones saved with the send.
+    const refs: { kind: "letter" | "source"; id: string }[] = logged.length
+      ? logged.map((r) => ({ kind: "letter" as const, id: r.letter_id }))
+      : (e.send_payload?.records ?? []);
+    const recs = refs.map((r) => {
+      const l = r.kind === "letter" ? letters.find((x) => x.id === r.id) : undefined;
+      const loggedRow = logged.find((x) => x.letter_id === r.id);
+      return {
+        kind: r.kind,
+        id: r.id,
+        identifier: loggedRow?.archive_id ?? l?.archive_id ?? "",
+        title: l?.title ?? null,
+        date: l?.normalized_date ?? null,
+      };
+    });
     return (
       <details
         key={e.id}
