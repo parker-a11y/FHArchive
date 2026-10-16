@@ -14,6 +14,7 @@ import {
   Text,
 } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { EmailPhotoFrame } from './photo-frame'
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock, type InlinePhoto } from '@/lib/inline-photos'
 import { isRichHtml } from '@/lib/rich-text'
 import { richHtmlToEmail } from '@/lib/rich-text-email'
@@ -79,23 +80,8 @@ function renderInline(text: string, shareLinks: Record<string, string>) {
   })
 }
 
-/** One embedded archive photo, captioned with its record number. */
 function InlinePhotoBlock({ photo }: { photo: InlinePhoto }) {
-  const img = <Img src={photo.url} alt={`${photo.identifier} archive photo`} style={image} />
-  return (
-    <Section style={photoBlock}>
-      {photo.href ? <Link href={photo.href}>{img}</Link> : img}
-      <Text style={photoCaption}>
-        {photo.href ? (
-          <Link href={photo.href} style={recordLink}>
-            {photo.identifier}
-          </Link>
-        ) : (
-          photo.identifier
-        )}
-      </Text>
-    </Section>
-  )
+  return <EmailPhotoFrame photo={photo} />
 }
 
 /** Message paragraphs with light markdown: headings, bullets, hr, bold/italic, record links. */

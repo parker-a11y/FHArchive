@@ -4,6 +4,7 @@ import { useInlinePhotos } from "@/lib/inline-photos-urls";
 import { isolatePhotoTokens, isPhotoBlock, photoOfBlock } from "@/lib/inline-photos";
 import { isRichHtml } from "@/lib/rich-text";
 import { RichTextView } from "@/components/RichTextView";
+import { PhotoFrame } from "@/components/media/PhotoFrame";
 
 
 
@@ -74,36 +75,7 @@ function PlainRecapBody({ text }: { text: string }) {
         if (isPhotoBlock(block)) {
           const photo = photoOfBlock(block, photos);
           if (!photo) return null;
-          return (
-            <figure key={i} className="my-4">
-              <img
-                src={photo.url}
-                alt={`${photo.identifier} archive photo`}
-                className="w-full rounded border border-border"
-                loading="lazy"
-              />
-              <figcaption className="mt-1 text-xs tracking-widest uppercase">
-                {!photo.identifier ? null : photo.identifier.startsWith("FH") ? (
-                  <Link
-                    to="/letters/$archiveId"
-                    params={{ archiveId: photo.identifier }}
-                    className="archive-id text-archive-gold underline-offset-2 hover:underline"
-                  >
-                    {photo.identifier}
-                  </Link>
-                ) : (
-                  <Link
-                    to="/sources/$dsId"
-                    params={{ dsId: photo.identifier }}
-                    className="archive-id text-archive-gold underline-offset-2 hover:underline"
-                  >
-                    {photo.identifier}
-                  </Link>
-                )}
-              </figcaption>
-
-            </figure>
-          );
+          return <PhotoFrame key={i} photo={photo} />;
         }
 
         const lines = block.split("\n").filter((l) => l.trim());
