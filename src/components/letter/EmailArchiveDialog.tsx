@@ -31,7 +31,7 @@ import {
 
 type Recipient = { email: string; name?: string | null };
 
-type RecordRef = { kind: "letter" | "source"; id: string; identifier: string; title?: string | null };
+type RecordRef = { kind: "letter" | "source"; id: string; identifier: string; title?: string | null; date?: string | null };
 
 export type EmailResearchPayload = {
   question?: string | null;
@@ -107,7 +107,7 @@ export function EmailArchiveDialog({
   // Warn when the subject names an FH/DS number or ISO date that doesn't
   // belong to any record being sent.
   const subjectMismatch = (() => {
-    const known = recordList.map((r) => `${r.identifier} ${r.title ?? ""}`).join(" ").toUpperCase();
+    const known = recordList.map((r) => `${r.identifier} ${r.title ?? ""} ${r.date ?? ""}`).join(" ").toUpperCase();
     const ids = subject.toUpperCase().match(/\b(?:FH|DS)-?\d{3,5}\b/g) ?? [];
     const dates = subject.match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? [];
     const bad = [

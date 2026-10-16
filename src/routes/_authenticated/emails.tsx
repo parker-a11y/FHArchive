@@ -529,7 +529,16 @@ function EmailsPage() {
   const renderEmail = (e: ArchiveEmail, startOpen = false) => {
     const recs = emailRecords
       .filter((r) => r.email_id === e.id)
-      .map((r) => ({ kind: "letter" as const, id: r.letter_id, identifier: r.archive_id }));
+      .map((r) => {
+        const l = letters.find((x) => x.id === r.letter_id);
+        return {
+          kind: "letter" as const,
+          id: r.letter_id,
+          identifier: r.archive_id,
+          title: l?.title ?? null,
+          date: l?.normalized_date ?? null,
+        };
+      });
     return (
       <details
         key={e.id}
@@ -751,7 +760,7 @@ function EmailsPage() {
                     body={scratchpads[l.id]}
                   />
                   <EmailArchiveDialog
-                    records={[{ kind: "letter", id: l.id, identifier: l.archive_id, title: l.title }]}
+                    records={[{ kind: "letter", id: l.id, identifier: l.archive_id, title: l.title, date: l.normalized_date }]}
                     defaultSendAt={scheduleAt}
                     trigger={
                       <Button variant="outline" size="sm">
