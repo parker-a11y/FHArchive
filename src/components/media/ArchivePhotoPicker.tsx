@@ -139,15 +139,18 @@ export function ArchivePhotoPicker({
   });
 
   const [imageUrl, setImageUrl] = useState("");
+  const [caption, setCaption] = useState("");
   const insertUrl = () => {
     const u = imageUrl.trim();
     if (!/^https?:\/\/\S+$/i.test(u)) return;
-    onInsert(imageUrlToken(u));
+    onInsert(imageUrlToken(u, caption));
     setImageUrl("");
+    setCaption("");
     setOpen(false);
   };
   const insert = (page: number) => {
-    onInsert(photoToken(selected!.identifier, page));
+    onInsert(photoToken(selected!.identifier, page, caption));
+    setCaption("");
     setOpen(false);
     setSelected(null);
     setQuery("");
@@ -172,6 +175,19 @@ export function ArchivePhotoPicker({
             your cursor is, captioned with its record number.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="space-y-1.5 rounded-md border border-archive-gold/40 bg-secondary/40 p-3">
+          <label htmlFor="photo-caption" className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Title under the photo <span className="normal-case tracking-normal">(optional)</span>
+          </label>
+          <Input
+            id="photo-caption"
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            maxLength={200}
+            placeholder="e.g. Skip on the dock at Ft Schuyler, 1943"
+          />
+        </div>
 
         <div className="flex gap-2">
           <input
