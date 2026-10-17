@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ImagePlus, ChevronLeft, Loader2 } from "lucide-react";
+import { ImagePlus, ChevronLeft, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
