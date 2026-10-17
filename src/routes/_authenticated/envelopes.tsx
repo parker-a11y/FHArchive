@@ -37,7 +37,6 @@ import {
 } from "@/components/letter/LocationLineOptions";
 import { useServerFn } from "@tanstack/react-start";
 import { suggestLocationLines } from "@/lib/location-line.functions";
-import { EnvelopeEntities } from "@/components/letter/EnvelopeEntities";
 import { displayDate } from "@/lib/archive";
 
 type EnvelopeRecord = {
@@ -615,7 +614,6 @@ function EnvelopeReview() {
                   />
                 </div>
 
-                <EnvelopeEntities key={current.id} letterId={current.id} />
 
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button onClick={() => save(true)} disabled={saving}>
