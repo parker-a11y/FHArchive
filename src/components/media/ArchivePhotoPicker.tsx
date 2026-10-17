@@ -142,11 +142,22 @@ export function ArchivePhotoPicker({
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const uploadFile = async (file: File) => {
+  const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
+  const stageFile = (file: File) => {
     if (!/^image\//i.test(file.type)) {
       setUploadError("Please choose an image file (JPG, PNG, etc.).");
       return;
     }
+    setUploadError(null);
+    setPendingFile({ file, preview: URL.createObjectURL(file) });
+  };
+  const cancelUpload = () => {
+    if (pendingFile) URL.revokeObjectURL(pendingFile.preview);
+    setPendingFile(null);
+  };
+  const confirmUpload = async () => {
+    if (!pendingFile) return;
+    const { file } = pendingFile;
     setUploading(true);
     setUploadError(null);
     try {
@@ -163,6 +174,7 @@ export function ArchivePhotoPicker({
       if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Could not create image link");
       onInsert(imageUrlToken(signed.signedUrl, caption));
       setCaption("");
+      cancelUpload();
       setOpen(false);
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed");
@@ -246,8 +258,8 @@ export function ArchivePhotoPicker({
             htmlFor="photo-upload"
             className={`inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-secondary ${uploading ? "pointer-events-none opacity-60" : ""}`}
           >
-            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-            {uploading ? "Uploading…" : "Upload an image file"}
+            <Upload className="size-4" />
+            Choose an image file
           </label>
           <input
             id="photo-upload"
@@ -257,7 +269,7 @@ export function ArchivePhotoPicker({
             disabled={uploading}
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) void uploadFile(f);
+              if (f) stageFile(f);
               e.target.value = "";
             }}
           />
@@ -265,6 +277,25 @@ export function ArchivePhotoPicker({
             Stored as an uploaded image — no archive record is created.
           </span>
         </div>
+        {pendingFile ? (
+          <div className="space-y-2 rounded-md border border-border p-3">
+            <img
+              src={pendingFile.preview}
+              alt="Upload preview"
+              className="max-h-48 rounded border border-border object-contain"
+            />
+            <p className="truncate text-xs text-muted-foreground">{pendingFile.file.name}</p>
+            <div className="flex gap-2">
+              <Button type="button" size="sm" onClick={() => void confirmUpload()} disabled={uploading}>
+                {uploading ? <Loader2 className="size-4 animate-spin" /> : null}
+                {uploading ? "Uploading…" : "Insert this image"}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={cancelUpload} disabled={uploading}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
 
         {selected ? (
