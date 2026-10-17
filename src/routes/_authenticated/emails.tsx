@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
 import { Check, ChevronLeft, ChevronRight, Link2, Loader2, Send } from "lucide-react";
@@ -248,20 +248,33 @@ function Calendar({
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const firstWeekday = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [
-    ...Array.from({ length: firstWeekday }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
+  const cells = Array.from({ length: 42 }, (_, i) => new Date(year, month, i - firstWeekday + 1));
 
   const todayKey = localDayKey(today.toISOString());
   const qc = useQueryClient();
   const reschedule = useServerFn(rescheduleEmails);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
+  const monthHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearMonthHover = () => {
+    if (monthHoverTimer.current !== null) clearTimeout(monthHoverTimer.current);
+    monthHoverTimer.current = null;
+  };
+  useEffect(() => () => clearMonthHover(), []);
+  const hoverMonth = (ev: React.DragEvent, offset: number) => {
+    if (!ev.dataTransfer.types.includes("application/x-archive-email") || moving) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+    if (monthHoverTimer.current !== null) return;
+    monthHoverTimer.current = setTimeout(() => {
+      setCursor((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+      setDragOver(null);
+      monthHoverTimer.current = null;
+    }, 700);
+  };
 
   const dropOn = async (key: string, raw: string) => {
+    clearMonthHover();
     setDragOver(null);
     let group: { id: string; when: string }[] = [];
     try {
@@ -297,7 +310,7 @@ function Calendar({
 
   return (
     <section className="rounded-lg border border-border bg-card p-4">
-      <header className="mb-3 flex items-center justify-between">
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">Dispatch calendar</h2>
           <p className="text-xs text-muted-foreground">
@@ -310,6 +323,10 @@ function Calendar({
             variant="outline"
             size="icon"
             onClick={() => setCursor(new Date(year, month - 1, 1))}
+            onDragOver={(ev) => hoverMonth(ev, -1)}
+            onDragLeave={clearMonthHover}
+            onDrop={(ev) => { ev.preventDefault(); clearMonthHover(); }}
+            title="Previous month — hold a dragged email here to change months"
             aria-label="Previous month"
           >
             <ChevronLeft className="size-4" />
@@ -321,6 +338,10 @@ function Calendar({
             variant="outline"
             size="icon"
             onClick={() => setCursor(new Date(year, month + 1, 1))}
+            onDragOver={(ev) => hoverMonth(ev, 1)}
+            onDragLeave={clearMonthHover}
+            onDrop={(ev) => { ev.preventDefault(); clearMonthHover(); }}
+            title="Next month — hold a dragged email here to change months"
             aria-label="Next month"
           >
             <ChevronRight className="size-4" />
@@ -336,9 +357,10 @@ function Calendar({
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          if (day === null) return <div key={`b${i}`} className="min-h-16 rounded" />;
-          const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        {cells.map((date) => {
+          const day = date.getDate();
+          const outsideMonth = date.getMonth() !== month;
+          const key = localDayKey(date.toISOString());
           // One email per recipient means the same dispatch repeats — show it once.
           const all = byDay.get(key) ?? [];
           const seen = new Set<string>();
@@ -364,6 +386,7 @@ function Calendar({
             <button
               key={key}
               type="button"
+              aria-label={date.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" })}
               onClick={() => onPickDay(key)}
               onDragOver={(ev) => {
                 if (!ev.dataTransfer.types.includes("application/x-archive-email")) return;
@@ -378,6 +401,7 @@ function Calendar({
               className={cn(
                 dragOver === key && "ring-2 ring-sky-500 bg-sky-500/10",
                 "min-h-16 rounded border p-1 text-left text-[11px] transition-colors",
+                outsideMonth && "text-muted-foreground bg-muted/30",
                 empty
                   ? "border-dashed border-border bg-background hover:bg-secondary"
                   : "border-border bg-secondary/40",
@@ -390,7 +414,7 @@ function Calendar({
                   isToday && "bg-primary text-primary-foreground",
                 )}
               >
-                {day}
+                {outsideMonth && day === 1 ? date.toLocaleDateString([], { month: "short", day: "numeric" }) : day}
               </span>
               <span className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
                 {unique.map((e) => (
@@ -415,6 +439,7 @@ function Calendar({
                       JSON.stringify(e.group ?? [{ id: e.emailId, when: e.when }]),
                     );
                   }}
+                  onDragEnd={() => { clearMonthHover(); setDragOver(null); }}
                   className={cn(
                     "mt-1 hidden truncate rounded px-1 py-0.5 sm:block",
                     e.kind === "scheduled" && "cursor-grab active:cursor-grabbing",
