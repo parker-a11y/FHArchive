@@ -330,6 +330,9 @@ export function RichTextEditor({
   onEditorReady?: (editor: Editor | null) => void;
   toolbarMode?: "full" | "transcription" | "none";
 }) {
+  const photos = useInlinePhotos(value);
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -337,6 +340,7 @@ export function RichTextEditor({
       TextStyle,
       FontFamily,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
+      inlinePhotoPreview(() => photosRef.current),
     ],
     content: toEditorHtml(value),
     editorProps: {
