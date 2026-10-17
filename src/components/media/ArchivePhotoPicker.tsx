@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ImagePlus, ChevronLeft, Loader2 } from "lucide-react";
+import { ImagePlus, ChevronLeft, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,6 +140,36 @@ export function ArchivePhotoPicker({
 
   const [imageUrl, setImageUrl] = useState("");
   const [caption, setCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadFile = async (file: File) => {
+    if (!/^image\//i.test(file.type)) {
+      setUploadError("Please choose an image file (JPG, PNG, etc.).");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${Date.now()}_${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from("uploaded-images")
+        .upload(path, file, { upsert: false, contentType: file.type || undefined });
+      if (upErr) throw upErr;
+      // Long-lived signed link (1 year) so the image keeps working in sent emails.
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("uploaded-images")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Could not create image link");
+      onInsert(imageUrlToken(signed.signedUrl, caption));
+      setCaption("");
+      setOpen(false);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
   const insertUrl = () => {
     const u = imageUrl.trim();
     if (!/^https?:\/\/\S+$/i.test(u)) return;
@@ -210,6 +240,32 @@ export function ArchivePhotoPicker({
         {imageUrl && /^https?:\/\/\S+$/i.test(imageUrl.trim()) ? (
           <img src={imageUrl.trim()} alt="Preview" className="max-h-40 rounded border border-border object-contain" />
         ) : null}
+
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="photo-upload"
+            className={`inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-secondary ${uploading ? "pointer-events-none opacity-60" : ""}`}
+          >
+            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+            {uploading ? "Uploading…" : "Upload an image file"}
+          </label>
+          <input
+            id="photo-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadFile(f);
+              e.target.value = "";
+            }}
+          />
+          <span className="text-xs text-muted-foreground">
+            Stored as an uploaded image — no archive record is created.
+          </span>
+        </div>
+        {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
 
         {selected ? (
           <div className="space-y-3">
