@@ -142,11 +142,22 @@ export function ArchivePhotoPicker({
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const uploadFile = async (file: File) => {
+  const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
+  const stageFile = (file: File) => {
     if (!/^image\//i.test(file.type)) {
       setUploadError("Please choose an image file (JPG, PNG, etc.).");
       return;
     }
+    setUploadError(null);
+    setPendingFile({ file, preview: URL.createObjectURL(file) });
+  };
+  const cancelUpload = () => {
+    if (pendingFile) URL.revokeObjectURL(pendingFile.preview);
+    setPendingFile(null);
+  };
+  const confirmUpload = async () => {
+    if (!pendingFile) return;
+    const { file } = pendingFile;
     setUploading(true);
     setUploadError(null);
     try {
@@ -163,6 +174,7 @@ export function ArchivePhotoPicker({
       if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Could not create image link");
       onInsert(imageUrlToken(signed.signedUrl, caption));
       setCaption("");
+      cancelUpload();
       setOpen(false);
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed");
