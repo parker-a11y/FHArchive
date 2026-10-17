@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Email calendar month navigation accepts archive-email drags with a delayed hover, and adjacent-month days remain drop targets; cross-month moves reuse the existing rescheduling checks.
+
 - Scan gallery reordering resolves an explicit before/after insertion boundary through `scan-order`; the marker and saved order use the same helper to prevent directional off-by-one drops.
 
 Files live in Supabase Storage, not in the database:
