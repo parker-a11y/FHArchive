@@ -47,6 +47,70 @@ import {
   sanitizeRichHtml,
 } from "@/lib/rich-text";
 
+/**
+ * Shows a live preview of each embedded photo token directly under the token's
+ * paragraph, so the composer sees the image a reader will see. The token text
+ * itself stays in the document untouched.
+ */
+const inlinePhotoPreviewKey = new PluginKey("inlinePhotoPreview");
+function inlinePhotoPreview(getPhotos: () => Record<string, InlinePhoto>) {
+  return Extension.create({
+    name: "inlinePhotoPreview",
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          key: inlinePhotoPreviewKey,
+          props: {
+            decorations(state) {
+              const photos = getPhotos();
+              const re = new RegExp(`${PHOTO_TOKEN_SRC}|${IMAGE_URL_TOKEN_SRC}`, "gi");
+              const decos: Decoration[] = [];
+              state.doc.descendants((node, pos) => {
+                if (!node.isTextblock) return;
+                const text = node.textContent;
+                re.lastIndex = 0;
+                let m: RegExpExecArray | null;
+                while ((m = re.exec(text))) {
+                  const photo = resolvePhotoToken(m[0], photos);
+                  if (!photo?.url) continue;
+                  const end = pos + node.nodeSize - 1;
+                  decos.push(
+                    Decoration.widget(
+                      end,
+                      () => {
+                        const wrap = document.createElement("div");
+                        wrap.style.cssText =
+                          "margin:0.35rem 0 0.75rem;pointer-events:none;";
+                        const img = document.createElement("img");
+                        img.src = photo.url;
+                        img.alt = photo.caption || photo.identifier || "Embedded image";
+                        img.style.cssText =
+                          "max-height:12rem;max-width:100%;border-radius:0.375rem;border:1px solid hsl(var(--border));object-fit:contain;display:block;";
+                        wrap.appendChild(img);
+                        const label = photo.caption || photo.identifier;
+                        if (label) {
+                          const cap = document.createElement("div");
+                          cap.textContent = label;
+                          cap.style.cssText =
+                            "font-size:0.7rem;color:hsl(var(--muted-foreground));font-style:italic;margin-top:0.15rem;";
+                          wrap.appendChild(cap);
+                        }
+                        return wrap;
+                      },
+                      { side: 1, key: `photo-${m[0]}` },
+                    ),
+                  );
+                }
+              });
+              return DecorationSet.create(state.doc, decos);
+            },
+          },
+        }),
+      ];
+    },
+  });
+}
+
 /** Radix Select items cannot use an empty value, so "Default" uses a sentinel. */
 const DEFAULT_FONT = "__default__";
 
