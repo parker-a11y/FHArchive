@@ -241,6 +241,32 @@ export function ArchivePhotoPicker({
           <img src={imageUrl.trim()} alt="Preview" className="max-h-40 rounded border border-border object-contain" />
         ) : null}
 
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="photo-upload"
+            className={`inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-secondary ${uploading ? "pointer-events-none opacity-60" : ""}`}
+          >
+            {uploading ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+            {uploading ? "Uploading…" : "Upload an image file"}
+          </label>
+          <input
+            id="photo-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadFile(f);
+              e.target.value = "";
+            }}
+          />
+          <span className="text-xs text-muted-foreground">
+            Stored as an uploaded image — no archive record is created.
+          </span>
+        </div>
+        {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
+
         {selected ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
