@@ -1,6 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { Extension } from "@tiptap/core";
 import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import {
+  PHOTO_TOKEN_SRC,
+  IMAGE_URL_TOKEN_SRC,
+  resolvePhotoToken,
+  type InlinePhoto,
+} from "@/lib/inline-photos";
+import { useInlinePhotos } from "@/lib/inline-photos-urls";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
