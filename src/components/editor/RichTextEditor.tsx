@@ -395,6 +395,13 @@ export function RichTextEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
 
+  // Signed photo URLs arrive asynchronously; nudge the editor to re-decorate.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.view.dispatch(editor.state.tr.setMeta(inlinePhotoPreviewKey, "refresh"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos, editor]);
+
   // Reflect programmatic changes (e.g. a prefilled note) without fighting typing.
   useEffect(() => {
     if (!editor) return;
