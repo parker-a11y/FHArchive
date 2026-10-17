@@ -140,6 +140,36 @@ export function ArchivePhotoPicker({
 
   const [imageUrl, setImageUrl] = useState("");
   const [caption, setCaption] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadFile = async (file: File) => {
+    if (!/^image\//i.test(file.type)) {
+      setUploadError("Please choose an image file (JPG, PNG, etc.).");
+      return;
+    }
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const safe = file.name.replace(/[^\w.\-]+/g, "_");
+      const path = `${Date.now()}_${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from("uploaded-images")
+        .upload(path, file, { upsert: false, contentType: file.type || undefined });
+      if (upErr) throw upErr;
+      // Long-lived signed link (1 year) so the image keeps working in sent emails.
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("uploaded-images")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Could not create image link");
+      onInsert(imageUrlToken(signed.signedUrl, caption));
+      setCaption("");
+      setOpen(false);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
   const insertUrl = () => {
     const u = imageUrl.trim();
     if (!/^https?:\/\/\S+$/i.test(u)) return;
