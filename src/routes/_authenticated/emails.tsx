@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -540,6 +540,15 @@ function EmailsPage() {
     return emails.filter((e) => ids.has(e.id));
   }, [lookupId, emailRecords, emails]);
 
+  const [recipientLookup, setRecipientLookup] = useState("");
+  const recipientQuery = recipientLookup.trim().toLowerCase();
+  const recipientEmails = useMemo(() => {
+    if (recipientQuery.length < 3) return [];
+    return emails.filter((e) =>
+      (e.recipients ?? []).some((r) => (r.email ?? "").toLowerCase().includes(recipientQuery)),
+    );
+  }, [recipientQuery, emails]);
+
   const sheetEmails = useMemo(() => {
     if (!sheetDay) return [];
     return emails.filter((e) => {
@@ -712,6 +721,29 @@ function EmailsPage() {
                   : `appears in ${lookupEmails.length} email${lookupEmails.length === 1 ? "" : "s"}:`}
               </p>
               {lookupEmails.map((e) => renderEmail(e))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold">What has been sent to this person?</h2>
+          <Input
+            value={recipientLookup}
+            onChange={(e) => setRecipientLookup(e.target.value)}
+            placeholder="Type an email address or part of one"
+            className="mt-2 h-9 max-w-sm"
+            type="email"
+            list={CONTACT_EMAIL_LIST_ID}
+          />
+          <ContactEmailList />
+          {recipientQuery.length >= 3 && (
+            <div className="mt-3 space-y-3">
+              <p className="text-sm">
+                {recipientEmails.length === 0
+                  ? "No emails found for that address."
+                  : `${recipientEmails.length} email${recipientEmails.length === 1 ? "" : "s"} to ${recipientQuery}:`}
+              </p>
+              {recipientEmails.map((e) => renderEmail(e))}
             </div>
           )}
         </section>
