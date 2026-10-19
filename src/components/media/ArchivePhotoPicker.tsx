@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { fetchDigitalFiles, signedScanUrl } from "@/lib/digital-files";
+import { fetchDigitalFiles } from "@/lib/digital-files";
 import { photoToken, imageUrlToken } from "@/lib/inline-photos";
 
 type PickRecord = { kind: "letter" | "source"; id: string; identifier: string; title: string | null };
@@ -73,6 +73,7 @@ export function ArchivePhotoPicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PickRecord | null>(null);
+  const [selectedPage, setSelectedPage] = useState<number | null>(null);
   const searching = query.trim().length >= 2;
 
   const { data: gallery = [] } = useQuery({
@@ -134,8 +135,10 @@ export function ArchivePhotoPicker({
   const { data: pages = [], isFetching: loadingPages } = useQuery({
     queryKey: ["photo-picker-pages", selected?.kind, selected?.id],
     enabled: open && Boolean(selected),
-    queryFn: () =>
-      selected!.kind === "letter" ? letterPages(selected!.id) : sourcePages(selected!.id),
+    queryFn: () => {
+      if (!selected) return [];
+      return selected.kind === "letter" ? letterPages(selected.id) : sourcePages(selected.id);
+    },
   });
 
   const [imageUrl, setImageUrl] = useState("");
@@ -191,10 +194,12 @@ export function ArchivePhotoPicker({
     setOpen(false);
   };
   const insert = (page: number) => {
-    onInsert(photoToken(selected!.identifier, page, caption));
+    if (!selected) return;
+    onInsert(photoToken(selected.identifier, page, caption));
     setCaption("");
     setOpen(false);
     setSelected(null);
+    setSelectedPage(null);
     setQuery("");
   };
 
@@ -301,7 +306,10 @@ export function ArchivePhotoPicker({
         {selected ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" className="gap-1" onClick={() => setSelected(null)}>
+              <Button variant="ghost" size="sm" className="gap-1" onClick={() => {
+                setSelected(null);
+                setSelectedPage(null);
+              }}>
                 <ChevronLeft className="size-4" /> Back
               </Button>
               <span className="text-sm">
@@ -320,11 +328,14 @@ export function ArchivePhotoPicker({
             ) : (
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {pages.map((p, i) => (
-                  <button
+                  <Button
                     key={i}
                     type="button"
-                    onClick={() => insert(i + 1)}
-                    className="group rounded border border-border p-1 text-left hover:border-archive-gold"
+                    variant="outline"
+                    aria-label={`Select image ${i + 1}: ${p.label ?? `Page ${i + 1}`}`}
+                    aria-pressed={selectedPage === i + 1}
+                    onClick={() => setSelectedPage(i + 1)}
+                    className={`group block h-auto min-w-0 rounded border p-1 text-left hover:border-archive-gold ${selectedPage === i + 1 ? "border-archive-gold bg-secondary ring-2 ring-archive-gold" : "border-border"}`}
                   >
                     <img
                       src={p.url}
@@ -335,7 +346,7 @@ export function ArchivePhotoPicker({
                     <span className="mt-1 block truncate text-[11px] text-muted-foreground">
                       {p.label ?? `Page ${i + 1}`}
                     </span>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -375,6 +386,19 @@ export function ArchivePhotoPicker({
             </div>
           </div>
         )}
+        {selected && pages.length > 0 ? (
+          <div className="sticky -bottom-6 flex justify-end border-t border-border bg-background py-3">
+            <Button
+              type="button"
+              disabled={selectedPage === null || loadingPages}
+              onClick={() => {
+                if (selectedPage !== null) insert(selectedPage);
+              }}
+            >
+              <ImagePlus className="size-4" /> Insert selected image
+            </Button>
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
