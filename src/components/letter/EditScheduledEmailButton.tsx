@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { RichTextEditor } from "@/components/editor/RichTextEditor";
+import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTextEditor";
+import { ArchivePhotoPicker } from "@/components/media/ArchivePhotoPicker";
 import { updateScheduledEmail } from "@/lib/archive-email.functions";
 
 function toLocalInput(iso: string) {
@@ -26,6 +27,7 @@ export function EditScheduledEmailButton({ emailId }: { emailId: string }) {
   const [message, setMessage] = useState("");
   const [when, setWhen] = useState("");
   const [recipients, setRecipients] = useState("");
+  const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
 
   const openEditor = async () => {
     setOpen(true);
@@ -105,7 +107,18 @@ export function EditScheduledEmailButton({ emailId }: { emailId: string }) {
               </label>
               <div className="space-y-1 text-sm">
                 <span className="field-label">Message</span>
-                <RichTextEditor value={message} onChange={setMessage} />
+                <RichTextEditor
+                  value={message}
+                  onChange={setMessage}
+                  onEditorReady={(editor) => {
+                    editorRef.current = editor;
+                  }}
+                  toolbarExtras={
+                    <ArchivePhotoPicker
+                      onInsert={(token) => insertTokenParagraph(editorRef.current, token)}
+                    />
+                  }
+                />
               </div>
               <p className="text-xs text-muted-foreground">The attached records and scans stay as they are.</p>
             </div>
