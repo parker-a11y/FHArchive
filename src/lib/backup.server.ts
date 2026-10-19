@@ -2,6 +2,8 @@
 // rotates old database dumps on a grandfather-father-son schedule, and mirrors every
 // storage file (scans + digital source uploads) to Google Drive incrementally.
 
+import { retryBackupRead } from "./backup-retry";
+
 const GATEWAY = "https://connector-gateway.lovable.dev/google_drive";
 
 const ROOT_FOLDER = "The Francis Files Backups";
@@ -228,19 +230,21 @@ async function listDumpFiles(rootId: string): Promise<DumpFile[]> {
 
 type StorageObject = { bucket: string; path: string; size: number };
 
-async function listBucket(
+async function* listBucket(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin: any,
   bucket: string,
   prefix = "",
-): Promise<StorageObject[]> {
-  const out: StorageObject[] = [];
+): AsyncGenerator<StorageObject> {
   let offset = 0;
   for (;;) {
-    const { data, error } = await admin.storage
-      .from(bucket)
-      .list(prefix, { limit: 100, offset, sortBy: { column: "name", order: "asc" } });
-    if (error) throw new Error(`Listing ${bucket}/${prefix} failed: ${error.message}`);
+    const data = await retryBackupRead(async () => {
+      const { data, error } = await admin.storage
+        .from(bucket)
+        .list(prefix, { limit: 100, offset, sortBy: { column: "name", order: "asc" } });
+      if (error) throw new Error(`Listing ${bucket}/${prefix} failed: ${error.message}`);
+      return data;
+    });
     const items = (data ?? []) as {
       name: string;
       id: string | null;
@@ -249,15 +253,14 @@ async function listBucket(
     for (const item of items) {
       const path = prefix ? `${prefix}/${item.name}` : item.name;
       if (item.id === null) {
-        out.push(...(await listBucket(admin, bucket, path)));
+        yield* listBucket(admin, bucket, path);
       } else {
-        out.push({ bucket, path, size: item.metadata?.size ?? 0 });
+        yield { bucket, path, size: item.metadata?.size ?? 0 };
       }
     }
     if (items.length < 100) break;
     offset += items.length;
   }
-  return out;
 }
 
 async function verifyBackupFiles(
@@ -303,18 +306,6 @@ export type BackupResult = {
 
 export async function runBackup(): Promise<BackupResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-  // Keep the scheduled job's credential in sync so the nightly cron can call
-  // this endpoint. Stored in a service-role-only table.
-  const cronSecret = process.env["LOVABLE_CRON_SECRET"];
-  if (cronSecret) {
-    await supabaseAdmin
-      .from("job_config")
-      .upsert(
-        { key: "cron_secret", value: cronSecret, updated_at: new Date().toISOString() },
-        { onConflict: "key" },
-      );
-  }
 
   const now = new Date();
   const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -398,29 +389,30 @@ export async function runBackup(): Promise<BackupResult> {
 
     // ---- 3. Mirror storage files (incremental) ------------------------------
     const filesRootId = await ensureFolder(FILES_FOLDER, rootId);
-    const { data: alreadyRows, error: alreadyError } = await supabaseAdmin
-      .from("backup_files")
-      .select("bucket, storage_path");
-    if (alreadyError) throw new Error(`Reading backup index failed: ${alreadyError.message}`);
-    const already = new Set(
-      (alreadyRows ?? []).map(
-        (r: { bucket: string; storage_path: string }) => `${r.bucket}/${r.storage_path}`,
-      ),
-    );
+    const already = new Set<string>();
+    for (let from = 0; ; from += 1000) {
+      const { data: alreadyRows, error: alreadyError } = await supabaseAdmin
+        .from("backup_files")
+        .select("bucket, storage_path")
+        .order("id")
+        .range(from, from + 999);
+      if (alreadyError) throw new Error(`Reading backup index failed: ${alreadyError.message}`);
+      for (const row of alreadyRows ?? []) already.add(`${row.bucket}/${row.storage_path}`);
+      if ((alreadyRows ?? []).length < 1000) break;
+    }
 
-    for (const bucket of BUCKETS) {
-      const objects = await listBucket(supabaseAdmin, bucket);
-      const missing = objects.filter((o) => !already.has(`${o.bucket}/${o.path}`));
-      const bucketFolderId = missing.length
-        ? await ensureFolder(bucket, filesRootId)
-        : null;
-
-      for (const object of missing) {
-        if (filesUploaded >= MAX_FILES_PER_RUN) {
-          filesPending += 1;
+    // Stream the walk so copies start immediately rather than listing the whole
+    // archive first. Leave time to persist results before scheduled HTTP expiry.
+    const copyDeadline = Date.now() + 120_000;
+    bucketLoop: for (const bucket of BUCKETS) {
+      let bucketFolderId: string | null = null;
+      for await (const object of listBucket(supabaseAdmin, bucket)) {
+        if (Date.now() >= copyDeadline || filesUploaded >= MAX_FILES_PER_RUN) {
+          filesPending += 1; // At least one remains; the next run resumes from the index.
           status = "partial";
-          continue;
+          break bucketLoop;
         }
+        if (already.has(`${object.bucket}/${object.path}`)) continue;
         if (object.size > MAX_FILE_BYTES) {
           filesPending += 1;
           status = "partial";
@@ -434,13 +426,14 @@ export async function runBackup(): Promise<BackupResult> {
           status = "partial";
           continue;
         }
+        if (!bucketFolderId) bucketFolderId = await ensureFolder(bucket, filesRootId);
         const driveFileId = await uploadToDrive({
           name: object.path.replace(/\//g, "__"),
-          parentId: bucketFolderId!,
+          parentId: bucketFolderId,
           mimeType: blob.type || "application/octet-stream",
           body: blob,
         });
-        await supabaseAdmin.from("backup_files").upsert(
+        const { error: indexError } = await supabaseAdmin.from("backup_files").upsert(
           {
             bucket,
             storage_path: object.path,
@@ -450,6 +443,7 @@ export async function runBackup(): Promise<BackupResult> {
           },
           { onConflict: "bucket,storage_path" },
         );
+        if (indexError) throw new Error(`Saving backup index failed: ${indexError.message}`);
         filesUploaded += 1;
         bytesUploaded += object.size;
       }
@@ -466,7 +460,7 @@ export async function runBackup(): Promise<BackupResult> {
       }
     }
   } catch (err) {
-    status = "error";
+    status = dbDriveFileId ? "partial" : "error";
     errorMessage = err instanceof Error ? err.message : String(err);
   }
 

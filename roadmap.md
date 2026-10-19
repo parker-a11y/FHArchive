@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Restore authenticated daily backups and verify a fresh catalog dump and resumed Google Drive file copying.
+- [ ] Publish backup reliability changes so nightly file copying uses bounded, resumable batches (waiting for user publication).
+
 - [x] Remove Container / Box field from UI/exports (DB column kept, unused)
 - [x] Original order / position notes: empty default, helper text removed
 
