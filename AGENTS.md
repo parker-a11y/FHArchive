@@ -3,6 +3,7 @@
 
 - Daily backup callbacks use the managed HTTP scheduler and generated cron authenticator, never a copied credential in job_config; this keeps credential rotation platform-owned.
 - Backup storage enumeration retries bounded transient connection failures and paginates its mirror index; this prevents large archives from failing or re-uploading indexed files.
+- Backup file mirroring streams its directory walk within a bounded per-run window and resumes from saved index rows; this keeps nightly requests finite while catching up missing files.
 
 - Email calendar month navigation accepts archive-email drags with a delayed hover, and adjacent-month days remain drop targets; cross-month moves reuse the existing rescheduling checks.
 

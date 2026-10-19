@@ -230,13 +230,12 @@ async function listDumpFiles(rootId: string): Promise<DumpFile[]> {
 
 type StorageObject = { bucket: string; path: string; size: number };
 
-async function listBucket(
+async function* listBucket(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin: any,
   bucket: string,
   prefix = "",
-): Promise<StorageObject[]> {
-  const out: StorageObject[] = [];
+): AsyncGenerator<StorageObject> {
   let offset = 0;
   for (;;) {
     const data = await retryBackupRead(async () => {
@@ -254,15 +253,14 @@ async function listBucket(
     for (const item of items) {
       const path = prefix ? `${prefix}/${item.name}` : item.name;
       if (item.id === null) {
-        out.push(...(await listBucket(admin, bucket, path)));
+        yield* listBucket(admin, bucket, path);
       } else {
-        out.push({ bucket, path, size: item.metadata?.size ?? 0 });
+        yield { bucket, path, size: item.metadata?.size ?? 0 };
       }
     }
     if (items.length < 100) break;
     offset += items.length;
   }
-  return out;
 }
 
 async function verifyBackupFiles(
@@ -403,19 +401,18 @@ export async function runBackup(): Promise<BackupResult> {
       if ((alreadyRows ?? []).length < 1000) break;
     }
 
-    for (const bucket of BUCKETS) {
-      const objects = await listBucket(supabaseAdmin, bucket);
-      const missing = objects.filter((o) => !already.has(`${o.bucket}/${o.path}`));
-      const bucketFolderId = missing.length
-        ? await ensureFolder(bucket, filesRootId)
-        : null;
-
-      for (const object of missing) {
-        if (filesUploaded >= MAX_FILES_PER_RUN) {
-          filesPending += 1;
+    // Stream the walk so copies start immediately rather than listing the whole
+    // archive first. Leave time to persist results before scheduled HTTP expiry.
+    const copyDeadline = Date.now() + 120_000;
+    bucketLoop: for (const bucket of BUCKETS) {
+      let bucketFolderId: string | null = null;
+      for await (const object of listBucket(supabaseAdmin, bucket)) {
+        if (Date.now() >= copyDeadline || filesUploaded >= MAX_FILES_PER_RUN) {
+          filesPending += 1; // At least one remains; the next run resumes from the index.
           status = "partial";
-          continue;
+          break bucketLoop;
         }
+        if (already.has(`${object.bucket}/${object.path}`)) continue;
         if (object.size > MAX_FILE_BYTES) {
           filesPending += 1;
           status = "partial";
@@ -429,13 +426,14 @@ export async function runBackup(): Promise<BackupResult> {
           status = "partial";
           continue;
         }
+        if (!bucketFolderId) bucketFolderId = await ensureFolder(bucket, filesRootId);
         const driveFileId = await uploadToDrive({
           name: object.path.replace(/\//g, "__"),
-          parentId: bucketFolderId!,
+          parentId: bucketFolderId,
           mimeType: blob.type || "application/octet-stream",
           body: blob,
         });
-        await supabaseAdmin.from("backup_files").upsert(
+        const { error: indexError } = await supabaseAdmin.from("backup_files").upsert(
           {
             bucket,
             storage_path: object.path,
@@ -445,6 +443,7 @@ export async function runBackup(): Promise<BackupResult> {
           },
           { onConflict: "bucket,storage_path" },
         );
+        if (indexError) throw new Error(`Saving backup index failed: ${indexError.message}`);
         filesUploaded += 1;
         bytesUploaded += object.size;
       }
@@ -461,7 +460,7 @@ export async function runBackup(): Promise<BackupResult> {
       }
     }
   } catch (err) {
-    status = "error";
+    status = dbDriveFileId ? "partial" : "error";
     errorMessage = err instanceof Error ? err.message : String(err);
   }
 
