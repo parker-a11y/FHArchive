@@ -2,6 +2,8 @@
 // rotates old database dumps on a grandfather-father-son schedule, and mirrors every
 // storage file (scans + digital source uploads) to Google Drive incrementally.
 
+import { retryBackupRead } from "./backup-retry";
+
 const GATEWAY = "https://connector-gateway.lovable.dev/google_drive";
 
 const ROOT_FOLDER = "The Francis Files Backups";
@@ -237,10 +239,13 @@ async function listBucket(
   const out: StorageObject[] = [];
   let offset = 0;
   for (;;) {
-    const { data, error } = await admin.storage
-      .from(bucket)
-      .list(prefix, { limit: 100, offset, sortBy: { column: "name", order: "asc" } });
-    if (error) throw new Error(`Listing ${bucket}/${prefix} failed: ${error.message}`);
+    const data = await retryBackupRead(async () => {
+      const { data, error } = await admin.storage
+        .from(bucket)
+        .list(prefix, { limit: 100, offset, sortBy: { column: "name", order: "asc" } });
+      if (error) throw new Error(`Listing ${bucket}/${prefix} failed: ${error.message}`);
+      return data;
+    });
     const items = (data ?? []) as {
       name: string;
       id: string | null;
@@ -303,18 +308,6 @@ export type BackupResult = {
 
 export async function runBackup(): Promise<BackupResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-  // Keep the scheduled job's credential in sync so the nightly cron can call
-  // this endpoint. Stored in a service-role-only table.
-  const cronSecret = process.env["LOVABLE_CRON_SECRET"];
-  if (cronSecret) {
-    await supabaseAdmin
-      .from("job_config")
-      .upsert(
-        { key: "cron_secret", value: cronSecret, updated_at: new Date().toISOString() },
-        { onConflict: "key" },
-      );
-  }
 
   const now = new Date();
   const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -398,15 +391,17 @@ export async function runBackup(): Promise<BackupResult> {
 
     // ---- 3. Mirror storage files (incremental) ------------------------------
     const filesRootId = await ensureFolder(FILES_FOLDER, rootId);
-    const { data: alreadyRows, error: alreadyError } = await supabaseAdmin
-      .from("backup_files")
-      .select("bucket, storage_path");
-    if (alreadyError) throw new Error(`Reading backup index failed: ${alreadyError.message}`);
-    const already = new Set(
-      (alreadyRows ?? []).map(
-        (r: { bucket: string; storage_path: string }) => `${r.bucket}/${r.storage_path}`,
-      ),
-    );
+    const already = new Set<string>();
+    for (let from = 0; ; from += 1000) {
+      const { data: alreadyRows, error: alreadyError } = await supabaseAdmin
+        .from("backup_files")
+        .select("bucket, storage_path")
+        .order("id")
+        .range(from, from + 999);
+      if (alreadyError) throw new Error(`Reading backup index failed: ${alreadyError.message}`);
+      for (const row of alreadyRows ?? []) already.add(`${row.bucket}/${row.storage_path}`);
+      if ((alreadyRows ?? []).length < 1000) break;
+    }
 
     for (const bucket of BUCKETS) {
       const objects = await listBucket(supabaseAdmin, bucket);

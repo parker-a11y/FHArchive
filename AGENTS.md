@@ -1,6 +1,9 @@
 
 ## Storage buckets
 
+- Daily backup callbacks use the managed HTTP scheduler and generated cron authenticator, never a copied credential in job_config; this keeps credential rotation platform-owned.
+- Backup storage enumeration retries bounded transient connection failures and paginates its mirror index; this prevents large archives from failing or re-uploading indexed files.
+
 - Email calendar month navigation accepts archive-email drags with a delayed hover, and adjacent-month days remain drop targets; cross-month moves reuse the existing rescheduling checks.
 
 - Scan gallery reordering resolves an explicit before/after insertion boundary through `scan-order`; the marker and saved order use the same helper to prevent directional off-by-one drops.
