@@ -304,7 +304,10 @@ export type BackupResult = {
   error?: string;
 };
 
-export async function runBackup(): Promise<BackupResult> {
+export async function runBackup(options: { filesOnly?: boolean } = {}): Promise<BackupResult> {
+  // filesOnly: catch-up mode — mirror storage files without re-uploading the
+  // database dump (the nightly run still produces the full dump).
+  const filesOnly = options.filesOnly === true;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const now = new Date();
@@ -334,6 +337,7 @@ export async function runBackup(): Promise<BackupResult> {
   try {
     const rootId = await ensureFolder(ROOT_FOLDER);
 
+    if (!filesOnly) {
     // ---- 1. Full database dump as one compressed JSON document ---------------
     const dump: Record<string, unknown[]> = {};
     for (const table of TABLES) {
@@ -385,6 +389,7 @@ export async function runBackup(): Promise<BackupResult> {
       // Retention failure is not fatal: we still have a fresh dump.
       status = status === "success" ? "partial" : status;
       console.error("Backup retention rotation failed:", err);
+    }
     }
 
     // ---- 3. Mirror storage files (incremental) ------------------------------
@@ -450,7 +455,7 @@ export async function runBackup(): Promise<BackupResult> {
     }
 
     // ---- 4. Monthly verification of a sample of mirrored files ---------------
-    if (now.getUTCDate() === 1) {
+    if (!filesOnly && now.getUTCDate() === 1) {
       try {
         verificationMissingCount = await verifyBackupFiles(supabaseAdmin, 200);
         if (verificationMissingCount > 0) status = "partial";
