@@ -43,7 +43,7 @@ const TABLES = [
 ] as const;
 
 const MAX_FILES_PER_RUN = 400;
-const MAX_FILE_BYTES = 100 * 1024 * 1024; // skip anything absurdly large
+const MAX_FILE_BYTES = 1024 * 1024 * 1024; // files are copied in 8 MB pieces; skip only absurd sizes
 
 function driveHeaders() {
   const lovableKey = process.env["LOVABLE_API_KEY"];
