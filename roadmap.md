@@ -1,7 +1,8 @@
 # Roadmap
 
 - [x] Restore authenticated daily backups and verify a fresh catalog dump and resumed Google Drive file copying.
-- [ ] Publish backup reliability changes so nightly file copying uses bounded, resumable batches (waiting for user publication).
+- [x] Publish backup reliability changes so nightly file copying uses bounded, resumable batches (published Oct 20, 2026).
+- [ ] Catch-up copying of ~5,400 remaining scans: temporary `backup-catchup-15min` schedule (every 15 min) is running; delete it once `backup_files` count reaches the storage total (~5,733 files).
 
 - [x] Remove Container / Box field from UI/exports (DB column kept, unused)
 - [x] Original order / position notes: empty default, helper text removed
