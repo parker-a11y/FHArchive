@@ -127,6 +127,84 @@ async function uploadToDrive(opts: {
   return json.id;
 }
 
+// Copy one storage file to Drive in fixed-size pieces (Drive resumable upload +
+// ranged storage reads) so a run never holds a whole archive master in memory.
+const UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024; // must be a multiple of 256 KiB
+
+async function copyStorageFileToDrive(opts: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any;
+  bucket: string;
+  path: string;
+  size: number;
+  name: string;
+  parentId: string;
+}): Promise<string> {
+  const { data: signed, error: signError } = await opts.admin.storage
+    .from(opts.bucket)
+    .createSignedUrl(opts.path, 60 * 30);
+  if (signError || !signed?.signedUrl) {
+    throw new Error(`Could not read ${opts.bucket}/${opts.path}: ${signError?.message ?? "no URL"}`);
+  }
+  const total = opts.size;
+  const mimeType = guessMime(opts.path);
+
+  const init = await fetch(`${GATEWAY}/upload/drive/v3/files?uploadType=resumable&fields=id`, {
+    method: "POST",
+    headers: {
+      ...driveHeaders(),
+      "Content-Type": "application/json; charset=UTF-8",
+      "X-Upload-Content-Type": mimeType,
+      "X-Upload-Content-Length": String(total),
+    },
+    body: JSON.stringify({ name: opts.name, parents: [opts.parentId] }),
+  });
+  if (!init.ok) {
+    throw new Error(`Google Drive upload start failed [${init.status}]: ${await init.text()}`);
+  }
+  const location = init.headers.get("location");
+  if (!location) throw new Error("Google Drive upload start returned no session URL");
+  const session = new URL(location);
+  const sessionUrl = `${GATEWAY}${session.pathname}${session.search}`;
+
+  for (let start = 0; start < total; start += UPLOAD_CHUNK_BYTES) {
+    const end = Math.min(start + UPLOAD_CHUNK_BYTES, total); // exclusive
+    const src = await fetch(signed.signedUrl, { headers: { Range: `bytes=${start}-${end - 1}` } });
+    if (!src.ok) throw new Error(`Reading ${opts.bucket}/${opts.path} failed [${src.status}]`);
+    let chunk = new Uint8Array(await src.arrayBuffer());
+    // A server that ignores Range returns the whole file; slice defensively.
+    if (src.status === 200 && chunk.byteLength > end - start) chunk = chunk.slice(start, end);
+    if (chunk.byteLength !== end - start) {
+      throw new Error(`Reading ${opts.bucket}/${opts.path} returned an unexpected size`);
+    }
+    const put = await fetch(sessionUrl, {
+      method: "PUT",
+      redirect: "manual",
+      headers: { ...driveHeaders(), "Content-Range": `bytes ${start}-${end - 1}/${total}` },
+      body: chunk,
+    });
+    const text = await put.text();
+    if (put.status === 308) continue;
+    if (!put.ok) throw new Error(`Google Drive upload failed [${put.status}]: ${text}`);
+    return (JSON.parse(text) as { id: string }).id;
+  }
+  throw new Error(`Google Drive upload of ${opts.path} did not complete`);
+}
+
+function guessMime(path: string): string {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  const map: Record<string, string> = {
+    tif: "image/tiff",
+    tiff: "image/tiff",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    pdf: "application/pdf",
+  };
+  return map[ext] ?? "application/octet-stream";
+}
+
 async function deleteDriveFile(fileId: string): Promise<void> {
   const res = await fetch(`${GATEWAY}/drive/v3/files/${fileId}`, {
     method: "DELETE",
@@ -138,8 +216,7 @@ async function deleteDriveFile(fileId: string): Promise<void> {
   }
 }
 
-async function gzipString(input: string): Promise<ArrayBuffer> {
-  const bytes = new TextEncoder().encode(input);
+async function gzipBytes(bytes: Uint8Array): Promise<ArrayBuffer> {
   const stream = new ReadableStream({
     start(controller) {
       controller.enqueue(bytes);
