@@ -435,14 +435,15 @@ export async function runBackup(options: { filesOnly?: boolean } = {}): Promise<
       dbRows += rows.length;
     }
 
-    const payload = JSON.stringify(
-      { exported_at: now.toISOString(), tables: dump },
-      null,
-      2,
+    // Compact JSON (no pretty-printing) and encode once to keep peak memory low.
+    let encoded: Uint8Array | null = new TextEncoder().encode(
+      JSON.stringify({ exported_at: now.toISOString(), tables: dump }),
     );
-    dbUncompressedBytes = new TextEncoder().encode(payload).length;
+    for (const key of Object.keys(dump)) delete dump[key];
+    dbUncompressedBytes = encoded.byteLength;
 
-    const compressed = await gzipString(payload);
+    const compressed = await gzipBytes(encoded);
+    encoded = null;
     dbCompressedBytes = compressed.byteLength;
 
     dbDriveFileId = await uploadToDrive({
@@ -500,21 +501,39 @@ export async function runBackup(options: { filesOnly?: boolean } = {}): Promise<
           status = "partial";
           continue;
         }
-        const { data: blob, error: dlError } = await supabaseAdmin.storage
-          .from(bucket)
-          .download(object.path);
-        if (dlError || !blob) {
+        if (!bucketFolderId) bucketFolderId = await ensureFolder(bucket, filesRootId);
+        const driveName = object.path.replace(/\//g, "__");
+        let driveFileId: string;
+        try {
+          if (object.size > 0) {
+            // Piece-by-piece copy keeps memory flat even for 100 MB masters.
+            driveFileId = await copyStorageFileToDrive({
+              admin: supabaseAdmin,
+              bucket,
+              path: object.path,
+              size: object.size,
+              name: driveName,
+              parentId: bucketFolderId,
+            });
+          } else {
+            // Size unknown/empty: small enough to copy in one go.
+            const { data: blob, error: dlError } = await supabaseAdmin.storage
+              .from(bucket)
+              .download(object.path);
+            if (dlError || !blob) throw new Error(dlError?.message ?? "download failed");
+            driveFileId = await uploadToDrive({
+              name: driveName,
+              parentId: bucketFolderId,
+              mimeType: blob.type || "application/octet-stream",
+              body: blob,
+            });
+          }
+        } catch (err) {
+          console.error(`Backup copy of ${bucket}/${object.path} failed:`, err);
           filesPending += 1;
           status = "partial";
           continue;
         }
-        if (!bucketFolderId) bucketFolderId = await ensureFolder(bucket, filesRootId);
-        const driveFileId = await uploadToDrive({
-          name: object.path.replace(/\//g, "__"),
-          parentId: bucketFolderId,
-          mimeType: blob.type || "application/octet-stream",
-          body: blob,
-        });
         const { error: indexError } = await supabaseAdmin.from("backup_files").upsert(
           {
             bucket,
