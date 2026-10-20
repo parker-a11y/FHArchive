@@ -131,7 +131,7 @@ async function uploadToDrive(opts: {
 // ranged storage reads) so a run never holds a whole archive master in memory.
 const UPLOAD_CHUNK_BYTES = 8 * 1024 * 1024; // must be a multiple of 256 KiB
 
-async function copyStorageFileToDrive(opts: {
+export async function copyStorageFileToDrive(opts: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   admin: any;
   bucket: string;
