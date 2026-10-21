@@ -3266,6 +3266,14 @@ export type Database = {
     }
     Functions: {
       archive_owner_id: { Args: never; Returns: string }
+      backup_pending_objects: {
+        Args: { _limit?: number }
+        Returns: {
+          bucket: string
+          path: string
+          size: number
+        }[]
+      }
       can_edit_archive: { Args: { _user_id: string }; Returns: boolean }
       can_read_archive: { Args: { _user_id: string }; Returns: boolean }
       create_digital_source: {
