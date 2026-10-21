@@ -472,30 +472,26 @@ export async function runBackup(options: { filesOnly?: boolean } = {}): Promise<
 
     // ---- 3. Mirror storage files (incremental) ------------------------------
     const filesRootId = await ensureFolder(FILES_FOLDER, rootId);
-    const already = new Set<string>();
-    for (let from = 0; ; from += 1000) {
-      const { data: alreadyRows, error: alreadyError } = await supabaseAdmin
-        .from("backup_files")
-        .select("bucket, storage_path")
-        .order("id")
-        .range(from, from + 999);
-      if (alreadyError) throw new Error(`Reading backup index failed: ${alreadyError.message}`);
-      for (const row of alreadyRows ?? []) already.add(`${row.bucket}/${row.storage_path}`);
-      if ((alreadyRows ?? []).length < 1000) break;
-    }
+    // One indexed query returns only files not yet mirrored, instead of
+    // re-walking every storage folder (which exhausted DB connections).
+    const { data: pendingRows, error: pendingError } = await retryBackupRead(async () => {
+      const r = await supabaseAdmin.rpc("backup_pending_objects", { _limit: MAX_FILES_PER_RUN + 1 });
+      if (r.error) throw new Error(`Listing pending files failed: ${r.error.message}`);
+      return r;
+    });
+    if (pendingError) throw new Error(pendingError.message);
+    const pending = (pendingRows ?? []) as StorageObject[];
 
-    // Stream the walk so copies start immediately rather than listing the whole
-    // archive first. Leave time to persist results before scheduled HTTP expiry.
     const copyDeadline = Date.now() + 120_000;
+    const folderIds = new Map<string, string>();
     bucketLoop: for (const bucket of BUCKETS) {
-      let bucketFolderId: string | null = null;
-      for await (const object of listBucket(supabaseAdmin, bucket)) {
+      for (const object of pending.filter((p) => p.bucket === bucket)) {
+        let bucketFolderId: string | null = folderIds.get(bucket) ?? null;
         if (Date.now() >= copyDeadline || filesUploaded >= MAX_FILES_PER_RUN) {
           filesPending += 1; // At least one remains; the next run resumes from the index.
           status = "partial";
           break bucketLoop;
         }
-        if (already.has(`${object.bucket}/${object.path}`)) continue;
         if (object.size > MAX_FILE_BYTES) {
           filesPending += 1;
           status = "partial";
