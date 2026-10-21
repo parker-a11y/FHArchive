@@ -693,6 +693,7 @@ function LetterPage() {
                           recipient: form.recipient as string,
                           normalized_date: form.normalized_date as string,
                           date_precision: form.date_precision as string,
+                          subtype: form.subtype as string,
                         }),
                       )
                     }

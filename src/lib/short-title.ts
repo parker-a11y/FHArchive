@@ -1,7 +1,8 @@
 /**
- * Short-title generation for personal letters.
+ * Short-title generation for personal letters and postcards.
  *
- * Convention: "Letter from Fran to Jaq - 1944-12-03".
+ * Convention: "Letter from Fran to Jaq - 1944-12-03", or
+ * "Postcard from Fran to Jaq - 1944-12-03" when the subtype is Postcard.
  * Francis A. Harrington and Jaquelyn Harrington always render as their
  * household nicknames; everyone else keeps their canonical name.
  */
@@ -59,7 +60,14 @@ export type ShortTitleInput = {
   recipient?: string | null;
   normalized_date?: string | null;
   date_precision?: string | null;
+  /** Record subtype — "Postcard" titles the record as a postcard. */
+  subtype?: string | null;
 };
+
+/** "Postcard" for the Postcard subtype, "Letter" for everything else. */
+export function shortTitleWord(subtype?: string | null): string {
+  return norm(subtype ?? "") === norm("Postcard") ? "Postcard" : "Letter";
+}
 
 /** Date fragment at whatever precision is known ("" when undated). */
 function datePart(date?: string | null, precision?: string | null): string {
@@ -71,12 +79,13 @@ function datePart(date?: string | null, precision?: string | null): string {
   return date.slice(0, 10);
 }
 
-/** "Letter from Fran to Jaq - 1944-12-03" */
+/** "Letter from Fran to Jaq - 1944-12-03" / "Postcard from Fran to Jaq - 1944-12-03" */
 export function shortLetterTitle(input: ShortTitleInput): string {
+  const word = shortTitleWord(input.subtype);
   const from = shortPersonName(input.author);
   const to = shortPersonName(input.recipient);
   const d = datePart(input.normalized_date, input.date_precision);
-  return `Letter from ${from} to ${to}${d ? ` - ${d}` : ""}`;
+  return `${word} from ${from} to ${to}${d ? ` - ${d}` : ""}`;
 }
 
 /** Records eligible for the Create Short Title button (personal letters and postcards). */
