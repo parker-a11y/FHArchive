@@ -479,7 +479,7 @@ export async function runBackup(options: { filesOnly?: boolean } = {}): Promise<
       if (r.error) throw new Error(`Listing pending files failed: ${r.error.message}`);
       return r;
     });
-    if (pendingError) throw new Error(pendingError.message);
+    void pendingError;
     const pending = (pendingRows ?? []) as StorageObject[];
 
     const copyDeadline = Date.now() + 120_000;
@@ -497,7 +497,10 @@ export async function runBackup(options: { filesOnly?: boolean } = {}): Promise<
           status = "partial";
           continue;
         }
-        if (!bucketFolderId) bucketFolderId = await ensureFolder(bucket, filesRootId);
+        if (!bucketFolderId) {
+          bucketFolderId = await ensureFolder(bucket, filesRootId);
+          folderIds.set(bucket, bucketFolderId);
+        }
         const driveName = object.path.replace(/\//g, "__");
         let driveFileId: string;
         try {
