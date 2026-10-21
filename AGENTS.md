@@ -3,7 +3,7 @@
 
 - Daily backup callbacks use the managed HTTP scheduler and generated cron authenticator, never a copied credential in job_config; this keeps credential rotation platform-owned.
 - Backup storage enumeration retries bounded transient connection failures and paginates its mirror index; this prevents large archives from failing or re-uploading indexed files.
-- Backup file mirroring streams its directory walk within a bounded per-run window, copies each file to Drive in fixed-size ranged/resumable chunks (never whole-file downloads), and resumes from saved index rows; this keeps worker memory flat and nightly requests finite.
+- Backup file mirroring gets its to-do list from one `backup_pending_objects` database query (never a folder-by-folder storage walk, which exhausted connections), copies each file to Drive in fixed-size ranged/resumable chunks, and runs within a bounded per-run window; this keeps memory flat and runs finite.
 
 - Email calendar month navigation accepts archive-email drags with a delayed hover, and adjacent-month days remain drop targets; cross-month moves reuse the existing rescheduling checks.
 
