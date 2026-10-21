@@ -86,18 +86,6 @@ function Timeline() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <select
-          className="h-8 rounded border border-input bg-background px-2 text-sm"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-        >
-          <option value="">All periods</option>
-          {PERIODS.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
-            </option>
-          ))}
-        </select>
       </div>
       <div className="max-w-4xl p-4 sm:p-8">
         {rows.map((l) => {
