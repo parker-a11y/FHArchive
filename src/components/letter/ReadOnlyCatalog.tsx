@@ -84,7 +84,6 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
   push("End date", letter.date_end);
   push("Date precision", labelOf(DATE_PRECISION, letter.date_precision));
   push("Date certainty", labelOf(DATE_CERTAINTY, letter.date_certainty));
-  push("Period", labelOf(PERIODS, letter.period));
   push("Identification", labelOf(IDENTIFICATION_STATUS, letter.identification_status));
   push("Primary person", letter.primary_person);
   if (isLetter) {

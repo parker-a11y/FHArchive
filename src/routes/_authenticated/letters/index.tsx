@@ -115,7 +115,6 @@ const COLUMNS: Col[] = [
   { key: "recipient", label: "To", width: 150, editable: true },
   { key: "origin", label: "Origin", width: 160, editable: true },
   { key: "storage", label: "Storage", width: 200 },
-  { key: "period", label: "Period", width: 100 },
   { key: "sheets", label: "Sheets", width: 70, editable: true },
   { key: "image_count", label: "Images", width: 70 },
   { key: "has_envelope", label: "Env", width: 60 },
@@ -1039,18 +1038,6 @@ function LettersTable() {
         >
           <option value="">All digitization states</option>
           {DIGITIZATION_STATUS.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select
-          className="h-8 rounded border border-input bg-background px-2 text-sm"
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-        >
-          <option value="">All periods</option>
-          {PERIODS.map((p) => (
             <option key={p.value} value={p.value}>
               {p.label}
             </option>

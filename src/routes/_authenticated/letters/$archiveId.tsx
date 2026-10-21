@@ -907,7 +907,6 @@ function LetterPage() {
             {[
               { key: "date_precision", label: "Date status / precision", opts: DATE_PRECISION },
               { key: "date_certainty", label: "Date certainty", opts: DATE_CERTAINTY },
-              { key: "period", label: "Period", opts: PERIODS },
               {
                 key: "identification_status",
                 label: "Identification status",

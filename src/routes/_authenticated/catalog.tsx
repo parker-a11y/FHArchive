@@ -96,7 +96,7 @@ const blank = {
   postal_service: "",
   postal_notes: "",
   censor_mark: false,
-  period: "wartime",
+  period: "unknown",
   sheets: "",
   // Letters are assumed to have an envelope; uncheck for NO ENVELOPE.
   has_envelope: true,
@@ -800,12 +800,6 @@ function QuickEntry() {
               value={form.date_certainty}
               onChange={(v) => set("date_certainty", v)}
               options={DATE_CERTAINTY}
-            />
-            <Select_
-              label="Period"
-              value={form.period}
-              onChange={(v) => set("period", v)}
-              options={PERIODS}
             />
             <Select_
               label="Identification status"

@@ -486,7 +486,7 @@ function SearchPage() {
                   meta={
                     <>
                       <DateLink date={l.normalized_date}>{displayDate(l)}</DateLink>
-                      {` · ${labelOf(PERIODS, l.period)} · ${labelOf(recordTypeOptions, l.record_type)}`}
+                      {` · ${labelOf(recordTypeOptions, l.record_type)}`}
                     </>
                   }
                 />
