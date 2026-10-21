@@ -8,6 +8,13 @@
       "when": 1792251474815,
       "tag": "0000_uploaded_images_bucket_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792616555338,
+      "tag": "0001_backup_pending_objects",
+      "breakpoints": true
     }
   ]
 }
