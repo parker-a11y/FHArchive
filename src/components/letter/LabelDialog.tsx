@@ -121,8 +121,6 @@ export function labelLines(letter: Partial<Letter>): string[] {
   const route = [letter.origin, letter.destination].filter(Boolean).join(" → ");
   if (route) lines.push(route);
   const extras: string[] = [];
-  if (letter.period && letter.period !== "unknown")
-    extras.push(labelOf(PERIODS, letter.period));
   if (letter.sheets) extras.push(`${letter.sheets} sheet${letter.sheets === 1 ? "" : "s"}`);
   if (letter.has_envelope) extras.push("envelope");
   if (letter.has_enclosures) extras.push("enclosures");
