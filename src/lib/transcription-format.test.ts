@@ -3,6 +3,7 @@ import { describe, test } from "node:test";
 import {
   combineTranscriptionPages,
   flowingCombinedTranscription,
+  reflowCombinedFromPages,
   removeRepeatedNavyLetterhead,
 } from "./transcription-format";
 import { richTextToPlain } from "./rich-text";
@@ -19,7 +20,7 @@ describe("flowingCombinedTranscription", () => {
 
   test("preserves real paragraph breaks inside pages", () => {
     assert.equal(combineTranscriptionPages(["Dear Jaq,\n\nFirst paragraph.", "Second page."]),
-      "Dear Jaq,\n\nFirst paragraph. Second page.",
+      "Dear Jaq,\n\nFirst paragraph.\n\nSecond page.",
     );
   });
 
@@ -47,6 +48,30 @@ describe("flowingCombinedTranscription", () => {
       richTextToPlain('<p style="text-align:center">Dear <u>Jaq</u>,</p><p><s>Cary</s> Gary</p>'),
       "Dear Jaq,\n\nCary Gary",
     );
+  });
+
+  test("joins a sentence crossing formatted pages while keeping internal paragraphs and emphasis", () => {
+    assert.equal(combineTranscriptionPages([
+      "<p>Dear Jaq,</p><p>Ted <strong>Hodgkins</strong> also arrived</p>",
+      "<p>in town yesterday.</p><p>We had dinner.</p>",
+    ]), "<p>Dear Jaq,</p><p>Ted <strong>Hodgkins</strong> also arrived in town yesterday.</p><p>We had dinner.</p>");
+  });
+
+  test("keeps greetings, dates, letterhead, and signatures separate at page edges", () => {
+    for (const opening of ["Dear Jaq,", "November 19, 1934", "HOTEL SEYMOUR", "All my love,"]) {
+      assert.equal(combineTranscriptionPages(["<p>We arrived in town</p>", `<p>${opening}</p>`]), `<p>We arrived in town</p><p>${opening}</p>`);
+    }
+  });
+
+  test("preserves genuine paragraphs within each page", () => {
+    assert.equal(combineTranscriptionPages(["First thought\n\nTed also arrived", "in town.\n\nNext thought."]), "First thought\n\nTed also arrived in town.\n\nNext thought.");
+  });
+
+  test("reflows existing unedited rollups without overwriting combined corrections", () => {
+    const pages = ["<p>Ted also arrived</p>", "<p>in town.</p>"];
+    assert.equal(reflowCombinedFromPages(pages.join(""), pages), "<p>Ted also arrived in town.</p>");
+    assert.equal(reflowCombinedFromPages("<p>Ted arrived last Tuesday.</p>", pages), "<p>Ted arrived last Tuesday.</p>");
+    assert.deepEqual(pages, ["<p>Ted also arrived</p>", "<p>in town.</p>"]);
   });
 });
 
