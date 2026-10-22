@@ -39,6 +39,7 @@ import {
 import { HighlightedText, countMatches } from "@/lib/highlight";
 import {
   flowingCombinedTranscription,
+  reflowCombinedFromPages,
   needsReflow,
   reflowTranscription,
 } from "@/lib/transcription-format";
@@ -456,6 +457,13 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
     return m;
   }, [transcripts]);
 
+  const combinedAi = reflowCombinedFromPages(letter.transcription_raw_ai, files.map((f) => byFile[f.id]?.ai_text));
+  useEffect(() => {
+    setVerified((current) => current === flowingCombinedTranscription(letter.transcription_verified)
+      ? reflowCombinedFromPages(current, files.map((f) => bestText(byFile[f.id] ?? { ai_text: "", verified_text: "" })))
+      : current);
+  }, [letter.transcription_verified, files, byFile]);
+
   const refreshLetter = () => {
     qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] });
     qc.invalidateQueries({ queryKey: ["letters"] });
@@ -569,7 +577,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
       !confirm("This will replace the combined verified transcription in the editor. Continue?")
     )
       return;
-    setVerified(flowingCombinedTranscription(letter.transcription_raw_ai));
+    setVerified(combinedAi);
     toast.message("AI text copied into the editor — review, then save.");
   }
 
@@ -762,7 +770,7 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             onClick={async () => {
               const text =
                 richTextToPlain(verified) ||
-                richTextToPlain(flowingCombinedTranscription(letter.transcription_raw_ai || ""));
+                richTextToPlain(combinedAi);
               if (!text.trim()) return;
               try {
                 await navigator.clipboard.writeText(text);
@@ -804,11 +812,11 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
             <span className="field-label">Combined AI transcription (read-only)</span>
             <div className="mt-1.5 max-h-72 overflow-auto rounded border border-archive-ai/40 bg-archive-ai-surface p-3 text-sm whitespace-pre-wrap">
               {letter.transcription_raw_ai ? (
-                isRichHtml(flowingCombinedTranscription(letter.transcription_raw_ai)) ? (
-                  <RichTextView html={flowingCombinedTranscription(letter.transcription_raw_ai)} year={moneyYear} estimatedYear={estimatedYear} />
+                isRichHtml(combinedAi) ? (
+                  <RichTextView html={combinedAi} year={moneyYear} estimatedYear={estimatedYear} />
                 ) : (
                   <FfnText
-                    text={flowingCombinedTranscription(letter.transcription_raw_ai)}
+                    text={combinedAi}
                     searchTerm={highlight}
                     year={moneyYear}
                     estimatedYear={estimatedYear}
