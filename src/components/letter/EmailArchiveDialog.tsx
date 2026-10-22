@@ -310,7 +310,7 @@ export function EmailArchiveDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
@@ -416,7 +416,7 @@ export function EmailArchiveDialog({
               className="mt-1"
               value={message}
               onChange={setMessage}
-              minHeight="8rem"
+              minHeight="28rem"
               placeholder="A note to go above the record…"
               onEditorReady={(e) => {
                 editorRef.current = e;
