@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Shared rich-text editors must shrink to their container and wrap long image tokens and URLs with overflow-wrap: anywhere; embedded images must not widen email or blog editing dialogs.
+
 - The shared image picker stops click propagation at its dialog boundary and opens its own file input by ref; portaled clicks must not reach email-row handlers that cancel native file selection.
 
 - Daily backup callbacks use the managed HTTP scheduler and generated cron authenticator, never a copied credential in job_config; this keeps credential rotation platform-owned.

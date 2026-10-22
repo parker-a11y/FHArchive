@@ -310,7 +310,7 @@ export function EmailArchiveDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="grid-cols-1 sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
