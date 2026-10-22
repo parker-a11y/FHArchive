@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { flowingCombinedTranscription } from "@/lib/transcription-format";
 
 export type SharedPage = {
   id: string;
@@ -50,6 +49,7 @@ export const getSharedRecord = createServerFn({ method: "GET" })
   .inputValidator((data: { token: string }) => ({ token: String(data.token).slice(0, 64) }))
   .handler(async ({ data }): Promise<SharedRecord | null> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { readableRecordTranscription } = await import("@/lib/combined-transcription.server");
 
     const { data: share } = await supabaseAdmin
       .from("record_shares")
@@ -163,7 +163,7 @@ export const getSharedRecord = createServerFn({ method: "GET" })
       summary: str("summary_long") ?? str("summary_short"),
       // Transcriptions are always visible to share-link viewers.
       transcription:
-        flowingCombinedTranscription(
+        await readableRecordTranscription(supabaseAdmin, share.letter_id,
           str("transcription_verified") ?? str("transcription_raw_ai"),
         ) || null,
       notes: share.include_notes ? str("historical_notes") ?? str("notes") : null,
