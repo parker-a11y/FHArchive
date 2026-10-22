@@ -253,7 +253,7 @@
 .rich-text-view {
   line-height: 1.6;
 }
-.rich-text-editor {
+.rich-text-editor.ProseMirror {
   min-width: 0;
   max-width: 100%;
   white-space: pre-wrap;

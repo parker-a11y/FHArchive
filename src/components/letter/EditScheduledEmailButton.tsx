@@ -85,7 +85,7 @@ export function EditScheduledEmailButton({ emailId }: { emailId: string }) {
         <Pencil className="size-3.5" /> Edit
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="grid-cols-1 sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Edit scheduled email</DialogTitle>
           </DialogHeader>
