@@ -415,15 +415,15 @@ export function RichTextEditor({
   if (!editor)
     return (
       <div
-        className={cn("rounded-md border border-input bg-background", className)}
+        className={cn("min-w-0 w-full rounded-md border border-input bg-background", className)}
         style={{ minHeight }}
       />
     );
 
   return (
-    <div className={cn("overflow-hidden rounded-md border border-input bg-background", className)}>
+    <div className={cn("min-w-0 w-full overflow-hidden rounded-md border border-input bg-background", className)}>
       <Toolbar editor={editor} extras={toolbarExtras} mode={toolbarMode} />
-      <EditorContent editor={editor} className="px-3 py-2 text-sm" />
+      <EditorContent editor={editor} className="min-w-0 max-w-full px-3 py-2 text-sm" />
     </div>
   );
 }
