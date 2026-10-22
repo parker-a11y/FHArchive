@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ImagePlus, ChevronLeft, Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +71,8 @@ export function ArchivePhotoPicker({
   trigger?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+  const captionId = useId();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PickRecord | null>(null);
   const [selectedPage, setSelectedPage] = useState<number | null>(null);
@@ -224,11 +226,11 @@ export function ArchivePhotoPicker({
         </DialogHeader>
 
         <div className="space-y-1.5 rounded-md border border-archive-gold/40 bg-secondary/40 p-3">
-          <label htmlFor="photo-caption" className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+          <label htmlFor={captionId} className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
             Title under the photo <span className="normal-case tracking-normal">(optional)</span>
           </label>
           <Input
-            id="photo-caption"
+            id={captionId}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             maxLength={200}
@@ -259,15 +261,18 @@ export function ArchivePhotoPicker({
         ) : null}
 
         <div className="flex items-center gap-2">
-          <label
-            htmlFor="photo-upload"
-            className={`inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-secondary ${uploading ? "pointer-events-none opacity-60" : ""}`}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => uploadInputRef.current?.click()}
           >
             <Upload className="size-4" />
             Choose an image file
-          </label>
+          </Button>
           <input
-            id="photo-upload"
+            ref={uploadInputRef}
             type="file"
             accept="image/*"
             className="hidden"
