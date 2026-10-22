@@ -7,7 +7,7 @@
  * Pure text transform — no AI, no network, no mutation of stored text.
  */
 
-import { isRichHtml, plainTextToRichHtml, sanitizeRichHtml } from "@/lib/rich-text";
+import { isRichHtml, plainTextToRichHtml, richTextToPlain, sanitizeRichHtml } from "@/lib/rich-text";
 
 const NAVY_LETTERHEAD = /\b(?:u\.?\s*s\.?|united\s+states)\s+(?:navy|naval)\b/i;
 
@@ -118,14 +118,48 @@ export function combineTranscriptionPages(pages: Array<string | null | undefined
   if (usable.some((page) => isRichHtml(page))) {
     return usable
       .map((page) => (isRichHtml(page) ? sanitizeRichHtml(page) : plainTextToRichHtml(page)))
-      .join("");
+      .reduce(joinHtmlPages, "");
   }
-  return pages
-    .map((page) => flowingCombinedTranscription(page).trim())
-    .filter(Boolean)
-    .join(" ")
+  return usable
+    .reduce((left, right) => left ? `${left}${pageContinues(left, right) ? " " : "\n\n"}${right}` : right, "")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+}
+
+/** Only join unfinished prose; dates, greetings, headings and sign-offs stay separate. */
+function pageContinues(left: string, right: string): boolean {
+  const ending = richTextToPlain(left).trim().split(/\n/).at(-1)?.trim() ?? "";
+  const opening = richTextToPlain(right).trim().split(/\n/)[0]?.trim() ?? "";
+  const structural = (line: string) => SALUTATION.test(line) || CLOSING.test(line) ||
+    POSTSCRIPT.test(line) || DATE_LINE.test(line) || NUMERIC_DATE.test(line) ||
+    /^[^a-z]*[A-Z][^a-z]*$/.test(line) || /^\[.*\]$/.test(line);
+  return Boolean(ending && opening) && !structural(ending) && !structural(opening) &&
+    !/[.!?:;][”’"')\]]*$/.test(ending);
+}
+
+function joinHtmlPages(left: string, right: string): string {
+  if (!left) return right;
+  const last = left.match(/<p\b([^>]*)>((?:(?!<\/?p\b)[\s\S])*)<\/p>\s*$/i);
+  const first = right.match(/^\s*<p\b([^>]*)>((?:(?!<\/?p\b)[\s\S])*)<\/p>/i);
+  if (!last || !first || last.index === undefined || !pageContinues(last[2], first[2]) ||
+      last[1] !== first[1]) return left + right;
+  // Inline emphasis and links remain intact; only the two page-edge paragraph tags disappear.
+  return left.slice(0, last.index) + `<p${last[1]}>${last[2].trimEnd()} ${first[2].trimStart()}</p>` + right.slice(first[0].length);
+}
+
+/** Upgrade an old roll-up only if it still exactly matches its source pages.
+ * Never replace a combined transcription that was independently corrected.
+ */
+export function reflowCombinedFromPages(input: string | null | undefined, pages: Array<string | null | undefined>): string {
+  const current = flowingCombinedTranscription(input);
+  const usable = pages.map((page) => flowingCombinedTranscription(page).trim()).filter(Boolean);
+  if (usable.length < 2 || !current) return current;
+  const rich = usable.some(isRichHtml);
+  const old = rich
+    ? usable.map((page) => isRichHtml(page) ? sanitizeRichHtml(page) : plainTextToRichHtml(page)).join("")
+    : usable.join(" ");
+  const canonical = (value: string) => (rich ? sanitizeRichHtml(value) : value).replace(/\s+/g, " ").trim();
+  return canonical(current) === canonical(old) ? combineTranscriptionPages(usable) : current;
 }
 
 /**
