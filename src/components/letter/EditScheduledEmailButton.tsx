@@ -85,7 +85,7 @@ export function EditScheduledEmailButton({ emailId }: { emailId: string }) {
         <Pencil className="size-3.5" /> Edit
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Edit scheduled email</DialogTitle>
           </DialogHeader>
@@ -110,6 +110,7 @@ export function EditScheduledEmailButton({ emailId }: { emailId: string }) {
                 <RichTextEditor
                   value={message}
                   onChange={setMessage}
+                  minHeight="28rem"
                   onEditorReady={(editor) => {
                     editorRef.current = editor;
                   }}
