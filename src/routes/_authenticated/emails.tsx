@@ -628,7 +628,7 @@ function EmailsPage() {
             <GetEmailLinkButton emailId={e.id} />
           </span>
         </summary>
-        <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
+        <div className="mx-auto mt-5 max-w-[72ch] space-y-4 overflow-wrap-anywhere border-t border-border pt-5 text-base leading-[1.8] [overflow-wrap:anywhere] [&_.rich-text-view]:leading-[1.8] [&_.rich-text-view_p]:mb-5 [&_.rich-text-view_blockquote]:my-6 [&_.rich-text-view_blockquote]:font-display [&_.rich-text-view_blockquote]:text-lg">
           {e.message_body &&
             (isRichHtml(e.message_body) ? (
               <RichTextView html={e.message_body} />
@@ -849,7 +849,7 @@ function EmailsPage() {
 
       <Sheet open={!!sheetDay} onOpenChange={(o) => !o && setSheetDay(null)}>
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
-          <SheetHeader>
+          <SheetHeader className="mx-auto w-full max-w-5xl pr-8">
             <SheetTitle>
               {sheetDay &&
                 new Date(`${sheetDay}T12:00`).toLocaleDateString([], {
@@ -860,7 +860,7 @@ function EmailsPage() {
                 })}
             </SheetTitle>
           </SheetHeader>
-          <div className="space-y-3 py-4">
+          <div className="mx-auto w-full max-w-5xl space-y-3 py-4">
             {sheetEmails.length === 0 && (
               <p className="text-sm text-muted-foreground">No letter scheduled for this date.</p>
             )}
