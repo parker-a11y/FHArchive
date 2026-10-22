@@ -216,7 +216,10 @@ export function ArchivePhotoPicker({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent
+        className="max-h-[85vh] overflow-y-auto sm:max-w-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
         <DialogHeader>
           <DialogTitle>Insert a photo from the archive</DialogTitle>
           <DialogDescription>

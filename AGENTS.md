@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- The shared image picker stops click propagation at its dialog boundary and opens its own file input by ref; portaled clicks must not reach email-row handlers that cancel native file selection.
+
 - Daily backup callbacks use the managed HTTP scheduler and generated cron authenticator, never a copied credential in job_config; this keeps credential rotation platform-owned.
 - Backup storage enumeration retries bounded transient connection failures and paginates its mirror index; this prevents large archives from failing or re-uploading indexed files.
 - Backup file mirroring gets its to-do list from one `backup_pending_objects` database query (never a folder-by-folder storage walk, which exhausted connections), copies each file to Drive in fixed-size ranged/resumable chunks, and runs within a bounded per-run window; this keeps memory flat and runs finite.
