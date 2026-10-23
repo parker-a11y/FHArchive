@@ -657,6 +657,18 @@ function EmailsPage() {
           </span>
         </summary>
         <div className="mx-auto mt-5 max-w-[72ch] space-y-4 overflow-wrap-anywhere border-t border-border pt-5 text-base leading-[1.8] [overflow-wrap:anywhere] [&_.rich-text-view]:leading-[1.8] [&_.rich-text-view_p]:mb-5 [&_.rich-text-view_blockquote]:my-6 [&_.rich-text-view_blockquote]:font-display [&_.rich-text-view_blockquote]:text-lg">
+          {prevSends.length > 0 && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                Previously sent
+              </p>
+              {prevSends.map((p, i) => (
+                <p key={i} className="mt-0.5 text-muted-foreground">
+                  {p.date} — {p.to}
+                </p>
+              ))}
+            </div>
+          )}
           {e.message_body &&
             (isRichHtml(e.message_body) ? (
               <RichTextView html={e.message_body} />
