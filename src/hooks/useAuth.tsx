@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             canReadArchive: admin || archivist || guest,
           };
         }
+        hasConfirmedAccess = true;
         setAccess({
           isAdmin: result.isAdmin,
           isApprovedGuest: result.isApprovedGuest,
