@@ -59,6 +59,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     includeEnvelope: Boolean(data.includeEnvelope),
     thumbnails: Boolean(data.thumbnails),
     scheduledFor: data.scheduledFor ? String(data.scheduledFor) : null,
+    draftId: data.draftId ? String(data.draftId) : null,
     research: data.research?.answer
       ? {
           question: String(data.research.question ?? "").slice(0, 2000),
