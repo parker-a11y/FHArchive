@@ -5,17 +5,17 @@ import type { InlinePhoto } from "@/lib/inline-photos";
 export function PhotoFrame({ photo }: { photo: InlinePhoto }) {
   const id = photo.identifier;
   return (
-    <figure className="photo-frame not-prose my-8 mx-auto max-w-[36rem]">
-      <div className="photo-frame-mat">
+    <span role="figure" aria-label={photo.caption || (id ? `${id} archive photo` : "Photo")} className="photo-frame not-prose my-8 mx-auto block max-w-[36rem]">
+      <span className="photo-frame-mat block">
         <img
           src={photo.url}
           alt={photo.caption || (id ? `${id} archive photo` : "Photo")}
           loading="lazy"
           className="block w-full rounded-[2px]"
         />
-      </div>
+      </span>
       {(photo.caption || id) && (
-        <figcaption className="mt-3 text-center">
+        <span className="mt-3 block text-center">
           {photo.caption && (
             <span className="block font-serif text-base italic leading-snug text-foreground">
               {photo.caption}
@@ -36,8 +36,8 @@ export function PhotoFrame({ photo }: { photo: InlinePhoto }) {
               <span aria-hidden className="h-px w-6 bg-archive-gold/60" />
             </span>
           )}
-        </figcaption>
+        </span>
       )}
-    </figure>
+    </span>
   );
 }
