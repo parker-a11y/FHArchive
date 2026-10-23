@@ -383,6 +383,7 @@ export function EmailArchiveDialog({
       refreshEmailLists();
       if (res.scheduledFor) {
         toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
+        clearAutosave();
         setOpen(false);
         setLater(false);
         setMessage(defaultMessage ?? "");
@@ -393,6 +394,7 @@ export function EmailArchiveDialog({
         toast.warning(`Skipped (previously unsubscribed or bounced): ${res.suppressed.join(", ")}`);
       for (const f of res.failed) toast.error(`${f.email}: ${f.error}`);
       if (res.failed.length === 0) {
+        clearAutosave();
         setOpen(false);
         setMessage(defaultMessage ?? "");
       }
@@ -423,6 +425,7 @@ export function EmailArchiveDialog({
       });
       setSavedDraftId(res.draftId);
       toast.success("Draft saved — find it at the top of Email Admin");
+      clearAutosave();
       setOpen(false);
       refreshEmailLists();
     } catch (error) {
@@ -443,7 +446,7 @@ export function EmailArchiveDialog({
     .slice(0, 6);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="sm" className="gap-2">
