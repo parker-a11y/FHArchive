@@ -89,6 +89,113 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     return deliverArchiveEmail(db, context.userId, payload);
   });
 
+export type SaveEmailDraftInput = {
+  /** Existing draft to overwrite; omitted = create a new draft. */
+  draftId?: string | null;
+  subject?: string;
+  headerSubtitle?: string;
+  message?: string;
+  recipients?: { email: string; name?: string | null }[];
+  records?: { kind: "letter" | "source"; id: string }[];
+  includeTranscription?: boolean;
+  includeImages?: boolean;
+  includeEnvelope?: boolean;
+  thumbnails?: boolean;
+  research?: SendArchiveEmailInput["research"];
+};
+
+/** Saves an in-progress email as a draft (status "draft" — never sent by the scheduler). Admin only. */
+export const saveEmailDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: SaveEmailDraftInput) => ({
+    draftId: data.draftId ? String(data.draftId) : null,
+    subject: String(data.subject ?? "").slice(0, 200),
+    headerSubtitle: String(data.headerSubtitle ?? "").slice(0, 200),
+    message: String(data.message ?? "").slice(0, 100000),
+    recipients: (data.recipients ?? [])
+      .slice(0, 25)
+      .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
+      .filter((r) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email)),
+    records: (data.records ?? [])
+      .slice(0, 10)
+      .map((r) => ({ kind: r.kind === "source" ? ("source" as const) : ("letter" as const), id: String(r.id) })),
+    includeTranscription: Boolean(data.includeTranscription),
+    includeImages: data.includeImages !== false,
+    includeEnvelope: Boolean(data.includeEnvelope),
+    thumbnails: Boolean(data.thumbnails),
+    research: data.research?.answer
+      ? {
+          question: String(data.research.question ?? "").slice(0, 2000),
+          answer: String(data.research.answer).slice(0, 40000),
+          caveats: String(data.research.caveats ?? "").slice(0, 4000),
+          confidence: String(data.research.confidence ?? "").slice(0, 40),
+          sources: (data.research.sources ?? [])
+            .slice(0, 15)
+            .map((s) => ({ title: s.title ?? null, url: String(s.url) }))
+            .filter((s) => /^https?:\/\//i.test(s.url)),
+        }
+      : null,
+  }))
+  .handler(async ({ data, context }): Promise<{ draftId: string }> => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can save drafts.");
+
+    const { draftId, subject, headerSubtitle, message, ...rest } = data;
+    const payload = {
+      subject,
+      headerTitle: subject,
+      headerSubtitle,
+      message,
+      ...rest,
+      scheduledFor: null,
+    };
+    const row = {
+      owner_id: context.userId,
+      subject: subject || "(untitled draft)",
+      message_body: message || null,
+      header_title: subject || null,
+      header_subtitle: headerSubtitle || null,
+      recipients: data.recipients,
+      status: "draft",
+      scheduled_for: null,
+      send_payload: payload,
+    };
+    if (draftId) {
+      const { error } = await db
+        .from("archive_emails")
+        .update(row as never)
+        .eq("id", draftId)
+        .eq("status", "draft");
+      if (error) throw new Error(error.message);
+      return { draftId };
+    }
+    const { data: inserted, error } = await db
+      .from("archive_emails")
+      .insert(row as never)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { draftId: (inserted as { id: string }).id };
+  });
+
+/** Deletes a saved draft. Admin only. */
+export const deleteEmailDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { emailId: string }) => ({ emailId: String(data.emailId) }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can delete drafts.");
+    const { error } = await db
+      .from("archive_emails")
+      .delete()
+      .eq("id", data.emailId)
+      .eq("status", "draft");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 /** Cancels a scheduled (not yet sent) email. Admin only. */
 export const cancelScheduledEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
