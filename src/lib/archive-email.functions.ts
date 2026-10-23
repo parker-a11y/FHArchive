@@ -24,6 +24,8 @@ export type SendArchiveEmailInput = {
   thumbnails?: boolean;
   /** ISO time to send later; omitted = send now. */
   scheduledFor?: string | null;
+  /** Draft being sent; the draft row is removed once the send is queued/delivered. */
+  draftId?: string | null;
 };
 
 export type SendArchiveEmailResult = {
@@ -57,6 +59,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     includeEnvelope: Boolean(data.includeEnvelope),
     thumbnails: Boolean(data.thumbnails),
     scheduledFor: data.scheduledFor ? String(data.scheduledFor) : null,
+    draftId: data.draftId ? String(data.draftId) : null,
     research: data.research?.answer
       ? {
           question: String(data.research.question ?? "").slice(0, 2000),
@@ -78,15 +81,129 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     if (!data.subject) throw new Error("A subject is required.");
 
     const { deliverArchiveEmail, scheduleArchiveEmail } = await import("@/lib/archive-email-send.server");
-    const { scheduledFor, ...payload } = data;
+    const { scheduledFor, draftId, ...payload } = data;
+    const consumeDraft = async () => {
+      if (!draftId) return;
+      await db.from("archive_emails").delete().eq("id", draftId).eq("status", "draft");
+    };
     if (scheduledFor) {
       const when = new Date(scheduledFor);
       if (Number.isNaN(when.getTime())) throw new Error("That scheduled time is not valid.");
       if (when.getTime() < Date.now() + 60_000) throw new Error("Pick a time at least a minute from now.");
       const emailId = await scheduleArchiveEmail(db, context.userId, payload, when);
+      await consumeDraft();
       return { emailId, sent: [], suppressed: [], failed: [], scheduledFor: when.toISOString() };
     }
-    return deliverArchiveEmail(db, context.userId, payload);
+    const result = await deliverArchiveEmail(db, context.userId, payload);
+    if (result.failed.length === 0) await consumeDraft();
+    return result;
+  });
+
+export type SaveEmailDraftInput = {
+  /** Existing draft to overwrite; omitted = create a new draft. */
+  draftId?: string | null;
+  subject?: string;
+  headerSubtitle?: string;
+  message?: string;
+  recipients?: { email: string; name?: string | null }[];
+  records?: { kind: "letter" | "source"; id: string }[];
+  includeTranscription?: boolean;
+  includeImages?: boolean;
+  includeEnvelope?: boolean;
+  thumbnails?: boolean;
+  research?: SendArchiveEmailInput["research"];
+};
+
+/** Saves an in-progress email as a draft (status "draft" — never sent by the scheduler). Admin only. */
+export const saveEmailDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: SaveEmailDraftInput) => ({
+    draftId: data.draftId ? String(data.draftId) : null,
+    subject: String(data.subject ?? "").slice(0, 200),
+    headerSubtitle: String(data.headerSubtitle ?? "").slice(0, 200),
+    message: String(data.message ?? "").slice(0, 100000),
+    recipients: (data.recipients ?? [])
+      .slice(0, 25)
+      .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
+      .filter((r) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email)),
+    records: (data.records ?? [])
+      .slice(0, 10)
+      .map((r) => ({ kind: r.kind === "source" ? ("source" as const) : ("letter" as const), id: String(r.id) })),
+    includeTranscription: Boolean(data.includeTranscription),
+    includeImages: data.includeImages !== false,
+    includeEnvelope: Boolean(data.includeEnvelope),
+    thumbnails: Boolean(data.thumbnails),
+    research: data.research?.answer
+      ? {
+          question: String(data.research.question ?? "").slice(0, 2000),
+          answer: String(data.research.answer).slice(0, 40000),
+          caveats: String(data.research.caveats ?? "").slice(0, 4000),
+          confidence: String(data.research.confidence ?? "").slice(0, 40),
+          sources: (data.research.sources ?? [])
+            .slice(0, 15)
+            .map((s) => ({ title: s.title ?? null, url: String(s.url) }))
+            .filter((s) => /^https?:\/\//i.test(s.url)),
+        }
+      : null,
+  }))
+  .handler(async ({ data, context }): Promise<{ draftId: string }> => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can save drafts.");
+
+    const { draftId, subject, headerSubtitle, message, ...rest } = data;
+    const payload = {
+      subject,
+      headerTitle: subject,
+      headerSubtitle,
+      message,
+      ...rest,
+      scheduledFor: null,
+    };
+    const row = {
+      owner_id: context.userId,
+      subject: subject || "(untitled draft)",
+      message_body: message || null,
+      header_title: subject || null,
+      header_subtitle: headerSubtitle || null,
+      recipients: data.recipients,
+      status: "draft",
+      scheduled_for: null,
+      send_payload: payload,
+    };
+    if (draftId) {
+      const { error } = await db
+        .from("archive_emails")
+        .update(row as never)
+        .eq("id", draftId)
+        .eq("status", "draft");
+      if (error) throw new Error(error.message);
+      return { draftId };
+    }
+    const { data: inserted, error } = await db
+      .from("archive_emails")
+      .insert(row as never)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { draftId: (inserted as { id: string }).id };
+  });
+
+/** Deletes a saved draft. Admin only. */
+export const deleteEmailDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { emailId: string }) => ({ emailId: String(data.emailId) }))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase;
+    const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
+    if (!isAdmin) throw new Error("Only archive administrators can delete drafts.");
+    const { error } = await db
+      .from("archive_emails")
+      .delete()
+      .eq("id", data.emailId)
+      .eq("status", "draft");
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 /** Cancels a scheduled (not yet sent) email. Admin only. */

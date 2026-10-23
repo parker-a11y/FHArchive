@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
@@ -22,8 +22,8 @@ import { ArchivePhotoPicker } from "@/components/media/ArchivePhotoPicker";
 import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTextEditor";
 
 
-import { fetchContacts } from "@/lib/archive-email";
-import { sendArchiveEmail } from "@/lib/archive-email.functions";
+import { fetchContacts, type EmailDraftPayload } from "@/lib/archive-email";
+import { sendArchiveEmail, saveEmailDraft } from "@/lib/archive-email.functions";
 import {
   checkStaleTranscriptions,
   rollupRecordTranscription,
@@ -54,6 +54,9 @@ export function EmailArchiveDialog({
   defaultSendAt,
   research,
   thumbnails,
+  draftId,
+  draft,
+  onDraftSaved,
 }: {
   kind?: "letter" | "source";
   id?: string;
@@ -70,32 +73,50 @@ export function EmailArchiveDialog({
   research?: EmailResearchPayload;
   /** Show one small clickable thumbnail per record instead of full scans. */
   thumbnails?: boolean;
+  /** Existing draft row being edited; removed once the email is sent/scheduled. */
+  draftId?: string;
+  /** Saved draft values to restore into the composer. */
+  draft?: EmailDraftPayload | null;
+  /** Called after a draft is saved or the email is sent/scheduled. */
+  onDraftSaved?: () => void;
 }) {
   const recordList: RecordRef[] =
     records ?? (id ? [{ kind: kind!, id: id!, identifier: identifier!, title }] : []);
   const identifiers = recordList.map((r) => r.identifier).join(", ");
   const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
+  const saveDraftFn = useServerFn(saveEmailDraft);
+  const qc = useQueryClient();
+  // The composer is used from many pages; always refresh Email Admin's lists.
+  const refreshEmailLists = () => {
+    qc.invalidateQueries({ queryKey: ["archive-email-drafts"] });
+    qc.invalidateQueries({ queryKey: ["archive-emails"] });
+    onDraftSaved?.();
+  };
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>(draft?.recipients ?? []);
   const [entry, setEntry] = useState("");
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(draftId ?? null);
   const [subject, setSubject] = useState(
-    defaultSubject ??
+    draft?.subject ??
+      defaultSubject ??
       (single?.title
         ? `${single.identifier} — ${single.title}`
         : `${identifiers || "A note"} from The Francis Files`),
   );
-  const [headerSubtitle, setHeaderSubtitle] = useState("From The Francis Files");
-  const [message, setMessage] = useState(defaultMessage ?? "");
-  const [includeTranscription, setIncludeTranscription] = useState(true);
-  const [includeImages, setIncludeImages] = useState(true);
+  const [headerSubtitle, setHeaderSubtitle] = useState(draft?.headerSubtitle ?? "From The Francis Files");
+  const [message, setMessage] = useState(draft?.message ?? defaultMessage ?? "");
+  const [includeTranscription, setIncludeTranscription] = useState(draft?.includeTranscription ?? true);
+  const [includeImages, setIncludeImages] = useState(draft?.includeImages ?? true);
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
   // Reset the subject whenever the dialog switches to a different record,
   // so a previous record's title can never carry over.
   const recordKey = recordList.map((r) => r.identifier).join("|");
   const singleTitle = single?.title ?? null;
   useEffect(() => {
+    // A restored draft keeps its saved subject.
+    if (draft?.subject) return;
     setSubject(
       defaultSubject ??
         (single?.title
@@ -117,7 +138,7 @@ export function EmailArchiveDialog({
     return bad.length ? bad : null;
   })();
 
-  const [includeEnvelope, setIncludeEnvelope] = useState(true);
+  const [includeEnvelope, setIncludeEnvelope] = useState(draft?.includeEnvelope ?? true);
   const [later, setLater] = useState(Boolean(defaultSendAt));
   const [sendAt, setSendAt] = useState(defaultSendAt ?? "");
   // Keep the scheduled time in step with a day picked after this dialog mounted.
@@ -267,8 +288,10 @@ export function EmailArchiveDialog({
           research: research?.answer ? research : null,
           thumbnails: Boolean(thumbnails),
           scheduledFor: later && sendAt ? new Date(sendAt).toISOString() : null,
+          draftId: savedDraftId,
         },
       });
+      refreshEmailLists();
       if (res.scheduledFor) {
         toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
         setOpen(false);
@@ -286,6 +309,35 @@ export function EmailArchiveDialog({
       }
     } catch (error) {
       toast.error((error as Error).message || "Could not send the email");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveDraft = async () => {
+    setBusy(true);
+    try {
+      const res = await saveDraftFn({
+        data: {
+          draftId: savedDraftId,
+          subject,
+          headerSubtitle,
+          message,
+          recipients,
+          records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
+          includeTranscription,
+          includeImages,
+          includeEnvelope,
+          thumbnails: Boolean(thumbnails),
+          research: research?.answer ? research : null,
+        },
+      });
+      setSavedDraftId(res.draftId);
+      toast.success("Draft saved — find it at the top of Email Admin");
+      setOpen(false);
+      refreshEmailLists();
+    } catch (error) {
+      toast.error((error as Error).message || "Could not save the draft");
     } finally {
       setBusy(false);
     }
@@ -501,6 +553,9 @@ export function EmailArchiveDialog({
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
             Cancel
+          </Button>
+          <Button variant="outline" onClick={saveDraft} disabled={busy}>
+            {savedDraftId ? "Update draft" : "Save draft"}
           </Button>
           <Button onClick={submit} disabled={busy}>
             {busy ? (later ? "Scheduling…" : "Sending…") : later ? "Schedule email" : "Send email"}
