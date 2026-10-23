@@ -281,8 +281,10 @@ export function EmailArchiveDialog({
           research: research?.answer ? research : null,
           thumbnails: Boolean(thumbnails),
           scheduledFor: later && sendAt ? new Date(sendAt).toISOString() : null,
+          draftId: savedDraftId,
         },
       });
+      onDraftSaved?.();
       if (res.scheduledFor) {
         toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
         setOpen(false);
@@ -300,6 +302,35 @@ export function EmailArchiveDialog({
       }
     } catch (error) {
       toast.error((error as Error).message || "Could not send the email");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveDraft = async () => {
+    setBusy(true);
+    try {
+      const res = await saveDraftFn({
+        data: {
+          draftId: savedDraftId,
+          subject,
+          headerSubtitle,
+          message,
+          recipients,
+          records: recordList.map((r) => ({ kind: r.kind, id: r.id })),
+          includeTranscription,
+          includeImages,
+          includeEnvelope,
+          thumbnails: Boolean(thumbnails),
+          research: research?.answer ? research : null,
+        },
+      });
+      setSavedDraftId(res.draftId);
+      toast.success("Draft saved — find it at the top of Email Admin");
+      setOpen(false);
+      onDraftSaved?.();
+    } catch (error) {
+      toast.error((error as Error).message || "Could not save the draft");
     } finally {
       setBusy(false);
     }
@@ -515,6 +546,9 @@ export function EmailArchiveDialog({
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
             Cancel
+          </Button>
+          <Button variant="outline" onClick={saveDraft} disabled={busy}>
+            {savedDraftId ? "Update draft" : "Save draft"}
           </Button>
           <Button onClick={submit} disabled={busy}>
             {busy ? (later ? "Scheduling…" : "Sending…") : later ? "Schedule email" : "Send email"}
