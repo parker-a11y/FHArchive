@@ -147,6 +147,95 @@ export function EmailArchiveDialog({
     setLater(true);
     setSendAt(defaultSendAt);
   }, [defaultSendAt]);
+
+  // --- Unsaved-work protection -------------------------------------------------
+  // A surprise logout used to wipe everything typed into the composer. The
+  // composer mirrors itself to localStorage (debounced) and restores on open,
+  // so losing the session never loses the email. Cleared on send/schedule and
+  // on a deliberate draft save.
+  const autosaveKey = `fh-email-composer:${recordKey || "note"}`;
+
+  const restoreAutosave = () => {
+    try {
+      const raw = localStorage.getItem(autosaveKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        subject?: string;
+        headerSubtitle?: string;
+        message?: string;
+        recipients?: Recipient[];
+        includeTranscription?: boolean;
+        includeImages?: boolean;
+        includeEnvelope?: boolean;
+        later?: boolean;
+        sendAt?: string;
+      };
+      if (saved.subject !== undefined) setSubject(saved.subject);
+      if (saved.headerSubtitle !== undefined) setHeaderSubtitle(saved.headerSubtitle);
+      if (saved.message !== undefined) setMessage(saved.message);
+      if (saved.recipients) setRecipients(saved.recipients);
+      if (saved.includeTranscription !== undefined) setIncludeTranscription(saved.includeTranscription);
+      if (saved.includeImages !== undefined) setIncludeImages(saved.includeImages);
+      if (saved.includeEnvelope !== undefined) setIncludeEnvelope(saved.includeEnvelope);
+      if (saved.later !== undefined) setLater(saved.later);
+      if (saved.sendAt !== undefined) setSendAt(saved.sendAt);
+      toast("Restored your unsaved edits from before the interruption");
+    } catch {
+      /* corrupted snapshot — ignore */
+    }
+  };
+
+  const clearAutosave = () => {
+    try {
+      localStorage.removeItem(autosaveKey);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Restore before the summary-prefill effect runs, so a restored message is
+  // never overwritten by the record's AI summary.
+  const handleOpenChange = (v: boolean) => {
+    if (v) restoreAutosave();
+    setOpen(v);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => {
+      try {
+        localStorage.setItem(
+          autosaveKey,
+          JSON.stringify({
+            subject,
+            headerSubtitle,
+            message,
+            recipients,
+            includeTranscription,
+            includeImages,
+            includeEnvelope,
+            later,
+            sendAt,
+          }),
+        );
+      } catch {
+        /* storage full — protection simply stops */
+      }
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [
+    open,
+    autosaveKey,
+    subject,
+    headerSubtitle,
+    message,
+    recipients,
+    includeTranscription,
+    includeImages,
+    includeEnvelope,
+    later,
+    sendAt,
+  ]);
   const pickNextSlot = async () => {
     const { data, error } = await supabase
       .from("archive_emails")
@@ -294,6 +383,7 @@ export function EmailArchiveDialog({
       refreshEmailLists();
       if (res.scheduledFor) {
         toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
+        clearAutosave();
         setOpen(false);
         setLater(false);
         setMessage(defaultMessage ?? "");
@@ -304,6 +394,7 @@ export function EmailArchiveDialog({
         toast.warning(`Skipped (previously unsubscribed or bounced): ${res.suppressed.join(", ")}`);
       for (const f of res.failed) toast.error(`${f.email}: ${f.error}`);
       if (res.failed.length === 0) {
+        clearAutosave();
         setOpen(false);
         setMessage(defaultMessage ?? "");
       }
@@ -334,6 +425,7 @@ export function EmailArchiveDialog({
       });
       setSavedDraftId(res.draftId);
       toast.success("Draft saved — find it at the top of Email Admin");
+      clearAutosave();
       setOpen(false);
       refreshEmailLists();
     } catch (error) {
@@ -354,7 +446,7 @@ export function EmailArchiveDialog({
     .slice(0, 6);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="sm" className="gap-2">
