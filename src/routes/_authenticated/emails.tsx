@@ -897,6 +897,67 @@ function EmailsPage() {
           </div>
         </section>
 
+        {drafts.length > 0 && (
+          <section>
+            <h2 className="mb-3 text-sm font-semibold">Drafts</h2>
+            <div className="space-y-3">
+              {drafts.map((d) => {
+                const payload = d.send_payload ?? null;
+                const recs = (payload?.records ?? []).map((r) => {
+                  const l = r.kind === "letter" ? letters.find((x) => x.id === r.id) : undefined;
+                  return {
+                    kind: r.kind,
+                    id: r.id,
+                    identifier: l?.archive_id ?? (r.kind === "source" ? "DS" : ""),
+                    title: l?.title ?? null,
+                    date: l?.normalized_date ?? null,
+                  };
+                });
+                return (
+                  <div
+                    key={d.id}
+                    className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm"
+                  >
+                    <span className={`rounded border px-1.5 py-0.5 text-xs ${STATUS_STYLES["draft"]}`}>
+                      draft
+                    </span>
+                    {recs.length > 0 && (
+                      <span className="font-mono text-xs font-semibold">
+                        {recs.map((r) => r.identifier).filter(Boolean).join(", ")}
+                      </span>
+                    )}
+                    <span className="min-w-0 break-words font-medium">{d.subject}</span>
+                    <span className="min-w-0 break-all text-muted-foreground">
+                      {(d.recipients ?? []).map((r) => r.email).join(", ")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Last saved {new Date(d.updated_at ?? d.sent_at).toLocaleString()}
+                    </span>
+                    <span className="ml-auto flex flex-wrap gap-2">
+                      <EmailArchiveDialog
+                        records={recs}
+                        draftId={d.id}
+                        draft={payload}
+                        research={payload?.research ?? undefined}
+                        onDraftSaved={() => {
+                          qc.invalidateQueries({ queryKey: ["archive-email-drafts"] });
+                          qc.invalidateQueries({ queryKey: ["archive-emails"] });
+                        }}
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            Open draft
+                          </Button>
+                        }
+                      />
+                      <DeleteDraftButton emailId={d.id} />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section>
           <h2 className="mb-3 text-sm font-semibold">Sent &amp; scheduled emails</h2>
           {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
