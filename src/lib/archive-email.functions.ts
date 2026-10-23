@@ -24,6 +24,8 @@ export type SendArchiveEmailInput = {
   thumbnails?: boolean;
   /** ISO time to send later; omitted = send now. */
   scheduledFor?: string | null;
+  /** Draft being sent; the draft row is removed once the send is queued/delivered. */
+  draftId?: string | null;
 };
 
 export type SendArchiveEmailResult = {
