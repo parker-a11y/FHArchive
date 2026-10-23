@@ -760,7 +760,7 @@ function EmailsPage() {
       />
       <div className="space-y-6 px-4 py-6 sm:px-8">
         <section className="rounded-lg border border-border bg-card p-4">
-          <h2 className="text-sm font-semibold">Has this record been emailed?</h2>
+          <h2 className="text-sm font-semibold">Has this been emailed or scheduled?</h2>
           <Input
             value={lookup}
             onChange={(e) => setLookup(e.target.value)}
@@ -773,7 +773,7 @@ function EmailsPage() {
               <p className="text-sm">
                 <strong className="font-mono">{lookupId}</strong>{" "}
                 {lookupEmails.length === 0
-                  ? "has never been used in an email."
+                  ? "has never been emailed or scheduled."
                   : `appears in ${lookupEmails.length} email${lookupEmails.length === 1 ? "" : "s"}:`}
               </p>
               {lookupEmails.map((e) => renderEmail(e))}
