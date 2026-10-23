@@ -3,6 +3,7 @@
 
 - Combined transcription page boundaries use the shared transcription-format helper; join only continuing prose and preserve page-level source text and structural breaks.
 - Shared rich-text editors must shrink to their container and wrap long image tokens and URLs with overflow-wrap: anywhere; embedded images must not widen email or blog editing dialogs.
+- Shared photo frames use phrasing-compatible elements with a figure role; image tokens can appear within rich-text paragraphs without invalid HTML nesting.
 
 - The shared image picker stops click propagation at its dialog boundary and opens its own file input by ref; portaled clicks must not reach email-row handlers that cancel native file selection.
 
