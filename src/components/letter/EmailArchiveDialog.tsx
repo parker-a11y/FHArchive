@@ -85,20 +85,23 @@ export function EmailArchiveDialog({
   const identifiers = recordList.map((r) => r.identifier).join(", ");
   const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
+  const saveDraftFn = useServerFn(saveEmailDraft);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>(draft?.recipients ?? []);
   const [entry, setEntry] = useState("");
+  const [savedDraftId, setSavedDraftId] = useState<string | null>(draftId ?? null);
   const [subject, setSubject] = useState(
-    defaultSubject ??
+    draft?.subject ??
+      defaultSubject ??
       (single?.title
         ? `${single.identifier} — ${single.title}`
         : `${identifiers || "A note"} from The Francis Files`),
   );
-  const [headerSubtitle, setHeaderSubtitle] = useState("From The Francis Files");
-  const [message, setMessage] = useState(defaultMessage ?? "");
-  const [includeTranscription, setIncludeTranscription] = useState(true);
-  const [includeImages, setIncludeImages] = useState(true);
+  const [headerSubtitle, setHeaderSubtitle] = useState(draft?.headerSubtitle ?? "From The Francis Files");
+  const [message, setMessage] = useState(draft?.message ?? defaultMessage ?? "");
+  const [includeTranscription, setIncludeTranscription] = useState(draft?.includeTranscription ?? true);
+  const [includeImages, setIncludeImages] = useState(draft?.includeImages ?? true);
   const editorRef = useRef<import("@tiptap/react").Editor | null>(null);
   // Reset the subject whenever the dialog switches to a different record,
   // so a previous record's title can never carry over.
@@ -126,7 +129,7 @@ export function EmailArchiveDialog({
     return bad.length ? bad : null;
   })();
 
-  const [includeEnvelope, setIncludeEnvelope] = useState(true);
+  const [includeEnvelope, setIncludeEnvelope] = useState(draft?.includeEnvelope ?? true);
   const [later, setLater] = useState(Boolean(defaultSendAt));
   const [sendAt, setSendAt] = useState(defaultSendAt ?? "");
   // Keep the scheduled time in step with a day picked after this dialog mounted.
