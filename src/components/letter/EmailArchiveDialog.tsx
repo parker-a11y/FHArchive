@@ -108,6 +108,8 @@ export function EmailArchiveDialog({
   const recordKey = recordList.map((r) => r.identifier).join("|");
   const singleTitle = single?.title ?? null;
   useEffect(() => {
+    // A restored draft keeps its saved subject.
+    if (draft?.subject) return;
     setSubject(
       defaultSubject ??
         (single?.title
