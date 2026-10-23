@@ -577,6 +577,34 @@ function EmailsPage() {
         date: l?.normalized_date ?? null,
       };
     });
+    // For a queued email: earlier sends of any of its records to someone other
+    // than the archivist's own proofing addresses.
+    const PERSONAL = new Set(["parkerjh@gmail.com", "parker@tenfoldcapture.com"]);
+    const ownIds = new Set(refs.filter((r) => r.kind === "letter").map((r) => r.id));
+    const prevSends =
+      e.status === "scheduled" && ownIds.size
+        ? emails
+            .filter(
+              (p) =>
+                p.id !== e.id &&
+                SENT_STATUSES.has(p.status) &&
+                (p.recipients ?? []).some((r) => !PERSONAL.has((r.email ?? "").toLowerCase())) &&
+                (emailRecords as EmailRecordRef[]).some(
+                  (r) => r.email_id === p.id && ownIds.has(r.letter_id),
+                ),
+            )
+            .map((p) => ({
+              date: new Date(p.sent_at).toLocaleDateString([], {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+              to: (p.recipients ?? [])
+                .map((r) => r.email)
+                .filter((em) => !PERSONAL.has((em ?? "").toLowerCase()))
+                .join(", "),
+            }))
+        : [];
     return (
       <details
         key={e.id}
