@@ -81,15 +81,22 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     if (!data.subject) throw new Error("A subject is required.");
 
     const { deliverArchiveEmail, scheduleArchiveEmail } = await import("@/lib/archive-email-send.server");
-    const { scheduledFor, ...payload } = data;
+    const { scheduledFor, draftId, ...payload } = data;
+    const consumeDraft = async () => {
+      if (!draftId) return;
+      await db.from("archive_emails").delete().eq("id", draftId).eq("status", "draft");
+    };
     if (scheduledFor) {
       const when = new Date(scheduledFor);
       if (Number.isNaN(when.getTime())) throw new Error("That scheduled time is not valid.");
       if (when.getTime() < Date.now() + 60_000) throw new Error("Pick a time at least a minute from now.");
       const emailId = await scheduleArchiveEmail(db, context.userId, payload, when);
+      await consumeDraft();
       return { emailId, sent: [], suppressed: [], failed: [], scheduledFor: when.toISOString() };
     }
-    return deliverArchiveEmail(db, context.userId, payload);
+    const result = await deliverArchiveEmail(db, context.userId, payload);
+    if (result.failed.length === 0) await consumeDraft();
+    return result;
   });
 
 export type SaveEmailDraftInput = {
