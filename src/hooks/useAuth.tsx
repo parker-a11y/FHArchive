@@ -109,15 +109,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       } catch (error) {
         console.error("Failed to refresh archive access:", error);
-        setAccess({
-          isAdmin: false,
-          isApprovedGuest: false,
-          isArchivist: false,
-          isPendingGuest: true,
-          canReadArchive: false,
-        });
+        // A transient failure (busy database, dropped connection) must not
+        // demote a signed-in admin/archivist to "pending guest" mid-session.
+        // Keep whatever access we last confirmed; if we have never confirmed
+        // any (first load), retry shortly instead of showing the pending screen.
+        if (!hasConfirmedAccess) {
+          window.setTimeout(() => {
+            void supabase.auth.getSession().then(({ data }) => refreshAccess(data.session));
+          }, 3000);
+        }
       }
     }
+
+    let hasConfirmedAccess = false;
 
     supabase.auth.getSession().then(({ data: d }) => {
       setSession(d.session);
