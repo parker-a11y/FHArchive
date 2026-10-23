@@ -20,7 +20,28 @@ export type ArchiveEmail = {
   sent_at: string;
   scheduled_for?: string | null;
   /** Queued emails keep their attached records here until they send. */
-  send_payload?: { records?: { kind: "letter" | "source"; id: string }[] } | null;
+  send_payload?: EmailDraftPayload | null;
+  updated_at?: string;
+};
+
+/** Everything needed to reopen a draft (or queued email) in the composer. */
+export type EmailDraftPayload = {
+  records?: { kind: "letter" | "source"; id: string }[];
+  subject?: string;
+  headerSubtitle?: string;
+  message?: string;
+  recipients?: { email: string; name?: string | null }[];
+  includeTranscription?: boolean;
+  includeImages?: boolean;
+  includeEnvelope?: boolean;
+  thumbnails?: boolean;
+  research?: {
+    question?: string | null;
+    answer?: string | null;
+    caveats?: string | null;
+    confidence?: string | null;
+    sources?: { title?: string | null; url: string }[];
+  } | null;
 };
 
 export async function fetchContacts(): Promise<ArchiveContact[]> {
@@ -37,8 +58,21 @@ export async function fetchSentEmails(): Promise<ArchiveEmail[]> {
   const { data, error } = await supabase
     .from("archive_emails")
     .select("id, subject, message_body, header_title, header_subtitle, recipients, status, error, sent_at, scheduled_for, send_payload")
+    .neq("status", "draft")
     .order("sent_at", { ascending: false })
     .limit(200);
+  if (error) throw error;
+  return (data ?? []) as unknown as ArchiveEmail[];
+}
+
+/** Saved email drafts, most recently edited first. Admin only (RLS). */
+export async function fetchDraftEmails(): Promise<ArchiveEmail[]> {
+  const { data, error } = await supabase
+    .from("archive_emails")
+    .select("id, subject, message_body, header_title, header_subtitle, recipients, status, error, sent_at, scheduled_for, send_payload, updated_at")
+    .eq("status", "draft")
+    .order("updated_at", { ascending: false })
+    .limit(50);
   if (error) throw error;
   return (data ?? []) as unknown as ArchiveEmail[];
 }
