@@ -657,16 +657,32 @@ function EmailsPage() {
           </span>
         </summary>
         <div className="mx-auto mt-5 max-w-[72ch] space-y-4 overflow-wrap-anywhere border-t border-border pt-5 text-base leading-[1.8] [overflow-wrap:anywhere] [&_.rich-text-view]:leading-[1.8] [&_.rich-text-view_p]:mb-5 [&_.rich-text-view_blockquote]:my-6 [&_.rich-text-view_blockquote]:font-display [&_.rich-text-view_blockquote]:text-lg">
-          {prevSends.length > 0 && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm dark:border-amber-900 dark:bg-amber-950/40">
-              <p className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+          {e.status === "scheduled" && (
+            <div
+              className={`rounded-md border px-3 py-2 text-sm ${
+                prevSends.length
+                  ? "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40"
+                  : "border-border bg-muted/40"
+              }`}
+            >
+              <p
+                className={`text-xs font-semibold uppercase tracking-wide ${
+                  prevSends.length
+                    ? "text-amber-800 dark:text-amber-300"
+                    : "text-muted-foreground"
+                }`}
+              >
                 Previously sent
               </p>
-              {prevSends.map((p, i) => (
-                <p key={i} className="mt-0.5 text-muted-foreground">
-                  {p.date} — {p.to}
-                </p>
-              ))}
+              {prevSends.length ? (
+                prevSends.map((p, i) => (
+                  <p key={i} className="mt-0.5 text-muted-foreground">
+                    {p.date} — {p.to}
+                  </p>
+                ))
+              ) : (
+                <p className="mt-0.5 font-medium">Never</p>
+              )}
             </div>
           )}
           {e.message_body &&
