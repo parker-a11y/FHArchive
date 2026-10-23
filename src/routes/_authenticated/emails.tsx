@@ -11,13 +11,14 @@ import { Input } from "@/components/ui/input";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import {
   fetchAllEmailRecords,
+  fetchDraftEmails,
   fetchEmailLetterList,
   fetchSentEmails,
   type ArchiveEmail,
   type EmailRecordRef,
 } from "@/lib/archive-email";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
-import { addScheduledRecipients, cancelScheduledEmail, rescheduleEmails } from "@/lib/archive-email.functions";
+import { addScheduledRecipients, cancelScheduledEmail, deleteEmailDraft, rescheduleEmails } from "@/lib/archive-email.functions";
 import { useQueryClient } from "@tanstack/react-query";
 import { RichTextView } from "@/components/RichTextView";
 import { isRichHtml } from "@/lib/rich-text";
@@ -64,6 +65,7 @@ const STATUS_STYLES: Record<string, string> = {
   sending: "border-border bg-secondary text-muted-foreground",
   scheduled: "border-accent bg-accent text-accent-foreground",
   cancelled: "border-border bg-secondary text-muted-foreground line-through",
+  draft: "border-amber-500/40 bg-amber-500/10 text-amber-700",
 };
 
 const SENT_STATUSES = new Set(["sent", "partial"]);
@@ -502,6 +504,10 @@ function EmailsPage() {
   const { data: emails = [], isLoading } = useQuery({
     queryKey: ["archive-emails"],
     queryFn: fetchSentEmails,
+  });
+  const { data: drafts = [] } = useQuery({
+    queryKey: ["archive-email-drafts"],
+    queryFn: fetchDraftEmails,
   });
   const { data: emailRecords = [] } = useQuery({
     queryKey: ["archive-email-records"],
