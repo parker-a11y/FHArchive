@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
@@ -86,6 +86,13 @@ export function EmailArchiveDialog({
   const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
   const saveDraftFn = useServerFn(saveEmailDraft);
+  const qc = useQueryClient();
+  // The composer is used from many pages; always refresh Email Admin's lists.
+  const refreshEmailLists = () => {
+    qc.invalidateQueries({ queryKey: ["archive-email-drafts"] });
+    qc.invalidateQueries({ queryKey: ["archive-emails"] });
+    onDraftSaved?.();
+  };
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recipients, setRecipients] = useState<Recipient[]>(draft?.recipients ?? []);
@@ -284,7 +291,7 @@ export function EmailArchiveDialog({
           draftId: savedDraftId,
         },
       });
-      onDraftSaved?.();
+      refreshEmailLists();
       if (res.scheduledFor) {
         toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
         setOpen(false);
@@ -328,7 +335,7 @@ export function EmailArchiveDialog({
       setSavedDraftId(res.draftId);
       toast.success("Draft saved — find it at the top of Email Admin");
       setOpen(false);
-      onDraftSaved?.();
+      refreshEmailLists();
     } catch (error) {
       toast.error((error as Error).message || "Could not save the draft");
     } finally {
