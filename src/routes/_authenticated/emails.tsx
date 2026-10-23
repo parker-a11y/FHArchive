@@ -111,6 +111,30 @@ function GetEmailLinkButton({ emailId }: { emailId: string }) {
   );
 }
 
+function DeleteDraftButton({ emailId }: { emailId: string }) {
+  const del = useServerFn(deleteEmailDraft);
+  const qc = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const remove = async () => {
+    if (!window.confirm("Delete this draft? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      await del({ data: { emailId } });
+      toast.success("Draft deleted");
+      qc.invalidateQueries({ queryKey: ["archive-email-drafts"] });
+    } catch (error) {
+      toast.error((error as Error).message || "Could not delete the draft");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button variant="outline" size="sm" onClick={remove} disabled={busy}>
+      {busy ? "Deleting…" : "Delete"}
+    </Button>
+  );
+}
+
 function AddRecipientsButton({ emailId }: { emailId: string }) {
   const add = useServerFn(addScheduledRecipients);
   const qc = useQueryClient();
@@ -501,6 +525,7 @@ const DOT_LABEL: Record<LetterState, string> = {
 };
 
 function EmailsPage() {
+  const qc = useQueryClient();
   const { data: emails = [], isLoading } = useQuery({
     queryKey: ["archive-emails"],
     queryFn: fetchSentEmails,
