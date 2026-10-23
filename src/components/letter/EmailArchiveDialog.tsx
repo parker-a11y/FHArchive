@@ -22,8 +22,8 @@ import { ArchivePhotoPicker } from "@/components/media/ArchivePhotoPicker";
 import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTextEditor";
 
 
-import { fetchContacts } from "@/lib/archive-email";
-import { sendArchiveEmail } from "@/lib/archive-email.functions";
+import { fetchContacts, type EmailDraftPayload } from "@/lib/archive-email";
+import { sendArchiveEmail, saveEmailDraft } from "@/lib/archive-email.functions";
 import {
   checkStaleTranscriptions,
   rollupRecordTranscription,
@@ -54,6 +54,9 @@ export function EmailArchiveDialog({
   defaultSendAt,
   research,
   thumbnails,
+  draftId,
+  draft,
+  onDraftSaved,
 }: {
   kind?: "letter" | "source";
   id?: string;
@@ -70,6 +73,12 @@ export function EmailArchiveDialog({
   research?: EmailResearchPayload;
   /** Show one small clickable thumbnail per record instead of full scans. */
   thumbnails?: boolean;
+  /** Existing draft row being edited; removed once the email is sent/scheduled. */
+  draftId?: string;
+  /** Saved draft values to restore into the composer. */
+  draft?: EmailDraftPayload | null;
+  /** Called after a draft is saved or the email is sent/scheduled. */
+  onDraftSaved?: () => void;
 }) {
   const recordList: RecordRef[] =
     records ?? (id ? [{ kind: kind!, id: id!, identifier: identifier!, title }] : []);
