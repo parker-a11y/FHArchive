@@ -121,7 +121,8 @@ function EmailPdfButton({ emailId }: { emailId: string }) {
     setBusy(true);
     try {
       const res = await ensure({ data: { emailId } });
-      w.location.href = `${res.url.split("?")[0].replace(/\/$/, "")}/pdf`;
+      const token = new URL(res.url).pathname.split("/").filter(Boolean).pop();
+      w.location.href = `${window.location.origin}/e/${token}/pdf`;
     } catch (error) {
       w.close();
       toast.error((error as Error).message || "Could not prepare the PDF");
