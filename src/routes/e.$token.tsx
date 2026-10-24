@@ -1,6 +1,6 @@
 import { retryUntilFound, NO_STORE_HEADERS } from "@/lib/share-retry";
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { getSharedEmail, getSharedEmailHtml } from "@/lib/email-share.functions";
 
 export const Route = createFileRoute("/e/$token")({
@@ -45,7 +45,26 @@ function SharedEmailPage() {
   const { email, html } = Route.useLoaderData();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const printedRef = useRef(false);
-  const printPdf = () => frameRef.current?.contentWindow?.print();
+  // Print the email itself as a standalone page (sandboxed frames can't open print dialogs reliably).
+  const printInto = (w: Window) => {
+    if (!html) return;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    const go = () => setTimeout(() => { w.focus(); w.print(); }, 500);
+    if (w.document.readyState === "complete") go();
+    else w.addEventListener("load", go);
+  };
+  const printPdf = () => {
+    const w = window.open("", "_blank");
+    if (w) printInto(w);
+  };
+  useEffect(() => {
+    if (printedRef.current || !html) return;
+    if (new URLSearchParams(window.location.search).get("print") !== "1") return;
+    printedRef.current = true;
+    printInto(window);
+  }, [html]);
 
   if (!email || !html) {
     return (
@@ -83,10 +102,6 @@ function SharedEmailPage() {
             const frame = ev.currentTarget;
             const doc = frame.contentDocument;
             if (doc) frame.style.height = `${doc.documentElement.scrollHeight + 32}px`;
-            if (!printedRef.current && new URLSearchParams(window.location.search).get("print") === "1") {
-              printedRef.current = true;
-              setTimeout(() => frame.contentWindow?.print(), 600);
-            }
           }}
         />
       </div>
