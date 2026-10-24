@@ -568,8 +568,17 @@ function EmailsPage() {
         .filter((r) => r.archive_id.toUpperCase() === lookupId)
         .map((r) => r.email_id),
     );
+    // Queued emails have no logged records yet — match the records saved with the send.
+    const letterById = new Map(letters.map((l) => [l.id, l]));
+    for (const e of emails) {
+      if (e.status !== "scheduled") continue;
+      const queued = (e.send_payload?.records ?? []).some(
+        (r) => r.kind === "letter" && letterById.get(r.id)?.archive_id.toUpperCase() === lookupId,
+      );
+      if (queued) ids.add(e.id);
+    }
     return emails.filter((e) => ids.has(e.id));
-  }, [lookupId, emailRecords, emails]);
+  }, [lookupId, emailRecords, emails, letters]);
 
   const [recipientLookup, setRecipientLookup] = useState("");
   const recipientQuery = recipientLookup.trim().toLowerCase();
@@ -760,8 +769,16 @@ function EmailsPage() {
       if (SENT_STATUSES.has(status)) map.set(r.letter_id, "sent");
       else if (status === "scheduled" && current !== "sent") map.set(r.letter_id, "queued");
     }
+    // Queued emails carry their records in send_payload until they send.
+    for (const e of emails) {
+      if (e.status !== "scheduled") continue;
+      for (const r of e.send_payload?.records ?? []) {
+        if (r.kind !== "letter") continue;
+        if (map.get(r.id) !== "sent") map.set(r.id, "queued");
+      }
+    }
     return map;
-  }, [emailRecords, statusById]);
+  }, [emailRecords, statusById, emails]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
