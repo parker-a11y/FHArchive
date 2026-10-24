@@ -718,9 +718,10 @@ function EmailsPage() {
               ev.preventDefault();
               ev.stopPropagation();
             }}
+            className="flex gap-2"
           >
             <GetEmailLinkButton emailId={e.id} />
-<EmailPdfButton emailId={e.id} />
+            <EmailPdfButton emailId={e.id} />
           </span>
         </summary>
         <div className="mx-auto mt-5 max-w-[72ch] space-y-4 overflow-wrap-anywhere border-t border-border pt-5 text-base leading-[1.8] [overflow-wrap:anywhere] [&_.rich-text-view]:leading-[1.8] [&_.rich-text-view_p]:mb-5 [&_.rich-text-view_blockquote]:my-6 [&_.rich-text-view_blockquote]:font-display [&_.rich-text-view_blockquote]:text-lg">
