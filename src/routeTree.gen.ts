@@ -68,6 +68,7 @@ import { Route as ApiPublicResearchReindexRouteImport } from './routes/api/publi
 import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/public/research-snapshot'
 import { Route as ApiPublicScheduledEmailsRouteImport } from './routes/api/public/scheduled-emails'
 import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
+import { Route as ETokenPdfRouteImport } from './routes/e_.$token.pdf'
 import { Route as AuthenticatedAdminNotesIndexRouteImport } from './routes/_authenticated/admin/notes/index'
 import { Route as AuthenticatedAdminNotesNoteIdRouteImport } from './routes/_authenticated/admin/notes/$noteId'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -395,6 +396,11 @@ const ApiPublicWeeklyRecapRoute = ApiPublicWeeklyRecapRouteImport.update({
   path: '/api/public/weekly-recap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ETokenPdfRoute = ETokenPdfRouteImport.update({
+  id: '/e_/$token/pdf',
+  path: '/e/$token/pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminNotesIndexRoute =
   AuthenticatedAdminNotesIndexRouteImport.update({
     id: '/admin/notes/',
@@ -464,6 +470,7 @@ export interface FileRoutesByFullPath {
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
+  '/e/$token/pdf': typeof ETokenPdfRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -527,6 +534,7 @@ export interface FileRoutesByTo {
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
+  '/e/$token/pdf': typeof ETokenPdfRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/keywords': typeof AuthenticatedKeywordsIndexRoute
@@ -592,6 +600,7 @@ export interface FileRoutesById {
   '/api/public/research-snapshot': typeof ApiPublicResearchSnapshotRoute
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
+  '/e_/$token/pdf': typeof ETokenPdfRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -657,6 +666,7 @@ export interface FileRouteTypes {
     | '/api/public/research-snapshot'
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
+    | '/e/$token/pdf'
     | '/containers/'
     | '/events/'
     | '/keywords/'
@@ -720,6 +730,7 @@ export interface FileRouteTypes {
     | '/api/public/research-snapshot'
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
+    | '/e/$token/pdf'
     | '/containers'
     | '/events'
     | '/keywords'
@@ -784,6 +795,7 @@ export interface FileRouteTypes {
     | '/api/public/research-snapshot'
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
+    | '/e_/$token/pdf'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
     | '/_authenticated/keywords/'
@@ -824,6 +836,7 @@ export interface RootRouteChildren {
   ApiPublicResearchSnapshotRoute: typeof ApiPublicResearchSnapshotRoute
   ApiPublicScheduledEmailsRoute: typeof ApiPublicScheduledEmailsRoute
   ApiPublicWeeklyRecapRoute: typeof ApiPublicWeeklyRecapRoute
+  ETokenPdfRoute: typeof ETokenPdfRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -1242,6 +1255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWeeklyRecapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/e_/$token/pdf': {
+      id: '/e_/$token/pdf'
+      path: '/e/$token/pdf'
+      fullPath: '/e/$token/pdf'
+      preLoaderRoute: typeof ETokenPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/notes/': {
       id: '/_authenticated/admin/notes/'
       path: '/admin/notes'
@@ -1374,6 +1394,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicResearchSnapshotRoute: ApiPublicResearchSnapshotRoute,
   ApiPublicScheduledEmailsRoute: ApiPublicScheduledEmailsRoute,
   ApiPublicWeeklyRecapRoute: ApiPublicWeeklyRecapRoute,
+  ETokenPdfRoute: ETokenPdfRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

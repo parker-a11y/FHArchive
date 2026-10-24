@@ -45,26 +45,14 @@ function SharedEmailPage() {
   const { email, html } = Route.useLoaderData();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const printedRef = useRef(false);
-  // Print the email itself as a standalone page (sandboxed frames can't open print dialogs reliably).
-  const printInto = (w: Window) => {
-    if (!html) return;
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    const go = () => setTimeout(() => { w.focus(); w.print(); }, 500);
-    if (w.document.readyState === "complete") go();
-    else w.addEventListener("load", go);
-  };
-  const printPdf = () => {
-    const w = window.open("", "_blank");
-    if (w) printInto(w);
-  };
+  const { token } = Route.useParams();
+  const printPdf = () => window.open(`/e/${token}/pdf`, "_blank");
   useEffect(() => {
     if (printedRef.current || !html) return;
     if (new URLSearchParams(window.location.search).get("print") !== "1") return;
     printedRef.current = true;
-    printInto(window);
-  }, [html]);
+    window.location.replace(`/e/${token}/pdf`);
+  }, [html, token]);
 
   if (!email || !html) {
     return (
