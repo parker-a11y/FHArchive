@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Check, ChevronLeft, ChevronRight, Link2, Loader2, Send } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,32 @@ function GetEmailLinkButton({ emailId }: { emailId: string }) {
         <Link2 className="size-4" />
       )}
       Get link
+    </Button>
+  );
+}
+
+/** Opens the email's view-only page and its print dialog so it can be saved as a PDF. */
+function EmailPdfButton({ emailId }: { emailId: string }) {
+  const ensure = useServerFn(ensureEmailShareLink);
+  const [busy, setBusy] = useState(false);
+  const open = async () => {
+    const w = window.open("", "_blank");
+    if (!w) return toast.error("Allow pop-ups to download the PDF");
+    setBusy(true);
+    try {
+      const res = await ensure({ data: { emailId } });
+      w.location.href = `${res.url}${res.url.includes("?") ? "&" : "?"}print=1`;
+    } catch (error) {
+      w.close();
+      toast.error((error as Error).message || "Could not prepare the PDF");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button variant="outline" size="sm" className="gap-2" onClick={open} disabled={busy} title="Save this email as a PDF">
+      {busy ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
+      PDF
     </Button>
   );
 }
@@ -692,8 +718,10 @@ function EmailsPage() {
               ev.preventDefault();
               ev.stopPropagation();
             }}
+            className="flex gap-2"
           >
             <GetEmailLinkButton emailId={e.id} />
+            <EmailPdfButton emailId={e.id} />
           </span>
         </summary>
         <div className="mx-auto mt-5 max-w-[72ch] space-y-4 overflow-wrap-anywhere border-t border-border pt-5 text-base leading-[1.8] [overflow-wrap:anywhere] [&_.rich-text-view]:leading-[1.8] [&_.rich-text-view_p]:mb-5 [&_.rich-text-view_blockquote]:my-6 [&_.rich-text-view_blockquote]:font-display [&_.rich-text-view_blockquote]:text-lg">

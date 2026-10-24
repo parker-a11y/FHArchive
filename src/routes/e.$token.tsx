@@ -1,5 +1,6 @@
 import { retryUntilFound, NO_STORE_HEADERS } from "@/lib/share-retry";
 import { createFileRoute } from "@tanstack/react-router";
+import { useRef } from "react";
 import { getSharedEmail, getSharedEmailHtml } from "@/lib/email-share.functions";
 
 export const Route = createFileRoute("/e/$token")({
@@ -42,6 +43,9 @@ export const Route = createFileRoute("/e/$token")({
 
 function SharedEmailPage() {
   const { email, html } = Route.useLoaderData();
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const printedRef = useRef(false);
+  const printPdf = () => frameRef.current?.contentWindow?.print();
 
   if (!email || !html) {
     return (
@@ -60,16 +64,29 @@ function SharedEmailPage() {
         <p className="mb-3 px-2 text-xs text-muted-foreground">
           {email.scheduled ? "Scheduled for" : "Sent"} {new Date(email.sentAt).toLocaleString()}
           {email.senderEmail ? ` · from ${email.senderEmail}` : ""}
+          <button
+            type="button"
+            onClick={printPdf}
+            className="ml-3 rounded border border-border bg-card px-2 py-1 font-medium text-foreground hover:bg-secondary"
+            title="Opens the print dialog — choose Save as PDF"
+          >
+            Download PDF
+          </button>
         </p>
         <iframe
+          ref={frameRef}
           title={email.subject}
           srcDoc={html}
-          sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"
           className="h-[80vh] w-full rounded border border-border bg-white"
           onLoad={(ev) => {
             const frame = ev.currentTarget;
             const doc = frame.contentDocument;
             if (doc) frame.style.height = `${doc.documentElement.scrollHeight + 32}px`;
+            if (!printedRef.current && new URLSearchParams(window.location.search).get("print") === "1") {
+              printedRef.current = true;
+              setTimeout(() => frame.contentWindow?.print(), 600);
+            }
           }}
         />
       </div>
