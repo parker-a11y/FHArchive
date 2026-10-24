@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { FileDown } from "lucide-react";
+import { printHtmlAsPdf } from "@/lib/print-pdf";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -327,6 +329,18 @@ function RecapPage() {
                     )}
                     Get link
                   </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => {
+                      const el = document.getElementById("recap-print-body");
+                      if (!el || !printHtmlAsPdf(recap.title, el.outerHTML))
+                        toast.error("Allow pop-ups to download the PDF");
+                    }}
+                    title="Opens the print dialog — choose Save as PDF"
+                  >
+                    <FileDown className="size-4" /> Download PDF
+                  </Button>
                   <Button className="gap-2" onClick={() => setEmailOpen(true)}>
                     <Mail className="size-4" /> Email recap
                   </Button>
@@ -411,7 +425,7 @@ function RecapPage() {
             </div>
           </div>
         ) : (
-          <article className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          <article id="recap-print-body" className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
             <h1 className="font-display text-2xl font-semibold tracking-tight">{recap.title}</h1>
             {recap.lede && <p className="mt-2 text-muted-foreground">{recap.lede}</p>}
 
