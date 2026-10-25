@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { validateEmailAttachments, type EmailAttachment } from "./email-attachments";
 
 export type SendArchiveEmailInput = {
+  attachments?: EmailAttachment[];
   recipients: { email: string; name?: string | null }[];
   subject: string;
   headerTitle?: string;
@@ -43,6 +45,7 @@ export type SendArchiveEmailResult = {
 export const sendArchiveEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: SendArchiveEmailInput) => ({
+    attachments: data.attachments ?? [],
     recipients: (data.recipients ?? [])
       .slice(0, 25)
       .map((r) => ({ email: String(r.email).trim().toLowerCase(), name: r.name ?? null }))
@@ -77,6 +80,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
     const db = context.supabase;
     const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
     if (!isAdmin) throw new Error("Only archive administrators can send email.");
+    data.attachments = validateEmailAttachments(data.attachments, context.userId);
     if (data.recipients.length === 0) throw new Error("Add at least one valid email address.");
     if (!data.subject) throw new Error("A subject is required.");
 
@@ -100,6 +104,7 @@ export const sendArchiveEmail = createServerFn({ method: "POST" })
   });
 
 export type SaveEmailDraftInput = {
+  attachments?: EmailAttachment[];
   /** Existing draft to overwrite; omitted = create a new draft. */
   draftId?: string | null;
   subject?: string;
@@ -118,6 +123,7 @@ export type SaveEmailDraftInput = {
 export const saveEmailDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: SaveEmailDraftInput) => ({
+    attachments: data.attachments ?? [],
     draftId: data.draftId ? String(data.draftId) : null,
     subject: String(data.subject ?? "").slice(0, 200),
     headerSubtitle: String(data.headerSubtitle ?? "").slice(0, 200),
@@ -150,6 +156,7 @@ export const saveEmailDraft = createServerFn({ method: "POST" })
     const db = context.supabase;
     const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
     if (!isAdmin) throw new Error("Only archive administrators can save drafts.");
+    data.attachments = validateEmailAttachments(data.attachments, context.userId);
 
     const { draftId, subject, headerSubtitle, message, ...rest } = data;
     const payload = {

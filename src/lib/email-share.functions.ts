@@ -103,6 +103,12 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
       includeImages: payload?.includeImages ?? true,
       includeEnvelope: payload?.includeEnvelope ?? true,
     });
+    const { data: files } = await supabaseAdmin.from("archive_email_attachments")
+      .select("filename, storage_path, file_size").eq("email_id", String(e['id']));
+    const { resolveEmailAttachments } = await import("./email-attachments.server");
+    const pendingFiles = (e['send_payload'] as { attachments?: import("./email-attachments").EmailAttachment[] } | null)?.attachments;
+    const attachments = await resolveEmailAttachments(supabaseAdmin, String(e['owner_id']),
+      files?.length ? files.filter((f) => f.storage_path).map((f) => ({ filename: f.filename, storagePath: String(f.storage_path), fileSize: f.file_size ?? 0 })) : pendingFiles);
 
     const [{ render }, { template }, React] = await Promise.all([
       import("@react-email/render"),
@@ -118,6 +124,7 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
     );
 
     const element = React.createElement(template.component, {
+      attachments,
       headerTitle: (e['header_title'] as string | null) || String(e['subject']),
       headerSubtitle: (e['header_subtitle'] as string | null) || undefined,
       message: (e['message_body'] as string | null) || undefined,

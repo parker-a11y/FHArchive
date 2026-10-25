@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { EmailAttachment } from "./email-attachments";
 
 export type ArchiveContact = {
   id: string;
@@ -26,6 +27,7 @@ export type ArchiveEmail = {
 
 /** Everything needed to reopen a draft (or queued email) in the composer. */
 export type EmailDraftPayload = {
+  attachments?: EmailAttachment[];
   records?: { kind: "letter" | "source"; id: string }[];
   subject?: string;
   headerSubtitle?: string;

@@ -1,7 +1,9 @@
 import type { SendArchiveEmailResult } from "./archive-email.functions";
+import type { EmailAttachment } from "./email-attachments";
 
 /** Validated send input (output of sendArchiveEmail's validator). */
 export type ArchiveEmailPayload = {
+  attachments?: EmailAttachment[];
   recipients: { email: string; name: string | null }[];
   subject: string;
   headerTitle: string;
@@ -49,7 +51,7 @@ export async function scheduleArchiveEmail(
       header_title: data.headerTitle || null,
       header_subtitle: data.headerSubtitle || null,
       recipients: data.recipients,
-      attachment_count: 0,
+      attachment_count: data.attachments?.length ?? 0,
       status: "scheduled",
       scheduled_for: when.toISOString(),
       send_payload: data,
@@ -72,6 +74,8 @@ export async function deliverArchiveEmail(
   const { buildRecords, rememberContacts, ensureShareLinksForRefs, resolveInlinePhotos } =
     await import("@/lib/archive-email.server");
   const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+  const { resolveEmailAttachments } = await import("./email-attachments.server");
+  const attachments = await resolveEmailAttachments(db, userId, data.attachments);
 
   const records = await buildRecords(db, userId, data.records, {
     includeTranscription: data.includeTranscription,
@@ -107,7 +111,7 @@ export async function deliverArchiveEmail(
         header_title: data.headerTitle || null,
         header_subtitle: data.headerSubtitle || null,
         recipients: data.recipients,
-        attachment_count: 0,
+        attachment_count: attachments.length,
         status: "sending",
       })
       .select("id")
@@ -116,6 +120,13 @@ export async function deliverArchiveEmail(
   }
 
   if (emailId && !proof) {
+    for (const file of data.attachments ?? []) {
+      const { error } = await db.from("archive_email_attachments").insert({
+        owner_id: userId, email_id: emailId, filename: file.filename,
+        storage_path: file.storagePath, file_size: file.fileSize,
+      });
+      if (error) throw new Error("Could not save the email attachment.");
+    }
     for (const [i, r] of records.entries()) {
       if (r.kind !== "letter") continue;
       await db.from("archive_email_records").insert({
@@ -130,7 +141,7 @@ export async function deliverArchiveEmail(
 
   const result: SendArchiveEmailResult = { emailId, sent: [], suppressed: [], failed: [] };
 
-  const targets = proof ? [{ email: opts.proofTo!, name: null }] : data.recipients;
+  const targets = opts.proofTo ? [{ email: opts.proofTo, name: null }] : data.recipients;
   for (const recipient of targets) {
     try {
       const res = await sendTemplateEmail("archive-record", recipient.email, {
@@ -138,6 +149,7 @@ export async function deliverArchiveEmail(
           ? `archive-proof-${opts.proofKey ?? crypto.randomUUID()}`
           : `archive-email-${emailId ?? crypto.randomUUID()}-${recipient.email}`,
         templateData: {
+          attachments,
           subject: proof ? `[Proof — sends tomorrow] ${data.subject}` : data.subject,
           headerTitle: data.headerTitle || data.subject,
           headerSubtitle: data.headerSubtitle || undefined,

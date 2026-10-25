@@ -44,6 +44,7 @@ export interface EmailResearch {
 }
 
 export interface ArchiveRecordEmailProps {
+  attachments?: { filename: string; url: string }[]
   headerTitle?: string
   headerSubtitle?: string
   message?: string
@@ -149,6 +150,7 @@ function MessageBody({
 }
 
 const ArchiveRecordEmail = ({
+  attachments = [],
   headerTitle = 'From The Francis Files',
   headerSubtitle,
   message,
@@ -275,6 +277,14 @@ const ArchiveRecordEmail = ({
           </Section>
         ))}
 
+        {attachments.length > 0 ? (
+          <Section>
+            <Text style={label}>Attachments</Text>
+            {attachments.map((file) => (
+              <Text key={file.url} style={body}><Link href={file.url} style={recordLink}>{file.filename}</Link></Text>
+            ))}
+          </Section>
+        ) : null}
         <Hr style={hr} />
         <Text style={footer}>
           {senderName && senderName !== 'The Francis Files'
