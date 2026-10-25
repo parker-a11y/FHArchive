@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Add admin-only blank SEND EMAIL actions to Email Admin and Weekly Recaps, with uploaded file links preserved in drafts, scheduling, and shared emails.
+
 - [x] Join continuing sentences at transcription page boundaries without changing individual page reviews (13 tests passed; verified combined display on FH0559).
 - [x] Restore authenticated daily backups and verify a fresh catalog dump and resumed Google Drive file copying.
 - [x] Publish backup reliability changes so nightly file copying uses bounded, resumable batches (published Oct 20, 2026).
