@@ -3,7 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { CalendarRange, Loader2, Sparkles, Wand2, PenLine } from "lucide-react";
+import { CalendarRange, Loader2, Sparkles, Wand2, PenLine, Send } from "lucide-react";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -85,6 +86,7 @@ function RecapsIndex() {
         actions={
           canGenerate ? (
             <div className="flex flex-wrap gap-2">
+              {isAdmin && <EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />}
               <Button className="gap-2" onClick={() => run.mutate()} disabled={run.isPending}>
                 {run.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-archive-gold" />}
                 GENERATE WEEKLY RECAP NOW

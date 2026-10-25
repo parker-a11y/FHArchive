@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Standalone email uploads use the private `ds-files` sender/email-attachments namespace; drafts and queued payloads retain file metadata, sent emails retain attachment rows, and delivery/shared rendering signs download links without requiring an FH record.
+
 - Combined transcription page boundaries use the shared transcription-format helper; join only continuing prose and preserve page-level source text and structural breaks.
 - Shared rich-text editors must shrink to their container and wrap long image tokens and URLs with overflow-wrap: anywhere; embedded images must not widen email or blog editing dialogs.
 - Shared photo frames use phrasing-compatible elements with a figure role; image tokens can appear within rich-text paragraphs without invalid HTML nesting.

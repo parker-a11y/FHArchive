@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Mail, Plus, X } from "lucide-react";
+import { Mail, Plus, X, Paperclip, Loader2 } from "lucide-react";
+import type { EmailAttachment } from "@/lib/email-attachments";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +82,7 @@ export function EmailArchiveDialog({
   onDraftSaved?: () => void;
 }) {
   const recordList: RecordRef[] =
-    records ?? (id ? [{ kind: kind!, id: id!, identifier: identifier!, title }] : []);
+    records ?? (id && kind && identifier ? [{ kind, id, identifier, title }] : []);
   const identifiers = recordList.map((r) => r.identifier).join(", ");
   const single = recordList.length === 1 ? recordList[0] : null;
   const send = useServerFn(sendArchiveEmail);
@@ -95,6 +96,28 @@ export function EmailArchiveDialog({
   };
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [attachments, setAttachments] = useState<EmailAttachment[]>(draft?.attachments ?? []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Sign in again to upload files.");
+      for (const file of Array.from(files)) {
+        const storagePath = `${user.id}/email-attachments/${crypto.randomUUID()}/${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error } = await supabase.storage.from("ds-files").upload(storagePath, file);
+        if (error) throw new Error(`Could not upload ${file.name}: ${error.message}`);
+        setAttachments((current) => [...current, { filename: file.name, storagePath, fileSize: file.size }]);
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
   const [recipients, setRecipients] = useState<Recipient[]>(draft?.recipients ?? []);
   const [entry, setEntry] = useState("");
   const [savedDraftId, setSavedDraftId] = useState<string | null>(draftId ?? null);
@@ -160,6 +183,7 @@ export function EmailArchiveDialog({
       const raw = localStorage.getItem(autosaveKey);
       if (!raw) return;
       const saved = JSON.parse(raw) as {
+        attachments?: EmailAttachment[];
         subject?: string;
         headerSubtitle?: string;
         message?: string;
@@ -171,6 +195,7 @@ export function EmailArchiveDialog({
         sendAt?: string;
       };
       if (saved.subject !== undefined) setSubject(saved.subject);
+      if (saved.attachments) setAttachments(saved.attachments);
       if (saved.headerSubtitle !== undefined) setHeaderSubtitle(saved.headerSubtitle);
       if (saved.message !== undefined) setMessage(saved.message);
       if (saved.recipients) setRecipients(saved.recipients);
@@ -207,6 +232,7 @@ export function EmailArchiveDialog({
         localStorage.setItem(
           autosaveKey,
           JSON.stringify({
+            attachments,
             subject,
             headerSubtitle,
             message,
@@ -226,6 +252,7 @@ export function EmailArchiveDialog({
   }, [
     open,
     autosaveKey,
+    attachments,
     subject,
     headerSubtitle,
     message,
@@ -365,6 +392,7 @@ export function EmailArchiveDialog({
     try {
       const res = await send({
         data: {
+          attachments,
           recipients,
           subject,
           headerTitle: subject,
@@ -410,6 +438,7 @@ export function EmailArchiveDialog({
     try {
       const res = await saveDraftFn({
         data: {
+          attachments,
           draftId: savedDraftId,
           subject,
           headerSubtitle,
@@ -561,7 +590,7 @@ export function EmailArchiveDialog({
               value={message}
               onChange={setMessage}
               minHeight="28rem"
-              placeholder="A note to go above the record…"
+              placeholder={recordList.length ? "A note to go above the record…" : "Write your email…"}
               onEditorReady={(e) => {
                 editorRef.current = e;
               }}
@@ -580,6 +609,23 @@ export function EmailArchiveDialog({
 
 
           <div className="space-y-2">
+            <input ref={fileInputRef} type="file" multiple className="hidden" aria-label="Email attachments" onChange={(e) => void uploadFiles(e.target.files)} />
+            <Button type="button" variant="outline" className="gap-2" disabled={uploading || busy} onClick={() => fileInputRef.current?.click()}>
+              {uploading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}
+              {uploading ? "Uploading…" : "Attachment Upload"}
+            </Button>
+            {attachments.map((file) => (
+              <div key={file.storagePath} className="flex min-w-0 items-center gap-2 text-sm">
+                <Paperclip className="size-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 break-all">{file.filename}</span>
+                <Button type="button" variant="ghost" size="icon" title={`Remove ${file.filename}`} aria-label={`Remove attachment ${file.filename}`} disabled={busy} onClick={() => setAttachments((current) => current.filter((f) => f.storagePath !== file.storagePath))}>
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {recordList.length > 0 && <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={includeImages}
@@ -614,7 +660,7 @@ export function EmailArchiveDialog({
                 </Button>
               </div>
             )}
-          </div>
+          </div>}
         </div>
 
         <div className="space-y-2 rounded border border-border px-3 py-2">
@@ -643,13 +689,13 @@ export function EmailArchiveDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy || uploading}>
             Cancel
           </Button>
-          <Button variant="outline" onClick={saveDraft} disabled={busy}>
+          <Button variant="outline" onClick={saveDraft} disabled={busy || uploading}>
             {savedDraftId ? "Update draft" : "Save draft"}
           </Button>
-          <Button onClick={submit} disabled={busy}>
+          <Button onClick={submit} disabled={busy || uploading}>
             {busy ? (later ? "Scheduling…" : "Sending…") : later ? "Schedule email" : "Send email"}
           </Button>
         </DialogFooter>
