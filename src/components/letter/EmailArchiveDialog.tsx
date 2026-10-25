@@ -414,6 +414,7 @@ export function EmailArchiveDialog({
         clearAutosave();
         setOpen(false);
         setLater(false);
+        setAttachments([]);
         setMessage(defaultMessage ?? "");
         return;
       }
@@ -422,6 +423,7 @@ export function EmailArchiveDialog({
         toast.warning(`Skipped (previously unsubscribed or bounced): ${res.suppressed.join(", ")}`);
       for (const f of res.failed) toast.error(`${f.email}: ${f.error}`);
       if (res.failed.length === 0) {
+        setAttachments([]);
         clearAutosave();
         setOpen(false);
         setMessage(defaultMessage ?? "");
