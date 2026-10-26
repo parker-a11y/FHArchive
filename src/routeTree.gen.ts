@@ -26,6 +26,7 @@ import { Route as AuthenticatedEnvelopesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedStorageBoxesRouteImport } from './routes/_authenticated/storage-boxes'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
@@ -159,6 +160,12 @@ const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStorageBoxesRoute =
+  AuthenticatedStorageBoxesRouteImport.update({
+    id: '/storage-boxes',
+    path: '/storage-boxes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
@@ -437,6 +444,7 @@ export interface FileRoutesByFullPath {
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
+  '/storage-boxes': typeof AuthenticatedStorageBoxesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
   '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
@@ -500,6 +508,7 @@ export interface FileRoutesByTo {
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
+  '/storage-boxes': typeof AuthenticatedStorageBoxesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
   '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
@@ -566,6 +575,7 @@ export interface FileRoutesById {
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/storage-boxes': typeof AuthenticatedStorageBoxesRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
   '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/queues'
     | '/quotations'
     | '/search'
+    | '/storage-boxes'
     | '/timeline'
     | '/a/$token'
     | '/api/send-sample-email'
@@ -696,6 +707,7 @@ export interface FileRouteTypes {
     | '/queues'
     | '/quotations'
     | '/search'
+    | '/storage-boxes'
     | '/timeline'
     | '/a/$token'
     | '/api/send-sample-email'
@@ -761,6 +773,7 @@ export interface FileRouteTypes {
     | '/_authenticated/queues'
     | '/_authenticated/quotations'
     | '/_authenticated/search'
+    | '/_authenticated/storage-boxes'
     | '/_authenticated/timeline'
     | '/a/$token'
     | '/api/send-sample-email'
@@ -959,6 +972,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof AuthenticatedSearchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/storage-boxes': {
+      id: '/_authenticated/storage-boxes'
+      path: '/storage-boxes'
+      fullPath: '/storage-boxes'
+      preLoaderRoute: typeof AuthenticatedStorageBoxesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/timeline': {
@@ -1296,6 +1316,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
   AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedStorageBoxesRoute: typeof AuthenticatedStorageBoxesRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminAskHistoryRoute: typeof AuthenticatedAdminAskHistoryRoute
@@ -1335,6 +1356,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedStorageBoxesRoute: AuthenticatedStorageBoxesRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminAskHistoryRoute: AuthenticatedAdminAskHistoryRoute,
