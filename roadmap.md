@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add a Storage Boxes summary with record counts and expandable contents grouped by current storage location (587 records verified, search and record links tested).
+
 - [x] Add admin-only blank SEND EMAIL actions to Email Admin and Weekly Recaps, with uploaded file links preserved in drafts, scheduling, and shared emails.
 
 - [x] Join continuing sentences at transcription page boundaries without changing individual page reviews (13 tests passed; verified combined display on FH0559).

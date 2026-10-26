@@ -904,6 +904,9 @@ function LettersTable() {
         description={`${total} records${activeFilterCount ? " matching filters" : ""}`}
         actions={
           <>
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <Link to="/storage-boxes"><Boxes className="size-4" /> Storage Boxes</Link>
+            </Button>
             {isAdmin && (
               <div className="flex items-center gap-1 rounded border border-border px-2 py-1">
                 <span className="text-xs text-muted-foreground">Range</span>
