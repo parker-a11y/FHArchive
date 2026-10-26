@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Current physical storage summaries group paginated, narrow `letters` reads by trimmed `storage_location`, independently of provenance containers; this keeps box contents complete and preserves existing record permissions.
+
 - Standalone email uploads use the private `ds-files` sender/email-attachments namespace; drafts and queued payloads retain file metadata, sent emails retain attachment rows, and delivery/shared rendering signs download links without requiring an FH record.
 
 - Combined transcription page boundaries use the shared transcription-format helper; join only continuing prose and preserve page-level source text and structural breaks.
