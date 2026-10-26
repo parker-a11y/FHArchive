@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Add a Storage Boxes summary with record counts and expandable contents grouped by current storage location.
+- [x] Add a Storage Boxes summary with record counts and expandable contents grouped by current storage location (587 records verified, search and record links tested).
 
 - [x] Add admin-only blank SEND EMAIL actions to Email Admin and Weekly Recaps, with uploaded file links preserved in drafts, scheduling, and shared emails.
 

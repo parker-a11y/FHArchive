@@ -98,7 +98,8 @@ function StorageBoxes() {
           {open && <div id={`box-${group.records[0]?.id}`} className="pb-4">
             {needle && group.matches.length !== group.records.length && <p className="pb-2 text-xs text-muted-foreground">{group.matches.length} matching records</p>}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[540px] text-left text-sm">
+              <table className="w-full min-w-[780px] table-fixed text-left text-sm">
+                <colgroup><col className="w-28" /><col className="w-48" /><col /><col className="w-44" /></colgroup>
                 <thead><tr className="border-b border-border text-xs text-muted-foreground"><th className="px-2 py-2">FH record</th><th className="px-2 py-2">Date</th><th className="px-2 py-2">Title</th><th className="px-2 py-2">Storage</th></tr></thead>
                 <tbody>{group.matches.map((record) => <tr key={record.id} className="border-b border-border/50 hover:bg-muted/40">
                   <td className="px-2 py-2 align-top"><Link to="/letters/$archiveId" params={{ archiveId: record.archive_id }} className="archive-id text-primary hover:underline">{record.archive_id}</Link></td>
