@@ -5,7 +5,7 @@ export type StorageBoxRecord = {
   title: string | null;
   record_type: string;
   storage_location: string | null;
-  storage_type: string;
+  storage_type: string | null;
   storage_folder: string | null;
   normalized_date: string | null;
   date_end: string | null;
