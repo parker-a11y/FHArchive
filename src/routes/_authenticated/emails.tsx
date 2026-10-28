@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send, ShieldCheck } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -834,7 +834,16 @@ function EmailsPage() {
       <PageHeader
         title="Email Admin"
         description="Schedule the next letter, see which records have gone out, and review every send."
-        actions={<EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="gap-2" asChild>
+              <Link to="/backups" title="Open the backup dashboard">
+                <ShieldCheck className="size-4" /> Backups
+              </Link>
+            </Button>
+            <EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />
+          </div>
+        }
       />
       <div className="space-y-6 px-4 py-6 sm:px-8">
         <section className="rounded-lg border border-border bg-card p-4">
