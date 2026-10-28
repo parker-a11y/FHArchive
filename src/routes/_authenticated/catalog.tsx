@@ -1001,28 +1001,23 @@ function QuickEntry() {
                 onChange={(e) => set("origin", e.target.value)}
                 placeholder={isLetter ? "FPO San Francisco" : undefined}
               />
-              {isLetter && (
-                <div className="flex gap-1.5 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
-                    onClick={() => set("origin", "FPO - San Francisco")}
-                  >
-                    FPO - San Francisco
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
-                    onClick={() => set("origin", "Ft Schuyler")}
-                  >
-                    Ft Schuyler
-                  </Button>
+              {isLetter && recentOrigins.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {recentOrigins.map((place) => (
+                    <Button
+                      key={place}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 max-w-full truncate px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
+                      onClick={() => set("origin", place)}
+                    >
+                      {place}
+                    </Button>
+                  ))}
                 </div>
               )}
+
             </div>
             {isLetter && (
               <PostalFields
