@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import { DOMParser as ProseMirrorDOMParser } from "@tiptap/pm/model";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
   PHOTO_TOKEN_SRC,
@@ -153,6 +153,42 @@ function ToolButton({
   );
 }
 
+/**
+ * Quote button behaviour. A plain blockquote toggle always quotes (or unquotes)
+ * the entire paragraph, so quoting one line of a long paragraph quoted all of
+ * it. When the selection covers only part of a single paragraph, split the
+ * paragraph at the selection boundaries first so just the selected lines
+ * become the quotation.
+ */
+function toggleQuote(editor: Editor) {
+  const { from, to, empty } = editor.state.selection;
+  const $from = editor.state.doc.resolve(from);
+  const $to = editor.state.doc.resolve(to);
+  const canSplit =
+    !empty &&
+    $from.sameParent($to) &&
+    $from.parent.type.name === "paragraph" &&
+    !(from <= $from.start() && to >= $from.end());
+  if (!canSplit) {
+    editor.chain().focus().toggleBlockquote().run();
+    return;
+  }
+  editor.commands.focus();
+  const { state, view } = editor;
+  const tr = state.tr;
+  // Split the later boundary first so earlier positions stay valid.
+  if (to < $from.end()) tr.split(to, $to.depth);
+  if (from > $from.start()) tr.split(from, $from.depth);
+  // The selected lines now sit in their own paragraph. A split opens the new
+  // block one position after the split point (a node occupies open and close
+  // tokens), so its content starts at from+2 — or at from+1 when the
+  // selection already began at the start of the paragraph.
+  const cursor = from > $from.start() ? from + 2 : from + 1;
+  tr.setSelection(TextSelection.create(tr.doc, cursor));
+  view.dispatch(tr.scrollIntoView());
+  editor.chain().toggleBlockquote().run();
+}
+
 function Toolbar({
   editor,
   extras,
@@ -228,7 +264,7 @@ function Toolbar({
       {mode === "full" ? <ToolButton
         label="Quotation"
         active={editor.isActive("blockquote")}
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        onClick={() => toggleQuote(editor)}
       >
         <Quote className="size-4" />
       </ToolButton> : null}
