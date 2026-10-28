@@ -262,7 +262,7 @@ function Toolbar({
       {mode === "full" ? <ToolButton
         label="Quotation"
         active={editor.isActive("blockquote")}
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        onClick={() => toggleQuote(editor)}
       >
         <Quote className="size-4" />
       </ToolButton> : null}
