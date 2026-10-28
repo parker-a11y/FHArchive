@@ -162,6 +162,7 @@ function ToolButton({
  */
 function toggleQuote(editor: Editor) {
   const { from, to, empty } = editor.state.selection;
+  console.log("[toggleQuote] sel", JSON.stringify({ from, to, empty }), editor.state.doc.toString().slice(0, 120));
   const $from = editor.state.doc.resolve(from);
   const $to = editor.state.doc.resolve(to);
   const canSplit =
