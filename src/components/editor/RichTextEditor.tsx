@@ -153,6 +153,40 @@ function ToolButton({
   );
 }
 
+/**
+ * Quote button behaviour. A plain blockquote toggle always quotes (or unquotes)
+ * the entire paragraph, so quoting one line of a long paragraph quoted all of
+ * it. When the selection covers only part of a single paragraph, split the
+ * paragraph at the selection boundaries first so just the selected lines
+ * become the quotation.
+ */
+function toggleQuote(editor: Editor) {
+  const { from, to, empty } = editor.state.selection;
+  const $from = editor.state.doc.resolve(from);
+  const $to = editor.state.doc.resolve(to);
+  const canSplit =
+    !empty &&
+    $from.sameParent($to) &&
+    $from.parent.type.name === "paragraph" &&
+    !(from <= $from.start() && to >= $from.end());
+  if (!canSplit) {
+    editor.chain().focus().toggleBlockquote().run();
+    return;
+  }
+  editor
+    .chain()
+    .focus()
+    .command(({ tr }) => {
+      // Split the later boundary first so earlier positions stay valid.
+      if (to < $from.end()) tr.split(to, $to.depth);
+      if (from > $from.start()) tr.split(from, $from.depth);
+      return true;
+    })
+    .setTextSelection(from + 1)
+    .toggleBlockquote()
+    .run();
+}
+
 function Toolbar({
   editor,
   extras,
