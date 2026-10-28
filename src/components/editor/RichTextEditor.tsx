@@ -201,7 +201,8 @@ function Toolbar({
   if (mode === "none") return null;
   const font = (editor.getAttributes("textStyle")["fontFamily"] as string) ?? "";
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 px-1 py-1">
+    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-0.5 rounded-t-md border-b border-border bg-muted px-1 py-1">
+
       <ToolButton
         label="Bold"
         active={editor.isActive("bold")}
@@ -457,7 +458,7 @@ export function RichTextEditor({
     );
 
   return (
-    <div className={cn("min-w-0 w-full overflow-hidden rounded-md border border-input bg-background", className)}>
+    <div className={cn("min-w-0 w-full rounded-md border border-input bg-background", className)}>
       <Toolbar editor={editor} extras={toolbarExtras} mode={toolbarMode} />
       <EditorContent editor={editor} className="min-w-0 max-w-full px-3 py-2 text-sm" />
     </div>
