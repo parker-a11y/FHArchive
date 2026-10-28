@@ -162,7 +162,6 @@ function ToolButton({
  */
 function toggleQuote(editor: Editor) {
   const { from, to, empty } = editor.state.selection;
-  console.log("[toggleQuote] sel", JSON.stringify({ from, to, empty }), editor.state.doc.toString().slice(0, 120));
   const $from = editor.state.doc.resolve(from);
   const $to = editor.state.doc.resolve(to);
   const canSplit =
@@ -170,6 +169,7 @@ function toggleQuote(editor: Editor) {
     $from.sameParent($to) &&
     $from.parent.type.name === "paragraph" &&
     !(from <= $from.start() && to >= $from.end());
+  console.log("[tq] canSplit", canSplit, { from, to });
   if (!canSplit) {
     editor.chain().focus().toggleBlockquote().run();
     return;
@@ -180,9 +180,13 @@ function toggleQuote(editor: Editor) {
   // Split the later boundary first so earlier positions stay valid.
   if (to < $from.end()) tr.split(to, $to.depth);
   if (from > $from.start()) tr.split(from, $from.depth);
+  const isolated = tr.doc.resolve(from + 1);
+  console.log("[tq] isolated parent", isolated.parent.type.name, "text", isolated.parent.textContent);
   tr.setSelection(TextSelection.create(tr.doc, from + 1));
   view.dispatch(tr.scrollIntoView());
+  console.log("[tq] after dispatch", editor.state.selection.from, editor.state.selection.$from.parent.type.name);
   editor.chain().toggleBlockquote().run();
+  console.log("[tq] final html", editor.getHTML().slice(0, 200));
 }
 
 function Toolbar({
