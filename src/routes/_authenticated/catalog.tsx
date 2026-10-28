@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord, previewNextArchiveId, type Letter } from "@/lib/queries";
+import { fetchRecentOrigins } from "@/lib/recent-origins";
+
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
 import { FilePlus2, Printer } from "lucide-react";
 
@@ -222,6 +224,13 @@ function QuickEntry() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { data: people = [] } = usePeopleNames();
+  /** Mailing origin quick picks follow the archive: the two places used last. */
+  const { data: recentOrigins = [] } = useQuery({
+    queryKey: ["recent-origins"],
+    queryFn: () => fetchRecentOrigins(2),
+    staleTime: 30_000,
+  });
+
 
   async function loadNext() {
     try {
@@ -366,7 +375,9 @@ function QuickEntry() {
       if (error) throw error;
       setStartedLetter(data as unknown as Letter);
       qc.invalidateQueries({ queryKey: ["letters"] });
+      qc.invalidateQueries({ queryKey: ["recent-origins"] });
       toast.success(`${created.archive_id} started — add scans below`);
+
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -457,8 +468,10 @@ function QuickEntry() {
       original_order_notes: form.original_order_notes,
     });
     qc.invalidateQueries({ queryKey: ["letters"] });
+    qc.invalidateQueries({ queryKey: ["recent-origins"] });
 
     if (followUpErrors.length) {
+
       toast.warning(`${created.archive_id} was saved, but some details need attention`, {
         description: followUpErrors.join("; "),
         duration: 12000,
