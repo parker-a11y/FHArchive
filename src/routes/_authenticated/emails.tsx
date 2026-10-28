@@ -1,10 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send, ShieldCheck } from "lucide-react";
 import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
