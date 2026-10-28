@@ -182,7 +182,7 @@ function toggleQuote(editor: Editor) {
   if (from > $from.start()) tr.split(from, $from.depth);
   tr.setSelection(TextSelection.create(tr.doc, from + 1));
   view.dispatch(tr.scrollIntoView());
-  editor.chain().focus().toggleBlockquote().run();
+  editor.chain().toggleBlockquote().run();
 }
 
 function Toolbar({
