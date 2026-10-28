@@ -169,24 +169,19 @@ function toggleQuote(editor: Editor) {
     $from.sameParent($to) &&
     $from.parent.type.name === "paragraph" &&
     !(from <= $from.start() && to >= $from.end());
-  console.log("[toggleQuote]", { from, to, empty, start: $from.start(), end: $from.end(), parent: $from.parent.type.name, canSplit });
   if (!canSplit) {
     editor.chain().focus().toggleBlockquote().run();
     return;
   }
-  editor
-    .chain()
-    .focus()
-    .command(({ tr }) => {
-      // Split the later boundary first so earlier positions stay valid.
-      if (to < $from.end()) tr.split(to, $to.depth);
-      if (from > $from.start()) tr.split(from, $from.depth);
-      console.log("[toggleQuote] after splits", tr.doc.toString().slice(0, 200), "sel target", from + 1);
-      return true;
-    })
-    .setTextSelection(from + 1)
-    .toggleBlockquote()
-    .run();
+  editor.commands.focus();
+  const { state, view } = editor;
+  const tr = state.tr;
+  // Split the later boundary first so earlier positions stay valid.
+  if (to < $from.end()) tr.split(to, $to.depth);
+  if (from > $from.start()) tr.split(from, $from.depth);
+  tr.setSelection(TextSelection.create(tr.doc, from + 1));
+  view.dispatch(tr.scrollIntoView());
+  editor.chain().focus().toggleBlockquote().run();
 }
 
 function Toolbar({
