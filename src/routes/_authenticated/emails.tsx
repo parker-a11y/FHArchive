@@ -834,7 +834,16 @@ function EmailsPage() {
       <PageHeader
         title="Email Admin"
         description="Schedule the next letter, see which records have gone out, and review every send."
-        actions={<EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="gap-2" asChild>
+              <Link to="/backups" title="Open the backup dashboard">
+                <ShieldCheck className="size-4" /> Backups
+              </Link>
+            </Button>
+            <EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />
+          </div>
+        }
       />
       <div className="space-y-6 px-4 py-6 sm:px-8">
         <section className="rounded-lg border border-border bg-card p-4">
