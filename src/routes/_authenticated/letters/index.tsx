@@ -234,6 +234,8 @@ type SavedViewState = {
   view?: "" | "undated" | "unidphoto";
   salutation?: string;
   addressee?: string;
+  fromF?: string;
+  toF?: string;
   closing?: string;
   signature?: string;
   postal?: string;
@@ -300,12 +302,16 @@ function LettersTable() {
   const [digStatus, setDigStatus] = useState("");
   const [tones, setTones] = useState<string[]>([]);
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
+  const [fromF, setFromF] = useState("");
+  const [toF, setToF] = useState("");
   const [salutation, setSalutation] = useState("");
   const [addressee, setAddressee] = useState("");
   const [closing, setClosing] = useState("");
   const [signature, setSignature] = useState("");
   const [postal, setPostal] = useState("");
   const [forwardedOnly, setForwardedOnly] = useState(false);
+  const debouncedFromF = useDebounced(fromF);
+  const debouncedToF = useDebounced(toF);
   const debouncedSalutation = useDebounced(salutation);
   const debouncedAddressee = useDebounced(addressee);
   const debouncedClosing = useDebounced(closing);
@@ -369,6 +375,8 @@ function LettersTable() {
     setDigStatus(s.digStatus ?? "");
     setTones(nextTones);
     setView(s.view ?? "");
+    setFromF(s.fromF ?? "");
+    setToF(s.toF ?? "");
     setSalutation(s.salutation ?? "");
     setAddressee(s.addressee ?? "");
     setClosing(s.closing ?? "");
@@ -522,6 +530,8 @@ function LettersTable() {
     digStatus,
     tones,
     view,
+    author: debouncedFromF,
+    recipient: debouncedToF,
     salutation: debouncedSalutation,
     addressee: debouncedAddressee,
     closing: debouncedClosing,
