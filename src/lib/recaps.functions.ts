@@ -189,3 +189,49 @@ export const emailWeeklyRecapFn = createServerFn({ method: "POST" })
       { publicLinks: data.publicLinks, includeTranscription: data.includeTranscription },
     );
   });
+
+/** "Post blog": turn the email composer's content into a blog post draft. */
+export const postComposerBlog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: { title?: string; body?: string; refs?: string[] }) => {
+      const title = String(data?.title ?? "").trim();
+      const body = String(data?.body ?? "").trim();
+      if (!title) throw new Error("Give the post a title first.");
+      if (!body) throw new Error("Write the post first.");
+      const refs = Array.from(
+        new Set(
+          [
+            ...(Array.isArray(data?.refs) ? data!.refs : []),
+            ...(body.toUpperCase().match(/\b(?:FH|DS)\s?-?\d{3,4}\b/g) ?? []),
+          ]
+            .map((x) => normalizeArchiveRef(String(x).trim()))
+            .filter((x) => /^(?:FH|DS)-?\d{3,4}$/.test(x)),
+        ),
+      ).slice(0, 60);
+      return { title: title.slice(0, 160), body, refs };
+    },
+  )
+  .handler(async ({ data, context }) => {
+    await assertArchiveAccess(context);
+    const today = new Date().toISOString().slice(0, 10);
+    const slug = `blog-${today}-${Math.random().toString(36).slice(2, 8)}`;
+    const { data: row, error } = await context.supabase
+      .from("weekly_recaps")
+      .insert({
+        kind: "blog",
+        slug,
+        range_label: "Blog post",
+        week_start: today,
+        week_end: today,
+        title: data.title,
+        body_md: data.body,
+        related_ids: data.refs,
+        status: "draft",
+        manually_edited: true,
+      })
+      .select("id, slug")
+      .single();
+    if (error) throw new Error(`Saving the blog post failed: ${error.message}`);
+    return { id: row?.id, slug: row?.slug };
+  });
