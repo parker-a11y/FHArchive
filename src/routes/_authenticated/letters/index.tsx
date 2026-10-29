@@ -473,6 +473,8 @@ function LettersTable() {
       digStatus,
       tones,
       view,
+      fromF,
+      toF,
       salutation,
       addressee,
       closing,
@@ -505,6 +507,8 @@ function LettersTable() {
     digStatus,
     tones,
     view,
+    fromF,
+    toF,
     salutation,
     addressee,
     closing,
@@ -812,6 +816,8 @@ function LettersTable() {
     setDigStatus("");
     setTones([]);
     setView("");
+    setFromF("");
+    setToF("");
     setSalutation("");
     setAddressee("");
     setClosing("");
@@ -848,6 +854,8 @@ function LettersTable() {
     dStatus,
     digStatus,
     view,
+    fromF,
+    toF,
     salutation,
     addressee,
     closing,
@@ -1035,6 +1043,20 @@ function LettersTable() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="h-8 w-64"
+        />
+        <Input
+          placeholder="From…"
+          title="Filter by sender (From)"
+          value={fromF}
+          onChange={(e) => setFromF(e.target.value)}
+          className="h-8 w-36"
+        />
+        <Input
+          placeholder="To…"
+          title="Filter by recipient (To)"
+          value={toF}
+          onChange={(e) => setToF(e.target.value)}
+          className="h-8 w-36"
         />
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
