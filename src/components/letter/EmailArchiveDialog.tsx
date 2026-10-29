@@ -25,6 +25,7 @@ import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTe
 
 import { fetchContacts, type EmailDraftPayload } from "@/lib/archive-email";
 import { sendArchiveEmail, saveEmailDraft } from "@/lib/archive-email.functions";
+import { postComposerBlog } from "@/lib/recaps.functions";
 import {
   checkStaleTranscriptions,
   rollupRecordTranscription,
@@ -120,6 +121,7 @@ export function EmailArchiveDialog({
   };
   const [recipients, setRecipients] = useState<Recipient[]>(draft?.recipients ?? []);
   const [entry, setEntry] = useState("");
+  const [blogMode, setBlogMode] = useState(false);
   const [savedDraftId, setSavedDraftId] = useState<string | null>(draftId ?? null);
   const [subject, setSubject] = useState(
     draft?.subject ??
@@ -193,6 +195,7 @@ export function EmailArchiveDialog({
         includeEnvelope?: boolean;
         later?: boolean;
         sendAt?: string;
+        blogMode?: boolean;
       };
       if (saved.subject !== undefined) setSubject(saved.subject);
       if (saved.attachments) setAttachments(saved.attachments);
@@ -204,6 +207,7 @@ export function EmailArchiveDialog({
       if (saved.includeEnvelope !== undefined) setIncludeEnvelope(saved.includeEnvelope);
       if (saved.later !== undefined) setLater(saved.later);
       if (saved.sendAt !== undefined) setSendAt(saved.sendAt);
+      if (saved.blogMode !== undefined) setBlogMode(saved.blogMode);
       toast("Restored your unsaved edits from before the interruption");
     } catch {
       /* corrupted snapshot — ignore */
@@ -242,6 +246,7 @@ export function EmailArchiveDialog({
             includeEnvelope,
             later,
             sendAt,
+            blogMode,
           }),
         );
       } catch {
@@ -262,6 +267,7 @@ export function EmailArchiveDialog({
     includeEnvelope,
     later,
     sendAt,
+    blogMode,
   ]);
   const pickNextSlot = async () => {
     const { data, error } = await supabase
@@ -379,6 +385,32 @@ export function EmailArchiveDialog({
   };
 
   const submit = async () => {
+    if (blogMode) {
+      if (!subject.trim()) return toast.error("Give the post a title first");
+      if (!message.trim()) return toast.error("Write the post first");
+      setBusy(true);
+      try {
+        await postComposerBlog({
+          data: {
+            title: subject,
+            body: message,
+            refs: recordList.map((r) => r.identifier),
+          },
+        });
+        qc.invalidateQueries({ queryKey: ["weekly-recaps"] });
+        toast.success("Blog post created — find it in Weekly Recap");
+        clearAutosave();
+        setOpen(false);
+        setBlogMode(false);
+        setAttachments([]);
+        setMessage(defaultMessage ?? "");
+      } catch (error) {
+        toast.error((error as Error).message || "Could not create the blog post");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     if (recipients.length === 0) return toast.error("Add at least one recipient");
     if (later && !sendAt) return toast.error("Pick a date and time to send");
     if (
@@ -503,7 +535,20 @@ export function EmailArchiveDialog({
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase">To</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground uppercase">To</label>
+              <Button
+                type="button"
+                size="sm"
+                variant={blogMode ? "default" : "outline"}
+                className="h-6 px-2 text-xs"
+                aria-pressed={blogMode}
+                onClick={() => setBlogMode((v) => !v)}
+              >
+                Blog
+              </Button>
+            </div>
+            {!blogMode && (<>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {recipients.map((r) => (
                 <span
@@ -554,6 +599,7 @@ export function EmailArchiveDialog({
                 ))}
               </div>
             )}
+            </>)}
           </div>
 
           <div>
@@ -665,7 +711,7 @@ export function EmailArchiveDialog({
           </div>}
         </div>
 
-        <div className="space-y-2 rounded border border-border px-3 py-2">
+        {!blogMode && (<div className="space-y-2 rounded border border-border px-3 py-2">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={later} onCheckedChange={(v) => setLater(Boolean(v))} />
             Send later
@@ -690,6 +736,7 @@ export function EmailArchiveDialog({
             </p>
           )}
         </div>
+        )}
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy || uploading}>
             Cancel
@@ -698,7 +745,17 @@ export function EmailArchiveDialog({
             {savedDraftId ? "Update draft" : "Save draft"}
           </Button>
           <Button onClick={submit} disabled={busy || uploading}>
-            {busy ? (later ? "Scheduling…" : "Sending…") : later ? "Schedule email" : "Send email"}
+            {busy
+              ? blogMode
+                ? "Posting…"
+                : later
+                  ? "Scheduling…"
+                  : "Sending…"
+              : blogMode
+                ? "Post blog"
+                : later
+                  ? "Schedule email"
+                  : "Send email"}
           </Button>
         </DialogFooter>
       </DialogContent>
