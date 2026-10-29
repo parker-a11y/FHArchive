@@ -699,7 +699,17 @@ export function EmailArchiveDialog({
             {savedDraftId ? "Update draft" : "Save draft"}
           </Button>
           <Button onClick={submit} disabled={busy || uploading}>
-            {busy ? (later ? "Scheduling…" : "Sending…") : later ? "Schedule email" : "Send email"}
+            {busy
+              ? blogMode
+                ? "Posting…"
+                : later
+                  ? "Scheduling…"
+                  : "Sending…"
+              : blogMode
+                ? "Post blog"
+                : later
+                  ? "Schedule email"
+                  : "Send email"}
           </Button>
         </DialogFooter>
       </DialogContent>
