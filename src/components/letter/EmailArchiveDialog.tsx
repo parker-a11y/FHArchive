@@ -548,7 +548,7 @@ export function EmailArchiveDialog({
                 Blog
               </Button>
             </div>
-            {!blogMode && (
+            {!blogMode && (<>
             <div className="mt-1 flex flex-wrap gap-1.5">
               {recipients.map((r) => (
                 <span
