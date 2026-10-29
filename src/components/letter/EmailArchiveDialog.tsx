@@ -121,6 +121,7 @@ export function EmailArchiveDialog({
   };
   const [recipients, setRecipients] = useState<Recipient[]>(draft?.recipients ?? []);
   const [entry, setEntry] = useState("");
+  const [blogMode, setBlogMode] = useState(false);
   const [savedDraftId, setSavedDraftId] = useState<string | null>(draftId ?? null);
   const [subject, setSubject] = useState(
     draft?.subject ??
