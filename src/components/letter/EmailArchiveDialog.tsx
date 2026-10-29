@@ -25,6 +25,7 @@ import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTe
 
 import { fetchContacts, type EmailDraftPayload } from "@/lib/archive-email";
 import { sendArchiveEmail, saveEmailDraft } from "@/lib/archive-email.functions";
+import { postComposerBlog } from "@/lib/recaps.functions";
 import {
   checkStaleTranscriptions,
   rollupRecordTranscription,
