@@ -599,7 +599,7 @@ export function EmailArchiveDialog({
                 ))}
               </div>
             )}
-            )}
+            </>)}
           </div>
 
           <div>
