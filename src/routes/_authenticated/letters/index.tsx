@@ -412,6 +412,8 @@ function LettersTable() {
       s.addressee ?? "",
       s.closing ?? "",
       s.signature ?? "",
+      s.fromF ?? "",
+      s.toF ?? "",
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -438,6 +440,8 @@ function LettersTable() {
     debouncedAddressee,
     debouncedClosing,
     debouncedSignature,
+    debouncedFromF,
+    debouncedToF,
   ]);
 
   // Any real filter change goes back to page 1.
