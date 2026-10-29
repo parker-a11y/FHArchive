@@ -24,7 +24,13 @@ import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTe
 
 
 import { fetchContacts, type EmailDraftPayload } from "@/lib/archive-email";
-import { sendArchiveEmail, saveEmailDraft } from "@/lib/archive-email.functions";
+import {
+  sendArchiveEmail,
+  saveEmailDraft,
+  fetchPriorEmailSends,
+  type PriorSend,
+} from "@/lib/archive-email.functions";
+import { ensureEmailShareLink } from "@/lib/email-share.functions";
 import { postComposerBlog } from "@/lib/recaps.functions";
 import {
   checkStaleTranscriptions,
@@ -508,6 +514,29 @@ export function EmailArchiveDialog({
     )
     .slice(0, 6);
 
+  // Whether these records have already gone out in an email, and links to see
+  // those emails. Proofing-only sends don't count as previously sent.
+  const priorSends = useQuery({
+    queryKey: ["prior-email-sends", recordKey],
+    queryFn: () =>
+      fetchPriorEmailSends({
+        data: { recordIds: recordList.map((r) => ({ kind: r.kind, id: r.id })) },
+      }),
+    enabled: open && recordList.length > 0 && !blogMode,
+  });
+  const openPriorSend = async (s: PriorSend) => {
+    try {
+      if (s.shareToken) {
+        window.open(`${window.location.origin}/e/${s.shareToken}`, "_blank");
+        return;
+      }
+      const res = await ensureEmailShareLink({ data: { emailId: s.id } });
+      window.open(res.url, "_blank");
+    } catch (error) {
+      toast.error((error as Error).message || "Could not open that email");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
@@ -519,6 +548,34 @@ export function EmailArchiveDialog({
       </DialogTrigger>
       <DialogContent className="grid-cols-1 sm:max-w-4xl">
         <DialogHeader>
+          {recordList.length > 0 && !blogMode && priorSends.isSuccess && (
+            priorSends.data.length ? (
+              <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
+                <div className="text-xs font-semibold uppercase tracking-wide">Previously sent emails</div>
+                <ul className="mt-1 space-y-0.5">
+                  {priorSends.data.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        className="text-xs underline underline-offset-2 hover:text-amber-700"
+                        onClick={() => openPriorSend(s)}
+                        title={s.subject}
+                      >
+                        {s.sentAt
+                          ? new Date(s.sentAt).toLocaleDateString(undefined, { dateStyle: "medium" })
+                          : "Sent"}
+                        {s.recipients.length ? ` — to ${s.recipients.join(", ")}` : ""}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-800">
+                Never sent
+              </div>
+            )
+          )}
           <DialogTitle>Email from the archive</DialogTitle>
           <DialogDescription>
             {description ??
