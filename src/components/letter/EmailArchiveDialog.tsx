@@ -504,7 +504,20 @@ export function EmailArchiveDialog({
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-muted-foreground uppercase">To</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-muted-foreground uppercase">To</label>
+              <Button
+                type="button"
+                size="sm"
+                variant={blogMode ? "default" : "outline"}
+                className="h-6 px-2 text-xs"
+                aria-pressed={blogMode}
+                onClick={() => setBlogMode((v) => !v)}
+              >
+                Blog
+              </Button>
+            </div>
+            {!blogMode && (
             <div className="mt-1 flex flex-wrap gap-1.5">
               {recipients.map((r) => (
                 <span
