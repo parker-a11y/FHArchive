@@ -205,6 +205,7 @@ export function EmailArchiveDialog({
       if (saved.includeEnvelope !== undefined) setIncludeEnvelope(saved.includeEnvelope);
       if (saved.later !== undefined) setLater(saved.later);
       if (saved.sendAt !== undefined) setSendAt(saved.sendAt);
+      if (saved.blogMode !== undefined) setBlogMode(saved.blogMode);
       toast("Restored your unsaved edits from before the interruption");
     } catch {
       /* corrupted snapshot — ignore */
