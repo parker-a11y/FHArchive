@@ -194,6 +194,7 @@ export function EmailArchiveDialog({
         includeEnvelope?: boolean;
         later?: boolean;
         sendAt?: string;
+        blogMode?: boolean;
       };
       if (saved.subject !== undefined) setSubject(saved.subject);
       if (saved.attachments) setAttachments(saved.attachments);
