@@ -243,6 +243,7 @@ export function EmailArchiveDialog({
             includeEnvelope,
             later,
             sendAt,
+            blogMode,
           }),
         );
       } catch {
