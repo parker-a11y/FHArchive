@@ -380,6 +380,32 @@ export function EmailArchiveDialog({
   };
 
   const submit = async () => {
+    if (blogMode) {
+      if (!subject.trim()) return toast.error("Give the post a title first");
+      if (!message.trim()) return toast.error("Write the post first");
+      setBusy(true);
+      try {
+        await postComposerBlog({
+          data: {
+            title: subject,
+            body: message,
+            refs: recordList.map((r) => r.identifier),
+          },
+        });
+        qc.invalidateQueries({ queryKey: ["weekly-recaps"] });
+        toast.success("Blog post created — find it in Weekly Recap");
+        clearAutosave();
+        setOpen(false);
+        setBlogMode(false);
+        setAttachments([]);
+        setMessage(defaultMessage ?? "");
+      } catch (error) {
+        toast.error((error as Error).message || "Could not create the blog post");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     if (recipients.length === 0) return toast.error("Add at least one recipient");
     if (later && !sendAt) return toast.error("Pick a date and time to send");
     if (
