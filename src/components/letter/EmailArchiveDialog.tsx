@@ -691,6 +691,7 @@ export function EmailArchiveDialog({
             </p>
           )}
         </div>
+        )}
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy || uploading}>
             Cancel
