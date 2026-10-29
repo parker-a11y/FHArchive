@@ -263,6 +263,7 @@ export function EmailArchiveDialog({
     includeEnvelope,
     later,
     sendAt,
+    blogMode,
   ]);
   const pickNextSlot = async () => {
     const { data, error } = await supabase
