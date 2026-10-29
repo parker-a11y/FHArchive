@@ -234,6 +234,8 @@ type SavedViewState = {
   view?: "" | "undated" | "unidphoto";
   salutation?: string;
   addressee?: string;
+  fromF?: string;
+  toF?: string;
   closing?: string;
   signature?: string;
   postal?: string;
@@ -300,12 +302,16 @@ function LettersTable() {
   const [digStatus, setDigStatus] = useState("");
   const [tones, setTones] = useState<string[]>([]);
   const [view, setView] = useState<"" | "undated" | "unidphoto">("");
+  const [fromF, setFromF] = useState("");
+  const [toF, setToF] = useState("");
   const [salutation, setSalutation] = useState("");
   const [addressee, setAddressee] = useState("");
   const [closing, setClosing] = useState("");
   const [signature, setSignature] = useState("");
   const [postal, setPostal] = useState("");
   const [forwardedOnly, setForwardedOnly] = useState(false);
+  const debouncedFromF = useDebounced(fromF);
+  const debouncedToF = useDebounced(toF);
   const debouncedSalutation = useDebounced(salutation);
   const debouncedAddressee = useDebounced(addressee);
   const debouncedClosing = useDebounced(closing);
@@ -369,6 +375,8 @@ function LettersTable() {
     setDigStatus(s.digStatus ?? "");
     setTones(nextTones);
     setView(s.view ?? "");
+    setFromF(s.fromF ?? "");
+    setToF(s.toF ?? "");
     setSalutation(s.salutation ?? "");
     setAddressee(s.addressee ?? "");
     setClosing(s.closing ?? "");
@@ -404,6 +412,8 @@ function LettersTable() {
       s.addressee ?? "",
       s.closing ?? "",
       s.signature ?? "",
+      s.fromF ?? "",
+      s.toF ?? "",
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -430,6 +440,8 @@ function LettersTable() {
     debouncedAddressee,
     debouncedClosing,
     debouncedSignature,
+    debouncedFromF,
+    debouncedToF,
   ]);
 
   // Any real filter change goes back to page 1.
@@ -461,6 +473,8 @@ function LettersTable() {
       digStatus,
       tones,
       view,
+      fromF,
+      toF,
       salutation,
       addressee,
       closing,
@@ -493,6 +507,8 @@ function LettersTable() {
     digStatus,
     tones,
     view,
+    fromF,
+    toF,
     salutation,
     addressee,
     closing,
@@ -522,6 +538,8 @@ function LettersTable() {
     digStatus,
     tones,
     view,
+    author: debouncedFromF,
+    recipient: debouncedToF,
     salutation: debouncedSalutation,
     addressee: debouncedAddressee,
     closing: debouncedClosing,
@@ -798,6 +816,8 @@ function LettersTable() {
     setDigStatus("");
     setTones([]);
     setView("");
+    setFromF("");
+    setToF("");
     setSalutation("");
     setAddressee("");
     setClosing("");
@@ -834,6 +854,8 @@ function LettersTable() {
     dStatus,
     digStatus,
     view,
+    fromF,
+    toF,
     salutation,
     addressee,
     closing,
@@ -1021,6 +1043,20 @@ function LettersTable() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="h-8 w-64"
+        />
+        <Input
+          placeholder="From…"
+          title="Filter by sender (From)"
+          value={fromF}
+          onChange={(e) => setFromF(e.target.value)}
+          className="h-8 w-36"
+        />
+        <Input
+          placeholder="To…"
+          title="Filter by recipient (To)"
+          value={toF}
+          onChange={(e) => setToF(e.target.value)}
+          className="h-8 w-36"
         />
         <select
           className="h-8 rounded border border-input bg-background px-2 text-sm"
