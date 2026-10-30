@@ -169,9 +169,11 @@ function MoneyTerm({
   estimatedYear: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState<number | "">(year ?? "");
+  // Archive letters are WWII-era; when a record has no usable date, assume 1945.
+  const effectiveYear = year && CPI_YEARS.includes(year) ? year : 1945;
+  const assumed = !year || !CPI_YEARS.includes(year);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const converted = selectedYear ? convertMoney(amountCents, selectedYear) : null;
+  const converted = convertMoney(amountCents, effectiveYear);
   const cancelClose = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
     closeTimer.current = null;
@@ -185,15 +187,14 @@ function MoneyTerm({
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={`${label}: estimate value in today's dollars`}
-          className="money-term cursor-pointer rounded-[2px] px-[1px] underline decoration-dotted underline-offset-[3px] focus-visible:ring-2 focus-visible:ring-archive-gold focus-visible:outline-none"
+          aria-label={`${label}: about ${converted != null ? presentDollars(converted) : "unknown"} today`}
+          className="money-term cursor-pointer rounded-[3px] bg-archive-gold/20 px-[2px] underline decoration-dotted underline-offset-[3px] focus-visible:ring-2 focus-visible:ring-archive-gold focus-visible:outline-none"
           onMouseEnter={() => {
             cancelClose();
             setOpen(true);
           }}
           onMouseLeave={scheduleClose}
           onClick={(event) => {
-            // Money can appear inside a linked search excerpt; open the card instead of navigating.
             event.preventDefault();
             event.stopPropagation();
             setOpen((value) => !value);
@@ -204,43 +205,18 @@ function MoneyTerm({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[min(21rem,92vw)] p-4"
+        className="w-auto max-w-[min(18rem,92vw)] px-3 py-2"
         onMouseEnter={cancelClose}
         onMouseLeave={scheduleClose}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <div className="space-y-3">
-          <div>
-            <div className="text-[11px] font-bold tracking-[0.14em] text-archive-gold uppercase">
-              Historical money
-            </div>
-            <div className="mt-1 text-sm">Original amount: <strong>{dollars(amountCents)}</strong></div>
-          </div>
-          <label className="block text-xs font-medium text-muted-foreground">
-            Year of amount
-            <select
-              className="mt-1 block h-9 w-full rounded border border-input bg-background px-2 text-sm text-foreground"
-              value={selectedYear}
-              onChange={(event) => setSelectedYear(event.target.value ? Number(event.target.value) : "")}
-            >
-              <option value="">Select a year</option>
-              {CPI_YEARS.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </label>
-          {converted == null ? (
-            <p className="text-sm text-muted-foreground">Choose the year this amount was written to estimate its value today.</p>
-          ) : (
-            <div className="rounded border border-border bg-muted/50 p-3">
-              <div className="text-xs text-muted-foreground">Approximate value in {LATEST_CPI_YEAR} dollars</div>
-              <div className="font-display text-2xl font-semibold">{presentDollars(converted)}</div>
-              {estimatedYear && selectedYear === year && (
-                <div className="mt-1 text-xs text-muted-foreground">Using the record’s estimated date.</div>
-              )}
-            </div>
-          )}
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Estimate based on annual U.S. CPI-U from the Bureau of Labor Statistics. Purchasing power varies by item and location.
-          </p>
+        <div className="text-sm">
+          <strong>{dollars(amountCents)}</strong> in {effectiveYear} ≈{" "}
+          <strong className="font-display text-lg">{converted != null ? presentDollars(converted) : "—"}</strong> today
+        </div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">
+          {assumed ? "Record undated; assuming 1945. " : estimatedYear ? "Using the record's estimated date. " : ""}
+          U.S. CPI-U, {LATEST_CPI_YEAR} dollars.
         </div>
       </PopoverContent>
     </Popover>
