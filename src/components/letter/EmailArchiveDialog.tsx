@@ -236,7 +236,8 @@ export function EmailArchiveDialog({
   // never overwritten by the record's AI summary.
   const handleOpenChange = (v: boolean) => {
     if (v) {
-      setSavedDraftId(draftId ?? null);
+      // Keep a draft saved earlier in this composer; only an explicit draft prop overrides it.
+      if (draftId) setSavedDraftId(draftId);
       const key = emailComposerRecoveryKey({
         draftId,
         scope: autosaveScope,
@@ -465,6 +466,7 @@ export function EmailArchiveDialog({
       if (res.scheduledFor) {
         toast.success(`Scheduled for ${new Date(res.scheduledFor).toLocaleString()}`);
         clearAutosave();
+        setSavedDraftId(null);
         setOpen(false);
         setLater(false);
         setAttachments([]);
@@ -478,6 +480,7 @@ export function EmailArchiveDialog({
       if (res.failed.length === 0) {
         setAttachments([]);
         clearAutosave();
+        setSavedDraftId(null);
         setOpen(false);
         setMessage(defaultMessage ?? "");
       }

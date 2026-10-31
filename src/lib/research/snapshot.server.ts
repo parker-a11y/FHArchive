@@ -55,6 +55,14 @@ const TABLES = [
   "ffn_notes",
 ] as const;
 
+/** Exported only; not needed to compose records or the index, so streamed one at a time. */
+const EXPORT_ONLY_TABLES = new Set<string>([
+  "edit_history",
+  "tone_options",
+  "record_categories",
+  "container_files",
+]);
+
 type Row = Record<string, any>;
 type Dump = Record<string, Row[]>;
 
@@ -103,35 +111,33 @@ function sqlLiteral(value: unknown): string {
   return `'${text.replace(/'/g, "''")}'`;
 }
 
-function sqliteScript(dump: Dump): string {
+function sqliteTableScript(table: string, rows: Row[]): string {
+  if (!rows.length) return `-- ${table}: no rows\n`;
+  const cols = Array.from(
+    rows.reduce<Set<string>>((s, r) => {
+      Object.keys(r).forEach((k) => s.add(k));
+      return s;
+    }, new Set<string>()),
+  );
+  const head = `INSERT INTO "${table}" (${cols.map((c) => `"${c}"`).join(", ")}) VALUES (`;
   const parts: string[] = [
+    `DROP TABLE IF EXISTS "${table}";`,
+    `CREATE TABLE "${table}" (${cols.map((c) => `"${c}" TEXT`).join(", ")});`,
+  ];
+  for (const row of rows) parts.push(`${head}${cols.map((c) => sqlLiteral(row[c])).join(", ")});`);
+  return parts.join("\n") + "\n";
+}
+
+function sqliteLoader(tables: string[]): string {
+  return [
     "-- Francis Archive research snapshot — SQLite build script",
-    "-- Build with:  sqlite3 archive.sqlite < archive.sqlite.sql",
+    "-- Run from this folder:  sqlite3 archive.sqlite < archive.sqlite.sql",
     "PRAGMA journal_mode = MEMORY;",
     "BEGIN TRANSACTION;",
-  ];
-  for (const [table, rows] of Object.entries(dump)) {
-    if (!rows.length) continue;
-    const cols = Array.from(
-      rows.reduce<Set<string>>((s, r) => {
-        Object.keys(r).forEach((k) => s.add(k));
-        return s;
-      }, new Set<string>()),
-    );
-    parts.push(
-      `DROP TABLE IF EXISTS "${table}";`,
-      `CREATE TABLE "${table}" (${cols.map((c) => `"${c}" TEXT`).join(", ")});`,
-    );
-    for (const row of rows) {
-      parts.push(
-        `INSERT INTO "${table}" (${cols.map((c) => `"${c}"`).join(", ")}) VALUES (${cols
-          .map((c) => sqlLiteral(row[c]))
-          .join(", ")});`,
-      );
-    }
-  }
-  parts.push("COMMIT;");
-  return parts.join("\n");
+    ...tables.map((t) => `.read sqlite/${t}.sql`),
+    "COMMIT;",
+    "",
+  ].join("\n");
 }
 
 // ------------------------------------------------------------------ helpers
@@ -455,7 +461,7 @@ function sourceMarkdown(s: ComposedRecord): string {
 
 // ------------------------------------------------------------------- schema
 
-function schemaJson(dump: Dump) {
+function describeRows(rows: Row[]) {
   const describe = (rows: Row[]) => {
     const cols = new Map<string, Set<string>>();
     for (const row of rows.slice(0, 200)) {
@@ -470,6 +476,10 @@ function schemaJson(dump: Dump) {
       types: Array.from(types),
     }));
   };
+  return { row_count: rows.length, columns: describe(rows) };
+}
+
+function schemaJson(tableSchemas: Record<string, ReturnType<typeof describeRows>>) {
   return {
     generated_at: new Date().toISOString(),
     description:
@@ -483,12 +493,7 @@ function schemaJson(dump: Dump) {
       linked_records: "Cross-references between FH records and/or Digital Sources.",
       historical_claims: "Research conclusions saved from Ask Francis. NOT catalog fact.",
     },
-    tables: Object.fromEntries(
-      Object.entries(dump).map(([name, rows]) => [
-        name,
-        { row_count: rows.length, columns: describe(rows) },
-      ]),
-    ),
+    tables: tableSchemas,
   };
 }
 
@@ -505,8 +510,9 @@ the live archive: the archive itself remains the system of record.
 
 | File | Purpose |
 | --- | --- |
-| \`archive.json\` | Full structured export: every table, plus composed records with their people, places, events, transcriptions and files resolved. |
-| \`archive.sqlite.sql\` | SQLite build script. Run \`sqlite3 archive.sqlite < archive.sqlite.sql\` to get a portable database. |
+| \`archive.json\` | Composed records and sources with their people, places, events, transcriptions and files resolved. |
+| \`tables/*.json\` | Every raw table, one file per table. |
+| \`archive.sqlite.sql\` + \`sqlite/*.sql\` | SQLite build script. From the snapshot folder run \`sqlite3 archive.sqlite < archive.sqlite.sql\` to get a portable database. |
 | \`schema.json\` | Machine-readable description of every table, column and key concept. |
 | \`csv/*.csv\` | Flat tables — records, people, places, events, organizations, keywords, relationships and all join tables. |
 | \`markdown/records/FH####.md\` | One Markdown file per FH record: metadata, transcription, notes. |
@@ -572,23 +578,24 @@ export async function runResearchSnapshot(
   if (runError) throw new Error(`Could not start snapshot: ${runError.message}`);
   const snapshotId = (runRow as { id: string }).id;
 
+  // A run killed by the platform (e.g. memory limit) never reaches its catch
+  // block; close out any older run still marked running after an hour.
+  await supabaseAdmin
+    .from("research_snapshots")
+    .update({
+      status: "error",
+      finished_at: new Date().toISOString(),
+      error: "Run stopped before finishing (interrupted by the server).",
+    } as never)
+    .eq("status", "running")
+    .neq("id", snapshotId)
+    .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
   let bytes = 0;
   const written: string[] = [];
   const counts = { records: 0, sources: 0, transcriptions: 0, people: 0, places: 0, files: 0 };
 
   try {
-    const dump: Dump = {};
-    for (const table of TABLES) dump[table] = await loadTable(supabaseAdmin, table);
-
-    const { records, sources } = composeRecords(dump);
-    counts.records = records.length;
-    counts.sources = sources.length;
-    counts.transcriptions = (dump["scan_transcriptions"] ?? []).filter(
-      (t) => (t["verified_text"] ?? t["ai_text"] ?? "").trim(),
-    ).length;
-    counts.people = (dump["people"] ?? []).length;
-    counts.places = (dump["places"] ?? []).length;
-
     const upload = async (path: string, body: string, mime: string) => {
       const blob = new Blob([body], { type: mime });
       const { error } = await supabaseAdmin.storage
@@ -599,6 +606,34 @@ export async function runResearchSnapshot(
       written.push(path);
       counts.files += 1;
     };
+
+    // Raw tables are exported one at a time (compact JSON, CSV, SQLite part)
+    // so no single export string ever holds the whole archive. Export-only
+    // tables are released right after their files are written.
+    const dump: Dump = {};
+    const tableSchemas: Record<string, ReturnType<typeof describeRows>> = {};
+    for (const table of TABLES) {
+      const rows = await loadTable(supabaseAdmin, table);
+      tableSchemas[table] = describeRows(rows);
+      await upload(`tables/${table}.json`, JSON.stringify(rows), "application/json");
+      await upload(`sqlite/${table}.sql`, sqliteTableScript(table, rows), "application/sql");
+      if (EXPORT_ONLY_TABLES.has(table)) {
+        await upload(`csv/raw/${table}.csv`, toCsv(rows), "text/csv");
+      } else {
+        dump[table] = rows;
+      }
+    }
+    await upload("archive.sqlite.sql", sqliteLoader([...TABLES]), "application/sql");
+
+    const { records, sources } = composeRecords(dump);
+    counts.records = records.length;
+    counts.sources = sources.length;
+    counts.transcriptions = (dump["scan_transcriptions"] ?? []).filter(
+      (t) => (t["verified_text"] ?? t["ai_text"] ?? "").trim(),
+    ).length;
+    counts.people = (dump["people"] ?? []).length;
+    counts.places = (dump["places"] ?? []).length;
+
 
     // 1. archive.json
     await upload(
@@ -611,20 +646,15 @@ export async function runResearchSnapshot(
           counts,
           records,
           sources,
-          tables: dump,
         },
-        null,
-        2,
       ),
       "application/json",
     );
 
     // 2. schema.json + README.md
-    await upload("schema.json", JSON.stringify(schemaJson(dump), null, 2), "application/json");
+    await upload("schema.json", JSON.stringify(schemaJson(tableSchemas), null, 2), "application/json");
     await upload("README.md", readme(now.toISOString(), counts), "text/markdown");
 
-    // 3. SQLite build script
-    await upload("archive.sqlite.sql", sqliteScript(dump), "application/sql");
 
     // 4. CSV tables — the named research tables plus every raw table.
     const flatRecords = records.map((r) => ({
