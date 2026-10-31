@@ -267,11 +267,13 @@ function Calendar({
   emails,
   recordsByEmail,
   onPickDay,
+  onPickEmail,
   selectedDay,
 }: {
   emails: ArchiveEmail[];
   recordsByEmail: Map<string, string[]>;
   onPickDay: (key: string) => void;
+  onPickEmail: (key: string, emailId: string) => void;
   selectedDay: string | null;
 }) {
   const today = new Date();
