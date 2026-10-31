@@ -308,22 +308,26 @@ function Calendar({
   const reschedule = useServerFn(rescheduleEmails);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
+  const [hoverMonthDir, setHoverMonthDir] = useState<-1 | 1 | null>(null);
   const monthHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearMonthHover = () => {
     if (monthHoverTimer.current !== null) clearTimeout(monthHoverTimer.current);
     monthHoverTimer.current = null;
+    setHoverMonthDir(null);
   };
   useEffect(() => () => clearMonthHover(), []);
-  const hoverMonth = (ev: React.DragEvent, offset: number) => {
+  const hoverMonth = (ev: React.DragEvent, offset: -1 | 1) => {
     if (!ev.dataTransfer.types.includes("application/x-archive-email") || moving) return;
     ev.preventDefault();
     ev.dataTransfer.dropEffect = "move";
     if (monthHoverTimer.current !== null) return;
+    setHoverMonthDir(offset);
     monthHoverTimer.current = setTimeout(() => {
       setCursor((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
       setDragOver(null);
       monthHoverTimer.current = null;
-    }, 700);
+      setHoverMonthDir(null);
+    }, 350);
   };
 
   const dropOn = async (key: string, raw: string) => {
@@ -375,6 +379,10 @@ function Calendar({
           <Button
             variant="outline"
             size="icon"
+            className={
+              "size-11 transition-colors" +
+              (hoverMonthDir === -1 ? " border-primary bg-primary/15 ring-2 ring-primary/40" : "")
+            }
             onClick={() => setCursor(new Date(year, month - 1, 1))}
             onDragOver={(ev) => hoverMonth(ev, -1)}
             onDragLeave={clearMonthHover}
@@ -382,7 +390,7 @@ function Calendar({
             title="Previous month — hold a dragged email here to change months"
             aria-label="Previous month"
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-5" />
           </Button>
           <span className="w-36 text-center text-sm font-medium">
             {cursor.toLocaleDateString([], { month: "long", year: "numeric" })}
@@ -390,6 +398,10 @@ function Calendar({
           <Button
             variant="outline"
             size="icon"
+            className={
+              "size-11 transition-colors" +
+              (hoverMonthDir === 1 ? " border-primary bg-primary/15 ring-2 ring-primary/40" : "")
+            }
             onClick={() => setCursor(new Date(year, month + 1, 1))}
             onDragOver={(ev) => hoverMonth(ev, 1)}
             onDragLeave={clearMonthHover}
@@ -397,7 +409,7 @@ function Calendar({
             title="Next month — hold a dragged email here to change months"
             aria-label="Next month"
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-5" />
           </Button>
         </div>
       </header>
