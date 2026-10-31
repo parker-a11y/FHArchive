@@ -267,11 +267,13 @@ function Calendar({
   emails,
   recordsByEmail,
   onPickDay,
+  onPickEmail,
   selectedDay,
 }: {
   emails: ArchiveEmail[];
   recordsByEmail: Map<string, string[]>;
   onPickDay: (key: string) => void;
+  onPickEmail: (key: string, emailId: string) => void;
   selectedDay: string | null;
 }) {
   const today = new Date();
@@ -496,6 +498,10 @@ function Calendar({
                 <span
                   key={e.emailId}
                   draggable={e.kind === "scheduled"}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    onPickEmail(key, e.emailId);
+                  }}
                   onDragStart={(ev) => {
                     ev.stopPropagation();
                     ev.dataTransfer.effectAllowed = "move";
@@ -590,6 +596,7 @@ function EmailsPage() {
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [sheetDay, setSheetDay] = useState<string | null>(null);
+  const [sheetEmailId, setSheetEmailId] = useState<string | null>(null);
   const [lookup, setLookup] = useState("");
 
   const lookupId = useMemo(() => {
@@ -630,14 +637,20 @@ function EmailsPage() {
 
   const sheetEmails = useMemo(() => {
     if (!sheetDay) return [];
-    return emails.filter((e) => {
+    const dayEmails = emails.filter((e) => {
       const scheduled = e.status === "scheduled" && e.scheduled_for;
       const when = scheduled ? e.scheduled_for! : e.sent_at;
       if (!when) return false;
       if (!scheduled && !SENT_STATUSES.has(e.status)) return false;
       return localDayKey(when) === sheetDay;
     });
-  }, [sheetDay, emails]);
+    // A specific entry was clicked — show only that one, not the whole day.
+    if (sheetEmailId) {
+      const picked = dayEmails.filter((e) => e.id === sheetEmailId);
+      if (picked.length) return picked;
+    }
+    return dayEmails;
+  }, [sheetDay, sheetEmailId, emails]);
 
   const renderEmail = (e: ArchiveEmail, startOpen = false) => {
     const logged = emailRecords.filter((r) => r.email_id === e.id);
@@ -907,7 +920,14 @@ function EmailsPage() {
           emails={emails}
           recordsByEmail={recordsByEmail}
           selectedDay={selectedDay}
-          onPickDay={(key) => setSheetDay(key)}
+          onPickDay={(key) => {
+            setSheetEmailId(null);
+            setSheetDay(key);
+          }}
+          onPickEmail={(key, emailId) => {
+            setSheetEmailId(emailId);
+            setSheetDay(key);
+          }}
         />
 
         <section id="letter-coverage" className="rounded-lg border border-border bg-card p-4">
@@ -1063,7 +1083,15 @@ function EmailsPage() {
         </section>
       </div>
 
-      <Sheet open={!!sheetDay} onOpenChange={(o) => !o && setSheetDay(null)}>
+      <Sheet
+        open={!!sheetDay}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSheetDay(null);
+            setSheetEmailId(null);
+          }
+        }}
+      >
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
           <SheetHeader className="mx-auto w-full max-w-5xl pr-8">
             <SheetTitle>
