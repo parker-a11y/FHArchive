@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
 import { WeekInHistory } from "@/components/WeekInHistory";
+import { MonthInHistory } from "@/components/MonthInHistory";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
