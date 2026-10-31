@@ -80,6 +80,7 @@ function Timeline() {
     <>
       <PageHeader title="Timeline" description={`${rows.length} letters in chronological order`} />
       <WeekInHistory letters={letters} />
+      <MonthInHistory letters={letters} />
       <div className="flex gap-2 border-b border-border px-4 sm:px-8 py-3">
         <Input
           className="h-8 w-72"
