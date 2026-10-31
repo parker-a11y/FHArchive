@@ -1,5 +1,6 @@
 import type { SendArchiveEmailResult } from "./archive-email.functions";
 import type { EmailAttachment } from "./email-attachments";
+import { deliveredEmailHistory } from "./prior-email-history";
 
 /** Validated send input (output of sendArchiveEmail's validator). */
 export type ArchiveEmailPayload = {
@@ -201,7 +202,7 @@ export async function deliverArchiveEmail(
       .from("archive_emails")
       .update({
         status,
-        send_payload: null,
+        send_payload: deliveredEmailHistory(data),
         error: result.failed.length ? result.failed.map((f) => `${f.email}: ${f.error}`).join("; ") : null,
       })
       .eq("id", emailId);

@@ -86,7 +86,7 @@ function RecapsIndex() {
         actions={
           canGenerate ? (
             <div className="flex flex-wrap gap-2">
-              {isAdmin && <EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />}
+              {isAdmin && <EmailArchiveDialog autosaveScope="weekly-recap-new" defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />}
               <Button className="gap-2" onClick={() => run.mutate()} disabled={run.isPending}>
                 {run.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-archive-gold" />}
                 GENERATE WEEKLY RECAP NOW

@@ -96,8 +96,8 @@ export const getSharedEmailHtml = createServerFn({ method: "GET" })
       kind: "letter" as const,
       id: String(r['letter_id']),
     }));
-    // Queued emails keep their records in the saved payload until they send.
-    const refs = logged.length ? logged : (payload?.records ?? []);
+    // Structured snapshots also preserve source records in mixed sent emails.
+    const refs = payload?.records ?? logged;
     const built = await buildRecords(supabaseAdmin as never, String(e['owner_id']), refs as never, {
       includeTranscription: payload?.includeTranscription ?? true,
       includeImages: payload?.includeImages ?? true,

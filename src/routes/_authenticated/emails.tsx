@@ -789,6 +789,7 @@ function EmailsPage() {
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <EmailArchiveDialog
               records={recs}
+              autosaveScope={`resend:${e.id}`}
               defaultSubject={e.subject}
               defaultMessage={e.message_body ?? ""}
               description="Send this same email again — add the new recipients below."
@@ -866,7 +867,7 @@ function EmailsPage() {
                 <ShieldCheck className="size-4" /> Backups
               </Link>
             </Button>
-            <EmailArchiveDialog defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />
+            <EmailArchiveDialog autosaveScope="email-admin-new" defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />
           </div>
         }
       />

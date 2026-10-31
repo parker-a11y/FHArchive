@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Correct prior-send history for sources and older emails with paginated reads, retained structured membership, and an unknown indicator where legacy DS history was lost.
+- [x] Isolate recovery by saved draft and originating composer; regression tests and signed-in reload/save/reopen checks passed without sending email.
+
 - [x] Add a Storage Boxes summary with record counts and expandable contents grouped by current storage location (587 records verified, search and record links tested).
 
 - [x] Add admin-only blank SEND EMAIL actions to Email Admin and Weekly Recaps, with uploaded file links preserved in drafts, scheduling, and shared emails.
