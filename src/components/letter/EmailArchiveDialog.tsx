@@ -24,6 +24,7 @@ import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTe
 
 
 import { fetchContacts, type EmailDraftPayload } from "@/lib/archive-email";
+import { emailComposerRecoveryKey } from "@/lib/email-composer-recovery";
 import {
   sendArchiveEmail,
   saveEmailDraft,
@@ -65,6 +66,7 @@ export function EmailArchiveDialog({
   draftId,
   draft,
   onDraftSaved,
+  autosaveScope,
 }: {
   kind?: "letter" | "source";
   id?: string;
@@ -87,6 +89,8 @@ export function EmailArchiveDialog({
   draft?: EmailDraftPayload | null;
   /** Called after a draft is saved or the email is sent/scheduled. */
   onDraftSaved?: () => void;
+  /** Stable identity for new-mail entry points and resends. */
+  autosaveScope?: string;
 }) {
   const recordList: RecordRef[] =
     records ?? (id && kind && identifier ? [{ kind, id, identifier, title }] : []);
@@ -184,7 +188,7 @@ export function EmailArchiveDialog({
   // composer mirrors itself to localStorage (debounced) and restores on open,
   // so losing the session never loses the email. Cleared on send/schedule and
   // on a deliberate draft save.
-  const autosaveKey = `fh-email-composer:${recordKey || "note"}`;
+  const [autosaveKey, setAutosaveKey] = useState("");
 
   const restoreAutosave = () => {
     try {
@@ -231,12 +235,22 @@ export function EmailArchiveDialog({
   // Restore before the summary-prefill effect runs, so a restored message is
   // never overwritten by the record's AI summary.
   const handleOpenChange = (v: boolean) => {
-    if (v) restoreAutosave();
+    if (v) {
+      const key = emailComposerRecoveryKey({
+        draftId,
+        scope: autosaveScope,
+        recordKey,
+        pathname: window.location.pathname,
+        seed: JSON.stringify([defaultSubject, defaultMessage, research]),
+      });
+      setAutosaveKey(key);
+      restoreAutosave(key);
+    }
     setOpen(v);
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !autosaveKey) return;
     const t = window.setTimeout(() => {
       try {
         localStorage.setItem(
@@ -549,11 +563,11 @@ export function EmailArchiveDialog({
       <DialogContent className="grid-cols-1 sm:max-w-4xl">
         <DialogHeader>
           {recordList.length > 0 && !blogMode && priorSends.isSuccess && (
-            priorSends.data.length ? (
+            priorSends.data.sends.length ? (
               <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900">
                 <div className="text-xs font-semibold uppercase tracking-wide">Previously sent emails</div>
                 <ul className="mt-1 space-y-0.5">
-                  {priorSends.data.map((s) => (
+                  {priorSends.data.sends.map((s) => (
                     <li key={s.id}>
                       <button
                         type="button"
@@ -569,6 +583,10 @@ export function EmailArchiveDialog({
                     </li>
                   ))}
                 </ul>
+              </div>
+            ) : priorSends.data.historyIncomplete ? (
+              <div className="rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+                Prior sends unknown — older source emails did not retain their record history.
               </div>
             ) : (
               <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-emerald-800">
