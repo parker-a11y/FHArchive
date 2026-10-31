@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Correct prior-send history for source records and emails older than the latest 300 sends.
+- [ ] Isolate email composer recovery by saved draft and originating composer; verify drafts cannot overwrite one another.
+
 - [x] Add a Storage Boxes summary with record counts and expandable contents grouped by current storage location (587 records verified, search and record links tested).
 
 - [x] Add admin-only blank SEND EMAIL actions to Email Admin and Weekly Recaps, with uploaded file links preserved in drafts, scheduling, and shared emails.
