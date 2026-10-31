@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { validateEmailAttachments, type EmailAttachment } from "./email-attachments";
+import { priorEmailHistory, type HistoryEmail } from "./prior-email-history";
 
 export type SendArchiveEmailInput = {
   attachments?: EmailAttachment[];
@@ -364,9 +365,6 @@ export const rescheduleEmails = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** The archivist's own proofing addresses never count as a prior send. */
-const PROOF_ADDRESSES = new Set(["parkerjh@gmail.com", "parker@tenfoldcapture.com"]);
-
 export type PriorSend = {
   id: string;
   subject: string;
@@ -386,42 +384,35 @@ export const fetchPriorEmailSends = createServerFn({ method: "POST" })
       .slice(0, 20)
       .map((r) => ({ kind: r.kind === "source" ? ("source" as const) : ("letter" as const), id: String(r.id) })),
   }))
-  .handler(async ({ data, context }): Promise<PriorSend[]> => {
+  .handler(async ({ data, context }) => {
     const db = context.supabase;
     const letterIds = data.recordIds.filter((r) => r.kind === "letter").map((r) => r.id);
     const loggedIds = new Set<string>();
     if (letterIds.length) {
-      const { data: rows } = await db
+      for (let offset = 0; ; offset += 500) {
+      const { data: rows, error } = await db
         .from("archive_email_records")
-        .select("email_id, letter_id")
-        .in("letter_id", letterIds);
+        .select("id, email_id, letter_id")
+        .in("letter_id", letterIds)
+        .order("id")
+        .range(offset, offset + 499);
+      if (error) throw new Error(error.message);
       for (const row of (rows ?? []) as { email_id: string; letter_id: string }[]) loggedIds.add(row.email_id);
+      if ((rows ?? []).length < 500) break;
+      }
     }
-    const { data: sent } = await db
+    const emails: HistoryEmail[] = [];
+    for (let offset = 0; ; offset += 500) {
+    const { data: sent, error } = await db
       .from("archive_emails")
       .select("id, subject, sent_at, scheduled_for, status, recipients, send_payload, share_token")
       .in("status", ["sent", "partial"])
       .order("sent_at", { ascending: false, nullsFirst: false })
-      .limit(300);
-    const ids = new Set(data.recordIds.map((r) => r.id));
-    return ((sent ?? []) as Record<string, unknown>[])
-      .filter((e) => {
-        const payload = (e.send_payload ?? null) as { records?: { id: string }[] } | null;
-        const inPayload = (payload?.records ?? []).some((r) => ids.has(r.id));
-        return loggedIds.has(String(e.id)) || inPayload;
-      })
-      .filter((e) =>
-        ((e.recipients ?? []) as { email?: string | null }[]).some(
-          (r) => !PROOF_ADDRESSES.has(String(r.email ?? "").toLowerCase()),
-        ),
-      )
-      .map((e) => ({
-        id: String(e.id),
-        subject: String(e.subject ?? ""),
-        sentAt: e.sent_at ? String(e.sent_at) : e.scheduled_for ? String(e.scheduled_for) : null,
-        recipients: ((e.recipients ?? []) as { email?: string | null }[])
-          .map((r) => String(r.email ?? ""))
-          .filter(Boolean),
-        shareToken: e.share_token ? String(e.share_token) : null,
-      }));
+      .order("id")
+      .range(offset, offset + 499);
+    if (error) throw new Error(error.message);
+    emails.push(...((sent ?? []) as HistoryEmail[]));
+    if ((sent ?? []).length < 500) break;
+    }
+    return priorEmailHistory(emails, data.recordIds, loggedIds);
   });

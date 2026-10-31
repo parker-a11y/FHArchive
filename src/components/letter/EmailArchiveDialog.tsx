@@ -190,9 +190,9 @@ export function EmailArchiveDialog({
   // on a deliberate draft save.
   const [autosaveKey, setAutosaveKey] = useState("");
 
-  const restoreAutosave = () => {
+  const restoreAutosave = (key: string) => {
     try {
-      const raw = localStorage.getItem(autosaveKey);
+      const raw = localStorage.getItem(key);
       if (!raw) return;
       const saved = JSON.parse(raw) as {
         attachments?: EmailAttachment[];

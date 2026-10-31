@@ -1,6 +1,9 @@
 
 ## Storage buckets
 
+- Delivered archive emails retain a minimal structured record/options snapshot in send_payload; prior-send reads paginate all history and never infer record membership from free text.
+- Email recovery keys isolate saved draft IDs, explicit entry-point/resend scopes, and otherwise record/context identity; never reuse the legacy global note slot across composers.
+
 - Current physical storage summaries group paginated, narrow `letters` reads by trimmed `storage_location`, independently of provenance containers; this keeps box contents complete and preserves existing record permissions.
 
 - Standalone email uploads use the private `ds-files` sender/email-attachments namespace; drafts and queued payloads retain file metadata, sent emails retain attachment rows, and delivery/shared rendering signs download links without requiring an FH record.
