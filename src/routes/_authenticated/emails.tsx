@@ -596,6 +596,7 @@ function EmailsPage() {
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [sheetDay, setSheetDay] = useState<string | null>(null);
+  const [sheetEmailId, setSheetEmailId] = useState<string | null>(null);
   const [lookup, setLookup] = useState("");
 
   const lookupId = useMemo(() => {
@@ -636,14 +637,20 @@ function EmailsPage() {
 
   const sheetEmails = useMemo(() => {
     if (!sheetDay) return [];
-    return emails.filter((e) => {
+    const dayEmails = emails.filter((e) => {
       const scheduled = e.status === "scheduled" && e.scheduled_for;
       const when = scheduled ? e.scheduled_for! : e.sent_at;
       if (!when) return false;
       if (!scheduled && !SENT_STATUSES.has(e.status)) return false;
       return localDayKey(when) === sheetDay;
     });
-  }, [sheetDay, emails]);
+    // A specific entry was clicked — show only that one, not the whole day.
+    if (sheetEmailId) {
+      const picked = dayEmails.filter((e) => e.id === sheetEmailId);
+      if (picked.length) return picked;
+    }
+    return dayEmails;
+  }, [sheetDay, sheetEmailId, emails]);
 
   const renderEmail = (e: ArchiveEmail, startOpen = false) => {
     const logged = emailRecords.filter((r) => r.email_id === e.id);
