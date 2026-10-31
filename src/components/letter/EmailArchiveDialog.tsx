@@ -236,6 +236,7 @@ export function EmailArchiveDialog({
   // never overwritten by the record's AI summary.
   const handleOpenChange = (v: boolean) => {
     if (v) {
+      setSavedDraftId(draftId ?? null);
       const key = emailComposerRecoveryKey({
         draftId,
         scope: autosaveScope,
