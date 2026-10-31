@@ -498,6 +498,10 @@ function Calendar({
                 <span
                   key={e.emailId}
                   draggable={e.kind === "scheduled"}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    onPickEmail(key, e.emailId);
+                  }}
                   onDragStart={(ev) => {
                     ev.stopPropagation();
                     ev.dataTransfer.effectAllowed = "move";
