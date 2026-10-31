@@ -308,22 +308,26 @@ function Calendar({
   const reschedule = useServerFn(rescheduleEmails);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
+  const [hoverMonthDir, setHoverMonthDir] = useState<-1 | 1 | null>(null);
   const monthHoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearMonthHover = () => {
     if (monthHoverTimer.current !== null) clearTimeout(monthHoverTimer.current);
     monthHoverTimer.current = null;
+    setHoverMonthDir(null);
   };
   useEffect(() => () => clearMonthHover(), []);
-  const hoverMonth = (ev: React.DragEvent, offset: number) => {
+  const hoverMonth = (ev: React.DragEvent, offset: -1 | 1) => {
     if (!ev.dataTransfer.types.includes("application/x-archive-email") || moving) return;
     ev.preventDefault();
     ev.dataTransfer.dropEffect = "move";
     if (monthHoverTimer.current !== null) return;
+    setHoverMonthDir(offset);
     monthHoverTimer.current = setTimeout(() => {
       setCursor((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
       setDragOver(null);
       monthHoverTimer.current = null;
-    }, 700);
+      setHoverMonthDir(null);
+    }, 350);
   };
 
   const dropOn = async (key: string, raw: string) => {
