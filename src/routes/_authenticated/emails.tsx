@@ -920,7 +920,14 @@ function EmailsPage() {
           emails={emails}
           recordsByEmail={recordsByEmail}
           selectedDay={selectedDay}
-          onPickDay={(key) => setSheetDay(key)}
+          onPickDay={(key) => {
+            setSheetEmailId(null);
+            setSheetDay(key);
+          }}
+          onPickEmail={(key, emailId) => {
+            setSheetEmailId(emailId);
+            setSheetDay(key);
+          }}
         />
 
         <section id="letter-coverage" className="rounded-lg border border-border bg-card p-4">
@@ -1076,7 +1083,15 @@ function EmailsPage() {
         </section>
       </div>
 
-      <Sheet open={!!sheetDay} onOpenChange={(o) => !o && setSheetDay(null)}>
+      <Sheet
+        open={!!sheetDay}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSheetDay(null);
+            setSheetEmailId(null);
+          }
+        }}
+      >
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
           <SheetHeader className="mx-auto w-full max-w-5xl pr-8">
             <SheetTitle>
