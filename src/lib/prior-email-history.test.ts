@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { deliveredEmailHistory, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
+import { deliveredEmailHistory, lastDistribution, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
 
 test("source membership survives delivery and matches only the selected DS record", () => {
   const payload = deliveredEmailHistory({ records: [{ kind: "source", id: "DS0007" }], includeImages: true, includeEnvelope: true, includeTranscription: true });
@@ -20,4 +20,16 @@ test("missing historical DS membership is unknown, never inferred from a subject
   const result = priorEmailHistory([{ id: "legacy", subject: "DS0007", recipients: [{ email: "family@example.com" }], send_payload: null }], [{ kind: "source", id: "DS0007" }], new Set());
   assert.equal(result.historyIncomplete, true);
   assert.equal(result.sends.length, 0);
+});
+test("last distribution returns the newest real send's recipients, skipping proof-only sends", () => {
+  const emails: HistoryEmail[] = [
+    { id: "proof", recipients: [{ email: "parkerjh@gmail.com" }] },
+    { id: "real", subject: "FH0595", sent_at: "2026-10-30T15:00:00Z", recipients: [{ email: "parkerjh@gmail.com" }, { email: "family@example.com" }, { email: "cousin@example.com" }] },
+  ];
+  const last = lastDistribution(emails);
+  assert.equal(last?.id, "real");
+  assert.deepEqual(last?.recipients, ["family@example.com", "cousin@example.com"]);
+});
+test("last distribution is null when only proof sends exist", () => {
+  assert.equal(lastDistribution([{ id: "proof", recipients: [{ email: "parker@tenfoldcapture.com" }] }]), null);
 });
