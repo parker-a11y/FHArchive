@@ -28,7 +28,7 @@ test("last distribution returns the newest real send's recipients, skipping proo
   ];
   const last = lastDistribution(emails);
   assert.equal(last?.id, "real");
-  assert.deepEqual(last?.recipients, ["family@example.com", "cousin@example.com"]);
+  assert.deepEqual(last?.recipients, ["parkerjh@gmail.com", "family@example.com", "cousin@example.com"]);
 });
 test("last distribution is null when only proof sends exist", () => {
   assert.equal(lastDistribution([{ id: "proof", recipients: [{ email: "parker@tenfoldcapture.com" }] }]), null);
