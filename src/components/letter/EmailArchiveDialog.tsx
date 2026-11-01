@@ -407,6 +407,30 @@ export function EmailArchiveDialog({
     setEntry("");
   };
 
+  const [loadingDistribution, setLoadingDistribution] = useState(false);
+  const applyLastDistribution = async () => {
+    setLoadingDistribution(true);
+    try {
+      const last = await fetchLastDistribution({ data: {} });
+      if (!last || last.recipients.length === 0) {
+        toast.error("No previous distribution found");
+        return;
+      }
+      setRecipients((prev) => {
+        const have = new Set(prev.map((r) => r.email));
+        const added = last.recipients.filter((email) => !have.has(email));
+        return [...prev, ...added.map((email) => ({ email, name: null }))];
+      });
+      toast.success(
+        `Added ${last.recipients.length} recipient${last.recipients.length === 1 ? "" : "s"} from "${last.subject || "the last email"}"`,
+      );
+    } catch (error) {
+      toast.error((error as Error).message || "Could not load the last distribution");
+    } finally {
+      setLoadingDistribution(false);
+    }
+  };
+
   const submit = async () => {
     if (blogMode) {
       if (!subject.trim()) return toast.error("Give the post a title first");
