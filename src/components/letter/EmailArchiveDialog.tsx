@@ -29,7 +29,7 @@ import {
   sendArchiveEmail,
   saveEmailDraft,
   fetchPriorEmailSends,
-  fetchLastDistribution,
+  fetchLastComposed,
   type PriorSend,
 } from "@/lib/archive-email.functions";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
@@ -407,13 +407,13 @@ export function EmailArchiveDialog({
     setEntry("");
   };
 
-  const [loadingDistribution, setLoadingDistribution] = useState(false);
-  const applyLastDistribution = async () => {
-    setLoadingDistribution(true);
+  const [loadingComposed, setLoadingComposed] = useState(false);
+  const applyLastComposed = async () => {
+    setLoadingComposed(true);
     try {
-      const last = await fetchLastDistribution();
+      const last = await fetchLastComposed();
       if (!last || last.recipients.length === 0) {
-        toast.error("No previous distribution found");
+        toast.error("No previous email found");
         return;
       }
       setRecipients((prev) => {
@@ -421,13 +421,14 @@ export function EmailArchiveDialog({
         const added = last.recipients.filter((email) => !have.has(email));
         return [...prev, ...added.map((email) => ({ email, name: null }))];
       });
+      const kind = last.status === "draft" ? "draft" : last.status === "scheduled" ? "scheduled email" : "email";
       toast.success(
-        `Added ${last.recipients.length} recipient${last.recipients.length === 1 ? "" : "s"} from "${last.subject || "the last email"}"`,
+        `Added ${last.recipients.length} recipient${last.recipients.length === 1 ? "" : "s"} from your last ${kind}: "${last.subject || "untitled"}"`,
       );
     } catch (error) {
-      toast.error((error as Error).message || "Could not load the last distribution");
+      toast.error((error as Error).message || "Could not load your last composed email");
     } finally {
-      setLoadingDistribution(false);
+      setLoadingComposed(false);
     }
   };
 
@@ -648,12 +649,12 @@ export function EmailArchiveDialog({
                     size="sm"
                     variant="outline"
                     className="h-6 px-2 text-xs gap-1"
-                    onClick={applyLastDistribution}
-                    disabled={loadingDistribution}
-                    title="Add everyone who received the most recent email"
+                    onClick={applyLastComposed}
+                    disabled={loadingComposed}
+                    title="Add everyone from the most recent email you wrote — draft, scheduled or sent"
                   >
-                    {loadingDistribution ? <Loader2 className="size-3 animate-spin" /> : <Users className="size-3" />}
-                    Last distribution
+                    {loadingComposed ? <Loader2 className="size-3 animate-spin" /> : <Users className="size-3" />}
+                    Last composed
                   </Button>
                 )}
                 <Button
