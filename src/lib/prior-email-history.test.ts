@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { deliveredEmailHistory, lastDistribution, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
+import { deliveredEmailHistory, lastComposedEmail, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
 
 test("source membership survives delivery and matches only the selected DS record", () => {
   const payload = deliveredEmailHistory({ records: [{ kind: "source", id: "DS0007" }], includeImages: true, includeEnvelope: true, includeTranscription: true });
@@ -21,15 +21,30 @@ test("missing historical DS membership is unknown, never inferred from a subject
   assert.equal(result.historyIncomplete, true);
   assert.equal(result.sends.length, 0);
 });
-test("last distribution returns the newest real send's recipients, skipping proof-only sends", () => {
+test("last composed returns the newest email's recipients, keeping proof addresses in a real list", () => {
   const emails: HistoryEmail[] = [
-    { id: "proof", recipients: [{ email: "parkerjh@gmail.com" }] },
-    { id: "real", subject: "FH0595", sent_at: "2026-10-30T15:00:00Z", recipients: [{ email: "parkerjh@gmail.com" }, { email: "family@example.com" }, { email: "cousin@example.com" }] },
+    { id: "older-send", subject: "FH0595", status: "sent", created_at: "2026-10-30 15:00:00+00", recipients: [{ email: "parkerjh@gmail.com" }, { email: "family@example.com" }, { email: "cousin@example.com" }] },
+    { id: "newer-draft", subject: "Room at the Seymour", status: "draft", created_at: "2026-11-01 21:02:24.733407+00", recipients: [{ email: "parkerjh@gmail.com" }, { email: "cailinrh@gmail.com" }] },
   ];
-  const last = lastDistribution(emails);
-  assert.equal(last?.id, "real");
-  assert.deepEqual(last?.recipients, ["parkerjh@gmail.com", "family@example.com", "cousin@example.com"]);
+  const last = lastComposedEmail(emails);
+  assert.equal(last?.id, "newer-draft");
+  assert.deepEqual(last?.recipients, ["parkerjh@gmail.com", "cailinrh@gmail.com"]);
 });
-test("last distribution is null when only proof sends exist", () => {
-  assert.equal(lastDistribution([{ id: "proof", recipients: [{ email: "parker@tenfoldcapture.com" }] }]), null);
+test("last composed ignores input order and picks the most recently written email", () => {
+  const emails: HistoryEmail[] = [
+    { id: "scheduled", subject: "Scheduled", status: "scheduled", created_at: "2026-10-28 12:00:00+00", recipients: [{ email: "aunt@example.com" }] },
+    { id: "oldest", subject: "Oldest", status: "sent", created_at: "2026-10-20 09:00:00+00", recipients: [{ email: "old@example.com" }] },
+    { id: "draft", subject: "Fresh draft", status: "draft", created_at: "2026-11-01 21:02:24.733407+00", recipients: [{ email: "cousin@example.com" }] },
+  ];
+  assert.equal(lastComposedEmail(emails)?.id, "draft");
+});
+test("last composed skips a proof-only email and falls back to the next newest", () => {
+  const emails: HistoryEmail[] = [
+    { id: "proof", status: "draft", created_at: "2026-11-01 22:00:00+00", recipients: [{ email: "PARKERJH@GMAIL.COM" }] },
+    { id: "real", status: "sent", created_at: "2026-10-30 15:00:00+00", recipients: [{ email: "family@example.com" }] },
+  ];
+  assert.equal(lastComposedEmail(emails)?.id, "real");
+});
+test("last composed is null when only proof emails exist", () => {
+  assert.equal(lastComposedEmail([{ id: "proof", recipients: [{ email: "parker@tenfoldcapture.com" }] }]), null);
 });

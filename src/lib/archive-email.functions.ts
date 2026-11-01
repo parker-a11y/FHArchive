@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { validateEmailAttachments, type EmailAttachment } from "./email-attachments";
-import { lastDistribution, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
+import { lastComposedEmail, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
 
 export type SendArchiveEmailInput = {
   attachments?: EmailAttachment[];
@@ -418,26 +418,27 @@ export const fetchPriorEmailSends = createServerFn({ method: "POST" })
   });
 
 /**
- * Recipients of the most recent delivered email, newest first. Proof-only
- * sends (the archivist's own addresses) do not count. Admin only.
+ * Recipients of the most recently composed email — draft, scheduled or sent,
+ * newest written first. Proof-only emails (the archivist's own addresses) do
+ * not count. Admin only.
  */
-export const fetchLastDistribution = createServerFn({ method: "POST" })
+export const fetchLastComposed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = context.supabase;
     const emails: HistoryEmail[] = [];
     for (let offset = 0; ; offset += 500) {
-      const { data: sent, error } = await db
+      const { data: rows, error } = await db
         .from("archive_emails")
-        .select("id, subject, sent_at, scheduled_for, status, recipients, send_payload, share_token")
-        .in("status", ["sent", "partial"])
-        .order("sent_at", { ascending: false, nullsFirst: false })
+        .select("id, subject, status, sent_at, scheduled_for, created_at, recipients, send_payload, share_token")
+        .neq("status", "cancelled")
+        .order("created_at", { ascending: false, nullsFirst: false })
         .order("id")
         .range(offset, offset + 499);
       if (error) throw new Error(error.message);
-      emails.push(...((sent ?? []) as HistoryEmail[]));
-      if ((sent ?? []).length < 500) break;
-      if (lastDistribution(emails)) break;
+      emails.push(...((rows ?? []) as HistoryEmail[]));
+      if ((rows ?? []).length < 500) break;
+      if (lastComposedEmail(emails)) break;
     }
-    return lastDistribution(emails);
+    return lastComposedEmail(emails);
   });
