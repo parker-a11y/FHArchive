@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Minor-edit AI confirmation retains previously reviewed suggestions and updates the current transcription fingerprint through an editor-authorized server function; it never approves first-time suggestions or changes archival text.
+
 - Delivered archive emails retain a minimal structured record/options snapshot in send_payload; prior-send reads paginate all history and never infer record membership from free text.
 - Email recovery keys isolate saved draft IDs, explicit entry-point/resend scopes, and otherwise record/context identity; never reuse the legacy global note slot across composers.
 

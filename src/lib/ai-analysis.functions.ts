@@ -1,5 +1,36 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { retainedReviewUpdates } from "./ai-review-override";
+
+/** Archivist confirmation: keep the prior review after insignificant edits, without AI. */
+export const confirmAiAnalysisNotNeeded = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { letterId: string }) => {
+    if (!input?.letterId) throw new Error("letterId is required");
+    return input;
+  })
+  .handler(async ({ data, context }) => {
+    const { data: canEdit, error: accessError } = await context.supabase.rpc("can_edit_archive", {
+      _user_id: context.userId,
+    });
+    if (accessError || !canEdit) throw new Error("You do not have permission to confirm AI review.");
+    const { data: rows, error } = await context.supabase.from("ai_suggestions")
+      .select("id,status,content,previous_content")
+      .eq("letter_id", data.letterId);
+    if (error) throw new Error(error.message);
+    const updates = retainedReviewUpdates(rows ?? []);
+    const { buildAnalysisContext } = await import("./ai-analysis.server");
+    const ctx = await buildAnalysisContext(context.supabase, data.letterId);
+    for (const update of updates) {
+      const { error: updateError } = await context.supabase.from("ai_suggestions")
+        .update(update).eq("id", update.id).eq("letter_id", data.letterId);
+      if (updateError) throw new Error(updateError.message);
+    }
+    const { error: hashError } = await context.supabase.from("letters")
+      .update({ ai_source_hash: await sha256(ctx.transcript) }).eq("id", data.letterId);
+    if (hashError) throw new Error(hashError.message);
+    return { retained: updates.length };
+  });
 
 /**
  * Runs AI analysis over a record's transcription and stores the output as

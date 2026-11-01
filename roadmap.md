@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add a minor-edit confirmation to retain completed AI review without rerunning analysis; four regression tests passed and signed-in confirmation persisted after reload on FH0011.
+
 - [x] Correct prior-send history for sources and older emails with paginated reads, retained structured membership, and an unknown indicator where legacy DS history was lost.
 - [x] Isolate recovery by saved draft and originating composer; regression tests and signed-in reload/save/reopen checks passed without sending email.
 
