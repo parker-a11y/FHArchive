@@ -43,9 +43,12 @@ export function lastDistribution(emails: HistoryEmail[]) {
     id: last.id,
     subject: last.subject ?? "",
     sentAt: last.sent_at ?? last.scheduled_for ?? null,
-    recipients: (last.recipients ?? [])
+    // Include every real recipient of that send (proof addresses too when they
+    // were genuine recipients); only proof-only sends are skipped above.
+    recipients: Array.from(new Map((last.recipients ?? [])
       .map((r) => String(r.email ?? "").trim())
-      .filter((email) => email && !PROOF_ADDRESSES.has(email.toLowerCase())),
+      .filter(Boolean)
+      .map((email) => [email.toLowerCase(), email] as const)).values()),
   };
 }
 
