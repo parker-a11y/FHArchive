@@ -411,7 +411,7 @@ export function EmailArchiveDialog({
   const applyLastDistribution = async () => {
     setLoadingDistribution(true);
     try {
-      const last = await fetchLastDistribution({ data: {} });
+      const last = await fetchLastDistribution();
       if (!last || last.recipients.length === 0) {
         toast.error("No previous distribution found");
         return;
