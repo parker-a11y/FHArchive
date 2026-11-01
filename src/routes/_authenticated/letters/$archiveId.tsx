@@ -85,6 +85,7 @@ import { isPhotographType } from "@/components/photo/photo-fields";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
+import { LetterContextPanel } from "@/components/letter/LetterContextPanel";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
@@ -115,6 +116,8 @@ export const Route = createFileRoute("/_authenticated/letters/$archiveId")({
         content: `Archival record ${params.archiveId}: catalog metadata, scans, transcription, keywords and research notes.`,
       },
       { property: "og:title", content: `${params.archiveId} — The Francis Files` },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary" },
       {
         property: "og:description",
         content: `Archival record ${params.archiveId} with scans, transcription and research notes.`,
@@ -556,6 +559,8 @@ function LetterPage() {
           </div>
         </div>
       </header>
+
+      <LetterContextPanel key={letter.id} letter={letter} />
 
       {showTranscription && (
         <section className="mx-4 mt-4 rounded border border-border bg-card p-4 sm:mx-8">

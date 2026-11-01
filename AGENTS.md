@@ -1,6 +1,8 @@
 
 ## Storage buckets
 
+- Letter reading context is a read-only collapsible panel backed by existing people/place links; use local React state with an accessible Button/hidden region instead of loading another collapsible primitive, and paginate narrow membership reads with deduplicated record IDs so context stays permission-scoped and evidence-based.
+
 - Minor-edit AI confirmation retains previously reviewed suggestions and updates the current transcription fingerprint through an editor-authorized server function; it never approves first-time suggestions or changes archival text.
 
 - Delivered archive emails retain a minimal structured record/options snapshot in send_payload; prior-send reads paginate all history and never infer record membership from free text.

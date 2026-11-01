@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Add the collapsible Cast of Characters & Setting panel above letter tabs; shared-letter counts tested and signed-in FH0647 expanded/collapsed with shared links verified on desktop and mobile.
+
 - [x] Add a minor-edit confirmation to retain completed AI review without rerunning analysis; four regression tests passed and signed-in confirmation persisted after reload on FH0011.
 
 - [x] Correct prior-send history for sources and older emails with paginated reads, retained structured membership, and an unknown indicator where legacy DS history was lost.
