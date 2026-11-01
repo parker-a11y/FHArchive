@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Mail, Plus, X, Paperclip, Loader2 } from "lucide-react";
+import { Mail, Plus, X, Paperclip, Loader2, Users } from "lucide-react";
 import type { EmailAttachment } from "@/lib/email-attachments";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import {
   sendArchiveEmail,
   saveEmailDraft,
   fetchPriorEmailSends,
+  fetchLastDistribution,
   type PriorSend,
 } from "@/lib/archive-email.functions";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
@@ -406,6 +407,30 @@ export function EmailArchiveDialog({
     setEntry("");
   };
 
+  const [loadingDistribution, setLoadingDistribution] = useState(false);
+  const applyLastDistribution = async () => {
+    setLoadingDistribution(true);
+    try {
+      const last = await fetchLastDistribution();
+      if (!last || last.recipients.length === 0) {
+        toast.error("No previous distribution found");
+        return;
+      }
+      setRecipients((prev) => {
+        const have = new Set(prev.map((r) => r.email));
+        const added = last.recipients.filter((email) => !have.has(email));
+        return [...prev, ...added.map((email) => ({ email, name: null }))];
+      });
+      toast.success(
+        `Added ${last.recipients.length} recipient${last.recipients.length === 1 ? "" : "s"} from "${last.subject || "the last email"}"`,
+      );
+    } catch (error) {
+      toast.error((error as Error).message || "Could not load the last distribution");
+    } finally {
+      setLoadingDistribution(false);
+    }
+  };
+
   const submit = async () => {
     if (blogMode) {
       if (!subject.trim()) return toast.error("Give the post a title first");
@@ -616,16 +641,32 @@ export function EmailArchiveDialog({
           <div>
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-muted-foreground uppercase">To</label>
-              <Button
-                type="button"
-                size="sm"
-                variant={blogMode ? "default" : "outline"}
-                className="h-6 px-2 text-xs"
-                aria-pressed={blogMode}
-                onClick={() => setBlogMode((v) => !v)}
-              >
-                Blog
-              </Button>
+              <div className="flex items-center gap-1.5">
+                {!blogMode && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-xs gap-1"
+                    onClick={applyLastDistribution}
+                    disabled={loadingDistribution}
+                    title="Add everyone who received the most recent email"
+                  >
+                    {loadingDistribution ? <Loader2 className="size-3 animate-spin" /> : <Users className="size-3" />}
+                    Last distribution
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={blogMode ? "default" : "outline"}
+                  className="h-6 px-2 text-xs"
+                  aria-pressed={blogMode}
+                  onClick={() => setBlogMode((v) => !v)}
+                >
+                  Blog
+                </Button>
+              </div>
             </div>
             {!blogMode && (<>
             <div className="mt-1 flex flex-wrap gap-1.5">
