@@ -2,8 +2,10 @@ export type HistoryRecord = { kind: "letter" | "source"; id: string };
 export type HistoryEmail = {
   id: string;
   subject?: string;
+  status?: string | null;
   sent_at?: string | null;
   scheduled_for?: string | null;
+  created_at?: string | null;
   recipients?: { email?: string | null }[];
   send_payload?: { records?: HistoryRecord[] } | null;
   share_token?: string | null;
@@ -27,24 +29,32 @@ export function priorEmailHistory(emails: HistoryEmail[], records: HistoryRecord
   };
 }
 
+/** When an email was written. Falls back to send/schedule time for older rows. */
+function composedAt(email: HistoryEmail) {
+  const value = email.created_at ?? email.sent_at ?? email.scheduled_for ?? "";
+  const time = Date.parse(String(value));
+  return Number.isNaN(time) ? 0 : time;
+}
+
 /**
- * Recipients of the most recent delivered email that went to a real audience.
- * Proof-only sends (archivist's own addresses) do not count as a distribution,
- * and proof addresses are stripped from the returned list.
+ * Recipients of the most recently composed email — draft, scheduled or sent.
+ * A proof-only email (the archivist's own addresses) is not a distribution and
+ * is skipped; proof addresses inside a real recipient list are kept.
  */
-export function lastDistribution(emails: HistoryEmail[]) {
-  const delivered = emails.filter((e) => (e.recipients ?? []).some((r) => {
+export function lastComposedEmail(emails: HistoryEmail[]) {
+  const real = emails.filter((e) => (e.recipients ?? []).some((r) => {
     const address = String(r.email ?? "").trim().toLowerCase();
     return address && !PROOF_ADDRESSES.has(address);
   }));
-  const last = delivered[0];
+  const last = [...real].sort((a, b) => composedAt(b) - composedAt(a))[0];
   if (!last) return null;
   return {
     id: last.id,
     subject: last.subject ?? "",
-    sentAt: last.sent_at ?? last.scheduled_for ?? null,
-    // Include every real recipient of that send (proof addresses too when they
-    // were genuine recipients); only proof-only sends are skipped above.
+    status: last.status ?? null,
+    composedAt: last.created_at ?? last.sent_at ?? last.scheduled_for ?? null,
+    // Include every real recipient of that email (proof addresses too when they
+    // were genuine recipients); only proof-only emails are skipped above.
     recipients: Array.from(new Map((last.recipients ?? [])
       .map((r) => String(r.email ?? "").trim())
       .filter(Boolean)
