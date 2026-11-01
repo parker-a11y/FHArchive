@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Info, MapPin, Users, Link2 } from "lucide-react";
@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Letter } from "@/lib/queries";
 import { sharedContextRecords, type ContextRecord, type ContextMembership } from "@/lib/letter-context";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 function RecordConnections({ records, label }: { records: ContextRecord[]; label: string }) {
@@ -26,6 +25,7 @@ function RecordConnections({ records, label }: { records: ContextRecord[]; label
 
 export function LetterContextPanel({ letter }: { letter: Letter }) {
   const [open, setOpen] = useState(false);
+  const contentId = useId();
   const context = useQuery({
     queryKey: ["links", letter.id, "reading-context"],
     queryFn: async () => {
@@ -94,12 +94,12 @@ export function LetterContextPanel({ letter }: { letter: Letter }) {
     </div>;
   }
   const shared = sharedContextRecords(connections.data?.memberships ?? [], personIds);
-  return <Collapsible open={open} onOpenChange={setOpen} className="no-print mx-4 mt-4 border-y border-archive-gold/30 bg-archive-note/40 sm:mx-8">
-    <CollapsibleTrigger asChild><Button variant="ghost" className="h-auto w-full justify-between gap-3 rounded-none px-3 py-3 text-left hover:bg-archive-note-hover/50" aria-label="Cast of Characters & Setting">
+  return <section data-state={open ? "open" : "closed"} className="no-print mx-4 mt-4 border-y border-archive-gold/30 bg-archive-note/40 sm:mx-8">
+    <Button variant="ghost" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls={contentId} className="h-auto w-full justify-between gap-3 rounded-none px-3 py-3 text-left hover:bg-archive-note-hover/50" aria-label="Cast of Characters & Setting">
       <div className="min-w-0 space-y-1"><span className="flex items-center gap-2 text-sm font-semibold"><Users className="size-4 shrink-0 text-archive-gold-strong" />Cast of Characters &amp; Setting</span><span className="block whitespace-normal break-words text-xs font-normal text-muted-foreground">{summary || "No people or places recorded yet"}</span></div>
       <ChevronDown className={`size-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
-    </Button></CollapsibleTrigger>
-    <CollapsibleContent>
+    </Button>
+    <div id={contentId} hidden={!open}>
       {context.isPending ? <p className="p-4 text-sm text-muted-foreground">Loading context…</p> : context.isError ? <p className="p-4 text-sm text-destructive">Could not load recorded connections.</p> : <div className="grid gap-x-8 gap-y-5 border-t border-archive-gold/20 p-4 text-sm sm:grid-cols-2">
         <section className="min-w-0 space-y-3"><h3 className="field-label flex items-center gap-2"><Users className="size-3.5" />Correspondents</h3>
           {author ? renderPerson(author) : letter.author ? <p>{letter.author} <span className="text-xs text-muted-foreground">Author</span></p> : null}
@@ -117,6 +117,6 @@ export function LetterContextPanel({ letter }: { letter: Letter }) {
           {connections.isPending ? <p className="text-muted-foreground">Loading shared letters…</p> : connections.isError ? <p className="text-destructive">Could not load shared letters.</p> : personIds.length > 1 && shared.length ? <><p className="text-xs text-muted-foreground">{[...new Map(people.filter((p) => p.people).map((p) => [p.person_id, p.people?.name])).values()].join(", ")}</p><RecordConnections records={shared} label={`${shared.length} ${shared.length === 1 ? "letter" : "letters"} linking these people`} /></> : <p className="text-muted-foreground">No shared-letter connections recorded.</p>}
         </section>
       </div>}
-    </CollapsibleContent>
-  </Collapsible>;
+    </div>
+  </section>;
 }

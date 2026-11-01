@@ -1,7 +1,7 @@
 
 ## Storage buckets
 
-- Letter reading context is a read-only collapsible panel backed by existing people/place links; paginate narrow membership reads and deduplicate record IDs for shared-letter counts so context stays permission-scoped and evidence-based.
+- Letter reading context is a read-only collapsible panel backed by existing people/place links; use local React state with an accessible Button/hidden region instead of loading another collapsible primitive, and paginate narrow membership reads with deduplicated record IDs so context stays permission-scoped and evidence-based.
 
 - Minor-edit AI confirmation retains previously reviewed suggestions and updates the current transcription fingerprint through an editor-authorized server function; it never approves first-time suggestions or changes archival text.
 
