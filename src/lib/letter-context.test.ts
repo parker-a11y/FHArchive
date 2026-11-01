@@ -1,4 +1,5 @@
-import { describe, expect, it } from "bun:test";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { sharedContextRecords, type ContextMembership } from "./letter-context";
 
 const record = (id: string) => ({ id, archive_id: `FH${id}`, normalized_date: "1944-01-01" });
@@ -11,13 +12,13 @@ const rows: ContextMembership[] = [
 ];
 describe("archival context connections", () => {
   it("counts a record once even with multiple person roles", () => {
-    expect(sharedContextRecords(rows, ["fran"]).map((r) => r.id)).toEqual(["1", "2"]);
+    assert.deepEqual(sharedContextRecords(rows, ["fran"]).map((r) => r.id), ["1", "2"]);
   });
   it("only shows shared letters containing every selected person", () => {
-    expect(sharedContextRecords(rows, ["fran", "skip"]).map((r) => r.id)).toEqual(["1"]);
+    assert.deepEqual(sharedContextRecords(rows, ["fran", "skip"]).map((r) => r.id), ["1"]);
   });
   it("does not count inaccessible records or invent empty connections", () => {
-    expect(sharedContextRecords(rows, ["skip"]).length).toBe(1);
-    expect(sharedContextRecords(rows, []).length).toBe(0);
+    assert.equal(sharedContextRecords(rows, ["skip"]).length, 1);
+    assert.equal(sharedContextRecords(rows, []).length, 0);
   });
 });
