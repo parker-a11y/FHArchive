@@ -5,7 +5,8 @@ import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { analyzeRecord } from "@/lib/ai-analysis.functions";
+import { analyzeRecord, confirmAiAnalysisNotNeeded } from "@/lib/ai-analysis.functions";
+import { canRetainAiReview } from "@/lib/ai-review-override";
 import {
   applySuggestion,
   suggestionEntities,
@@ -564,6 +565,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
   const { resolvePerson, dialog: personDialog } = usePersonMatcher();
   const { confirmEntities, dialog: entityDialog } = useEntityConfirmer();
   const runAnalysis = useServerFn(analyzeRecord);
+  const confirmNoAnalysis = useServerFn(confirmAiAnalysisNotNeeded);
   const runToneSuggest = useServerFn(suggestTones);
   const { data: toneOptions = [] } = useToneOptions();
   const [toneProposals, setToneProposals] = useState<ToneProposal[] | null>(null);
@@ -588,6 +590,28 @@ export function AiPanel({ letter }: { letter: Letter }) {
   const hasTranscript = Boolean(
     (letter.transcription_verified ?? "").trim() || (letter.transcription_raw_ai ?? "").trim(),
   );
+
+  async function retainReview() {
+    if (!confirm("Confirm these edits are minor and the previous AI analysis still applies? This keeps your reviewed suggestions without running AI or changing the record's text.")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await confirmNoAnalysis({ data: { letterId: letter.id } });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["ai", letter.id] }),
+        qc.invalidateQueries({ queryKey: ["ai_pending"] }),
+        qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] }),
+        qc.invalidateQueries({ queryKey: ["letters"] }),
+      ]);
+      toast.success("Confirmed — AI analysis not needed again. Previous review retained.");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Could not confirm AI review";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function analyze(mode: "new" | "all" | "refresh" = "new") {
     setBusy(true);
@@ -822,7 +846,14 @@ export function AiPanel({ letter }: { letter: Letter }) {
               </>
             )}
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {canRetainAiReview(rows) && (
+              <Button size="sm" variant="outline" onClick={retainReview} disabled={busy}
+                title="Confirm minor edits do not require another AI analysis; retain the previous review.">
+                <CheckCircle2 className="mr-1.5 size-4" />
+                AI analysis not needed again
+              </Button>
+            )}
             {acceptable.length > 0 && (
               <Button size="sm" variant="outline" onClick={acceptAll} disabled={busy}>
                 Accept all ({acceptable.length})
