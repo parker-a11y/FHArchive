@@ -602,6 +602,9 @@ export function AiPanel({ letter }: { letter: Letter }) {
         qc.invalidateQueries({ queryKey: ["ai_pending"] }),
         qc.invalidateQueries({ queryKey: ["letter", letter.archive_id] }),
         qc.invalidateQueries({ queryKey: ["letters"] }),
+        qc.invalidateQueries({ queryKey: ["letters-page-ai-state"] }),
+        qc.invalidateQueries({ queryKey: ["dashboard-recent-ai"] }),
+        qc.invalidateQueries({ queryKey: ["letters-page"] }),
       ]);
       toast.success("Confirmed — AI analysis not needed again. Previous review retained.");
     } catch (e) {
