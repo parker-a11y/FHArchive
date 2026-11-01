@@ -27,6 +27,28 @@ export function priorEmailHistory(emails: HistoryEmail[], records: HistoryRecord
   };
 }
 
+/**
+ * Recipients of the most recent delivered email that went to a real audience.
+ * Proof-only sends (archivist's own addresses) do not count as a distribution,
+ * and proof addresses are stripped from the returned list.
+ */
+export function lastDistribution(emails: HistoryEmail[]) {
+  const delivered = emails.filter((e) => (e.recipients ?? []).some((r) => {
+    const address = String(r.email ?? "").trim().toLowerCase();
+    return address && !PROOF_ADDRESSES.has(address);
+  }));
+  const last = delivered[0];
+  if (!last) return null;
+  return {
+    id: last.id,
+    subject: last.subject ?? "",
+    sentAt: last.sent_at ?? last.scheduled_for ?? null,
+    recipients: (last.recipients ?? [])
+      .map((r) => String(r.email ?? "").trim())
+      .filter((email) => email && !PROOF_ADDRESSES.has(email.toLowerCase())),
+  };
+}
+
 /** Keep structured record membership after delivery without retaining the queued send command. */
 export function deliveredEmailHistory(data: { records: HistoryRecord[]; includeTranscription: boolean; includeImages: boolean; includeEnvelope: boolean }) {
   return { records: data.records, includeTranscription: data.includeTranscription, includeImages: data.includeImages, includeEnvelope: data.includeEnvelope };
