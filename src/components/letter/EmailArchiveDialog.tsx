@@ -641,16 +641,32 @@ export function EmailArchiveDialog({
           <div>
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-muted-foreground uppercase">To</label>
-              <Button
-                type="button"
-                size="sm"
-                variant={blogMode ? "default" : "outline"}
-                className="h-6 px-2 text-xs"
-                aria-pressed={blogMode}
-                onClick={() => setBlogMode((v) => !v)}
-              >
-                Blog
-              </Button>
+              <div className="flex items-center gap-1.5">
+                {!blogMode && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-xs gap-1"
+                    onClick={applyLastDistribution}
+                    disabled={loadingDistribution}
+                    title="Add everyone who received the most recent email"
+                  >
+                    {loadingDistribution ? <Loader2 className="size-3 animate-spin" /> : <Users className="size-3" />}
+                    Last distribution
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={blogMode ? "default" : "outline"}
+                  className="h-6 px-2 text-xs"
+                  aria-pressed={blogMode}
+                  onClick={() => setBlogMode((v) => !v)}
+                >
+                  Blog
+                </Button>
+              </div>
             </div>
             {!blogMode && (<>
             <div className="mt-1 flex flex-wrap gap-1.5">
