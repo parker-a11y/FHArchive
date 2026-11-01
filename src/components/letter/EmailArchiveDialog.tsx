@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Mail, Plus, X, Paperclip, Loader2 } from "lucide-react";
+import { Mail, Plus, X, Paperclip, Loader2, Users } from "lucide-react";
 import type { EmailAttachment } from "@/lib/email-attachments";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import {
   sendArchiveEmail,
   saveEmailDraft,
   fetchPriorEmailSends,
+  fetchLastDistribution,
   type PriorSend,
 } from "@/lib/archive-email.functions";
 import { ensureEmailShareLink } from "@/lib/email-share.functions";
