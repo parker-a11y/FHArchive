@@ -112,6 +112,20 @@ function Gallery() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["photos"] });
     qc.invalidateQueries({ queryKey: ["photos-pending"] });
+    qc.invalidateQueries({ queryKey: ["photos-missing-views"] });
+  };
+
+  const backfill = async () => {
+    setBackfilling({ done: 0, total: missingViews.data ?? 0 });
+    try {
+      const n = await backfillViewCopies((done, total) => setBackfilling({ done, total }));
+      toast.success(`Made large viewing copies for ${n} photo${n === 1 ? "" : "s"}`);
+      refresh();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBackfilling(null);
+    }
   };
 
   const bulk = async (files: File[]) => {
@@ -172,6 +186,17 @@ function Gallery() {
             <Button size="sm" variant="outline" onClick={convert} disabled={converting}>
               {converting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
               Move them into the gallery
+            </Button>
+          </div>
+        )}
+        {!!missingViews.data && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
+            <span>
+              {missingViews.data} photo{missingViews.data === 1 ? "" : "s"} only have a small preview — a large, sharp viewing copy can be made for each.
+            </span>
+            <Button size="sm" variant="outline" onClick={backfill} disabled={!!backfilling}>
+              {backfilling ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
+              {backfilling ? `Making copies ${backfilling.done}/${backfilling.total}…` : "Make large viewing copies"}
             </Button>
           </div>
         )}
@@ -302,7 +327,10 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [fileError, setFileError] = useState("");
   const dirty = caption !== (photo.caption ?? "") || notes !== (photo.notes ?? "");
   const original = side === "front" ? photo.front_path : photo.back_path;
-  const path = side === "front" ? viewPath(photo.front_path, photo.front_thumb_path) : viewPath(photo.back_path, photo.back_thumb_path);
+  const path =
+    side === "front"
+      ? viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)
+      : viewPath(photo.back_path, photo.back_thumb_path, photo.back_view_path);
 
   // The original file is fetched as soon as the photo opens (and again when
   // flipping to the back) so Download can hand it over straight from the click.
