@@ -24,6 +24,7 @@ import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
 import { Route as AuthenticatedEnvelopesRouteImport } from './routes/_authenticated/envelopes'
 import { Route as AuthenticatedPhotoInboxRouteImport } from './routes/_authenticated/photo-inbox'
+import { Route as AuthenticatedPhotosRouteImport } from './routes/_authenticated/photos'
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
@@ -149,6 +150,11 @@ const AuthenticatedEnvelopesRoute = AuthenticatedEnvelopesRouteImport.update({
 const AuthenticatedPhotoInboxRoute = AuthenticatedPhotoInboxRouteImport.update({
   id: '/photo-inbox',
   path: '/photo-inbox',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPhotosRoute = AuthenticatedPhotosRouteImport.update({
+  id: '/photos',
+  path: '/photos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQueuesRoute = AuthenticatedQueuesRouteImport.update({
@@ -448,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
+  '/photos': typeof AuthenticatedPhotosRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
+  '/photos': typeof AuthenticatedPhotosRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
@@ -581,6 +589,7 @@ export interface FileRoutesById {
   '/_authenticated/emails': typeof AuthenticatedEmailsRoute
   '/_authenticated/envelopes': typeof AuthenticatedEnvelopesRoute
   '/_authenticated/photo-inbox': typeof AuthenticatedPhotoInboxRoute
+  '/_authenticated/photos': typeof AuthenticatedPhotosRoute
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
@@ -650,6 +659,7 @@ export interface FileRouteTypes {
     | '/emails'
     | '/envelopes'
     | '/photo-inbox'
+    | '/photos'
     | '/queues'
     | '/quotations'
     | '/search'
@@ -715,6 +725,7 @@ export interface FileRouteTypes {
     | '/emails'
     | '/envelopes'
     | '/photo-inbox'
+    | '/photos'
     | '/queues'
     | '/quotations'
     | '/search'
@@ -782,6 +793,7 @@ export interface FileRouteTypes {
     | '/_authenticated/emails'
     | '/_authenticated/envelopes'
     | '/_authenticated/photo-inbox'
+    | '/_authenticated/photos'
     | '/_authenticated/queues'
     | '/_authenticated/quotations'
     | '/_authenticated/search'
@@ -970,6 +982,13 @@ declare module '@tanstack/react-router' {
       path: '/photo-inbox'
       fullPath: '/photo-inbox'
       preLoaderRoute: typeof AuthenticatedPhotoInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/photos': {
+      id: '/_authenticated/photos'
+      path: '/photos'
+      fullPath: '/photos'
+      preLoaderRoute: typeof AuthenticatedPhotosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/queues': {
@@ -1333,6 +1352,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
   AuthenticatedEnvelopesRoute: typeof AuthenticatedEnvelopesRoute
   AuthenticatedPhotoInboxRoute: typeof AuthenticatedPhotoInboxRoute
+  AuthenticatedPhotosRoute: typeof AuthenticatedPhotosRoute
   AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
   AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
@@ -1374,6 +1394,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
   AuthenticatedEnvelopesRoute: AuthenticatedEnvelopesRoute,
   AuthenticatedPhotoInboxRoute: AuthenticatedPhotoInboxRoute,
+  AuthenticatedPhotosRoute: AuthenticatedPhotosRoute,
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
