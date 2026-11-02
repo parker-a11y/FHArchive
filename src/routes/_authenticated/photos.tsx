@@ -330,6 +330,8 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [busy, setBusy] = useState(false);
   /** The photo is popped out to fill the whole screen. */
   const [full, setFull] = useState(false);
+  /** The popped-out photo element, so clicks on it don't dismiss the dialog behind. */
+  const fullElRef = useRef<HTMLElement | null>(null);
   const [file, setFile] = useState<{ blob: Blob; name: string } | null>(null);
   const [getting, setGetting] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -366,7 +368,13 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
           // While the photo is popped out, the pop-out owns clicks and Esc, so
           // the dialog behind it must stay open.
           onEscapeKeyDown={(e) => full && e.preventDefault()}
-          onInteractOutside={(e) => full && e.preventDefault()}
+          onInteractOutside={(e) => {
+            // A click on the popped-out photo is not an interaction with the
+            // dialog behind it, so that dialog must stay open underneath.
+            const el = fullElRef.current;
+            const target = (e.detail?.originalEvent as Event | undefined)?.target ?? null;
+            if (el && target && el.contains(target as Node)) e.preventDefault();
+          }}
         >
         <DialogHeader>
           <DialogTitle>{photo.caption || "Photo"}</DialogTitle>
@@ -451,7 +459,7 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
         )}
         </DialogContent>
       </Dialog>
-      {full && <FullPhoto photo={photo} side={side} onSide={setSide} onClose={() => setFull(false)} />}
+      {full && <FullPhoto photo={photo} side={side} onSide={setSide} elRef={fullElRef} onClose={() => setFull(false)} />}
     </>
   );
 }
@@ -462,11 +470,13 @@ function FullPhoto({
   side,
   onSide,
   onClose,
+  elRef,
 }: {
   photo: Photo;
   side: "front" | "back";
   onSide: (s: "front" | "back") => void;
   onClose: () => void;
+  elRef: { current: HTMLElement | null };
 }) {
   const path =
     side === "front"
@@ -490,9 +500,13 @@ function FullPhoto({
 
   return (
     <div
+      ref={(node) => {
+        elRef.current = node;
+      }}
       role="dialog"
       aria-modal="true"
       aria-label={`${photo.caption || "Photo"} full screen`}
+      data-full-photo=""
       className="pointer-events-auto fixed inset-0 z-[100] flex flex-col bg-black"
       onClick={onClose}
     >
