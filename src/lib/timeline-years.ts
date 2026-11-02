@@ -2,12 +2,14 @@ import type { Letter } from "@/lib/queries";
 
 export const UNDATED_YEAR = "Undated";
 
+export type YearBucket = { year: string; count: number };
+
 /**
  * Year buckets for the timeline, in the order the timeline shows them:
  * ascending calendar years first, undated records last. Every year that has at
  * least one record gets a bucket, so a quick pick never points at an empty jump.
  */
-export function timelineYears(letters: Letter[]): { year: string; count: number }[] {
+export function timelineYears(letters: Letter[]): YearBucket[] {
   const counts = new Map<string, number>();
   for (const l of letters) {
     const year = l.normalized_date?.slice(0, 4) || UNDATED_YEAR;
