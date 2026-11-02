@@ -373,6 +373,12 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
             // dialog behind it, so that dialog must stay open underneath.
             const el = fullElRef.current;
             const target = (e.detail?.originalEvent as Event | undefined)?.target ?? null;
+            console.log("[popout] outside", {
+              hasEl: !!el,
+              same: el === target,
+              inside: !!(el && target && el.contains(target as Node)),
+              targetClass: (target as Element)?.className?.toString().slice(0, 45) ?? null,
+            });
             if (el && target && el.contains(target as Node)) e.preventDefault();
           }}
         >
@@ -510,7 +516,10 @@ function FullPhoto({
       aria-label={`${photo.caption || "Photo"} full screen`}
       data-full-photo=""
       className="pointer-events-auto fixed inset-0 z-[100] flex flex-col bg-black"
-      onClick={onClose}
+      onClick={(e) => {
+        console.log("[popout] clicked", e.target === e.currentTarget, (e.target as Element)?.tagName);
+        onClose();
+      }}
     >
       <div
         className="flex shrink-0 items-center justify-between gap-2 px-3 py-2"
