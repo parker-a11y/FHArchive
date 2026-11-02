@@ -161,7 +161,7 @@ function Timeline() {
       </div>
       <div className="max-w-4xl p-4 sm:p-8">
         {rows.map((l) => {
-          const year = l.normalized_date?.slice(0, 4) ?? "Undated";
+          const year = l.normalized_date?.slice(0, 4) || "Undated";
           const showYear = year !== lastYear;
           lastYear = year;
           return (
