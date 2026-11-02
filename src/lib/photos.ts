@@ -239,46 +239,56 @@ export async function missingViewCount() {
 
 /**
  * Build the large (~2400 px) JPEG viewing copy for photos that predate it.
- * Downloads each original, derives view + thumbnail in the browser, uploads
- * them next to the master and updates the row. Safe to run again.
+ * Downloads each original through a signed URL, derives view + thumbnail in
+ * the browser, uploads them next to the master and updates the row. One bad
+ * photo never stops the run — failures are collected and reported. Safe to
+ * run again.
  */
 export async function backfillViewCopies(
   onProgress?: (done: number, total: number) => void,
-): Promise<number> {
+): Promise<{ done: number; failed: string[] }> {
   const photos = await fetchPhotos();
   const need = photos.filter(
     (p) => !p.front_view_path || (p.back_path && !p.back_view_path),
   );
   let done = 0;
+  const failed: string[] = [];
   for (const p of need) {
-    const patch: Partial<Pick<Photo, "front_view_path" | "front_thumb_path" | "back_view_path" | "back_thumb_path">> = {};
-    for (const side of ["front", "back"] as const) {
-      const master = side === "front" ? p.front_path : p.back_path;
-      const hasView = side === "front" ? p.front_view_path : p.back_view_path;
-      if (!master || hasView) continue;
-      const { data, error } = await supabase.storage.from("scans").download(master);
-      if (error || !data) throw new Error(`${p.caption ?? p.id}: ${error?.message ?? "file missing"}`);
-      const file = new File([data], master.split("/").pop() ?? "photo", { type: data.type });
-      if (!canDerive(file)) continue;
-      const d = await makeDerivatives(file);
-      const vp = `${master}_view.jpg`;
-      const rv = await supabase.storage.from("scans").upload(vp, d.view.blob, { upsert: true, contentType: "image/jpeg" });
-      if (rv.error) throw new Error(`${p.caption ?? p.id}: ${rv.error.message}`);
-      patch[`${side}_view_path`] = vp;
-      // Refresh the small thumbnail too when it is missing.
-      const hasThumb = side === "front" ? p.front_thumb_path : p.back_thumb_path;
-      if (!hasThumb) {
-        const tp = `${master}_thumb.jpg`;
-        const rt = await supabase.storage.from("scans").upload(tp, d.thumb.blob, { upsert: true, contentType: "image/jpeg" });
-        if (!rt.error) patch[`${side}_thumb_path`] = tp;
+    try {
+      const patch: Partial<Pick<Photo, "front_view_path" | "front_thumb_path" | "back_view_path" | "back_thumb_path">> = {};
+      for (const side of ["front", "back"] as const) {
+        const master = side === "front" ? p.front_path : p.back_path;
+        const hasView = side === "front" ? p.front_view_path : p.back_view_path;
+        if (!master || hasView) continue;
+        const { data: signed, error: signErr } = await supabase.storage.from("scans").createSignedUrl(master, 600);
+        if (signErr || !signed?.signedUrl) throw new Error(signErr?.message ?? "file missing");
+        const res = await fetch(signed.signedUrl);
+        if (!res.ok) throw new Error(`download failed (${res.status})`);
+        const blob = await res.blob();
+        const file = new File([blob], master.split("/").pop() ?? "photo", { type: blob.type });
+        if (!canDerive(file)) continue;
+        const d = await makeDerivatives(file);
+        const vp = `${master}_view.jpg`;
+        const rv = await supabase.storage.from("scans").upload(vp, d.view.blob, { upsert: true, contentType: "image/jpeg" });
+        if (rv.error) throw new Error(rv.error.message);
+        patch[`${side}_view_path`] = vp;
+        // Refresh the small thumbnail too when it is missing.
+        const hasThumb = side === "front" ? p.front_thumb_path : p.back_thumb_path;
+        if (!hasThumb) {
+          const tp = `${master}_thumb.jpg`;
+          const rt = await supabase.storage.from("scans").upload(tp, d.thumb.blob, { upsert: true, contentType: "image/jpeg" });
+          if (!rt.error) patch[`${side}_thumb_path`] = tp;
+        }
       }
-    }
-    if (Object.keys(patch).length) {
-      const { error } = await supabase.from("photos").update(patch).eq("id", p.id);
-      if (error) throw error;
+      if (Object.keys(patch).length) {
+        const { error } = await supabase.from("photos").update(patch).eq("id", p.id);
+        if (error) throw error;
+      }
+    } catch (e) {
+      failed.push(`${p.caption ?? p.id}: ${(e as Error).message}`);
     }
     done++;
     onProgress?.(done, need.length);
   }
-  return done;
+  return { done: done - failed.length, failed };
 }
