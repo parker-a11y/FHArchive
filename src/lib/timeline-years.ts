@@ -10,7 +10,7 @@ export const UNDATED_YEAR = "Undated";
 export function timelineYears(letters: Letter[]): { year: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const l of letters) {
-    const year = l.normalized_date?.slice(0, 4) ?? UNDATED_YEAR;
+    const year = l.normalized_date?.slice(0, 4) || UNDATED_YEAR;
     counts.set(year, (counts.get(year) ?? 0) + 1);
   }
   const dated = [...counts.entries()]
