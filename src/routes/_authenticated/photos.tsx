@@ -12,11 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { deliverFile } from "@/lib/download";
 import {
+  backfillViewCopies,
   convertExistingPhotos,
   createPhoto,
   deletePhoto,
   fetchPhotoOriginal,
   fetchPhotos,
+  missingViewCount,
   pendingConversionCount,
   updatePhoto,
   viewPath,
@@ -97,7 +99,9 @@ function Gallery() {
   const [open, setOpen] = useState<Photo | null>(null);
   const [dropping, setDropping] = useState(0);
   const [converting, setConverting] = useState(false);
+  const [backfilling, setBackfilling] = useState<{ done: number; total: number } | null>(null);
   const pending = useQuery({ queryKey: ["photos-pending"], queryFn: pendingConversionCount, enabled: canEdit !== false });
+  const missingViews = useQuery({ queryKey: ["photos-missing-views"], queryFn: missingViewCount, enabled: canEdit !== false });
 
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -108,6 +112,26 @@ function Gallery() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["photos"] });
     qc.invalidateQueries({ queryKey: ["photos-pending"] });
+    qc.invalidateQueries({ queryKey: ["photos-missing-views"] });
+  };
+
+  const backfill = async () => {
+    setBackfilling({ done: 0, total: missingViews.data ?? 0 });
+    try {
+      const { done, failed } = await backfillViewCopies((done, total) => setBackfilling({ done, total }));
+      if (failed.length) {
+        toast.warning(`Made ${done} large viewing copies; ${failed.length} failed`, {
+          description: failed.slice(0, 3).join(" · "),
+        });
+      } else {
+        toast.success(`Made large viewing copies for ${done} photo${done === 1 ? "" : "s"}`);
+      }
+      refresh();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBackfilling(null);
+    }
   };
 
   const bulk = async (files: File[]) => {
@@ -168,6 +192,17 @@ function Gallery() {
             <Button size="sm" variant="outline" onClick={convert} disabled={converting}>
               {converting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
               Move them into the gallery
+            </Button>
+          </div>
+        )}
+        {!!missingViews.data && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
+            <span>
+              {missingViews.data} photo{missingViews.data === 1 ? "" : "s"} only have a small preview — a large, sharp viewing copy can be made for each.
+            </span>
+            <Button size="sm" variant="outline" onClick={backfill} disabled={!!backfilling}>
+              {backfilling ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
+              {backfilling ? `Making copies ${backfilling.done}/${backfilling.total}…` : "Make large viewing copies"}
             </Button>
           </div>
         )}
@@ -298,7 +333,10 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [fileError, setFileError] = useState("");
   const dirty = caption !== (photo.caption ?? "") || notes !== (photo.notes ?? "");
   const original = side === "front" ? photo.front_path : photo.back_path;
-  const path = side === "front" ? viewPath(photo.front_path, photo.front_thumb_path) : viewPath(photo.back_path, photo.back_thumb_path);
+  const path =
+    side === "front"
+      ? viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)
+      : viewPath(photo.back_path, photo.back_thumb_path, photo.back_view_path);
 
   // The original file is fetched as soon as the photo opens (and again when
   // flipping to the back) so Download can hand it over straight from the click.

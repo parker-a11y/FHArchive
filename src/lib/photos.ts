@@ -3,22 +3,25 @@
  * not FH records. Files live in the private `scans` bucket under `photos/`.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { canDerive, makeThumbnail } from "@/lib/derivatives";
+import { canDerive, makeDerivatives } from "@/lib/derivatives";
 import { legacyPhotoNotes } from "@/lib/photo-notes";
 
 export type Photo = {
   id: string;
   front_path: string;
   front_thumb_path: string | null;
+  front_view_path: string | null;
   back_path: string | null;
   back_thumb_path: string | null;
+  back_view_path: string | null;
   caption: string | null;
   notes: string | null;
   legacy_archive_id: string | null;
   created_at: string;
 };
 
-const COLS = "id, front_path, front_thumb_path, back_path, back_thumb_path, caption, notes, legacy_archive_id, created_at";
+const COLS =
+  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at";
 
 export async function fetchPhotos(): Promise<Photo[]> {
   const out: Photo[] = [];
@@ -34,7 +37,7 @@ export async function fetchPhotos(): Promise<Photo[]> {
   }
 }
 
-async function uploadOne(file: File): Promise<{ path: string; thumb: string | null }> {
+async function uploadOne(file: File): Promise<{ path: string; thumb: string | null; view: string | null }> {
   const safe = file.name.replace(/[^\w.\-]+/g, "_");
   const path = `photos/${Date.now()}_x${Math.random().toString(36).slice(2, 8)}_${safe}`;
   const { error } = await supabase.storage
@@ -42,17 +45,21 @@ async function uploadOne(file: File): Promise<{ path: string; thumb: string | nu
     .upload(path, file, { upsert: false, contentType: file.type || undefined });
   if (error) throw new Error(`${file.name}: ${error.message}`);
   let thumb: string | null = null;
+  let view: string | null = null;
   if (canDerive(file)) {
     try {
-      const t = await makeThumbnail(file);
+      const d = await makeDerivatives(file);
+      const vp = `${path}_view.jpg`;
+      const rv = await supabase.storage.from("scans").upload(vp, d.view.blob, { upsert: true, contentType: "image/jpeg" });
+      if (!rv.error) view = vp;
       const tp = `${path}_thumb.jpg`;
-      const r = await supabase.storage.from("scans").upload(tp, t.blob, { upsert: true, contentType: "image/jpeg" });
-      if (!r.error) thumb = tp;
+      const rt = await supabase.storage.from("scans").upload(tp, d.thumb.blob, { upsert: true, contentType: "image/jpeg" });
+      if (!rt.error) thumb = tp;
     } catch {
-      /* preview is optional */
+      /* previews are optional */
     }
   }
-  return { path, thumb };
+  return { path, thumb, view };
 }
 
 export async function createPhoto(input: { front: File; back?: File | null; caption?: string; notes?: string }) {
@@ -61,14 +68,16 @@ export async function createPhoto(input: { front: File; back?: File | null; capt
   const { error } = await supabase.from("photos").insert({
     front_path: front.path,
     front_thumb_path: front.thumb,
+    front_view_path: front.view,
     back_path: back?.path ?? null,
     back_thumb_path: back?.thumb ?? null,
+    back_view_path: back?.view ?? null,
     caption: input.caption?.trim() || null,
     notes: input.notes?.trim() || null,
     created_by: auth.user?.id ?? null,
   });
   if (error) {
-    const paths = [front.path, front.thumb, back?.path, back?.thumb].filter(Boolean) as string[];
+    const paths = [front.path, front.thumb, front.view, back?.path, back?.thumb, back?.view].filter(Boolean) as string[];
     await supabase.storage.from("scans").remove(paths);
     throw error;
   }
@@ -87,12 +96,21 @@ export async function deletePhoto(p: Photo) {
   if (error) throw error;
   // Converted FH photos still share files with their retired record; leave those.
   if (p.legacy_archive_id) return;
-  const paths = [p.front_path, p.front_thumb_path, p.back_path, p.back_thumb_path].filter(Boolean) as string[];
+  const paths = [
+    p.front_path,
+    p.front_thumb_path,
+    p.front_view_path,
+    p.back_path,
+    p.back_thumb_path,
+    p.back_view_path,
+  ].filter(Boolean) as string[];
   if (paths.length) await supabase.storage.from("scans").remove(paths);
 }
 
-export const viewPath = (path: string | null, thumb: string | null) =>
-  thumb ?? (path && !/\.tiff?$/i.test(path) ? path : null);
+/** Best on-screen image: the large viewing copy, then the thumbnail, then a
+ *  browser-viewable original. TIFF originals are never returned (unrenderable). */
+export const viewPath = (path: string | null, thumb: string | null, view: string | null = null) =>
+  view ?? thumb ?? (path && !/\.tiff?$/i.test(path) ? path : null);
 
 /**
  * The name the visitor sees when downloading: the original filename, with the
@@ -207,4 +225,70 @@ export async function convertExistingPhotos(): Promise<number> {
     moved++;
   }
   return moved;
+}
+
+/** Photos whose front (or back) still lacks a large viewing copy. */
+export async function missingViewCount() {
+  const { count, error } = await supabase
+    .from("photos")
+    .select("id", { count: "exact", head: true })
+    .or("front_view_path.is.null,and(back_path.not.is.null,back_view_path.is.null)");
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * Build the large (~2400 px) JPEG viewing copy for photos that predate it.
+ * Downloads each original through a signed URL, derives view + thumbnail in
+ * the browser, uploads them next to the master and updates the row. One bad
+ * photo never stops the run — failures are collected and reported. Safe to
+ * run again.
+ */
+export async function backfillViewCopies(
+  onProgress?: (done: number, total: number) => void,
+): Promise<{ done: number; failed: string[] }> {
+  const photos = await fetchPhotos();
+  const need = photos.filter(
+    (p) => !p.front_view_path || (p.back_path && !p.back_view_path),
+  );
+  let done = 0;
+  const failed: string[] = [];
+  for (const p of need) {
+    try {
+      const patch: Partial<Pick<Photo, "front_view_path" | "front_thumb_path" | "back_view_path" | "back_thumb_path">> = {};
+      for (const side of ["front", "back"] as const) {
+        const master = side === "front" ? p.front_path : p.back_path;
+        const hasView = side === "front" ? p.front_view_path : p.back_view_path;
+        if (!master || hasView) continue;
+        const { data: signed, error: signErr } = await supabase.storage.from("scans").createSignedUrl(master, 600);
+        if (signErr || !signed?.signedUrl) throw new Error(signErr?.message ?? "file missing");
+        const res = await fetch(signed.signedUrl);
+        if (!res.ok) throw new Error(`download failed (${res.status})`);
+        const blob = await res.blob();
+        const file = new File([blob], master.split("/").pop() ?? "photo", { type: blob.type });
+        if (!canDerive(file)) continue;
+        const d = await makeDerivatives(file);
+        const vp = `${master}_view.jpg`;
+        const rv = await supabase.storage.from("scans").upload(vp, d.view.blob, { upsert: true, contentType: "image/jpeg" });
+        if (rv.error) throw new Error(rv.error.message);
+        patch[`${side}_view_path`] = vp;
+        // Refresh the small thumbnail too when it is missing.
+        const hasThumb = side === "front" ? p.front_thumb_path : p.back_thumb_path;
+        if (!hasThumb) {
+          const tp = `${master}_thumb.jpg`;
+          const rt = await supabase.storage.from("scans").upload(tp, d.thumb.blob, { upsert: true, contentType: "image/jpeg" });
+          if (!rt.error) patch[`${side}_thumb_path`] = tp;
+        }
+      }
+      if (Object.keys(patch).length) {
+        const { error } = await supabase.from("photos").update(patch).eq("id", p.id);
+        if (error) throw error;
+      }
+    } catch (e) {
+      failed.push(`${p.caption ?? p.id}: ${(e as Error).message}`);
+    }
+    done++;
+    onProgress?.(done, need.length);
+  }
+  return { done: done - failed.length, failed };
 }

@@ -43,6 +43,13 @@
       "when": 1793654141171,
       "tag": "0005_hide_moved_photos_all_overloads",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793654869022,
+      "tag": "0006_photo_view_copies",
+      "breakpoints": true
     }
   ]
 }

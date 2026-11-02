@@ -2431,11 +2431,13 @@ export type Database = {
         Row: {
           back_path: string | null
           back_thumb_path: string | null
+          back_view_path: string | null
           caption: string | null
           created_at: string
           created_by: string | null
           front_path: string
           front_thumb_path: string | null
+          front_view_path: string | null
           id: string
           legacy_archive_id: string | null
           legacy_source: string | null
@@ -2445,11 +2447,13 @@ export type Database = {
         Insert: {
           back_path?: string | null
           back_thumb_path?: string | null
+          back_view_path?: string | null
           caption?: string | null
           created_at?: string
           created_by?: string | null
           front_path: string
           front_thumb_path?: string | null
+          front_view_path?: string | null
           id?: string
           legacy_archive_id?: string | null
           legacy_source?: string | null
@@ -2459,11 +2463,13 @@ export type Database = {
         Update: {
           back_path?: string | null
           back_thumb_path?: string | null
+          back_view_path?: string | null
           caption?: string | null
           created_at?: string
           created_by?: string | null
           front_path?: string
           front_thumb_path?: string | null
+          front_view_path?: string | null
           id?: string
           legacy_archive_id?: string | null
           legacy_source?: string | null
