@@ -102,9 +102,14 @@ export const viewPath = (path: string | null, thumb: string | null) =>
  */
 export function originalName(path: string) {
   const base = (path.split("/").pop() ?? path).replace(/_thumb\.jpg$/i, "");
-  const stripped = base.replace(/^\d{10,}_/, "").replace(/^x[a-z0-9]{1,8}_/, "");
+  let stripped = base.replace(/^\d{10,}_/, "");
+  // New uploads carry an `x<random>_` marker; photos staged in the old Unassigned
+  // bucket carry a bare 6-character token. Both are upload noise, not the name.
+  if (/^_unassigned\//i.test(path)) stripped = stripped.replace(/^[a-z0-9]{6}_/, "");
+  else stripped = stripped.replace(/^x[a-z0-9]{1,8}_/, "");
   return stripped || base;
 }
+
 
 
 /**

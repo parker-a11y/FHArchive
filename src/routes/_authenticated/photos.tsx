@@ -295,6 +295,7 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState<{ blob: Blob; name: string } | null>(null);
   const [getting, setGetting] = useState(false);
+  const [fileError, setFileError] = useState("");
   const dirty = caption !== (photo.caption ?? "") || notes !== (photo.notes ?? "");
   const original = side === "front" ? photo.front_path : photo.back_path;
   const path = side === "front" ? viewPath(photo.front_path, photo.front_thumb_path) : viewPath(photo.back_path, photo.back_thumb_path);
@@ -304,16 +305,18 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   useEffect(() => {
     let alive = true;
     setFile(null);
+    setFileError("");
     if (!original) return;
     setGetting(true);
     fetchPhotoOriginal(original)
       .then((f) => alive && setFile(f))
-      .catch((e) => alive && toast.error((e as Error).message))
+      .catch((e) => alive && setFileError((e as Error).message || "This photo's file could not be opened."))
       .finally(() => alive && setGetting(false));
     return () => {
       alive = false;
     };
   }, [original]);
+
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
