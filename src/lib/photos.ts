@@ -3,22 +3,25 @@
  * not FH records. Files live in the private `scans` bucket under `photos/`.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { canDerive, makeThumbnail } from "@/lib/derivatives";
+import { canDerive, makeDerivatives } from "@/lib/derivatives";
 import { legacyPhotoNotes } from "@/lib/photo-notes";
 
 export type Photo = {
   id: string;
   front_path: string;
   front_thumb_path: string | null;
+  front_view_path: string | null;
   back_path: string | null;
   back_thumb_path: string | null;
+  back_view_path: string | null;
   caption: string | null;
   notes: string | null;
   legacy_archive_id: string | null;
   created_at: string;
 };
 
-const COLS = "id, front_path, front_thumb_path, back_path, back_thumb_path, caption, notes, legacy_archive_id, created_at";
+const COLS =
+  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at";
 
 export async function fetchPhotos(): Promise<Photo[]> {
   const out: Photo[] = [];
