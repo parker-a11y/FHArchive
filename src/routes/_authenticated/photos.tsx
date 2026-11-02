@@ -87,7 +87,7 @@ function Img({ path, alt, className }: { path: string | null; alt: string; class
 
 function Gallery() {
   const { data: photos } = useSuspenseQuery(photosOptions);
-  const { canEdit } = useAuth() as { canEdit?: boolean };
+  const { canEdit } = useAuth();
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
