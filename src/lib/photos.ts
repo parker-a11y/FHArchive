@@ -37,7 +37,7 @@ export async function fetchPhotos(): Promise<Photo[]> {
   }
 }
 
-async function uploadOne(file: File): Promise<{ path: string; thumb: string | null }> {
+async function uploadOne(file: File): Promise<{ path: string; thumb: string | null; view: string | null }> {
   const safe = file.name.replace(/[^\w.\-]+/g, "_");
   const path = `photos/${Date.now()}_x${Math.random().toString(36).slice(2, 8)}_${safe}`;
   const { error } = await supabase.storage
@@ -45,17 +45,21 @@ async function uploadOne(file: File): Promise<{ path: string; thumb: string | nu
     .upload(path, file, { upsert: false, contentType: file.type || undefined });
   if (error) throw new Error(`${file.name}: ${error.message}`);
   let thumb: string | null = null;
+  let view: string | null = null;
   if (canDerive(file)) {
     try {
-      const t = await makeThumbnail(file);
+      const d = await makeDerivatives(file);
+      const vp = `${path}_view.jpg`;
+      const rv = await supabase.storage.from("scans").upload(vp, d.view.blob, { upsert: true, contentType: "image/jpeg" });
+      if (!rv.error) view = vp;
       const tp = `${path}_thumb.jpg`;
-      const r = await supabase.storage.from("scans").upload(tp, t.blob, { upsert: true, contentType: "image/jpeg" });
-      if (!r.error) thumb = tp;
+      const rt = await supabase.storage.from("scans").upload(tp, d.thumb.blob, { upsert: true, contentType: "image/jpeg" });
+      if (!rt.error) thumb = tp;
     } catch {
-      /* preview is optional */
+      /* previews are optional */
     }
   }
-  return { path, thumb };
+  return { path, thumb, view };
 }
 
 export async function createPhoto(input: { front: File; back?: File | null; caption?: string; notes?: string }) {
@@ -64,14 +68,16 @@ export async function createPhoto(input: { front: File; back?: File | null; capt
   const { error } = await supabase.from("photos").insert({
     front_path: front.path,
     front_thumb_path: front.thumb,
+    front_view_path: front.view,
     back_path: back?.path ?? null,
     back_thumb_path: back?.thumb ?? null,
+    back_view_path: back?.view ?? null,
     caption: input.caption?.trim() || null,
     notes: input.notes?.trim() || null,
     created_by: auth.user?.id ?? null,
   });
   if (error) {
-    const paths = [front.path, front.thumb, back?.path, back?.thumb].filter(Boolean) as string[];
+    const paths = [front.path, front.thumb, front.view, back?.path, back?.thumb, back?.view].filter(Boolean) as string[];
     await supabase.storage.from("scans").remove(paths);
     throw error;
   }
