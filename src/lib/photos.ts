@@ -226,3 +226,59 @@ export async function convertExistingPhotos(): Promise<number> {
   }
   return moved;
 }
+
+/** Photos whose front (or back) still lacks a large viewing copy. */
+export async function missingViewCount() {
+  const { count, error } = await supabase
+    .from("photos")
+    .select("id", { count: "exact", head: true })
+    .or("front_view_path.is.null,and(back_path.not.is.null,back_view_path.is.null)");
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * Build the large (~2400 px) JPEG viewing copy for photos that predate it.
+ * Downloads each original, derives view + thumbnail in the browser, uploads
+ * them next to the master and updates the row. Safe to run again.
+ */
+export async function backfillViewCopies(
+  onProgress?: (done: number, total: number) => void,
+): Promise<number> {
+  const photos = await fetchPhotos();
+  const need = photos.filter(
+    (p) => !p.front_view_path || (p.back_path && !p.back_view_path),
+  );
+  let done = 0;
+  for (const p of need) {
+    const patch: Record<string, string> = {};
+    for (const side of ["front", "back"] as const) {
+      const master = side === "front" ? p.front_path : p.back_path;
+      const hasView = side === "front" ? p.front_view_path : p.back_view_path;
+      if (!master || hasView) continue;
+      const { data, error } = await supabase.storage.from("scans").download(master);
+      if (error || !data) throw new Error(`${p.caption ?? p.id}: ${error?.message ?? "file missing"}`);
+      const file = new File([data], master.split("/").pop() ?? "photo", { type: data.type });
+      if (!canDerive(file)) continue;
+      const d = await makeDerivatives(file);
+      const vp = `${master}_view.jpg`;
+      const rv = await supabase.storage.from("scans").upload(vp, d.view.blob, { upsert: true, contentType: "image/jpeg" });
+      if (rv.error) throw new Error(`${p.caption ?? p.id}: ${rv.error.message}`);
+      patch[`${side}_view_path`] = vp;
+      // Refresh the small thumbnail too when it is missing.
+      const hasThumb = side === "front" ? p.front_thumb_path : p.back_thumb_path;
+      if (!hasThumb) {
+        const tp = `${master}_thumb.jpg`;
+        const rt = await supabase.storage.from("scans").upload(tp, d.thumb.blob, { upsert: true, contentType: "image/jpeg" });
+        if (!rt.error) patch[`${side}_thumb_path`] = tp;
+      }
+    }
+    if (Object.keys(patch).length) {
+      const { error } = await supabase.from("photos").update(patch).eq("id", p.id);
+      if (error) throw error;
+    }
+    done++;
+    onProgress?.(done, need.length);
+  }
+  return done;
+}
