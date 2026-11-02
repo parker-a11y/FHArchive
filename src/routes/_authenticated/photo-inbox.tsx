@@ -59,7 +59,7 @@ function Thumb({ photo }: { photo: UnassignedPhoto }) {
     let alive = true;
     supabase.storage
       .from("scans")
-      .createSignedUrl(photo.storage_path, 3600, { transform: { width: 400, height: 400, resize: "contain" } })
+      .createSignedUrl(photo.storage_path, 3600)
       .then(({ data }) => alive && setUrl(data?.signedUrl ?? ""));
     return () => {
       alive = false;

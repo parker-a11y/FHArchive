@@ -42,5 +42,5 @@
 - [x] Money amounts highlight and convert inside formatted transcriptions
 - [x] Ask Francis history: "Get public link" button for sharing an answer
 
-- [ ] Simplify photo intake: front + optional back image, writing on back, title, date, people, place, box
-- [ ] Bulk Photo Upload: drag photos into an Unassigned bucket, then pick photos there to create records
+- [x] Simplify photo intake: front + optional back image, writing on back, title, date, people, place, box
+- [x] Bulk Photo Upload: drag photos into an Unassigned bucket, then pick photos there to create records
