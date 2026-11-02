@@ -81,10 +81,14 @@ function Timeline() {
   const headingRefs = useRef<Record<string, HTMLElement | null>>({});
   const [activeYear, setActiveYear] = useState("");
 
-  // Distance from the viewport top to just below the pinned filter/year bar.
+  // Where the pinned filter/year bar sits once it is stuck to the top of the
+  // viewport: its own sticky offset plus its height, so jumps land below it
+  // whether or not the page has been scrolled yet.
   const jumpLine = () => {
-    const bar = barRef.current?.getBoundingClientRect();
-    return bar ? bar.bottom + 8 : 8;
+    const bar = barRef.current;
+    if (!bar) return 8;
+    const stickyTop = parseFloat(getComputedStyle(bar).top) || 0;
+    return stickyTop + bar.getBoundingClientRect().height + 8;
   };
 
   const jumpToYear = (year: string) => {
