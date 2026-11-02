@@ -12,11 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { deliverFile } from "@/lib/download";
 import {
+  backfillViewCopies,
   convertExistingPhotos,
   createPhoto,
   deletePhoto,
   fetchPhotoOriginal,
   fetchPhotos,
+  missingViewCount,
   pendingConversionCount,
   updatePhoto,
   viewPath,
@@ -97,7 +99,9 @@ function Gallery() {
   const [open, setOpen] = useState<Photo | null>(null);
   const [dropping, setDropping] = useState(0);
   const [converting, setConverting] = useState(false);
+  const [backfilling, setBackfilling] = useState<{ done: number; total: number } | null>(null);
   const pending = useQuery({ queryKey: ["photos-pending"], queryFn: pendingConversionCount, enabled: canEdit !== false });
+  const missingViews = useQuery({ queryKey: ["photos-missing-views"], queryFn: missingViewCount, enabled: canEdit !== false });
 
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
