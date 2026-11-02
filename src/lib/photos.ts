@@ -251,7 +251,7 @@ export async function backfillViewCopies(
   );
   let done = 0;
   for (const p of need) {
-    const patch: Record<string, string> = {};
+    const patch: Partial<Pick<Photo, "front_view_path" | "front_thumb_path" | "back_view_path" | "back_thumb_path">> = {};
     for (const side of ["front", "back"] as const) {
       const master = side === "front" ? p.front_path : p.back_path;
       const hasView = side === "front" ? p.front_view_path : p.back_view_path;
