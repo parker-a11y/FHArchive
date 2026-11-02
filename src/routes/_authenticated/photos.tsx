@@ -337,13 +337,15 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
           <Button
             size="sm"
             variant="outline"
-            disabled={!file || getting}
-            title="Downloads the original file at full quality"
+            disabled={!file}
+            title={fileError || "Downloads the original file at full quality"}
             onClick={() => file && deliverFile(file.blob, file.name)}
           >
             {getting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
-            {getting ? "Preparing…" : "Download"}
+            {fileError ? "Download unavailable" : getting ? "Preparing…" : "Download"}
           </Button>
+          {fileError && <span className="text-xs text-muted-foreground">{fileError}</span>}
+
         </div>
 
         {canEdit ? (
