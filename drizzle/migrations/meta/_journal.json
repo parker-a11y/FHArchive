@@ -50,6 +50,13 @@
       "when": 1793654869022,
       "tag": "0006_photo_view_copies",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793659595581,
+      "tag": "0007_photo_gallery_order",
+      "breakpoints": true
     }
   ]
 }
