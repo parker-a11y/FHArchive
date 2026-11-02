@@ -29,6 +29,20 @@
       "when": 1793649195070,
       "tag": "0003_unassigned_photos_thumb",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793653904270,
+      "tag": "0004_photo_gallery",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793654141171,
+      "tag": "0005_hide_moved_photos_all_overloads",
+      "breakpoints": true
     }
   ]
 }

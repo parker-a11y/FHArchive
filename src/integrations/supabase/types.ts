@@ -2427,6 +2427,51 @@ export type Database = {
           },
         ]
       }
+      photos: {
+        Row: {
+          back_path: string | null
+          back_thumb_path: string | null
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          front_path: string
+          front_thumb_path: string | null
+          id: string
+          legacy_archive_id: string | null
+          legacy_source: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          back_path?: string | null
+          back_thumb_path?: string | null
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          front_path: string
+          front_thumb_path?: string | null
+          id?: string
+          legacy_archive_id?: string | null
+          legacy_source?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          back_path?: string | null
+          back_thumb_path?: string | null
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          front_path?: string
+          front_thumb_path?: string | null
+          id?: string
+          legacy_archive_id?: string | null
+          legacy_source?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       places: {
         Row: {
           canonical_name: string

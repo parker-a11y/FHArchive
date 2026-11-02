@@ -49,3 +49,5 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Gallery photos live in `photos` (not FH records); converted FH photograph records keep their row with record_type `moved_to_gallery`, which `search_letters` excludes, so FH numbers, history and old links survive.
