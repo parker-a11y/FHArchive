@@ -163,8 +163,11 @@ function readLastStorage(): Partial<StorageMemory> {
     if (!raw) return {};
     const p = JSON.parse(raw) as Partial<StorageMemory>;
     return {
-      record_type: p.record_type || "letter",
-      subtype: p.subtype ?? "",
+      // Photos now live in the Photos gallery; a remembered photo type must not
+      // switch Quick Entry into the photo form.
+      ...(p.record_type === "photograph" || p.record_type === "moved_to_gallery"
+        ? { record_type: "letter", subtype: "" }
+        : { record_type: p.record_type || "letter", subtype: p.subtype ?? "" }),
       storage_type: p.storage_type || "file_jacket",
       storage_location: p.storage_location ?? "",
       source_container_id: p.source_container_id ?? "",
