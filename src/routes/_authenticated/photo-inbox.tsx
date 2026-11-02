@@ -226,7 +226,7 @@ function PhotoInbox() {
       </div>
 
       <Dialog open={!!intake} onOpenChange={(o) => !o && setIntake(null)}>
-        <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto">
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Create photo record</DialogTitle>
           </DialogHeader>
