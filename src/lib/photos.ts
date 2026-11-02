@@ -36,7 +36,7 @@ export async function fetchPhotos(): Promise<Photo[]> {
 
 async function uploadOne(file: File): Promise<{ path: string; thumb: string | null }> {
   const safe = file.name.replace(/[^\w.\-]+/g, "_");
-  const path = `photos/${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safe}`;
+  const path = `photos/${Date.now()}_x${Math.random().toString(36).slice(2, 8)}_${safe}`;
   const { error } = await supabase.storage
     .from("scans")
     .upload(path, file, { upsert: false, contentType: file.type || undefined });
@@ -93,6 +93,39 @@ export async function deletePhoto(p: Photo) {
 
 export const viewPath = (path: string | null, thumb: string | null) =>
   thumb ?? (path && !/\.tiff?$/i.test(path) ? path : null);
+
+/**
+ * The name the visitor sees when downloading: the original filename, with the
+ * upload-time prefix that the scanners and uploadOne() add stripped off
+ * (`1789434441468_353.jpg` → `353.jpg`, `1793649564624_2026-11-02-0217.tif` →
+ * `2026-11-02-0217.tif`).
+ */
+export function originalName(path: string) {
+  const base = (path.split("/").pop() ?? path).replace(/_thumb\.jpg$/i, "");
+  let stripped = base.replace(/^\d{10,}_/, "");
+  // New uploads carry an `x<random>_` marker; photos staged in the old Unassigned
+  // bucket carry a bare 6-character token. Both are upload noise, not the name.
+  if (/^_unassigned\//i.test(path)) stripped = stripped.replace(/^[a-z0-9]{6}_/, "");
+  else stripped = stripped.replace(/^x[a-z0-9]{1,8}_/, "");
+  return stripped || base;
+}
+
+
+
+/**
+ * Fetch the archival original (never the small JPEG preview) into memory so the
+ * visitor can download it. The bucket is private, so this goes through a short
+ * signed URL.
+ */
+export async function fetchPhotoOriginal(path: string): Promise<{ blob: Blob; name: string }> {
+  const { data, error } = await supabase.storage.from("scans").createSignedUrl(path, 600);
+  if (error || !data?.signedUrl) throw new Error(error?.message ?? "Could not open this photo");
+  const res = await fetch(data.signedUrl);
+  if (!res.ok) throw new Error(`Could not download this photo (${res.status})`);
+  const blob = await res.blob();
+  return { blob, name: originalName(path) };
+}
+
 
 /** How many old FH photo records / bucket photos still need moving. */
 export async function pendingConversionCount() {
