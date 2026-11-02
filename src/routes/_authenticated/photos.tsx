@@ -118,8 +118,14 @@ function Gallery() {
   const backfill = async () => {
     setBackfilling({ done: 0, total: missingViews.data ?? 0 });
     try {
-      const n = await backfillViewCopies((done, total) => setBackfilling({ done, total }));
-      toast.success(`Made large viewing copies for ${n} photo${n === 1 ? "" : "s"}`);
+      const { done, failed } = await backfillViewCopies((done, total) => setBackfilling({ done, total }));
+      if (failed.length) {
+        toast.warning(`Made ${done} large viewing copies; ${failed.length} failed`, {
+          description: failed.slice(0, 3).join(" · "),
+        });
+      } else {
+        toast.success(`Made large viewing copies for ${done} photo${done === 1 ? "" : "s"}`);
+      }
       refresh();
     } catch (e) {
       toast.error((e as Error).message);
