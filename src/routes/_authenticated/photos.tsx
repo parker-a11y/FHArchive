@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Download, ImagePlus, Loader2, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
+import { Download, ImagePlus, Loader2, Maximize2, RefreshCw, Search, Trash2, UploadCloud, X } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -328,6 +328,8 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [caption, setCaption] = useState(photo.caption ?? "");
   const [notes, setNotes] = useState(photo.notes ?? "");
   const [busy, setBusy] = useState(false);
+  /** The photo is popped out to fill the whole screen. */
+  const [full, setFull] = useState(false);
   const [file, setFile] = useState<{ blob: Blob; name: string } | null>(null);
   const [getting, setGetting] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -357,15 +359,31 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
 
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[95vh] max-w-3xl overflow-y-auto">
+    <>
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
+        <DialogContent
+          className="max-h-[95vh] max-w-3xl overflow-y-auto"
+          // While the photo is popped out, the pop-out owns clicks and Esc, so
+          // the dialog behind it must stay open.
+          onEscapeKeyDown={(e) => full && e.preventDefault()}
+          onInteractOutside={(e) => full && e.preventDefault()}
+        >
         <DialogHeader>
           <DialogTitle>{photo.caption || "Photo"}</DialogTitle>
         </DialogHeader>
-        <div className="flex max-h-[60vh] items-center justify-center bg-muted">
-          <Img path={path} alt={side} className="max-h-[60vh] w-auto object-contain" />
-        </div>
+          <button
+            type="button"
+            onClick={() => setFull(true)}
+            title="Click to view full screen"
+            aria-label="View this photo full screen"
+            className="flex max-h-[60vh] w-full cursor-zoom-in items-center justify-center bg-muted"
+          >
+            <Img path={path} alt={side} className="max-h-[60vh] w-auto object-contain" />
+          </button>
         <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setFull(true)} title="Fill the screen with this photo">
+            <Maximize2 className="mr-1 h-4 w-4" /> Full screen
+          </Button>
           {photo.back_path && (
             <>
               <Button size="sm" variant={side === "front" ? "default" : "outline"} onClick={() => setSide("front")}>Front</Button>
@@ -431,7 +449,78 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
         ) : (
           photo.notes && <p className="whitespace-pre-wrap text-sm">{photo.notes}</p>
         )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      {full && <FullPhoto photo={photo} side={side} onSide={setSide} onClose={() => setFull(false)} />}
+    </>
+  );
+}
+
+/** Full-viewport photo view: the picture fills the screen; a click or Esc closes it. */
+function FullPhoto({
+  photo,
+  side,
+  onSide,
+  onClose,
+}: {
+  photo: Photo;
+  side: "front" | "back";
+  onSide: (s: "front" | "back") => void;
+  onClose: () => void;
+}) {
+  const path =
+    side === "front"
+      ? viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)
+      : viewPath(photo.back_path, photo.back_thumb_path, photo.back_view_path);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      e.stopPropagation();
+      onClose();
+    }
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${photo.caption || "Photo"} full screen`}
+      className="pointer-events-auto fixed inset-0 z-[100] flex flex-col bg-black"
+      onClick={onClose}
+    >
+      <div
+        className="flex shrink-0 items-center justify-between gap-2 px-3 py-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <span className="truncate text-sm text-white/80">{photo.caption || "Photo"}</span>
+        <div className="flex shrink-0 items-center gap-2">
+          {photo.back_path && (
+            <>
+              <Button size="sm" variant={side === "front" ? "secondary" : "outline"} onClick={() => onSide("front")}>
+                Front
+              </Button>
+              <Button size="sm" variant={side === "back" ? "secondary" : "outline"} onClick={() => onSide("back")}>
+                Back
+              </Button>
+            </>
+          )}
+          <Button size="sm" variant="outline" onClick={onClose}>
+            <X className="mr-1 h-4 w-4" /> Close
+          </Button>
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 items-center justify-center p-2">
+        <Img path={path} alt={side} className="max-h-full max-w-full object-contain" />
+      </div>
+      <p className="shrink-0 pb-2 text-center text-xs text-white/50">Click anywhere or press Esc to close</p>
+    </div>
   );
 }
