@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Loader2, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
+import { Download, ImagePlus, Loader2, RefreshCw, Search, Trash2, UploadCloud } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,16 +10,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { deliverFile } from "@/lib/download";
 import {
   convertExistingPhotos,
   createPhoto,
   deletePhoto,
+  fetchPhotoOriginal,
   fetchPhotos,
   pendingConversionCount,
   updatePhoto,
   viewPath,
   type Photo,
 } from "@/lib/photos";
+
 
 const photosOptions = queryOptions({ queryKey: ["photos"], queryFn: fetchPhotos });
 
@@ -290,8 +293,28 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [caption, setCaption] = useState(photo.caption ?? "");
   const [notes, setNotes] = useState(photo.notes ?? "");
   const [busy, setBusy] = useState(false);
+  const [file, setFile] = useState<{ blob: Blob; name: string } | null>(null);
+  const [getting, setGetting] = useState(false);
   const dirty = caption !== (photo.caption ?? "") || notes !== (photo.notes ?? "");
+  const original = side === "front" ? photo.front_path : photo.back_path;
   const path = side === "front" ? viewPath(photo.front_path, photo.front_thumb_path) : viewPath(photo.back_path, photo.back_thumb_path);
+
+  // The original file is fetched as soon as the photo opens (and again when
+  // flipping to the back) so Download can hand it over straight from the click.
+  useEffect(() => {
+    let alive = true;
+    setFile(null);
+    if (!original) return;
+    setGetting(true);
+    fetchPhotoOriginal(original)
+      .then((f) => alive && setFile(f))
+      .catch((e) => alive && toast.error((e as Error).message))
+      .finally(() => alive && setGetting(false));
+    return () => {
+      alive = false;
+    };
+  }, [original]);
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[95vh] max-w-3xl overflow-y-auto">
@@ -301,12 +324,25 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
         <div className="flex max-h-[60vh] items-center justify-center bg-muted">
           <Img path={path} alt={side} className="max-h-[60vh] w-auto object-contain" />
         </div>
-        {photo.back_path && (
-          <div className="flex gap-2">
-            <Button size="sm" variant={side === "front" ? "default" : "outline"} onClick={() => setSide("front")}>Front</Button>
-            <Button size="sm" variant={side === "back" ? "default" : "outline"} onClick={() => setSide("back")}>Back</Button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {photo.back_path && (
+            <>
+              <Button size="sm" variant={side === "front" ? "default" : "outline"} onClick={() => setSide("front")}>Front</Button>
+              <Button size="sm" variant={side === "back" ? "default" : "outline"} onClick={() => setSide("back")}>Back</Button>
+            </>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!file || getting}
+            title="Downloads the original file at full quality"
+            onClick={() => file && deliverFile(file.blob, file.name)}
+          >
+            {getting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
+            {getting ? "Preparing…" : "Download"}
+          </Button>
+        </div>
+
         {canEdit ? (
           <>
             <Input placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)} />
