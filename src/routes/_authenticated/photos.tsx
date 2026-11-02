@@ -362,7 +362,7 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
 
   return (
     <>
-      <Dialog open onOpenChange={(o) => { console.log("[popout] onOpenChange", o); !o && onClose(); }}>
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
         <DialogContent
           className="max-h-[95vh] max-w-3xl overflow-y-auto"
           // While the photo is popped out, the pop-out owns clicks and Esc, so
@@ -373,11 +373,6 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
             // dialog behind it, so that dialog must stay open underneath.
             const el = fullElRef.current;
             const target = (e.detail?.originalEvent as Event | undefined)?.target ?? null;
-            console.log("[popout] interactOutside", {
-              hasEl: !!el,
-              target: (target as Element)?.nodeName ?? null,
-              inside: !!(el && target && el.contains(target as Node)),
-            });
             if (el && target && el.contains(target as Node)) e.preventDefault();
           }}
         >
@@ -464,7 +459,7 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
         )}
         </DialogContent>
       </Dialog>
-      {full && <FullPhoto photo={photo} side={side} onSide={setSide} elRef={fullElRef} onClose={() => { console.log("[popout] onClose"); setFull(false); }} />}
+      {full && <FullPhoto photo={photo} side={side} onSide={setSide} elRef={fullElRef} onClose={() => setFull(false)} />}
     </>
   );
 }
@@ -506,7 +501,9 @@ function FullPhoto({
   return (
     <div
       ref={(node) => {
-        elRef.current = node;
+        // Keep the node after it unmounts: the dialog behind reads this a beat
+        // later to work out whether the click belonged to the pop-out.
+        if (node) elRef.current = node;
       }}
       role="dialog"
       aria-modal="true"
