@@ -21,6 +21,7 @@ export const RECORD_TYPES = [
   { value: "scrapbook", label: "Scrapbook Material" },
   { value: "research", label: "Research Material" },
   { value: "other", label: "Other" },
+  { value: "moved_to_gallery", label: "Moved to Photo Gallery" },
 ] as const;
 
 
@@ -369,7 +370,6 @@ export const IMAGE_TYPES = [
   { value: "envelope_back", label: "Envelope Back" },
   { value: "enclosure", label: "Enclosure" },
   { value: "other", label: "Other" },
-  { value: "moved_to_gallery", label: "Moved to Photo Gallery" },
 ] as const;
 
 export const ITEM_TYPES = [
