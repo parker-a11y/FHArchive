@@ -140,7 +140,11 @@ function Timeline() {
           onChange={(e) => setFilter(e.target.value)}
         />
         {years.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Jump to year">
+          <div
+            className="no-scrollbar mt-2 flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+            role="group"
+            aria-label="Jump to year"
+          >
             {years.map((y) => {
               const on = activeYear === y.year;
               return (
