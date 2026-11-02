@@ -23,6 +23,7 @@ import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
 import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
 import { Route as AuthenticatedEnvelopesRouteImport } from './routes/_authenticated/envelopes'
+import { Route as AuthenticatedPhotoInboxRouteImport } from './routes/_authenticated/photo-inbox'
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
@@ -143,6 +144,11 @@ const AuthenticatedEmailsRoute = AuthenticatedEmailsRouteImport.update({
 const AuthenticatedEnvelopesRoute = AuthenticatedEnvelopesRouteImport.update({
   id: '/envelopes',
   path: '/envelopes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPhotoInboxRoute = AuthenticatedPhotoInboxRouteImport.update({
+  id: '/photo-inbox',
+  path: '/photo-inbox',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedQueuesRoute = AuthenticatedQueuesRouteImport.update({
@@ -441,6 +447,7 @@ export interface FileRoutesByFullPath {
   '/categories': typeof AuthenticatedCategoriesRoute
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
+  '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
@@ -505,6 +512,7 @@ export interface FileRoutesByTo {
   '/categories': typeof AuthenticatedCategoriesRoute
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
+  '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
   '/search': typeof AuthenticatedSearchRoute
@@ -572,6 +580,7 @@ export interface FileRoutesById {
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
   '/_authenticated/emails': typeof AuthenticatedEmailsRoute
   '/_authenticated/envelopes': typeof AuthenticatedEnvelopesRoute
+  '/_authenticated/photo-inbox': typeof AuthenticatedPhotoInboxRoute
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
   '/_authenticated/search': typeof AuthenticatedSearchRoute
@@ -640,6 +649,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/emails'
     | '/envelopes'
+    | '/photo-inbox'
     | '/queues'
     | '/quotations'
     | '/search'
@@ -704,6 +714,7 @@ export interface FileRouteTypes {
     | '/categories'
     | '/emails'
     | '/envelopes'
+    | '/photo-inbox'
     | '/queues'
     | '/quotations'
     | '/search'
@@ -770,6 +781,7 @@ export interface FileRouteTypes {
     | '/_authenticated/categories'
     | '/_authenticated/emails'
     | '/_authenticated/envelopes'
+    | '/_authenticated/photo-inbox'
     | '/_authenticated/queues'
     | '/_authenticated/quotations'
     | '/_authenticated/search'
@@ -951,6 +963,13 @@ declare module '@tanstack/react-router' {
       path: '/envelopes'
       fullPath: '/envelopes'
       preLoaderRoute: typeof AuthenticatedEnvelopesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/photo-inbox': {
+      id: '/_authenticated/photo-inbox'
+      path: '/photo-inbox'
+      fullPath: '/photo-inbox'
+      preLoaderRoute: typeof AuthenticatedPhotoInboxRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/queues': {
@@ -1313,6 +1332,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
   AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
   AuthenticatedEnvelopesRoute: typeof AuthenticatedEnvelopesRoute
+  AuthenticatedPhotoInboxRoute: typeof AuthenticatedPhotoInboxRoute
   AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
   AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
@@ -1353,6 +1373,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
   AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
   AuthenticatedEnvelopesRoute: AuthenticatedEnvelopesRoute,
+  AuthenticatedPhotoInboxRoute: AuthenticatedPhotoInboxRoute,
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,

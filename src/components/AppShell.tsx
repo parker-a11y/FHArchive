@@ -26,6 +26,7 @@ import {
   FileSearch,
   Newspaper,
   BookOpen,
+  Images,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
