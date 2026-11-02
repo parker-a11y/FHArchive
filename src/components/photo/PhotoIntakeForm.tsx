@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createRecord } from "@/lib/queries";
 import { linkLetterPeople } from "@/lib/letter-people";
 import { addRecordType, useInvalidateCategories, type Option } from "@/lib/categories";
+import { makeThumbnail } from "@/lib/derivatives";
 import { findOrCreatePlace, uploadPhotoAtIntake } from "./photo-fields";
 
 export type PhotoSaveMode = "next" | "open" | "label";
@@ -59,9 +60,20 @@ function ImageDrop({
   const [preview, setPreview] = useState<string | null>(null);
   useEffect(() => {
     if (!file) return setPreview(null);
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
+    let url = "";
+    let alive = true;
+    const isTiff = /\.tiff?$/i.test(file.name) || /tiff/i.test(file.type);
+    (async () => {
+      // Browsers can't draw TIFFs; convert to a JPEG preview first.
+      const blob = isTiff ? (await makeThumbnail(file).catch(() => null))?.blob : file;
+      if (!blob || !alive) return;
+      url = URL.createObjectURL(blob);
+      setPreview(url);
+    })();
+    return () => {
+      alive = false;
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [file]);
   return (
     <div>

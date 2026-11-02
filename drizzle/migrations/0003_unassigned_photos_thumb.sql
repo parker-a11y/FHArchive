@@ -1,0 +1,1 @@
+ALTER TABLE public.unassigned_photos ADD COLUMN thumb_path text;

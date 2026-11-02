@@ -4,6 +4,7 @@
  * an archivist turns them into a record.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { canDerive, makeThumbnail } from "@/lib/derivatives";
 
 export const UNASSIGNED_PREFIX = "_unassigned";
 
@@ -14,6 +15,7 @@ export type UnassignedPhoto = {
   mime_type: string | null;
   size_bytes: number | null;
   created_at: string;
+  thumb_path: string | null;
 };
 
 export function unassignedPath(fileName: string, now = Date.now(), rand = Math.random()) {
@@ -26,7 +28,7 @@ export async function fetchUnassignedPhotos(): Promise<UnassignedPhoto[]> {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from("unassigned_photos")
-      .select("id, storage_path, original_filename, mime_type, size_bytes, created_at")
+      .select("id, storage_path, original_filename, mime_type, size_bytes, created_at, thumb_path")
       .order("created_at", { ascending: true })
       .range(from, from + 999);
     if (error) throw error;
@@ -48,6 +50,7 @@ export async function uploadUnassignedPhoto(file: File) {
     mime_type: file.type || null,
     size_bytes: file.size,
     uploaded_by: auth.user?.id ?? null,
+    thumb_path: await storeThumb(path, file),
   });
   if (insErr) {
     await supabase.storage.from("scans").remove([path]);
@@ -64,10 +67,36 @@ export async function unassignedAsFile(p: UnassignedPhoto): Promise<File> {
 
 export async function removeUnassignedPhotos(photos: UnassignedPhoto[]) {
   if (!photos.length) return;
-  await supabase.storage.from("scans").remove(photos.map((p) => p.storage_path));
+  // Remove the list entries first so an interrupted delete never leaves a
+  // listed photo whose file is already gone.
   const { error } = await supabase
     .from("unassigned_photos")
     .delete()
     .in("id", photos.map((p) => p.id));
   if (error) throw error;
+  await supabase.storage
+    .from("scans")
+    .remove(photos.flatMap((p) => (p.thumb_path ? [p.storage_path, p.thumb_path] : [p.storage_path])));
+}
+
+/** Browsers can't show TIFFs, so every staged photo gets a small JPEG preview. */
+async function storeThumb(path: string, file: File): Promise<string | null> {
+  if (!canDerive(file)) return null;
+  try {
+    const t = await makeThumbnail(file);
+    const thumbPath = `${path}_thumb.jpg`;
+    const { error } = await supabase.storage
+      .from("scans")
+      .upload(thumbPath, t.blob, { upsert: true, contentType: "image/jpeg" });
+    return error ? null : thumbPath;
+  } catch {
+    return null;
+  }
+}
+
+/** Make a preview for a photo uploaded before previews existed. */
+export async function backfillThumb(p: UnassignedPhoto): Promise<string | null> {
+  const thumbPath = await storeThumb(p.storage_path, await unassignedAsFile(p));
+  if (thumbPath) await supabase.from("unassigned_photos").update({ thumb_path: thumbPath }).eq("id", p.id);
+  return thumbPath;
 }

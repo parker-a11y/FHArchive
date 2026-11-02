@@ -22,6 +22,13 @@
       "when": 1793648437599,
       "tag": "0002_unassigned_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793649195070,
+      "tag": "0003_unassigned_photos_thumb",
+      "breakpoints": true
     }
   ]
 }

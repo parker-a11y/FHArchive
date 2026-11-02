@@ -10,6 +10,7 @@ import { PhotoIntakeForm } from "@/components/photo/PhotoIntakeForm";
 import { supabase } from "@/integrations/supabase/client";
 import { previewNextArchiveId } from "@/lib/queries";
 import {
+  backfillThumb,
   fetchUnassignedPhotos,
   removeUnassignedPhotos,
   unassignedAsFile,
@@ -57,14 +58,17 @@ function Thumb({ photo }: { photo: UnassignedPhoto }) {
   const [url, setUrl] = useState("");
   useEffect(() => {
     let alive = true;
-    supabase.storage
-      .from("scans")
-      .createSignedUrl(photo.storage_path, 3600)
-      .then(({ data }) => alive && setUrl(data?.signedUrl ?? ""));
+    (async () => {
+      const isTiff = /\.tiff?$/i.test(photo.original_filename) || /tiff/i.test(photo.mime_type ?? "");
+      const path = photo.thumb_path ?? (isTiff ? await backfillThumb(photo).catch(() => null) : photo.storage_path);
+      if (!path) return;
+      const { data } = await supabase.storage.from("scans").createSignedUrl(path, 3600);
+      if (alive) setUrl(data?.signedUrl ?? "");
+    })();
     return () => {
       alive = false;
     };
-  }, [photo.storage_path]);
+  }, [photo]);
   return url ? (
     <img src={url} alt={photo.original_filename} className="h-full w-full object-contain" loading="lazy" />
   ) : (
