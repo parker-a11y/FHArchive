@@ -67,14 +67,16 @@ export async function unassignedAsFile(p: UnassignedPhoto): Promise<File> {
 
 export async function removeUnassignedPhotos(photos: UnassignedPhoto[]) {
   if (!photos.length) return;
-  await supabase.storage
-    .from("scans")
-    .remove(photos.flatMap((p) => (p.thumb_path ? [p.storage_path, p.thumb_path] : [p.storage_path])));
+  // Remove the list entries first so an interrupted delete never leaves a
+  // listed photo whose file is already gone.
   const { error } = await supabase
     .from("unassigned_photos")
     .delete()
     .in("id", photos.map((p) => p.id));
   if (error) throw error;
+  await supabase.storage
+    .from("scans")
+    .remove(photos.flatMap((p) => (p.thumb_path ? [p.storage_path, p.thumb_path] : [p.storage_path])));
 }
 
 /** Browsers can't show TIFFs, so every staged photo gets a small JPEG preview. */
