@@ -330,3 +330,9 @@
 .photo-frame-mat img {
   border: 1px solid color-mix(in oklab, var(--archive-gold) 25%, transparent);
 }
+
+/* Horizontal year picker: scrollable on phones without a visible scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

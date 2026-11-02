@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
 import { fetchLetters } from "@/lib/queries";
@@ -9,6 +9,7 @@ import { PERIODS, displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
 import { WeekInHistory } from "@/components/WeekInHistory";
 import { MonthInHistory } from "@/components/MonthInHistory";
+import { timelineYears } from "@/lib/timeline-years";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -74,6 +75,53 @@ function Timeline() {
       });
   }, [letters, period, filter, tagMap]);
 
+  const years = useMemo(() => timelineYears(rows), [rows]);
+
+  const barRef = useRef<HTMLDivElement | null>(null);
+  const headingRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [activeYear, setActiveYear] = useState("");
+
+  // Where the pinned filter/year bar sits once it is stuck to the top of the
+  // viewport: its own sticky offset plus its height, so jumps land below it
+  // whether or not the page has been scrolled yet.
+  const jumpLine = () => {
+    const bar = barRef.current;
+    if (!bar) return 8;
+    const stickyTop = parseFloat(getComputedStyle(bar).top) || 0;
+    return stickyTop + bar.getBoundingClientRect().height + 8;
+  };
+
+  const jumpToYear = (year: string) => {
+    const el = headingRefs.current[year];
+    if (!el) return;
+    const top = window.scrollY + el.getBoundingClientRect().top - jumpLine();
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    setActiveYear(year);
+  };
+
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const line = jumpLine() + 4;
+        let current = "";
+        for (const { year } of years) {
+          const el = headingRefs.current[year];
+          if (el && el.getBoundingClientRect().top <= line) current = year;
+        }
+        if (current) setActiveYear(current);
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [years]);
+
   let lastYear = "";
 
   return (
@@ -81,23 +129,59 @@ function Timeline() {
       <PageHeader title="Timeline" description={`${rows.length} letters in chronological order`} />
       <WeekInHistory letters={letters} />
       <MonthInHistory letters={letters} />
-      <div className="flex gap-2 border-b border-border px-4 sm:px-8 py-3">
+      <div
+        ref={barRef}
+        className="sticky top-[53px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-8 lg:top-0"
+      >
         <Input
           className="h-8 w-72"
           placeholder="Filter by person, place or keyword…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
+        {years.length > 0 && (
+          <div
+            className="no-scrollbar mt-2 flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+            role="group"
+            aria-label="Jump to year"
+          >
+            {years.map((y) => {
+              const on = activeYear === y.year;
+              return (
+                <button
+                  key={y.year}
+                  type="button"
+                  onClick={() => jumpToYear(y.year)}
+                  title={`${y.count} record${y.count === 1 ? "" : "s"} in ${y.year}`}
+                  aria-current={on ? "true" : undefined}
+                  className={`rounded-full border px-2.5 py-0.5 text-xs tabular-nums transition-colors ${
+                    on
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  {y.year}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       <div className="max-w-4xl p-4 sm:p-8">
         {rows.map((l) => {
-          const year = l.normalized_date?.slice(0, 4) ?? "Undated";
+          const year = l.normalized_date?.slice(0, 4) || "Undated";
           const showYear = year !== lastYear;
           lastYear = year;
           return (
             <div key={l.id}>
               {showYear && (
-                <h2 className="font-display mt-8 mb-3 border-b border-archive-rule pb-1 text-lg font-semibold first:mt-0">
+                <h2
+                  id={`timeline-year-${year}`}
+                  ref={(el) => {
+                    headingRefs.current[year] = el;
+                  }}
+                  className="font-display mt-8 mb-3 border-b border-archive-rule pb-1 text-lg font-semibold first:mt-0"
+                >
                   {year}
                 </h2>
               )}
