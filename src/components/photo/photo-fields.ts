@@ -47,6 +47,8 @@ export async function uploadPhotoAtIntake(
   archiveId: string,
   letterId: string,
   file: File,
+  seq = 1,
+  label: string | null = null,
 ) {
   const safe = file.name.replace(/[^\w.\-]+/g, "_");
   const masterPath = `${archiveId}/masters/${Date.now()}_${safe}`;
@@ -59,13 +61,14 @@ export async function uploadPhotoAtIntake(
     .from("digital_files")
     .insert({
       letter_id: letterId,
-      seq: 1,
-      sort_order: 1,
+      seq,
+      sort_order: seq,
       original_filename: file.name,
       master_path: masterPath,
       master_mime: file.type || null,
       master_size: file.size,
       filename_matches: true,
+      label,
     } as never)
     .select("id")
     .single();
