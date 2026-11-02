@@ -96,12 +96,21 @@ export async function deletePhoto(p: Photo) {
   if (error) throw error;
   // Converted FH photos still share files with their retired record; leave those.
   if (p.legacy_archive_id) return;
-  const paths = [p.front_path, p.front_thumb_path, p.back_path, p.back_thumb_path].filter(Boolean) as string[];
+  const paths = [
+    p.front_path,
+    p.front_thumb_path,
+    p.front_view_path,
+    p.back_path,
+    p.back_thumb_path,
+    p.back_view_path,
+  ].filter(Boolean) as string[];
   if (paths.length) await supabase.storage.from("scans").remove(paths);
 }
 
-export const viewPath = (path: string | null, thumb: string | null) =>
-  thumb ?? (path && !/\.tiff?$/i.test(path) ? path : null);
+/** Best on-screen image: the large viewing copy, then the thumbnail, then a
+ *  browser-viewable original. TIFF originals are never returned (unrenderable). */
+export const viewPath = (path: string | null, thumb: string | null, view: string | null = null) =>
+  view ?? thumb ?? (path && !/\.tiff?$/i.test(path) ? path : null);
 
 /**
  * The name the visitor sees when downloading: the original filename, with the
