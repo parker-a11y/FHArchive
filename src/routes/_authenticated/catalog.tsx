@@ -271,7 +271,7 @@ function QuickEntry() {
     }
   }
   const isLetter = isLetterType(form.record_type);
-  const recordTypeOptions = useRecordTypeOptions();
+  const recordTypeOptions = useRecordTypeOptions().filter((o) => o.value !== "photograph");
   const subtypeOptions = useSubtypeOptions(form.record_type);
   const invalidateCategories = useInvalidateCategories();
 
