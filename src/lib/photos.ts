@@ -94,6 +94,30 @@ export async function deletePhoto(p: Photo) {
 export const viewPath = (path: string | null, thumb: string | null) =>
   thumb ?? (path && !/\.tiff?$/i.test(path) ? path : null);
 
+/**
+ * The name the visitor sees when downloading: the original filename, with the
+ * `photos/<upload-time>_<random>_` prefix that uploadOne() adds stripped off.
+ */
+export function originalName(path: string) {
+  const base = (path.split("/").pop() ?? path).replace(/_thumb\.jpg$/i, "");
+  return base.replace(/^\d{10,}_[a-z0-9]{4,8}_/i, "") || base;
+}
+
+/**
+ * Fetch the archival original (never the small JPEG preview) into memory so the
+ * visitor can download it. The bucket is private, so this goes through a short
+ * signed URL.
+ */
+export async function fetchPhotoOriginal(path: string): Promise<{ blob: Blob; name: string }> {
+  const { data, error } = await supabase.storage.from("scans").createSignedUrl(path, 600);
+  if (error || !data?.signedUrl) throw new Error(error?.message ?? "Could not open this photo");
+  const res = await fetch(data.signedUrl);
+  if (!res.ok) throw new Error(`Could not download this photo (${res.status})`);
+  const blob = await res.blob();
+  return { blob, name: originalName(path) };
+}
+
+
 /** How many old FH photo records / bucket photos still need moving. */
 export async function pendingConversionCount() {
   const [a, b] = await Promise.all([
