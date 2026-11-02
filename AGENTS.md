@@ -51,3 +51,4 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 <!-- LOVABLE:END -->
 
 - Gallery photos live in `photos` (not FH records); converted FH photograph records keep their row with record_type `moved_to_gallery`, which `search_letters` excludes, so FH numbers, history and old links survive.
+- Photo gallery ordering uses the scan before/after insertion helper and an atomic, RLS-scoped reorder operation; filtered moves retain hidden photos and file uploads remain separate from internal drags.

@@ -2442,6 +2442,7 @@ export type Database = {
           legacy_archive_id: string | null
           legacy_source: string | null
           notes: string | null
+          sort_order: number | null
           updated_at: string
         }
         Insert: {
@@ -2458,6 +2459,7 @@ export type Database = {
           legacy_archive_id?: string | null
           legacy_source?: string | null
           notes?: string | null
+          sort_order?: number | null
           updated_at?: string
         }
         Update: {
@@ -2474,6 +2476,7 @@ export type Database = {
           legacy_archive_id?: string | null
           legacy_source?: string | null
           notes?: string | null
+          sort_order?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -3517,6 +3520,7 @@ export type Database = {
           ds_seq: number
         }[]
       }
+      reorder_photos: { Args: { ordered_ids: string[] }; Returns: undefined }
       require_admin: { Args: never; Returns: undefined }
       require_editor: { Args: never; Returns: undefined }
       search_archive_records: {

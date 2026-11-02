@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { deliverFile } from "@/lib/download";
+import { reorderScans, type ScanDropTarget } from "@/lib/scan-order";
 import {
   backfillViewCopies,
   convertExistingPhotos,
@@ -21,6 +22,7 @@ import {
   missingViewCount,
   pendingConversionCount,
   updatePhoto,
+  savePhotoOrder,
   viewPath,
   type Photo,
 } from "@/lib/photos";
@@ -99,6 +101,10 @@ function Gallery() {
   const [open, setOpen] = useState<Photo | null>(null);
   const [dropping, setDropping] = useState(0);
   const [converting, setConverting] = useState(false);
+  const [dragged, setDragged] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<ScanDropTarget | null>(null);
+  const [ordering, setOrdering] = useState(false);
+  const suppressClick = useRef(false);
   const [backfilling, setBackfilling] = useState<{ done: number; total: number } | null>(null);
   const pending = useQuery({ queryKey: ["photos-pending"], queryFn: pendingConversionCount, enabled: canEdit !== false });
   const missingViews = useQuery({ queryKey: ["photos-missing-views"], queryFn: missingViewCount, enabled: canEdit !== false });
@@ -113,6 +119,24 @@ function Gallery() {
     qc.invalidateQueries({ queryKey: ["photos"] });
     qc.invalidateQueries({ queryKey: ["photos-pending"] });
     qc.invalidateQueries({ queryKey: ["photos-missing-views"] });
+  };
+
+  const movePhoto = async (id: string, target: ScanDropTarget) => {
+    if (!canEdit || ordering || id === target.id) return;
+    const next = reorderScans(photos, id, target);
+    if (next.every((p, i) => p.id === photos[i]?.id)) return;
+    setOrdering(true);
+    qc.setQueryData(photosOptions.queryKey, next);
+    try {
+      await savePhotoOrder(next);
+      toast.success("Photo order saved");
+    } catch (e) {
+      qc.setQueryData(photosOptions.queryKey, photos);
+      toast.error((e as Error).message);
+    } finally {
+      setOrdering(false);
+      qc.invalidateQueries({ queryKey: ["photos"] });
+    }
   };
 
   const backfill = async () => {
@@ -167,9 +191,9 @@ function Gallery() {
 
   return (
     <div
-      onDragOver={(e) => canEdit !== false && e.preventDefault()}
+      onDragOver={(e) => canEdit && e.dataTransfer.types.includes("Files") && e.preventDefault()}
       onDrop={(e) => {
-        if (canEdit === false) return;
+        if (!canEdit || !e.dataTransfer.files.length) return;
         e.preventDefault();
         bulk(Array.from(e.dataTransfer.files));
       }}
@@ -220,17 +244,53 @@ function Gallery() {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {shown.map((p) => (
-              <button
+              <Button
                 key={p.id}
+                variant="ghost"
                 type="button"
-                onClick={() => setOpen(p)}
-                className="group overflow-hidden rounded-md border border-border bg-card text-left transition hover:shadow-md"
+                data-photo-id={p.id}
+                aria-label={p.caption || "Untitled photo"}
+                draggable={!!canEdit && !ordering}
+                onClick={() => { if (!suppressClick.current) setOpen(p); }}
+                onDragStart={(e) => {
+                  if (!canEdit || ordering) { e.preventDefault(); return; }
+                  suppressClick.current = true;
+                  setDragged(p.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("application/x-archive-photo", p.id);
+                }}
+                onDragOver={(e) => {
+                  if (!dragged || ordering || p.id === dragged) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = "move";
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setDropTarget({ id: p.id, side: e.clientX < rect.left + rect.width / 2 ? "before" : "after" });
+                }}
+                onDrop={(e) => {
+                  const id = e.dataTransfer.getData("application/x-archive-photo");
+                  if (!id || !canEdit || ordering) return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const target: ScanDropTarget = { id: p.id, side: e.clientX < rect.left + rect.width / 2 ? "before" : "after" };
+                  setDragged(null);
+                  setDropTarget(null);
+                  void movePhoto(id, target);
+                }}
+                onDragEnd={() => {
+                  setDragged(null);
+                  setDropTarget(null);
+                  window.setTimeout(() => { suppressClick.current = false; }, 0);
+                }}
+                className={`group relative block h-auto overflow-visible whitespace-normal rounded-md border border-border bg-card p-0 text-left font-normal transition hover:shadow-md ${dragged === p.id ? "opacity-40" : ""} ${canEdit && !ordering ? "cursor-grab active:cursor-grabbing" : ""}`}
               >
-                <div className="aspect-square bg-muted">
+                {dropTarget?.id === p.id && <span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 z-10 w-1 bg-primary ${dropTarget.side === "before" ? "-left-2" : "-right-2"}`} />}
+                <div className="pointer-events-none aspect-square overflow-hidden rounded-t-md bg-muted">
                   <Img path={viewPath(p.front_path, p.front_thumb_path)} alt={p.caption ?? "Photo"} className="h-full w-full object-cover" />
                 </div>
                 <div className="truncate px-2 py-1.5 text-xs">{p.caption || <span className="text-muted-foreground">Untitled</span>}</div>
-              </button>
+              </Button>
             ))}
           </div>
         )}

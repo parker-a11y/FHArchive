@@ -18,10 +18,11 @@ export type Photo = {
   notes: string | null;
   legacy_archive_id: string | null;
   created_at: string;
+  sort_order: number | null;
 };
 
 const COLS =
-  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at";
+  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at, sort_order";
 
 export async function fetchPhotos(): Promise<Photo[]> {
   const out: Photo[] = [];
@@ -29,12 +30,19 @@ export async function fetchPhotos(): Promise<Photo[]> {
     const { data, error } = await supabase
       .from("photos")
       .select(COLS)
+      .order("sort_order", { ascending: true, nullsFirst: true })
       .order("created_at", { ascending: false })
+      .order("id", { ascending: true })
       .range(from, from + 999);
     if (error) throw error;
     out.push(...((data ?? []) as Photo[]));
     if (!data || data.length < 1000) return out;
   }
+}
+
+export async function savePhotoOrder(photos: readonly Photo[]) {
+  const { error } = await supabase.rpc("reorder_photos", { ordered_ids: photos.map((p) => p.id) });
+  if (error) throw error;
 }
 
 async function uploadOne(file: File): Promise<{ path: string; thumb: string | null; view: string | null }> {
