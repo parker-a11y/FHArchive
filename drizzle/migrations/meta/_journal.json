@@ -15,6 +15,13 @@
       "when": 1792616555338,
       "tag": "0001_backup_pending_objects",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793648437599,
+      "tag": "0002_unassigned_photos",
+      "breakpoints": true
     }
   ]
 }

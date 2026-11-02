@@ -26,6 +26,7 @@ import {
   FileSearch,
   Newspaper,
   BookOpen,
+  Images,
 } from "lucide-react";
 import logoMark from "@/assets/francis-files-logo.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +45,7 @@ const NAV = [
   { to: "/sources", label: "Digital Sources", icon: Globe },
   { to: "/containers", label: "Source Containers", icon: Box },
   { to: "/storage-boxes", label: "Storage Boxes", icon: Boxes },
+  { to: "/photo-inbox", label: "Unassigned Photos", icon: Images, editorOnly: true },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks, adminOnly: true },
