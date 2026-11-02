@@ -1,87 +1,108 @@
 /**
- * Photograph intake — an image-first alternative to the document form.
- *
- * Only the handful of fields that a photograph actually carries are shown;
- * everything letter-specific (sender/recipient, postal, envelope, sheets) is
- * gone. Optional sections stay collapsed so a fast pass touches four fields.
+ * Photograph intake — deliberately minimal: front image, optional back image,
+ * writing on the back, title, date, people pictured, place and storage box.
+ * Everything else can be filled in later on the record page.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, ImagePlus, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CategorySelect } from "@/components/CategorySelect";
 import { PersonMultiSelect, type PersonRef } from "@/components/PersonMultiSelect";
-import { PersonCombobox } from "@/components/PersonCombobox";
-import { ContainerSelect } from "@/components/containers/ContainerSelect";
+import { StorageLocationSelect } from "@/components/letter/StorageLocationSelect";
 import { supabase } from "@/integrations/supabase/client";
 import { createRecord } from "@/lib/queries";
 import { linkLetterPeople } from "@/lib/letter-people";
-import { STORAGE_TYPES } from "@/lib/archive";
-import {
-  addRecordType,
-  addSubtype,
-  useInvalidateCategories,
-  useSubtypeOptions,
-  type Option,
-} from "@/lib/categories";
-import { PHOTO_MEDIUMS, findOrCreatePlace, uploadPhotoAtIntake } from "./photo-fields";
+import { addRecordType, useInvalidateCategories, type Option } from "@/lib/categories";
+import { findOrCreatePlace, uploadPhotoAtIntake } from "./photo-fields";
 
 export type PhotoSaveMode = "next" | "open" | "label";
 
 type Props = {
   nextArchiveId: string | null;
   recordType: string;
-  onRecordTypeChange: (v: string) => void;
-  recordTypeOptions: Option[];
-  onSaved: (created: { id: string; archive_id: string }, ctx: { mode: PhotoSaveMode; title: string; date: string; starred: boolean }) => void;
+  onRecordTypeChange?: (v: string) => void;
+  recordTypeOptions?: Option[];
+  /** Pre-filled images (e.g. picked from the Unassigned Photos bucket). */
+  initialFront?: File | null;
+  initialBack?: File | null;
+  onSaved: (
+    created: { id: string; archive_id: string },
+    ctx: { mode: PhotoSaveMode; title: string; date: string; starred: boolean },
+  ) => void | Promise<void>;
 };
 
 const blank = {
-  subtype: "",
   title: "",
   normalized_date: "",
   date_precision: "exact",
   date_certainty: "confirmed",
-  occasion: "",
-  place: "",
-  photographer: "",
-  print_size: "",
-  photo_medium: "",
-  has_writing: false,
   back_inscription: "",
-  storage_type: "photo_sleeve",
-  storage_folder: "",
-  source_container_id: "",
-  primary_person: "",
-  notes: "",
+  place: "",
+  storage_location: "",
 };
 
-function Section({
-  title,
-  open,
-  onToggle,
-  children,
+function ImageDrop({
+  label,
+  file,
+  onFile,
 }: {
-  title: string;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
+  label: string;
+  file: File | null;
+  onFile: (f: File | null) => void;
 }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!file) return setPreview(null);
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
   return (
-    <div className="rounded border border-border bg-muted/30">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium"
+    <div>
+      <div className="field-label mb-1">{label}</div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*,.tif,.tiff,application/pdf"
+        className="hidden"
+        onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+      />
+      <div
+        role="button"
+        tabIndex={0}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          const f = e.dataTransfer.files?.[0];
+          if (f) onFile(f);
+        }}
+        onClick={() => ref.current?.click()}
+        onKeyDown={(e) => e.key === " " && ref.current?.click()}
+        className="flex aspect-[4/5] cursor-pointer items-center justify-center overflow-hidden rounded border border-dashed border-border bg-muted/30 text-center hover:border-primary"
       >
-        {open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
-        {title}
-      </button>
-      {open && <div className="grid grid-cols-1 gap-3 border-t border-border px-3 py-3 sm:grid-cols-3">{children}</div>}
+        {preview ? (
+          <img src={preview} alt={label} className="h-full w-full object-contain" />
+        ) : (
+          <div className="px-3 text-xs text-muted-foreground">
+            <ImagePlus className="mx-auto mb-1 size-5" />
+            Drop or click
+          </div>
+        )}
+      </div>
+      {file && (
+        <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span className="truncate">{file.name}</span>
+          <button type="button" onClick={() => onFile(null)} aria-label={`Remove ${label}`}>
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -91,46 +112,37 @@ export function PhotoIntakeForm({
   recordType,
   onRecordTypeChange,
   recordTypeOptions,
+  initialFront = null,
+  initialBack = null,
   onSaved,
 }: Props) {
   const [form, setForm] = useState({ ...blank });
   const [people, setPeople] = useState<PersonRef[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [front, setFront] = useState<File | null>(initialFront);
+  const [back, setBack] = useState<File | null>(initialBack);
   const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState({ details: false, writing: false, storage: false });
-  const inputRef = useRef<HTMLInputElement>(null);
-  const subtypeOptions = useSubtypeOptions(recordType);
   const invalidateCategories = useInvalidateCategories();
+  const set = (k: keyof typeof blank, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const set = (k: keyof typeof blank, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
-
-  useEffect(() => {
-    if (!file) return setPreview(null);
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  useEffect(() => {
-    if (nextArchiveId) setForm((f) => (f.storage_folder ? f : { ...f, storage_folder: nextArchiveId }));
-  }, [nextArchiveId]);
+  useEffect(() => setFront(initialFront), [initialFront]);
+  useEffect(() => setBack(initialBack), [initialBack]);
 
   async function save(mode: PhotoSaveMode) {
     if (busy) return;
     setBusy(true);
     try {
       const precision = !form.normalized_date ? "undated" : form.date_precision;
+      const writing = form.back_inscription.trim();
       const created = await createRecord({
         p_record_type: recordType,
-        p_subtype: form.subtype,
+        p_subtype: "",
         p_title: form.title,
         p_date_as_written: "",
         p_normalized_date: form.normalized_date,
         p_date_end: "",
         p_date_precision: precision,
         p_date_certainty: form.date_certainty,
-        p_primary_person: form.primary_person,
+        p_primary_person: "",
         p_author: null,
         p_recipient: null,
         p_origin: null,
@@ -139,34 +151,29 @@ export function PhotoIntakeForm({
         p_sheets: null,
         p_has_envelope: false,
         p_has_enclosures: false,
-        p_storage_location: null,
+        p_storage_location: form.storage_location || null,
         p_original_copy: "original",
-        p_notes: form.notes,
+        p_notes: "",
       });
 
       await supabase
         .from("letters")
         .update({
-          photo_occasion: form.occasion || null,
-          photographer: form.photographer || null,
-          print_size: form.print_size || null,
-          photo_medium: form.photo_medium || null,
-          photo_back_inscription: form.has_writing ? form.back_inscription || null : null,
-          storage_type: form.storage_type || null,
-          storage_folder: form.storage_folder || null,
-          source_container_id: form.source_container_id || null,
-          // Photographs skip transcription unless the print carries writing.
-          transcription_status: form.has_writing ? "not_started" : "not_required",
+          photo_back_inscription: writing || null,
+          storage_location: form.storage_location || null,
+          storage_type: "photo_sleeve",
+          photo_front_scanned: !!front,
+          photo_back_scanned: !!back,
+          transcription_status: writing || back ? "not_started" : "not_required",
         } as never)
         .eq("id", created.id);
 
       const { data: auth } = await supabase.auth.getUser();
-      const ownerId = auth.user?.id;
-      if (ownerId && people.length) {
+      if (auth.user?.id && people.length) {
         await linkLetterPeople(
           created.id,
           people.map((p) => ({ personId: p.id, role: "pictured" as never })),
-          ownerId,
+          auth.user.id,
         );
       }
       if (form.place.trim()) {
@@ -181,32 +188,26 @@ export function PhotoIntakeForm({
         }
       }
 
-      if (file) {
+      for (const [file, seq, label] of [
+        [front, 1, "Front"],
+        [back, 2, "Back"],
+      ] as const) {
+        if (!file) continue;
         try {
-          await uploadPhotoAtIntake(created.archive_id, created.id, file);
+          await uploadPhotoAtIntake(created.archive_id, created.id, file, seq, label);
         } catch (e) {
-          toast.error(`${created.archive_id}: photo upload failed — ${(e as Error).message}`, {
+          toast.error(`${created.archive_id}: ${label.toLowerCase()} upload failed — ${(e as Error).message}`, {
             duration: 10000,
           });
         }
       }
 
-      onSaved(created, {
-        mode,
-        title: form.title,
-        date: form.normalized_date,
-        starred: false,
-      });
+      await onSaved(created, { mode, title: form.title, date: form.normalized_date, starred: false });
       if (mode !== "open") {
-        setForm((f) => ({
-          ...blank,
-          subtype: f.subtype,
-          storage_type: f.storage_type,
-          source_container_id: f.source_container_id,
-          storage_folder: "",
-        }));
+        setForm((f) => ({ ...blank, storage_location: f.storage_location }));
         setPeople([]);
-        setFile(null);
+        setFront(null);
+        setBack(null);
       }
     } catch (e) {
       toast.error((e as Error).message);
@@ -232,138 +233,81 @@ export function PhotoIntakeForm({
         }
       }}
     >
-      <div className="mb-6 rounded border border-border bg-card px-5 py-4">
-        <div className="field-label">Next archive ID (assigned on save)</div>
-        <div className="archive-id font-display mt-1 text-4xl">{nextArchiveId ?? "……"}</div>
-      </div>
-
-      <div className="mb-4 max-w-xs space-y-1.5">
-        <Label className="field-label">Record type *</Label>
-        <CategorySelect
-          value={recordType}
-          onChange={onRecordTypeChange}
-          options={recordTypeOptions}
-          onCreate={async (label) => {
-            const v = await addRecordType(label, recordTypeOptions);
-            invalidateCategories();
-            return v;
-          }}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-[18rem_1fr]">
-        {/* ------------------------------ image ------------------------------ */}
-        <div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*,.tif,.tiff,application/pdf"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          />
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const f = e.dataTransfer.files?.[0];
-              if (f) setFile(f);
-            }}
-            onClick={() => inputRef.current?.click()}
-            className="flex aspect-[4/5] cursor-pointer items-center justify-center overflow-hidden rounded border border-dashed border-border bg-muted/30 text-center"
-          >
-            {preview ? (
-              <img src={preview} alt="Photograph preview" className="h-full w-full object-contain" />
-            ) : (
-              <div className="px-4 text-sm text-muted-foreground">
-                <ImagePlus className="mx-auto mb-2 size-6" />
-                Drop the photo here, or click to choose
-              </div>
-            )}
+      <div className="mb-5 flex flex-wrap items-end gap-6">
+        <div className="rounded border border-border bg-card px-5 py-3">
+          <div className="field-label">Next archive ID</div>
+          <div className="archive-id font-display text-3xl">{nextArchiveId ?? "……"}</div>
+        </div>
+        {onRecordTypeChange && recordTypeOptions && (
+          <div className="w-56 space-y-1.5">
+            <Label className="field-label">Record type</Label>
+            <CategorySelect
+              value={recordType}
+              onChange={onRecordTypeChange}
+              options={recordTypeOptions}
+              onCreate={async (label) => {
+                const v = await addRecordType(label, recordTypeOptions);
+                invalidateCategories();
+                return v;
+              }}
+            />
           </div>
-          {file && (
-            <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span className="truncate">{file.name}</span>
-              <button type="button" onClick={() => setFile(null)} aria-label="Remove photo">
-                <X className="size-4" />
-              </button>
-            </div>
-          )}
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[20rem_1fr]">
+        <div className="grid grid-cols-2 gap-3">
+          <ImageDrop label="Front" file={front} onFile={setFront} />
+          <ImageDrop label="Back (optional)" file={back} onFile={setBack} />
         </div>
 
-        {/* ------------------------------ core ------------------------------ */}
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="field-label">Subtype</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {subtypeOptions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => set("subtype", form.subtype === s ? "" : s)}
-                  className={`rounded-full border px-3 py-1 text-xs ${
-                    form.subtype === s
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-primary"
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-              <div className="w-40">
-                <CategorySelect
-                  value=""
-                  allowEmpty
-                  className="h-7 text-xs"
-                  onChange={(v) => set("subtype", v)}
-                  options={subtypeOptions.map((s) => ({ value: s, label: s }))}
-                  onCreate={async (label) => {
-                    const v = await addSubtype(recordType, label, subtypeOptions);
-                    invalidateCategories();
-                    return v;
-                  }}
+            <Label className="field-label">Title</Label>
+            <Input
+              autoFocus
+              value={form.title}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="Fran and Skip on the dock"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="field-label">Date</Label>
+            <Input
+              type="date"
+              className="max-w-xs"
+              value={form.normalized_date}
+              onChange={(e) => set("normalized_date", e.target.value)}
+            />
+            <div className="flex flex-wrap gap-4 pt-1 text-xs">
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={form.date_precision === "year"}
+                  onChange={(e) => set("date_precision", e.target.checked ? "year" : "exact")}
                 />
-              </div>
+                Year only
+              </label>
+              <label className="flex items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={form.date_certainty === "approximate"}
+                  onChange={(e) => set("date_certainty", e.target.checked ? "approximate" : "confirmed")}
+                />
+                Approximate
+              </label>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label className="field-label">Caption / short description</Label>
-            <Input value={form.title} onChange={(e) => set("title", e.target.value)} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label className="field-label">Date (optional)</Label>
-              <Input
-                type="date"
-                value={form.normalized_date}
-                onChange={(e) => set("normalized_date", e.target.value)}
-              />
-              <div className="flex flex-wrap gap-4 pt-1 text-xs">
-                <label className="flex items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={form.date_precision === "year"}
-                    onChange={(e) => set("date_precision", e.target.checked ? "year" : "exact")}
-                  />
-                  Year only
-                </label>
-                <label className="flex items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={form.date_certainty === "approximate"}
-                    onChange={(e) =>
-                      set("date_certainty", e.target.checked ? "approximate" : "confirmed")
-                    }
-                  />
-                  Approximate
-                </label>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="field-label">Place</Label>
-              <Input value={form.place} onChange={(e) => set("place", e.target.value)} />
-            </div>
+            <Label className="field-label">Writing on back</Label>
+            <Textarea
+              rows={3}
+              value={form.back_inscription}
+              onChange={(e) => set("back_inscription", e.target.value)}
+              placeholder="Type exactly what's written on the back, if anything"
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -375,117 +319,18 @@ export function PhotoIntakeForm({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="field-label">Occasion / event</Label>
-            <Input value={form.occasion} onChange={(e) => set("occasion", e.target.value)} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="field-label">Place</Label>
+              <Input value={form.place} onChange={(e) => set("place", e.target.value)} />
+            </div>
+            <StorageLocationSelect
+              label="Box"
+              value={form.storage_location}
+              onChange={(v) => set("storage_location", v)}
+            />
           </div>
         </div>
-      </div>
-
-      {/* --------------------------- optional bits --------------------------- */}
-      <div className="mt-5 space-y-2">
-        <Section
-          title="Photo details"
-          open={open.details}
-          onToggle={() => setOpen((o) => ({ ...o, details: !o.details }))}
-        >
-          <div className="space-y-1.5">
-            <Label className="field-label">Photographer / studio</Label>
-            <Input value={form.photographer} onChange={(e) => set("photographer", e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="field-label">Print size</Label>
-            <Input value={form.print_size} onChange={(e) => set("print_size", e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="field-label">Black &amp; white or color</Label>
-            <select
-              value={form.photo_medium}
-              onChange={(e) => set("photo_medium", e.target.value)}
-              className="h-9 w-full rounded border border-input bg-background px-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-            >
-              {PHOTO_MEDIUMS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label className="field-label">Primary person (optional)</Label>
-            <PersonCombobox
-              value={form.primary_person}
-              onChange={(v) => set("primary_person", v)}
-            />
-          </div>
-        </Section>
-
-        <Section
-          title="Writing on the back"
-          open={open.writing}
-          onToggle={() => setOpen((o) => ({ ...o, writing: !o.writing }))}
-        >
-          <label className="flex items-start gap-2 text-sm sm:col-span-3">
-            <input
-              type="checkbox"
-              className="mt-1"
-              checked={form.has_writing}
-              onChange={(e) => set("has_writing", e.target.checked)}
-            />
-            <span className="leading-snug">
-              This photo has writing on it — keep transcription / AI review on for this record.
-            </span>
-          </label>
-          {form.has_writing && (
-            <div className="space-y-1.5 sm:col-span-3">
-              <Label className="field-label">Reverse inscription</Label>
-              <Textarea
-                rows={3}
-                value={form.back_inscription}
-                onChange={(e) => set("back_inscription", e.target.value)}
-              />
-            </div>
-          )}
-        </Section>
-
-        <Section
-          title="Storage &amp; filing"
-          open={open.storage}
-          onToggle={() => setOpen((o) => ({ ...o, storage: !o.storage }))}
-        >
-          <div className="space-y-1.5">
-            <Label className="field-label">Storage type</Label>
-            <select
-              value={form.storage_type}
-              onChange={(e) => set("storage_type", e.target.value)}
-              className="h-9 w-full rounded border border-input bg-background px-2 text-sm focus:ring-2 focus:ring-ring focus:outline-none"
-            >
-              {STORAGE_TYPES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="field-label">Folder / jacket</Label>
-            <Input
-              value={form.storage_folder}
-              onChange={(e) => set("storage_folder", e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="field-label">Source container</Label>
-            <ContainerSelect
-              value={form.source_container_id}
-              onChange={(v) => set("source_container_id", v)}
-            />
-          </div>
-          <div className="space-y-1.5 sm:col-span-3">
-            <Label className="field-label">Notes</Label>
-            <Textarea rows={2} value={form.notes} onChange={(e) => set("notes", e.target.value)} />
-          </div>
-        </Section>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
