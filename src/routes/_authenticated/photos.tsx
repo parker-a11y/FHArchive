@@ -330,8 +330,6 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
   const [busy, setBusy] = useState(false);
   /** The photo is popped out to fill the whole screen. */
   const [full, setFull] = useState(false);
-  /** The popped-out photo element, so clicks on it don't dismiss the dialog behind. */
-  const fullElRef = useRef<HTMLElement | null>(null);
   const [file, setFile] = useState<{ blob: Blob; name: string } | null>(null);
   const [getting, setGetting] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -365,22 +363,6 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
       <Dialog open onOpenChange={(o) => !o && onClose()}>
         <DialogContent
           className="max-h-[95vh] max-w-3xl overflow-y-auto"
-          // While the photo is popped out, the pop-out owns clicks and Esc, so
-          // the dialog behind it must stay open.
-          onEscapeKeyDown={(e) => full && e.preventDefault()}
-          onInteractOutside={(e) => {
-            // A click on the popped-out photo is not an interaction with the
-            // dialog behind it, so that dialog must stay open underneath.
-            const el = fullElRef.current;
-            const target = (e.detail?.originalEvent as Event | undefined)?.target ?? null;
-            console.log("[popout] outside", {
-              hasEl: !!el,
-              same: el === target,
-              inside: !!(el && target && el.contains(target as Node)),
-              targetClass: (target as Element)?.className?.toString().slice(0, 45) ?? null,
-            });
-            if (el && target && el.contains(target as Node)) e.preventDefault();
-          }}
         >
         <DialogHeader>
           <DialogTitle>{photo.caption || "Photo"}</DialogTitle>
@@ -463,9 +445,11 @@ function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; can
         ) : (
           photo.notes && <p className="whitespace-pre-wrap text-sm">{photo.notes}</p>
         )}
+        {/* The pop-out is nested inside the viewer so the dialog behind it — and
+            screen readers — treat it as part of the viewer, not a click elsewhere. */}
+        {full && <FullPhoto photo={photo} side={side} onSide={setSide} onClose={() => setFull(false)} />}
         </DialogContent>
       </Dialog>
-      {full && <FullPhoto photo={photo} side={side} onSide={setSide} elRef={fullElRef} onClose={() => setFull(false)} />}
     </>
   );
 }
@@ -476,76 +460,44 @@ function FullPhoto({
   side,
   onSide,
   onClose,
-  elRef,
 }: {
   photo: Photo;
   side: "front" | "back";
   onSide: (s: "front" | "back") => void;
   onClose: () => void;
-  elRef: { current: HTMLElement | null };
 }) {
   const path =
     side === "front"
       ? viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)
       : viewPath(photo.back_path, photo.back_thumb_path, photo.back_view_path);
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== "Escape") return;
-      e.preventDefault();
-      e.stopPropagation();
-      onClose();
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => {
-      window.removeEventListener("keydown", onKey, true);
-      document.body.style.overflow = "";
-    };
-  }, [onClose]);
-
   return (
-    <div
-      ref={(node) => {
-        // Keep the node after it unmounts: the dialog behind reads this a beat
-        // later to work out whether the click belonged to the pop-out.
-        if (node) elRef.current = node;
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${photo.caption || "Photo"} full screen`}
-      data-full-photo=""
-      className="pointer-events-auto fixed inset-0 z-[100] flex flex-col bg-black"
-      onClick={(e) => {
-        console.log("[popout] clicked", e.target === e.currentTarget, (e.target as Element)?.tagName);
-        onClose();
-      }}
-    >
-      <div
-        className="flex shrink-0 items-center justify-between gap-2 px-3 py-2"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <span className="truncate text-sm text-white/80">{photo.caption || "Photo"}</span>
-        <div className="flex shrink-0 items-center gap-2">
-          {photo.back_path && (
-            <>
-              <Button size="sm" variant={side === "front" ? "secondary" : "outline"} onClick={() => onSide("front")}>
-                Front
-              </Button>
-              <Button size="sm" variant={side === "back" ? "secondary" : "outline"} onClick={() => onSide("back")}>
-                Back
-              </Button>
-            </>
-          )}
-          <Button size="sm" variant="outline" onClick={onClose}>
-            <X className="mr-1 h-4 w-4" /> Close
-          </Button>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="inset-0 flex h-[100dvh] max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-black p-0 sm:left-0 sm:top-0 sm:h-full sm:max-h-none sm:max-w-none sm:translate-x-0 sm:translate-y-0 sm:rounded-none sm:p-0 [&>button]:hidden">
+        <DialogTitle className="sr-only">{`${photo.caption || "Photo"} full screen`}</DialogTitle>
+        <div className="flex shrink-0 items-center justify-between gap-2 py-2">
+          <span className="truncate text-sm text-white/80">{photo.caption || "Photo"}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            {photo.back_path && (
+              <>
+                <Button size="sm" variant={side === "front" ? "secondary" : "outline"} onClick={() => onSide("front")}>
+                  Front
+                </Button>
+                <Button size="sm" variant={side === "back" ? "secondary" : "outline"} onClick={() => onSide("back")}>
+                  Back
+                </Button>
+              </>
+            )}
+            <Button size="sm" variant="outline" onClick={onClose}>
+              <X className="mr-1 h-4 w-4" /> Close
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className="flex min-h-0 flex-1 items-center justify-center p-2">
-        <Img path={path} alt={side} className="max-h-full max-w-full object-contain" />
-      </div>
-      <p className="shrink-0 pb-2 text-center text-xs text-white/50">Click anywhere or press Esc to close</p>
-    </div>
+        <div className="flex min-h-0 flex-1 items-center justify-center py-2" onClick={onClose}>
+          <Img path={path} alt={side} className="max-h-full max-w-full object-contain" />
+        </div>
+        <p className="shrink-0 pb-2 text-center text-xs text-white/50">Click the photo or press Esc to close</p>
+      </DialogContent>
+    </Dialog>
   );
 }
