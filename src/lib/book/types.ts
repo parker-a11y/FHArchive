@@ -29,6 +29,9 @@ export type BookRecordSource = {
   author: string | null;
   recipient: string | null;
   location: string | null;
+  /** Mailing origin and destination exactly as catalogued (never inferred). */
+  origin: string | null;
+  destination: string | null;
   title: string | null;
   scans: BookImage[];
   envelopes: BookImage[];
@@ -44,6 +47,8 @@ export type BookRecordSource = {
 export type BookSettings = {
   scansPerPage: 1 | 2;
   titlePage: boolean;
+  /** Classic Literary — Envelope First (default). Off = original Phase 1 order. */
+  envelopeFirst: boolean;
 };
 
 export type BookMeta = {

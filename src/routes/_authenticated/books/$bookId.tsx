@@ -151,7 +151,7 @@ function BookEditor() {
 function BookDetails({ data, onSaved }: { data: Editor; onSaved: () => void }) {
   const [title, setTitle] = useState(data.meta.title);
   const [subtitle, setSubtitle] = useState(data.meta.subtitle ?? "");
-  const save = async (patch: { id: string; title?: string; subtitle?: string | null; settings?: { scansPerPage: 1 | 2; titlePage: boolean } }) => {
+  const save = async (patch: { id: string; title?: string; subtitle?: string | null; settings?: { scansPerPage: 1 | 2; titlePage: boolean; envelopeFirst: boolean } }) => {
     try {
       await updateBook({ data: patch });
       onSaved();
@@ -176,7 +176,11 @@ function BookDetails({ data, onSaved }: { data: Editor; onSaved: () => void }) {
           <Label htmlFor="tp">Title page</Label>
         </div>
         <div className="flex items-center gap-2">
-          <Switch id="two" checked={s.scansPerPage === 2} onCheckedChange={(v) => save({ id: data.meta.id, settings: { ...s, scansPerPage: v ? 2 : 1 } })} />
+          <Switch id="ef" checked={s.envelopeFirst} onCheckedChange={(v) => save({ id: data.meta.id, settings: { ...s, envelopeFirst: v } })} />
+          <Label htmlFor="ef">Classic Literary — Envelope First</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch id="two" disabled={s.envelopeFirst} checked={!s.envelopeFirst && s.scansPerPage === 2} onCheckedChange={(v) => save({ id: data.meta.id, settings: { ...s, scansPerPage: v ? 2 : 1 } })} />
           <Label htmlFor="two">Two letter scans per page</Label>
         </div>
       </div>
