@@ -335,7 +335,7 @@ export const retryBookExport = createServerFn({ method: "POST" })
     await assertEditor(context);
     const { data: row } = await context.supabase.from("book_exports").select("status, step").eq("id", data.exportId).single();
     // A blocked export (changed sources) restarts from layout; others resume where they stopped.
-    const patch: Record<string, unknown> = { status: "queued", attempts: 0, error: null, lease_until: null, step: "Waiting to restart" };
+    const patch: any = { status: "queued", attempts: 0, error: null, lease_until: null, step: "Waiting to restart" };
     if (row?.step === "Blocked") patch.state = {};
     const { error } = await context.supabase.from("book_exports").update(patch).eq("id", data.exportId);
     if (error) throw new Error(error.message);

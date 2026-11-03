@@ -151,7 +151,7 @@ function BookEditor() {
 function BookDetails({ data, onSaved }: { data: Editor; onSaved: () => void }) {
   const [title, setTitle] = useState(data.meta.title);
   const [subtitle, setSubtitle] = useState(data.meta.subtitle ?? "");
-  const save = async (patch: Parameters<typeof updateBook>[0]["data"]) => {
+  const save = async (patch: { id: string; title?: string; subtitle?: string | null; settings?: { scansPerPage: 1 | 2; titlePage: boolean } }) => {
     try {
       await updateBook({ data: patch });
       onSaved();
