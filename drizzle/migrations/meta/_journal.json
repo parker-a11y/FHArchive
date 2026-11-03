@@ -57,6 +57,13 @@
       "when": 1793659595581,
       "tag": "0007_photo_gallery_order",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793721807563,
+      "tag": "0008_archivists_read_archive_emails",
+      "breakpoints": true
     }
   ]
 }

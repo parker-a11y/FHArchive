@@ -56,7 +56,7 @@ const NAV = [
   { to: "/places", label: "Places", icon: MapPin },
   { to: "/keywords", label: "Keywords", icon: Tags },
   { to: "/categories", label: "Categories", icon: Tags, adminOnly: true },
-  { to: "/emails", label: "Email Admin", icon: Mail, adminOnly: true },
+  { to: "/emails", label: "Email Admin", icon: Mail, editorOnly: true },
   { to: "/backups", label: "Backups", icon: ShieldCheck, adminOnly: true },
 ];
 

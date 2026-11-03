@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
 import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send, ShieldCheck } from "lucide-react";
-import { AdminOnly, AppShell, PageHeader } from "@/components/AppShell";
+import { AppShell, EditorOnly, PageHeader } from "@/components/AppShell";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
@@ -33,9 +34,9 @@ import { EditScheduledEmailButton } from "@/components/letter/EditScheduledEmail
 
 export const Route = createFileRoute("/_authenticated/emails")({
   component: () => (
-    <AdminOnly>
+    <EditorOnly>
       <EmailsPage />
-    </AdminOnly>
+    </EditorOnly>
   ),
   head: () => ({
     meta: [
@@ -269,7 +270,9 @@ function Calendar({
   onPickDay,
   onPickEmail,
   selectedDay,
+  readOnly = false,
 }: {
+  readOnly?: boolean;
   emails: ArchiveEmail[];
   recordsByEmail: Map<string, string[]>;
   onPickDay: (key: string) => void;
@@ -463,6 +466,7 @@ function Calendar({
               onDragLeave={() => setDragOver((k) => (k === key ? null : k))}
               onDrop={(ev) => {
                 ev.preventDefault();
+                if (readOnly) return;
                 dropOn(key, ev.dataTransfer.getData("application/x-archive-email"));
               }}
               className={cn(
@@ -497,7 +501,7 @@ function Calendar({
               {entries.map((e) => (
                 <span
                   key={e.emailId}
-                  draggable={e.kind === "scheduled"}
+                  draggable={!readOnly && e.kind === "scheduled"}
                   onClick={(ev) => {
                     ev.stopPropagation();
                     onPickEmail(key, e.emailId);
@@ -571,6 +575,8 @@ const DOT_LABEL: Record<LetterState, string> = {
 
 function EmailsPage() {
   const qc = useQueryClient();
+  // Archivists see the calendar and history read-only; only admins send or change email.
+  const { isAdmin } = useAuth();
   const { data: emails = [], isLoading } = useQuery({
     queryKey: ["archive-emails"],
     queryFn: fetchSentEmails,
@@ -578,6 +584,7 @@ function EmailsPage() {
   const { data: drafts = [] } = useQuery({
     queryKey: ["archive-email-drafts"],
     queryFn: fetchDraftEmails,
+    enabled: isAdmin,
   });
   const { data: emailRecords = [] } = useQuery({
     queryKey: ["archive-email-records"],
@@ -590,6 +597,7 @@ function EmailsPage() {
   const { data: scratchpads = {} } = useQuery({
     queryKey: SCRATCHPAD_QUERY_KEY,
     queryFn: fetchEmailScratchpads,
+    enabled: isAdmin,
   });
 
   const [filter, setFilter] = useState<LetterState | "all">("all");
@@ -725,7 +733,7 @@ function EmailsPage() {
               ? `Sends ${new Date(e.scheduled_for).toLocaleString()}`
               : new Date(e.sent_at).toLocaleString()}
           </span>
-          {e.status === "scheduled" && (
+          {isAdmin && e.status === "scheduled" && (
             <span
               className="flex flex-wrap gap-2"
               onClick={(ev) => {
@@ -746,8 +754,8 @@ function EmailsPage() {
             }}
             className="flex gap-2"
           >
-            <GetEmailLinkButton emailId={e.id} />
-            <EmailPdfButton emailId={e.id} />
+            {isAdmin && <GetEmailLinkButton emailId={e.id} />}
+            {isAdmin && <EmailPdfButton emailId={e.id} />}
           </span>
         </summary>
         <div className="mx-auto mt-5 max-w-[72ch] space-y-4 overflow-wrap-anywhere border-t border-border pt-5 text-base leading-[1.8] [overflow-wrap:anywhere] [&_.rich-text-view]:leading-[1.8] [&_.rich-text-view_p]:mb-5 [&_.rich-text-view_blockquote]:my-6 [&_.rich-text-view_blockquote]:font-display [&_.rich-text-view_blockquote]:text-lg">
@@ -786,7 +794,7 @@ function EmailsPage() {
               <p className="whitespace-pre-wrap">{e.message_body}</p>
             ))}
           {e.error && <p className="text-destructive">{e.error}</p>}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
+          {isAdmin && <div className="flex flex-wrap items-center gap-3 pt-1">
             <EmailArchiveDialog
               records={recs}
               autosaveScope={`resend:${e.id}`}
@@ -799,7 +807,7 @@ function EmailsPage() {
                 </Button>
               }
             />
-          </div>
+          </div>}
         </div>
       </details>
     );
@@ -862,12 +870,12 @@ function EmailsPage() {
         description="Schedule the next letter, see which records have gone out, and review every send."
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2" asChild>
+            {isAdmin && <><Button variant="outline" className="gap-2" asChild>
               <Link to="/backups" title="Open the backup dashboard">
                 <ShieldCheck className="size-4" /> Backups
               </Link>
             </Button>
-            <EmailArchiveDialog autosaveScope="email-admin-new" defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} />
+            <EmailArchiveDialog autosaveScope="email-admin-new" defaultSubject="" trigger={<Button className="gap-2"><Send className="size-4" /> SEND EMAIL</Button>} /></>}
           </div>
         }
       />
@@ -921,6 +929,7 @@ function EmailsPage() {
           emails={emails}
           recordsByEmail={recordsByEmail}
           selectedDay={selectedDay}
+          readOnly={!isAdmin}
           onPickDay={(key) => {
             setSheetEmailId(null);
             setSheetDay(key);
@@ -990,7 +999,7 @@ function EmailsPage() {
                   {l.normalized_date ?? l.date_as_written ?? "—"}
                 </span>
                 <span className="truncate">{l.title ?? "Untitled"}</span>
-                <span className="ml-auto flex shrink-0 items-center gap-1">
+                {isAdmin && <span className="ml-auto flex shrink-0 items-center gap-1">
                   <EmailScratchpadButton
                     letterId={l.id}
                     archiveId={l.archive_id}
@@ -1005,13 +1014,13 @@ function EmailsPage() {
                       </Button>
                     }
                   />
-                </span>
+                </span>}
               </div>
             ))}
           </div>
         </section>
 
-        {drafts.length > 0 && (
+        {isAdmin && drafts.length > 0 && (
           <section>
             <h2 className="mb-3 text-sm font-semibold">Drafts</h2>
             <div className="space-y-3">
@@ -1110,7 +1119,7 @@ function EmailsPage() {
               <p className="text-sm text-muted-foreground">No letter scheduled for this date.</p>
             )}
             {sheetEmails.map((e) => renderEmail(e, true))}
-            <Button
+            {isAdmin && <Button
               variant="outline"
               className="w-full"
               onClick={() => {
@@ -1120,7 +1129,7 @@ function EmailsPage() {
               }}
             >
               Schedule a letter for this day
-            </Button>
+            </Button>}
           </div>
         </SheetContent>
       </Sheet>
