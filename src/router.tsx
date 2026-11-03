@@ -48,14 +48,14 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: ({ error }) => {
-      if (typeof window !== "undefined" && /reading 'component'|dynamically imported module/i.test(String(error?.message))) {
+      if (typeof window !== "undefined" && /reading 'component'|dynamically imported module/i.test(String((error as Error)?.message))) {
         const key = "stale-chunk-reload";
         if (Date.now() - Number(sessionStorage.getItem(key) ?? 0) > 10_000) {
           sessionStorage.setItem(key, String(Date.now()));
           window.location.reload();
         }
       }
-      return <div style={{ padding: 24 }}>Something went wrong: {String(error?.message ?? error)}. Please refresh the page.</div>;
+      return <div style={{ padding: 24 }}>Something went wrong: {String((error as Error)?.message ?? error)}. Please refresh the page.</div>;
     },
   });
 
