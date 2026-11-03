@@ -52,3 +52,10 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 
 - Gallery photos live in `photos` (not FH records); converted FH photograph records keep their row with record_type `moved_to_gallery`, which `search_letters` excludes, so FH numbers, history and old links survive.
 - Photo gallery ordering uses the scan before/after insertion helper and an atomic, RLS-scoped reorder operation; filtered moves retain hidden photos and file uploads remain separate from internal drags.
+
+## Book Builder
+- Book projects (`book_projects`, `book_items`, `book_exports`) only reference archive records and never write to letters, scans or transcriptions; this keeps the archive the single source of truth.
+- One layout engine (`src/lib/book/layout.ts`) produces the page plan for both the preview and the PDF, measured with the same embedded EB Garamond files; this keeps on-screen page numbers identical to the export.
+- PDFs are written incrementally in stored parts (structure/fonts, image batches, xref) by a leased background runner driven by an every-minute schedule, then streamed as one file through a signed download route; this keeps memory per request bounded for large books.
+- Full-resolution print copies are new `file_derivatives` rows of kind `print`, made in the browser from the untouched TIFF masters and oriented to match the viewing copy; the server cannot decode large TIFFs.
+- Each book item stores the source fingerprint it was added or refreshed at; exports are blocked while any record changed, and each export keeps a manifest of fingerprints, image derivatives and transcription hashes for auditing.

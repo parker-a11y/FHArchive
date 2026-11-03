@@ -201,6 +201,8 @@ function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage
               lineHeight: lineH,
               color: el.tone === "muted" ? "var(--book-muted)" : "var(--book-ink)",
               fontKerning: "none",
+              fontVariantLigatures: "none",
+              fontFeatureSettings: '"liga" 0, "clig" 0, "calt" 0, "kern" 0',
               ...FONT_CSS[el.font],
             }}
           >

@@ -44,3 +44,8 @@
 
 - [x] Simplify photo intake: front + optional back image, writing on back, title, date, people, place, box
 - [x] Bulk Photo Upload: drag photos into an Unassigned bucket, then pick photos there to create records
+
+## Book Builder
+- [x] Phase 1 — core Book Builder (projects, record selection, ordering, letter → envelope → transcription layout, preview, background PDF export, print copies, source-change checks)
+- [ ] Phase 2 — custom page builder (waiting for your go-ahead)
+- [ ] Phase 3 — advanced publishing and Blurb/Lulu/BookBaby profiles (waiting for your go-ahead)
