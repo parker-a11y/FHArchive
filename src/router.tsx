@@ -55,7 +55,7 @@ export const getRouter = () => {
           window.location.reload();
         }
       }
-      return null;
+      return <div style={{ padding: 24 }}>Something went wrong: {String(error?.message ?? error)}. Please refresh the page.</div>;
     },
   });
 
