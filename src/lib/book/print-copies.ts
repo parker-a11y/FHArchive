@@ -29,8 +29,7 @@ export async function preparePrintCopy(t: PrintCopyTarget) {
   const path = `${t.record.archiveId}/print/${file.id}.jpg`;
   const { error: uErr } = await supabase.storage.from("scans").upload(path, print.blob, { contentType: "image/jpeg", upsert: true });
   if (uErr) throw new Error(uErr.message);
-  await supabase.from("file_derivatives").delete().eq("file_id", file.id).eq("kind", "print");
-  const { error: iErr } = await supabase.from("file_derivatives").insert({
+  const row = {
     letter_id: file.letter_id,
     file_id: file.id,
     kind: "print",
@@ -40,7 +39,11 @@ export async function preparePrintCopy(t: PrintCopyTarget) {
     file_size: print.blob.size,
     width: print.width,
     height: print.height,
-  } as never);
+  };
+  const { data: existing } = await supabase.from("file_derivatives").select("id").eq("file_id", file.id).eq("kind", "print").maybeSingle();
+  const { error: iErr } = existing
+    ? await supabase.from("file_derivatives").update(row as never).eq("id", existing.id)
+    : await supabase.from("file_derivatives").insert(row as never);
   if (iErr) throw new Error(iErr.message);
   return print;
 }
