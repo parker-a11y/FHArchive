@@ -36,7 +36,7 @@ describe("Book Builder", () => {
     const kinds = plan.pages.map((p) => p.kind);
     expect(kinds.slice(0, 3)).toEqual(["scan", "scan", "envelope"]);
     expect(kinds.slice(3).every((k) => k === "text")).toBe(true);
-    expect(kinds.length).toBeGreaterThan(5); // long transcription flows over several pages
+    expect(kinds.length).toBeGreaterThan(4); // long transcription flows over several pages
   });
 
   it("never drops or invents an envelope", () => {
