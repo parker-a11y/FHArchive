@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { parseArchiveIds } from "./ids";
 import { parseTranscription, blocksPlainText } from "./text";
 import { createBookFonts, BOOK_FONT_FILES } from "./fonts";
@@ -20,41 +21,40 @@ const record = (over: Partial<BookRecordSource> = {}): BookRecordSource => ({
 });
 const meta = { id: "b", title: "Test", subtitle: null, trimWidthIn: 8.5, trimHeightIn: 11, settings: { scansPerPage: 1 as const, titlePage: false } };
 
-describe("Book Builder", () => {
-  it("parses archive ID lists and ranges", () => {
-    expect(parseArchiveIds("FH0012, fh40-FH42 77")).toEqual(["FH0012", "FH0040", "FH0041", "FH0042", "FH0077"]);
+test("parses archive ID lists and ranges", () => {
+    assert.deepEqual(parseArchiveIds("FH0012, fh40-FH42 77"), ["FH0012", "FH0040", "FH0041", "FH0042", "FH0077"]);
   });
 
-  it("keeps every character of a transcription, including italics and uncertainty marks", () => {
+test("keeps every character of a transcription, including italics and uncertainty marks", () => {
     const blocks = parseTranscription("<p>Dear <em>Jaq</em> [illegible] &amp; café?<br />Fran</p>");
-    expect(blocksPlainText(blocks)).toBe("Dear Jaq [illegible] & café?\nFran");
-    expect(blocks[0].inlines.find((i) => i.text === "Jaq")?.italic).toBe(true);
+    assert.equal(blocksPlainText(blocks), "Dear Jaq [illegible] & café?\nFran");
+    assert.equal(blocks[0].inlines.find((i) => i.text === "Jaq")?.italic, true);
   });
 
-  it("orders each record as letter scans, then envelope, then transcription", () => {
+test("orders each record as letter scans, then envelope, then transcription", () => {
     const plan = buildPlan(meta, [record()], fonts());
     const kinds = plan.pages.map((p) => p.kind);
-    expect(kinds.slice(0, 3)).toEqual(["scan", "scan", "envelope"]);
-    expect(kinds.slice(3).every((k) => k === "text")).toBe(true);
-    expect(kinds.length).toBeGreaterThan(4); // long transcription flows over several pages
+    assert.deepEqual(kinds.slice(0, 3), ["scan", "scan", "envelope"]);
+    assert.ok(kinds.slice(3).every((k) => k === "text"));
+    assert.ok(kinds.length > 4); // long transcription flows over several pages
   });
 
-  it("never drops or invents an envelope", () => {
+test("never drops or invents an envelope", () => {
     const plan = buildPlan(meta, [record({ envelopes: [] })], fonts());
-    expect(plan.pages.some((p) => p.kind === "envelope")).toBe(false);
+    assert.equal(plan.pages.some((p) => p.kind === "envelope"), false);
   });
 
-  it("prints all transcription words with no text below the bottom margin", () => {
+test("prints all transcription words with no text below the bottom margin", () => {
     const rec = record();
     const plan = buildPlan(meta, [rec], fonts());
     const words = plan.pages.filter((p) => p.kind === "text").flatMap((p) => p.elements).filter((e) => e.t === "text" && e.size === 11.5);
-    expect(words.length).toBe(blocksPlainText(parseTranscription(rec.transcription)).split(/\s+/).filter(Boolean).length);
-    expect(words.every((w) => w.t === "text" && w.y <= 11 * 72 - 74)).toBe(true);
+    assert.equal(words.length, blocksPlainText(parseTranscription(rec.transcription)).split(/\s+/).filter(Boolean).length);
+    assert.ok(words.every((w) => w.t === "text" && w.y <= 11 * 72 - 74));
   });
 
-  it("flags scans printing under 200 DPI", () => {
+test("flags scans printing under 200 DPI", () => {
     const low = { ...img("Page 1 Front"), width: 900, height: 1260 };
     const plan = buildPlan(meta, [record({ scans: [low] })], fonts());
-    expect(plan.warnings.some((w) => w.level === "warning" && /DPI/.test(w.message))).toBe(true);
+    assert.ok(plan.warnings.some((w) => w.level === "warning" && /DPI/.test(w.message)));
   });
-});
+
