@@ -46,6 +46,7 @@ import { Route as AuthenticatedAdminNumberingRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminOnThisDateRouteImport } from './routes/_authenticated/admin/on-this-date'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedBooksIndexRouteImport } from './routes/_authenticated/books/index'
+import { Route as AuthenticatedBooksBookIdRouteImport } from './routes/_authenticated/books/$bookId'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
 import { Route as AuthenticatedContainersBoxIdRouteImport } from './routes/_authenticated/containers/$boxId'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
@@ -271,6 +272,12 @@ const AuthenticatedBooksIndexRoute = AuthenticatedBooksIndexRouteImport.update({
   path: '/books/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBooksBookIdRoute =
+  AuthenticatedBooksBookIdRouteImport.update({
+    id: '/books/$bookId',
+    path: '/books/$bookId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContainersIndexRoute =
   AuthenticatedContainersIndexRouteImport.update({
     id: '/containers/',
@@ -495,6 +502,7 @@ export interface FileRoutesByFullPath {
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/books/$bookId': typeof AuthenticatedBooksBookIdRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -565,6 +573,7 @@ export interface FileRoutesByTo {
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/books/$bookId': typeof AuthenticatedBooksBookIdRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -637,6 +646,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/_authenticated/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/books/$bookId': typeof AuthenticatedBooksBookIdRoute
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/_authenticated/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -709,6 +719,7 @@ export interface FileRouteTypes {
     | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
+    | '/books/$bookId'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -779,6 +790,7 @@ export interface FileRouteTypes {
     | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
+    | '/books/$bookId'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -850,6 +862,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/numbering'
     | '/_authenticated/admin/on-this-date'
     | '/_authenticated/admin/users'
+    | '/_authenticated/books/$bookId'
     | '/_authenticated/containers/$boxId'
     | '/_authenticated/keywords/$keywordId'
     | '/_authenticated/letters/$archiveId'
@@ -1178,6 +1191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBooksIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/books/$bookId': {
+      id: '/_authenticated/books/$bookId'
+      path: '/books/$bookId'
+      fullPath: '/books/$bookId'
+      preLoaderRoute: typeof AuthenticatedBooksBookIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/containers/': {
       id: '/_authenticated/containers/'
       path: '/containers'
@@ -1425,6 +1445,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminNumberingRoute: typeof AuthenticatedAdminNumberingRoute
   AuthenticatedAdminOnThisDateRoute: typeof AuthenticatedAdminOnThisDateRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedBooksBookIdRoute: typeof AuthenticatedBooksBookIdRoute
   AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
   AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
@@ -1468,6 +1489,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminNumberingRoute: AuthenticatedAdminNumberingRoute,
   AuthenticatedAdminOnThisDateRoute: AuthenticatedAdminOnThisDateRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedBooksBookIdRoute: AuthenticatedBooksBookIdRoute,
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,
   AuthenticatedKeywordsKeywordIdRoute: AuthenticatedKeywordsKeywordIdRoute,
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,
