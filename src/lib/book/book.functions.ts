@@ -35,7 +35,7 @@ export const createBook = createServerFn({ method: "POST" })
     await assertEditor(context);
     const { data: row, error } = await context.supabase
       .from("book_projects")
-      .insert({ title: data.title, subtitle: data.subtitle || null, description: data.description || null, settings: { scansPerPage: 1, titlePage: true } })
+      .insert({ title: data.title, subtitle: data.subtitle || null, description: data.description || null, settings: { scansPerPage: 1, titlePage: true, envelopeFirst: true } })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -51,7 +51,7 @@ export const updateBook = createServerFn({ method: "POST" })
         title: z.string().trim().min(1).max(200).optional(),
         subtitle: z.string().trim().max(300).nullable().optional(),
         description: z.string().max(4000).nullable().optional(),
-        settings: z.object({ scansPerPage: z.union([z.literal(1), z.literal(2)]), titlePage: z.boolean() }).optional(),
+        settings: z.object({ scansPerPage: z.union([z.literal(1), z.literal(2)]), titlePage: z.boolean(), envelopeFirst: z.boolean().optional() }).optional(),
       })
       .parse(d),
   )

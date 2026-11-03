@@ -18,8 +18,13 @@ export async function sha256(text: string) {
 
 export function normalizeSettings(raw: unknown): BookSettings {
   const s = (raw ?? {}) as Partial<BookSettings>;
-  return { scansPerPage: s.scansPerPage === 2 ? 2 : 1, titlePage: s.titlePage !== false };
+  return { scansPerPage: s.scansPerPage === 2 ? 2 : 1, titlePage: s.titlePage !== false, envelopeFirst: s.envelopeFirst !== false };
 }
+
+const clean = (v: unknown) => {
+  const t = typeof v === "string" ? v.trim() : "";
+  return t && t.toUpperCase() !== "NONE" ? t : null;
+};
 
 async function inChunks<T>(ids: string[], fn: (chunk: string[]) => Promise<T[]>): Promise<T[]> {
   const out: T[] = [];
@@ -60,7 +65,7 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
   const letters = await inChunks(letterIds, async (c) => {
     const { data, error: e } = await db
       .from("letters")
-      .select("id, archive_id, title, date_as_written, normalized_date, sort_date, author, recipient, dateline, origin, has_envelope, transcription_verified, transcription_raw_ai, updated_at")
+      .select("id, archive_id, title, date_as_written, normalized_date, sort_date, author, recipient, dateline, origin, destination, has_envelope, transcription_verified, transcription_raw_ai, updated_at")
       .in("id", c);
     if (e) throw new Error(e.message);
     return data ?? [];
@@ -162,6 +167,8 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
       author: l.author?.trim() || null,
       recipient: l.recipient?.trim() || null,
       location: (l.dateline && String(l.dateline).toUpperCase() !== "NONE" ? l.dateline : null) ?? l.origin ?? null,
+      origin: clean(l.origin),
+      destination: clean(l.destination),
       title: l.title ?? null,
       scans,
       envelopes,
