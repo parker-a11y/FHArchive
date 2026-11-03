@@ -170,11 +170,11 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
 
   // ---- pages ----------------------------------------------------------------
   let currentRecordLabel: string | null = null;
-  function newPage(kind: PlannedPage["kind"], rec: BookRecordSource | null, opts: { head?: boolean } = {}) {
+  function newPage(kind: PlannedPage["kind"], rec: BookRecordSource | null, opts: { head?: boolean; folio?: boolean } = {}) {
     const index = pages.length + 1;
     const page: PlannedPage = {
       index,
-      folio: kind === "title" || kind === "blank" ? null : index,
+      folio: kind === "title" || kind === "blank" || opts.folio === false ? null : index,
       kind,
       itemId: rec?.itemId ?? null,
       archiveId: rec?.archiveId ?? null,
@@ -263,14 +263,102 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
     newPage("blank", null);
   }
 
+  /** Pads with an intentionally blank page so the next page is right-hand (odd). */
+  const toRightHand = () => {
+    if (pages.length % 2 === 1) newPage("blank", null);
+  };
+
+  /** Identifying lines under the envelope; only catalogued facts, nothing invented. */
+  function introLines(rec: BookRecordSource) {
+    const lines: Array<{ text: string; size: number; leading: number; italic: boolean; bold: boolean; tone: "ink" | "muted"; gapBefore: number }> = [];
+    const add = (text: string | null, size: number, leading: number, italic: boolean, bold: boolean, tone: "ink" | "muted", gapBefore = 0) => {
+      if (text) lines.push({ text, size, leading, italic, bold, tone, gapBefore });
+    };
+    add(rec.author ? `A Letter from ${rec.author}` : rec.title || "A Letter", 20, 26, false, false, "ink");
+    add(rec.recipient ? `To ${rec.recipient}` : null, 13, 19, true, false, "ink");
+    add(rec.dateLabel, 12, 18, false, false, "ink", 8);
+    add(rec.origin ?? rec.location, 11, 16, true, false, "muted");
+    add(rec.destination ? `To ${rec.destination}` : null, 11, 16, true, false, "muted");
+    add(rec.archiveId, 8, 14, false, false, "muted", 10);
+    return lines;
+  }
+  const introHeight = (rec: BookRecordSource) => introLines(rec).reduce((h, l) => h + l.leading + l.gapBefore, 0);
+  function writeIntro(page: PlannedPage, rec: BookRecordSource, top: number) {
+    let y = top;
+    for (const l of introLines(rec)) {
+      y = writeBlock(page, [{ text: l.text, italic: l.italic, bold: l.bold }], y + l.gapBefore, l.size, l.leading, { align: "center", tone: l.tone });
+    }
+    return y;
+  }
+
+  /** Fits an image inside a box without cropping; returns its printed size. */
+  const fit = (img: BookImage, w: number, h: number) => {
+    const ratio = img.width > 0 && img.height > 0 ? img.width / img.height : 1.6;
+    return w / ratio > h ? { w: h * ratio, h } : { w, h: w / ratio };
+  };
+  const LEGIBLE_LONG_SIDE = 4.25 * 72;
+
   // ---- records ----------------------------------------------------------------
   for (const rec of records) {
     currentRecordLabel = rec.dateLabel ?? rec.title ?? rec.archiveId;
     let headerDone = false;
 
-    // FIRST — original letter pages
+    if (meta.settings.envelopeFirst) {
+      // 1 — envelope / introduction on a right-hand page, no folio or running head
+      toRightHand();
+      const page = newPage("envelope", rec, { folio: false });
+      const infoH = introHeight(rec);
+      const x0 = leftOf(page.index);
+      if (!rec.envelopes.length) {
+        writeIntro(page, rec, H * 0.36);
+      } else {
+        const gap = 22;
+        const areaTop = L.marginTop;
+        const areaH = bottom - areaTop - infoH - 28;
+        const [front, back] = rec.envelopes;
+        let onFirst = [front];
+        let stacked = true;
+        if (back) {
+          // Try both on one page: stacked (landscape envelopes) or side by side (portrait).
+          const st = [fit(front, contentW, (areaH - gap) / 2 - 16), fit(back, contentW, (areaH - gap) / 2 - 16)];
+          const sb = [fit(front, (contentW - gap) / 2, areaH - 16), fit(back, (contentW - gap) / 2, areaH - 16)];
+          const area = (a: { w: number; h: number }[]) => a.reduce((s2, b) => s2 + b.w * b.h, 0);
+          const best = area(st) >= area(sb) ? st : sb;
+          stacked = best === st;
+          if (best.every((b) => Math.max(b.w, b.h) >= LEGIBLE_LONG_SIDE)) onFirst = [front, back];
+        }
+        if (onFirst.length === 2) {
+          if (stacked) {
+            const slot = (areaH - gap) / 2;
+            onFirst.forEach((img, k) => placeImage(page, img, { x: x0, y: areaTop + k * (slot + gap), w: contentW, h: slot }, rec));
+          } else {
+            const slot = (contentW - gap) / 2;
+            onFirst.forEach((img, k) => placeImage(page, img, { x: x0 + k * (slot + gap), y: areaTop, w: slot, h: areaH }, rec));
+          }
+        } else {
+          placeImage(page, front, { x: x0, y: areaTop, w: contentW, h: areaH }, rec);
+        }
+        writeIntro(page, rec, bottom - infoH);
+        // Envelopes that did not fit legibly get their own unnumbered pages.
+        for (const img of rec.envelopes.slice(onFirst.length)) {
+          const extra = newPage("envelope", rec, { folio: false });
+          placeImage(extra, img, { x: leftOf(extra.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+        }
+      }
+      // 2 — blank reverse(s) so the first handwritten page opens on the right
+      toRightHand();
+      // 3 — each original letter page on its own full page
+      for (const img of rec.scans) {
+        const sp = newPage("scan", rec);
+        placeImage(sp, img, { x: leftOf(sp.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+      }
+      headerDone = true;
+    }
+
+    // Original (non-envelope-first) order: letter pages, then envelope.
     const perPage = meta.settings.scansPerPage === 2 ? 2 : 1;
-    for (let i = 0; i < rec.scans.length; i += perPage) {
+    const legacy = !meta.settings.envelopeFirst;
+    for (let i = 0; legacy && i < rec.scans.length; i += perPage) {
       const page = newPage("scan", rec, { head: headerDone });
       let top = L.marginTop;
       if (!headerDone) {
@@ -285,7 +373,7 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
     }
 
     // SECOND — original envelope (front, then reverse) — never substituted
-    for (let i = 0; i < rec.envelopes.length; i += 2) {
+    for (let i = 0; legacy && i < rec.envelopes.length; i += 2) {
       const page = newPage("envelope", rec, { head: headerDone });
       let top = L.marginTop;
       if (!headerDone) {
