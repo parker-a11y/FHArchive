@@ -45,6 +45,7 @@ import { Route as AuthenticatedAdminLeftoverNamesRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminNumberingRouteImport } from './routes/_authenticated/admin/numbering'
 import { Route as AuthenticatedAdminOnThisDateRouteImport } from './routes/_authenticated/admin/on-this-date'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedBooksIndexRouteImport } from './routes/_authenticated/books/index'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
 import { Route as AuthenticatedContainersBoxIdRouteImport } from './routes/_authenticated/containers/$boxId'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
@@ -263,6 +264,11 @@ const AuthenticatedAdminOnThisDateRoute =
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBooksIndexRoute = AuthenticatedBooksIndexRouteImport.update({
+  id: '/books/',
+  path: '/books/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedContainersIndexRoute =
@@ -509,6 +515,7 @@ export interface FileRoutesByFullPath {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e/$token/pdf': typeof ETokenPdfRoute
+  '/books/': typeof AuthenticatedBooksIndexRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -578,6 +585,7 @@ export interface FileRoutesByTo {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e/$token/pdf': typeof ETokenPdfRoute
+  '/books': typeof AuthenticatedBooksIndexRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/keywords': typeof AuthenticatedKeywordsIndexRoute
@@ -649,6 +657,7 @@ export interface FileRoutesById {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e_/$token/pdf': typeof ETokenPdfRoute
+  '/_authenticated/books/': typeof AuthenticatedBooksIndexRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -720,6 +729,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e/$token/pdf'
+    | '/books/'
     | '/containers/'
     | '/events/'
     | '/keywords/'
@@ -789,6 +799,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e/$token/pdf'
+    | '/books'
     | '/containers'
     | '/events'
     | '/keywords'
@@ -859,6 +870,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e_/$token/pdf'
+    | '/_authenticated/books/'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
     | '/_authenticated/keywords/'
@@ -1159,6 +1171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/books/': {
+      id: '/_authenticated/books/'
+      path: '/books'
+      fullPath: '/books/'
+      preLoaderRoute: typeof AuthenticatedBooksIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/containers/': {
       id: '/_authenticated/containers/'
       path: '/containers'
@@ -1415,6 +1434,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRecapsWeekStartRoute: typeof AuthenticatedRecapsWeekStartRoute
   AuthenticatedSourcesDsIdRoute: typeof AuthenticatedSourcesDsIdRoute
   AuthenticatedSourcesNewRoute: typeof AuthenticatedSourcesNewRoute
+  AuthenticatedBooksIndexRoute: typeof AuthenticatedBooksIndexRoute
   AuthenticatedContainersIndexRoute: typeof AuthenticatedContainersIndexRoute
   AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
   AuthenticatedKeywordsIndexRoute: typeof AuthenticatedKeywordsIndexRoute
@@ -1457,6 +1477,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRecapsWeekStartRoute: AuthenticatedRecapsWeekStartRoute,
   AuthenticatedSourcesDsIdRoute: AuthenticatedSourcesDsIdRoute,
   AuthenticatedSourcesNewRoute: AuthenticatedSourcesNewRoute,
+  AuthenticatedBooksIndexRoute: AuthenticatedBooksIndexRoute,
   AuthenticatedContainersIndexRoute: AuthenticatedContainersIndexRoute,
   AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,
   AuthenticatedKeywordsIndexRoute: AuthenticatedKeywordsIndexRoute,
