@@ -15,11 +15,12 @@ const fonts = () =>
 const img = (label: string) => ({ fileId: label, label, path: `x/${label}.jpg`, source: "print" as const, derivativeId: null, width: 4000, height: 5600 });
 const record = (over: Partial<BookRecordSource> = {}): BookRecordSource => ({
   itemId: "i1", letterId: "l1", archiveId: "FH0001", dateLabel: "Dec. 27, 1944", sortDate: null, author: "Fran", recipient: "Jaq",
-  location: null, title: null, scans: [img("Page 1 Front"), img("Page 1 Back")], envelopes: [img("Envelope Front")],
+  location: null, origin: "Camp DeWitt, Wolfeboro, NH", destination: "Worcester, Mass.", title: null, scans: [img("Page 1 Front"), img("Page 1 Back")], envelopes: [img("Envelope Front")],
   transcription: "<p>Darling -</p><p>" + "I love you so. ".repeat(400) + "</p><p>Fran</p>", transcriptionVerified: true,
   fingerprint: "a", storedFingerprint: "a", updatedAt: null, hasEnvelopeFlag: true, ...over,
 });
-const meta = { id: "b", title: "Test", subtitle: null, trimWidthIn: 8.5, trimHeightIn: 11, settings: { scansPerPage: 1 as const, titlePage: false } };
+const meta = { id: "b", title: "Test", subtitle: null, trimWidthIn: 8.5, trimHeightIn: 11, settings: { scansPerPage: 1 as const, titlePage: false, envelopeFirst: false } };
+const ef = { ...meta, settings: { ...meta.settings, envelopeFirst: true, titlePage: true } };
 
 test("parses archive ID lists and ranges", () => {
     assert.deepEqual(parseArchiveIds("FH0012, fh40-FH42 77"), ["FH0012", "FH0040", "FH0041", "FH0042", "FH0077"]);
@@ -58,3 +59,41 @@ test("flags scans printing under 200 DPI", () => {
     assert.ok(plan.warnings.some((w) => w.level === "warning" && /DPI/.test(w.message)));
   });
 
+
+const texts = (p: { elements: Array<{ t: string }> }) => p.elements.filter((e): e is { t: "text"; text: string } & typeof e => e.t === "text").map((e) => (e as any).text).join(" ");
+
+test("Envelope First: envelope intro on the right, blank reverse, scans open on the right", () => {
+  const plan = buildPlan(ef, [record(), record({ itemId: "i2", archiveId: "FH0002" })], fonts());
+  const kinds = plan.pages.map((p) => p.kind);
+  assert.deepEqual(kinds.slice(0, 5), ["title", "blank", "envelope", "blank", "scan"]);
+  for (const p of plan.pages) {
+    if (p.kind === "envelope") assert.equal(p.index % 2, 1, "envelope pages are right-hand");
+    if (p.kind === "envelope" || p.kind === "blank") assert.equal(p.folio, null);
+  }
+  const firstScans = plan.pages.filter((p, i) => p.kind === "scan" && plan.pages[i - 1].kind !== "scan");
+  assert.ok(firstScans.every((p) => p.index % 2 === 1), "first handwritten page is right-hand");
+  assert.ok(plan.pages.filter((p) => p.kind === "blank").every((p) => p.elements.length === 0));
+  assert.equal(plan.pages.filter((p) => p.kind === "envelope").length, 2);
+});
+
+test("Envelope First intro shows only catalogued facts", () => {
+  const plan = buildPlan(ef, [record()], fonts());
+  const intro = texts(plan.pages.find((p) => p.kind === "envelope")!);
+  for (const part of ["Letter", "from", "Fran", "To", "Jaq", "Camp", "Worcester", "FH0001"]) assert.ok(intro.includes(part), part);
+  const bare = texts(buildPlan(ef, [record({ destination: null, recipient: null })], fonts()).pages.find((p) => p.kind === "envelope")!);
+  assert.ok(!bare.includes("Worcester") && !bare.includes("Jaq"));
+});
+
+test("Envelope First without an envelope gives a text-only intro and no images", () => {
+  const plan = buildPlan(ef, [record({ envelopes: [] })], fonts());
+  const intro = plan.pages.find((p) => p.kind === "envelope")!;
+  assert.equal(intro.elements.some((e) => e.t === "image"), false);
+  assert.ok(texts(intro).includes("Fran"));
+});
+
+test("Envelope First: each scan gets its own page, every scan appears once", () => {
+  const plan = buildPlan({ ...ef, settings: { ...ef.settings, scansPerPage: 2 } }, [record()], fonts());
+  const scanPages = plan.pages.filter((p) => p.kind === "scan");
+  assert.equal(scanPages.length, 2);
+  assert.ok(scanPages.every((p) => p.elements.filter((e) => e.t === "image").length === 1));
+});
