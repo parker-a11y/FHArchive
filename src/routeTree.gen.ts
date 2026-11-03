@@ -65,6 +65,8 @@ import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
 import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
+import { Route as ApiPublicBookExportDownloadRouteImport } from './routes/api/public/book-export-download'
+import { Route as ApiPublicBookExportsTickRouteImport } from './routes/api/public/book-exports-tick'
 import { Route as ApiPublicEmailProofsRouteImport } from './routes/api/public/email-proofs'
 import { Route as ApiPublicOnThisDateBackfillRouteImport } from './routes/api/public/on-this-date-backfill'
 import { Route as ApiPublicResearchReindexRouteImport } from './routes/api/public/research-reindex'
@@ -381,6 +383,18 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   path: '/api/public/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBookExportDownloadRoute =
+  ApiPublicBookExportDownloadRouteImport.update({
+    id: '/api/public/book-export-download',
+    path: '/api/public/book-export-download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBookExportsTickRoute =
+  ApiPublicBookExportsTickRouteImport.update({
+    id: '/api/public/book-exports-tick',
+    path: '/api/public/book-exports-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicEmailProofsRoute = ApiPublicEmailProofsRouteImport.update({
   id: '/api/public/email-proofs',
   path: '/api/public/email-proofs',
@@ -486,6 +500,8 @@ export interface FileRoutesByFullPath {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/book-export-download': typeof ApiPublicBookExportDownloadRoute
+  '/api/public/book-exports-tick': typeof ApiPublicBookExportsTickRoute
   '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
@@ -553,6 +569,8 @@ export interface FileRoutesByTo {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/book-export-download': typeof ApiPublicBookExportDownloadRoute
+  '/api/public/book-exports-tick': typeof ApiPublicBookExportsTickRoute
   '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
@@ -622,6 +640,8 @@ export interface FileRoutesById {
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/book-export-download': typeof ApiPublicBookExportDownloadRoute
+  '/api/public/book-exports-tick': typeof ApiPublicBookExportsTickRoute
   '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
@@ -691,6 +711,8 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/book-export-download'
+    | '/api/public/book-exports-tick'
     | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
@@ -758,6 +780,8 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/book-export-download'
+    | '/api/public/book-exports-tick'
     | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
@@ -826,6 +850,8 @@ export interface FileRouteTypes {
     | '/_authenticated/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/book-export-download'
+    | '/api/public/book-exports-tick'
     | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
@@ -867,6 +893,8 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  ApiPublicBookExportDownloadRoute: typeof ApiPublicBookExportDownloadRoute
+  ApiPublicBookExportsTickRoute: typeof ApiPublicBookExportsTickRoute
   ApiPublicEmailProofsRoute: typeof ApiPublicEmailProofsRoute
   ApiPublicOnThisDateBackfillRoute: typeof ApiPublicOnThisDateBackfillRoute
   ApiPublicResearchReindexRoute: typeof ApiPublicResearchReindexRoute
@@ -1271,6 +1299,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/book-export-download': {
+      id: '/api/public/book-export-download'
+      path: '/api/public/book-export-download'
+      fullPath: '/api/public/book-export-download'
+      preLoaderRoute: typeof ApiPublicBookExportDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/book-exports-tick': {
+      id: '/api/public/book-exports-tick'
+      path: '/api/public/book-exports-tick'
+      fullPath: '/api/public/book-exports-tick'
+      preLoaderRoute: typeof ApiPublicBookExportsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/email-proofs': {
       id: '/api/public/email-proofs'
       path: '/api/public/email-proofs'
@@ -1452,6 +1494,8 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  ApiPublicBookExportDownloadRoute: ApiPublicBookExportDownloadRoute,
+  ApiPublicBookExportsTickRoute: ApiPublicBookExportsTickRoute,
   ApiPublicEmailProofsRoute: ApiPublicEmailProofsRoute,
   ApiPublicOnThisDateBackfillRoute: ApiPublicOnThisDateBackfillRoute,
   ApiPublicResearchReindexRoute: ApiPublicResearchReindexRoute,
