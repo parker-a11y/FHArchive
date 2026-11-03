@@ -16,12 +16,16 @@ if (typeof window !== "undefined") {
     e.preventDefault();
     reloadOnce();
   });
+  const STALE = /dynamically imported module|Importing a module script failed|error loading dynamically|reading 'component'/i;
   window.addEventListener("unhandledrejection", (e) => {
     const msg = String((e.reason as Error | undefined)?.message ?? e.reason ?? "");
-    if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(msg)) {
+    if (STALE.test(msg)) {
       e.preventDefault();
       reloadOnce();
     }
+  });
+  window.addEventListener("error", (e) => {
+    if (STALE.test(String(e.message ?? ""))) reloadOnce();
   });
 }
 
@@ -43,6 +47,16 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    defaultErrorComponent: ({ error }) => {
+      if (typeof window !== "undefined" && /reading 'component'|dynamically imported module/i.test(String((error as Error)?.message))) {
+        const key = "stale-chunk-reload";
+        if (Date.now() - Number(sessionStorage.getItem(key) ?? 0) > 10_000) {
+          sessionStorage.setItem(key, String(Date.now()));
+          window.location.reload();
+        }
+      }
+      return <div style={{ padding: 24 }}>Something went wrong: {String((error as Error)?.message ?? error)}. Please refresh the page.</div>;
+    },
   });
 
   return router;
