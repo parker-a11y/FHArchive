@@ -174,3 +174,92 @@ export async function makeDerivatives(file: File): Promise<DerivedSet> {
   source.canvas.height = 0;
   return { view, thumb, sourceWidth: source.width, sourceHeight: source.height };
 }
+
+/** Longest side of a Book Builder print copy (≈600 DPI on a 10-inch page). */
+export const PRINT_MAX = 6000;
+
+/**
+ * Builds a high-quality JPEG print copy from the untouched master, at full
+ * resolution up to PRINT_MAX. The orientation is matched to the existing
+ * viewing copy (which may have been rotated after upload), so the print copy
+ * always faces the same way as what the archive already shows.
+ */
+export async function makePrintCopy(
+  file: File,
+  referenceUrl: string | null,
+): Promise<DerivedImage & { rotation: number }> {
+  const source = /\.tiff?$/i.test(file.name) || /tiff/i.test(file.type)
+    ? await decodeTiff(file)
+    : await decodeBrowserImage(file);
+  try {
+    let rotation = 0;
+    if (referenceUrl) rotation = await matchRotation(source, referenceUrl);
+    const ratio = Math.min(1, PRINT_MAX / Math.max(source.width, source.height));
+    const sw = Math.max(1, Math.round(source.width * ratio));
+    const sh = Math.max(1, Math.round(source.height * ratio));
+    const turned = rotation === 90 || rotation === 270;
+    const out = document.createElement("canvas");
+    out.width = turned ? sh : sw;
+    out.height = turned ? sw : sh;
+    const ctx = out.getContext("2d");
+    if (!ctx) throw new Error("Canvas is unavailable in this browser");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.imageSmoothingQuality = "high";
+    ctx.translate(out.width / 2, out.height / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.drawImage(source.canvas, -sw / 2, -sh / 2, sw, sh);
+    const blob = await new Promise<Blob>((resolve, reject) =>
+      out.toBlob((b) => (b ? resolve(b) : reject(new Error("Browser could not encode the print copy"))), "image/jpeg", 0.92),
+    );
+    const result = { blob, width: out.width, height: out.height, rotation };
+    out.width = 0;
+    out.height = 0;
+    return result;
+  } finally {
+    source.canvas.width = 0;
+    source.canvas.height = 0;
+  }
+}
+
+async function matchRotation(source: Source, referenceUrl: string): Promise<number> {
+  const res = await fetch(referenceUrl);
+  if (!res.ok) return 0;
+  const ref = await createImageBitmap(await res.blob());
+  const S = 48;
+  const gray = (draw: (ctx: CanvasRenderingContext2D) => void) => {
+    const c = document.createElement("canvas");
+    c.width = S;
+    c.height = S;
+    const ctx = c.getContext("2d")!;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, S, S);
+    draw(ctx);
+    const d = ctx.getImageData(0, 0, S, S).data;
+    const g = new Float32Array(S * S);
+    for (let i = 0; i < g.length; i++) g[i] = d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11;
+    return g;
+  };
+  const refG = gray((ctx) => ctx.drawImage(ref, 0, 0, S, S));
+  const refLandscape = ref.width > ref.height;
+  ref.close?.();
+  let best = 0;
+  let bestScore = Infinity;
+  for (const r of [0, 90, 180, 270]) {
+    const turned = r === 90 || r === 270;
+    const landscape = turned ? source.height > source.width : source.width > source.height;
+    if (landscape !== refLandscape && Math.abs(source.width - source.height) > Math.min(source.width, source.height) * 0.05) continue;
+    const g = gray((ctx) => {
+      ctx.translate(S / 2, S / 2);
+      ctx.rotate((r * Math.PI) / 180);
+      ctx.drawImage(source.canvas, -S / 2, -S / 2, S, S);
+    });
+    let diff = 0;
+    for (let i = 0; i < g.length; i++) diff += Math.abs(g[i] - refG[i]);
+    if (diff < bestScore) {
+      bestScore = diff;
+      best = r;
+    }
+  }
+  return best;
+}

@@ -62,6 +62,11 @@
 }
 
 :root {
+  /* Book Builder page preview: printed paper and ink (same in light and dark). */
+  --book-paper: oklch(0.985 0.012 88);
+  --book-ink: oklch(0.22 0.01 60);
+  --book-muted: oklch(0.5 0.015 60);
+  --book-guide: oklch(0.65 0.15 25);
   --radius: 0.75rem;
   --background: oklch(0.972 0.004 90);
   --foreground: oklch(0.235 0.012 65);
@@ -336,3 +341,8 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
+@font-face { font-family: "BookGaramond"; src: url("/fonts/book/EBGaramond-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "BookGaramond"; src: url("/fonts/book/EBGaramond-Italic.ttf") format("truetype"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "BookGaramond"; src: url("/fonts/book/EBGaramond-SemiBold.ttf") format("truetype"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "BookGaramond"; src: url("/fonts/book/EBGaramond-SemiBoldItalic.ttf") format("truetype"); font-weight: 600; font-style: italic; font-display: swap; }

@@ -45,6 +45,8 @@ import { Route as AuthenticatedAdminLeftoverNamesRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminNumberingRouteImport } from './routes/_authenticated/admin/numbering'
 import { Route as AuthenticatedAdminOnThisDateRouteImport } from './routes/_authenticated/admin/on-this-date'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedBooksIndexRouteImport } from './routes/_authenticated/books/index'
+import { Route as AuthenticatedBooksBookIdRouteImport } from './routes/_authenticated/books/$bookId'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
 import { Route as AuthenticatedContainersBoxIdRouteImport } from './routes/_authenticated/containers/$boxId'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
@@ -65,6 +67,8 @@ import { Route as AuthenticatedSourcesDsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSourcesNewRouteImport } from './routes/_authenticated/sources/new'
 import { Route as ApiPublicArchivistDigestRouteImport } from './routes/api/public/archivist-digest'
 import { Route as ApiPublicBackupRouteImport } from './routes/api/public/backup'
+import { Route as ApiPublicBookExportDownloadRouteImport } from './routes/api/public/book-export-download'
+import { Route as ApiPublicBookExportsTickRouteImport } from './routes/api/public/book-exports-tick'
 import { Route as ApiPublicEmailProofsRouteImport } from './routes/api/public/email-proofs'
 import { Route as ApiPublicOnThisDateBackfillRouteImport } from './routes/api/public/on-this-date-backfill'
 import { Route as ApiPublicResearchReindexRouteImport } from './routes/api/public/research-reindex'
@@ -263,6 +267,17 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBooksIndexRoute = AuthenticatedBooksIndexRouteImport.update({
+  id: '/books/',
+  path: '/books/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBooksBookIdRoute =
+  AuthenticatedBooksBookIdRouteImport.update({
+    id: '/books/$bookId',
+    path: '/books/$bookId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedContainersIndexRoute =
   AuthenticatedContainersIndexRouteImport.update({
     id: '/containers/',
@@ -381,6 +396,18 @@ const ApiPublicBackupRoute = ApiPublicBackupRouteImport.update({
   path: '/api/public/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBookExportDownloadRoute =
+  ApiPublicBookExportDownloadRouteImport.update({
+    id: '/api/public/book-export-download',
+    path: '/api/public/book-export-download',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBookExportsTickRoute =
+  ApiPublicBookExportsTickRouteImport.update({
+    id: '/api/public/book-exports-tick',
+    path: '/api/public/book-exports-tick',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicEmailProofsRoute = ApiPublicEmailProofsRouteImport.update({
   id: '/api/public/email-proofs',
   path: '/api/public/email-proofs',
@@ -475,6 +502,7 @@ export interface FileRoutesByFullPath {
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/books/$bookId': typeof AuthenticatedBooksBookIdRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -486,6 +514,8 @@ export interface FileRoutesByFullPath {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/book-export-download': typeof ApiPublicBookExportDownloadRoute
+  '/api/public/book-exports-tick': typeof ApiPublicBookExportsTickRoute
   '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
@@ -493,6 +523,7 @@ export interface FileRoutesByFullPath {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e/$token/pdf': typeof ETokenPdfRoute
+  '/books/': typeof AuthenticatedBooksIndexRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -542,6 +573,7 @@ export interface FileRoutesByTo {
   '/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/books/$bookId': typeof AuthenticatedBooksBookIdRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -553,6 +585,8 @@ export interface FileRoutesByTo {
   '/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/book-export-download': typeof ApiPublicBookExportDownloadRoute
+  '/api/public/book-exports-tick': typeof ApiPublicBookExportsTickRoute
   '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
@@ -560,6 +594,7 @@ export interface FileRoutesByTo {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e/$token/pdf': typeof ETokenPdfRoute
+  '/books': typeof AuthenticatedBooksIndexRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/keywords': typeof AuthenticatedKeywordsIndexRoute
@@ -611,6 +646,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/numbering': typeof AuthenticatedAdminNumberingRoute
   '/_authenticated/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/books/$bookId': typeof AuthenticatedBooksBookIdRoute
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/_authenticated/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -622,6 +658,8 @@ export interface FileRoutesById {
   '/_authenticated/sources/new': typeof AuthenticatedSourcesNewRoute
   '/api/public/archivist-digest': typeof ApiPublicArchivistDigestRoute
   '/api/public/backup': typeof ApiPublicBackupRoute
+  '/api/public/book-export-download': typeof ApiPublicBookExportDownloadRoute
+  '/api/public/book-exports-tick': typeof ApiPublicBookExportsTickRoute
   '/api/public/email-proofs': typeof ApiPublicEmailProofsRoute
   '/api/public/on-this-date-backfill': typeof ApiPublicOnThisDateBackfillRoute
   '/api/public/research-reindex': typeof ApiPublicResearchReindexRoute
@@ -629,6 +667,7 @@ export interface FileRoutesById {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e_/$token/pdf': typeof ETokenPdfRoute
+  '/_authenticated/books/': typeof AuthenticatedBooksIndexRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/keywords/': typeof AuthenticatedKeywordsIndexRoute
@@ -680,6 +719,7 @@ export interface FileRouteTypes {
     | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
+    | '/books/$bookId'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -691,6 +731,8 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/book-export-download'
+    | '/api/public/book-exports-tick'
     | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
@@ -698,6 +740,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e/$token/pdf'
+    | '/books/'
     | '/containers/'
     | '/events/'
     | '/keywords/'
@@ -747,6 +790,7 @@ export interface FileRouteTypes {
     | '/admin/numbering'
     | '/admin/on-this-date'
     | '/admin/users'
+    | '/books/$bookId'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -758,6 +802,8 @@ export interface FileRouteTypes {
     | '/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/book-export-download'
+    | '/api/public/book-exports-tick'
     | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
@@ -765,6 +811,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e/$token/pdf'
+    | '/books'
     | '/containers'
     | '/events'
     | '/keywords'
@@ -815,6 +862,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/numbering'
     | '/_authenticated/admin/on-this-date'
     | '/_authenticated/admin/users'
+    | '/_authenticated/books/$bookId'
     | '/_authenticated/containers/$boxId'
     | '/_authenticated/keywords/$keywordId'
     | '/_authenticated/letters/$archiveId'
@@ -826,6 +874,8 @@ export interface FileRouteTypes {
     | '/_authenticated/sources/new'
     | '/api/public/archivist-digest'
     | '/api/public/backup'
+    | '/api/public/book-export-download'
+    | '/api/public/book-exports-tick'
     | '/api/public/email-proofs'
     | '/api/public/on-this-date-backfill'
     | '/api/public/research-reindex'
@@ -833,6 +883,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e_/$token/pdf'
+    | '/_authenticated/books/'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
     | '/_authenticated/keywords/'
@@ -867,6 +918,8 @@ export interface RootRouteChildren {
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicArchivistDigestRoute: typeof ApiPublicArchivistDigestRoute
   ApiPublicBackupRoute: typeof ApiPublicBackupRoute
+  ApiPublicBookExportDownloadRoute: typeof ApiPublicBookExportDownloadRoute
+  ApiPublicBookExportsTickRoute: typeof ApiPublicBookExportsTickRoute
   ApiPublicEmailProofsRoute: typeof ApiPublicEmailProofsRoute
   ApiPublicOnThisDateBackfillRoute: typeof ApiPublicOnThisDateBackfillRoute
   ApiPublicResearchReindexRoute: typeof ApiPublicResearchReindexRoute
@@ -1131,6 +1184,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/books/': {
+      id: '/_authenticated/books/'
+      path: '/books'
+      fullPath: '/books/'
+      preLoaderRoute: typeof AuthenticatedBooksIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/books/$bookId': {
+      id: '/_authenticated/books/$bookId'
+      path: '/books/$bookId'
+      fullPath: '/books/$bookId'
+      preLoaderRoute: typeof AuthenticatedBooksBookIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/containers/': {
       id: '/_authenticated/containers/'
       path: '/containers'
@@ -1271,6 +1338,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBackupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/book-export-download': {
+      id: '/api/public/book-export-download'
+      path: '/api/public/book-export-download'
+      fullPath: '/api/public/book-export-download'
+      preLoaderRoute: typeof ApiPublicBookExportDownloadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/book-exports-tick': {
+      id: '/api/public/book-exports-tick'
+      path: '/api/public/book-exports-tick'
+      fullPath: '/api/public/book-exports-tick'
+      preLoaderRoute: typeof ApiPublicBookExportsTickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/email-proofs': {
       id: '/api/public/email-proofs'
       path: '/api/public/email-proofs'
@@ -1364,6 +1445,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminNumberingRoute: typeof AuthenticatedAdminNumberingRoute
   AuthenticatedAdminOnThisDateRoute: typeof AuthenticatedAdminOnThisDateRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedBooksBookIdRoute: typeof AuthenticatedBooksBookIdRoute
   AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
   AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
@@ -1373,6 +1455,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRecapsWeekStartRoute: typeof AuthenticatedRecapsWeekStartRoute
   AuthenticatedSourcesDsIdRoute: typeof AuthenticatedSourcesDsIdRoute
   AuthenticatedSourcesNewRoute: typeof AuthenticatedSourcesNewRoute
+  AuthenticatedBooksIndexRoute: typeof AuthenticatedBooksIndexRoute
   AuthenticatedContainersIndexRoute: typeof AuthenticatedContainersIndexRoute
   AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
   AuthenticatedKeywordsIndexRoute: typeof AuthenticatedKeywordsIndexRoute
@@ -1406,6 +1489,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminNumberingRoute: AuthenticatedAdminNumberingRoute,
   AuthenticatedAdminOnThisDateRoute: AuthenticatedAdminOnThisDateRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedBooksBookIdRoute: AuthenticatedBooksBookIdRoute,
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,
   AuthenticatedKeywordsKeywordIdRoute: AuthenticatedKeywordsKeywordIdRoute,
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,
@@ -1415,6 +1499,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRecapsWeekStartRoute: AuthenticatedRecapsWeekStartRoute,
   AuthenticatedSourcesDsIdRoute: AuthenticatedSourcesDsIdRoute,
   AuthenticatedSourcesNewRoute: AuthenticatedSourcesNewRoute,
+  AuthenticatedBooksIndexRoute: AuthenticatedBooksIndexRoute,
   AuthenticatedContainersIndexRoute: AuthenticatedContainersIndexRoute,
   AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,
   AuthenticatedKeywordsIndexRoute: AuthenticatedKeywordsIndexRoute,
@@ -1452,6 +1537,8 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicArchivistDigestRoute: ApiPublicArchivistDigestRoute,
   ApiPublicBackupRoute: ApiPublicBackupRoute,
+  ApiPublicBookExportDownloadRoute: ApiPublicBookExportDownloadRoute,
+  ApiPublicBookExportsTickRoute: ApiPublicBookExportsTickRoute,
   ApiPublicEmailProofsRoute: ApiPublicEmailProofsRoute,
   ApiPublicOnThisDateBackfillRoute: ApiPublicOnThisDateBackfillRoute,
   ApiPublicResearchReindexRoute: ApiPublicResearchReindexRoute,

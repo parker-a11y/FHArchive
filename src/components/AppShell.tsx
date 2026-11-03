@@ -46,6 +46,7 @@ const NAV = [
   { to: "/containers", label: "Source Containers", icon: Box },
   { to: "/storage-boxes", label: "Storage Boxes", icon: Boxes },
   { to: "/photos", label: "Photos", icon: Images },
+  { to: "/books", label: "Book Builder", icon: BookOpen, editorOnly: true },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks, adminOnly: true },
