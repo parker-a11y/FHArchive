@@ -154,8 +154,9 @@ export function BookPreview({ plan, fonts, jumpTo }: { plan: BookPlan; fonts: Bo
 }
 
 function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage; plan: BookPlan; scale: number; asc: number; lineH: number; guides: boolean }) {
-  const inside = page.index % 2 === 1 ? LAYOUT.marginInside : LAYOUT.marginOutside;
-  const outside = page.index % 2 === 1 ? LAYOUT.marginOutside : LAYOUT.marginInside;
+  const recto = page.index % 2 === 1;
+  const left = recto ? LAYOUT.marginInside : LAYOUT.marginOutside;
+  const right = recto ? LAYOUT.marginOutside : LAYOUT.marginInside;
   return (
     <div
       className="relative overflow-hidden shadow-md"
@@ -212,8 +213,8 @@ function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage
           className="pointer-events-none absolute border border-dashed"
           style={{
             borderColor: "var(--book-guide)",
-            left: (page.index % 2 === 1 ? inside : outside) * scale,
-            right: (page.index % 2 === 1 ? outside : inside) * scale,
+            left: left * scale,
+            right: right * scale,
             top: LAYOUT.marginTop * scale,
             bottom: LAYOUT.marginBottom * scale,
           }}
