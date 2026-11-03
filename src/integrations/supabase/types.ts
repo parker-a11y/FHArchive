@@ -487,6 +487,179 @@ export type Database = {
         }
         Relationships: []
       }
+      book_exports: {
+        Row: {
+          attempts: number
+          book_id: string
+          created_at: string
+          error: string | null
+          file_size: number | null
+          finished_at: string | null
+          id: string
+          lease_until: string | null
+          manifest: Json | null
+          owner_id: string
+          page_count: number | null
+          profile: string
+          progress: number
+          state: Json
+          status: string
+          step: string | null
+          total: number
+          updated_at: string
+          warnings: Json
+        }
+        Insert: {
+          attempts?: number
+          book_id: string
+          created_at?: string
+          error?: string | null
+          file_size?: number | null
+          finished_at?: string | null
+          id?: string
+          lease_until?: string | null
+          manifest?: Json | null
+          owner_id?: string
+          page_count?: number | null
+          profile?: string
+          progress?: number
+          state?: Json
+          status?: string
+          step?: string | null
+          total?: number
+          updated_at?: string
+          warnings?: Json
+        }
+        Update: {
+          attempts?: number
+          book_id?: string
+          created_at?: string
+          error?: string | null
+          file_size?: number | null
+          finished_at?: string | null
+          id?: string
+          lease_until?: string | null
+          manifest?: Json | null
+          owner_id?: string
+          page_count?: number | null
+          profile?: string
+          progress?: number
+          state?: Json
+          status?: string
+          step?: string | null
+          total?: number
+          updated_at?: string
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_exports_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "book_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_items: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          item_type: string
+          letter_id: string | null
+          options: Json
+          position: number
+          source_checked_at: string | null
+          source_fingerprint: string | null
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          item_type?: string
+          letter_id?: string | null
+          options?: Json
+          position?: number
+          source_checked_at?: string | null
+          source_fingerprint?: string | null
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          item_type?: string
+          letter_id?: string | null
+          options?: Json
+          position?: number
+          source_checked_at?: string | null
+          source_fingerprint?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_items_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "book_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_items_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          orientation: string
+          owner_id: string
+          saved_custom_order: Json | null
+          settings: Json
+          subtitle: string | null
+          theme: string
+          title: string
+          trim_height_in: number
+          trim_width_in: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          orientation?: string
+          owner_id?: string
+          saved_custom_order?: Json | null
+          settings?: Json
+          subtitle?: string | null
+          theme?: string
+          title?: string
+          trim_height_in?: number
+          trim_width_in?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          orientation?: string
+          owner_id?: string
+          saved_custom_order?: Json | null
+          settings?: Json
+          subtitle?: string | null
+          theme?: string
+          title?: string
+          trim_height_in?: number
+          trim_width_in?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       container_counter: {
         Row: {
           last_seq: number
