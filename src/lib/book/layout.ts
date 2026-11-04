@@ -426,12 +426,42 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
       renderCustom(entry);
       continue;
     }
+    if (entry.type === "chapter") {
+      renderChapter(entry);
+      continue;
+    }
     const rec = entry;
     currentRecordLabel = rec.dateLabel ?? rec.title ?? rec.archiveId;
     let headerDone = false;
 
-    if (meta.settings.envelopeFirst) {
-      // 1 — envelope / introduction on a right-hand page, no folio or running head
+    // Facing pages: introduction, then each scan on a left page with its own transcription opposite.
+    const pageTexts = rec.pageTexts;
+    if (settings.facing && rec.scans.length && pageTexts && rec.scans.some((s) => pageTexts[s.fileId]?.trim())) {
+      envelopeIntro(rec);
+      rec.scans.forEach((img, si) => {
+        toLeftHand();
+        const sp = newPage("scan", rec);
+        placeImage(sp, img, { x: leftOf(sp.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+        const tp = newPage("text", rec);
+        const label = `${img.label || `Page ${si + 1}`} · ${rec.transcriptionVerified ? "Transcription" : "Transcription, not yet human-verified"}`;
+        const y = writeBlock(tp, [{ text: label, italic: true, bold: false }], L.marginTop - 8, 10, 14, { align: "center", tone: "muted" }) + 12;
+        const blocks = parseTranscription(pageTexts[img.fileId] ?? "");
+        if (blocks.length) flowBlocks(blocks, tp, y, rec, "ink");
+        else writeBlock(tp, [{ text: "No transcription for this page.", italic: true, bold: false }], y, 10, 14, { align: "center", tone: "muted" });
+      });
+      continue;
+    }
+
+    if (meta.settings.envelopeFirst || settings.facing) {
+      envelopeIntro(rec);
+      // 3 — each original letter page on its own full page
+      for (const img of rec.scans) {
+        const sp = newPage("scan", rec);
+        placeImage(sp, img, { x: leftOf(sp.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+      }
+      headerDone = true;
+    }
+    if (false as boolean) {
       toRightHand();
       const page = newPage("envelope", rec, { folio: false });
       const infoH = introHeight(rec);
