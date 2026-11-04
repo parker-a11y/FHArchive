@@ -45,6 +45,8 @@ export type BookRecordSource = {
   updatedAt: string | null;
   thumbUrl?: string | null;
   hasEnvelopeFlag: boolean;
+  /** Per-scan transcription text keyed by file id (for facing-page layout). */
+  pageTexts?: Record<string, string>;
 };
 
 export type BookSettings = {
@@ -52,6 +54,12 @@ export type BookSettings = {
   titlePage: boolean;
   /** Classic Literary — Envelope First (default). Off = original Phase 1 order. */
   envelopeFirst: boolean;
+  /** Phase 3 — each scan on a left page with its own transcription facing it. */
+  facing?: boolean;
+  theme?: string;
+  printer?: string;
+  toc?: { enabled: boolean; records: boolean };
+  front?: { colophon: boolean; colophonText: string; dedication: string };
 };
 
 export type BookMeta = {
@@ -71,8 +79,11 @@ export type TextRun = {
   size: number;
   font: FontKey;
   text: string;
-  tone: "ink" | "muted" | "note";
+  tone: Tone;
+  /** Rotated 90° clockwise, reading top to bottom (spine text). */
+  rotate?: boolean;
 };
+export type Tone = "ink" | "muted" | "note" | "paper";
 
 export type ImageBox = {
   t: "image";
@@ -88,12 +99,15 @@ export type ImageBox = {
 
 export type Rule = { t: "rule"; x: number; y: number; w: number };
 
-export type PageElement = TextRun | ImageBox | Rule;
+/** Solid colour fill (covers only). */
+export type Fill = { t: "fill"; x: number; y: number; w: number; h: number; color: [number, number, number] };
+
+export type PageElement = TextRun | ImageBox | Rule | Fill;
 
 export type PlannedPage = {
   index: number; // 1-based physical page
   folio: number | null; // printed page number (null = suppressed)
-  kind: "title" | "blank" | "scan" | "envelope" | "text" | "custom";
+  kind: "title" | "blank" | "scan" | "envelope" | "text" | "custom" | "chapter" | "toc" | "front" | "cover";
   itemId: string | null;
   archiveId: string | null;
   elements: PageElement[];
@@ -111,6 +125,13 @@ export type BookPlan = {
   heightPt: number;
   pages: PlannedPage[];
   warnings: BookWarning[];
+  /** Bleed beyond the trim on each outside edge (0 = none). Full-bleed images extend into it. */
+  bleedPt?: number;
+  /** Margins actually used (theme + printer gutter), for preview guides and preflight. */
+  margins?: { top: number; bottom: number; inside: number; outside: number };
+  tones?: Record<Tone, [number, number, number]>;
+  /** Blank pages appended to meet the printer's page-count rule. */
+  paddedPages?: number;
 };
 
 export const PRINT_DPI_GOOD = 300;
@@ -169,6 +190,23 @@ export type BookPageSource = {
   storedFingerprint: string | null;
 };
 
-export type BookEntry = BookRecordSource | BookPageSource;
+// ---- Phase 3: chapters and covers -------------------------------------------
+
+export type ChapterDoc = { title: string; subtitle?: string; epigraph?: string; epigraphSource?: string };
+export type BookChapterSource = { type: "chapter"; itemId: string; doc: ChapterDoc };
+
+export type CoverDoc = {
+  template: "classic" | "photo" | "cloth";
+  title: string;
+  subtitle: string;
+  author: string;
+  backText: string;
+  spineText: boolean;
+  image: ImageRef | null;
+};
+
+export type BookEntry = BookRecordSource | BookPageSource | BookChapterSource;
 export const isPageEntry = (e: BookEntry): e is BookPageSource => e.type === "page";
-export const recordEntries = (es: BookEntry[]) => es.filter((e): e is BookRecordSource => !isPageEntry(e));
+export const isChapterEntry = (e: BookEntry): e is BookChapterSource => e.type === "chapter";
+export const isRecordEntry = (e: BookEntry): e is BookRecordSource => (e.type ?? "record") === "record";
+export const recordEntries = (es: BookEntry[]) => es.filter(isRecordEntry);
