@@ -145,3 +145,108 @@ test("a long research essay flows across several numbered pages", () => {
   assert.ok(plan.pages.length >= 6);
   assert.ok(plan.pages.every((p) => p.folio !== null));
 });
+
+// ---- Phase 3: chapters, contents, themes, printers, preflight, cover ----
+import { buildCoverPlan } from "./layout";
+import { runPreflight } from "./preflight";
+import { PRINTERS, coverSize, gutterIn } from "./printers";
+import type { BookChapterSource } from "./types";
+
+const chapter = (itemId: string, title: string): BookChapterSource => ({ type: "chapter", itemId, doc: { title, subtitle: "", epigraph: "A line", epigraphSource: "Fran" } });
+const p3 = (over: Record<string, unknown> = {}) => ({ ...ef, settings: { ...ef.settings, toc: { enabled: true, records: true }, ...over } });
+
+test("chapters open on right-hand pages and run in the left-hand heads", () => {
+  const plan = buildPlan(p3(), [chapter("c1", "Boot Camp"), record(), chapter("c2", "At Sea"), record({ itemId: "i2", archiveId: "FH0002" })], fonts());
+  const chs = plan.pages.filter((p) => p.kind === "chapter");
+  assert.equal(chs.length, 2);
+  assert.ok(chs.every((p) => p.index % 2 === 1 && p.folio === null));
+  const leftAfter = plan.pages.find((p) => p.index > chs[1].index && p.index % 2 === 0 && p.folio !== null)!;
+  assert.ok(texts(leftAfter).includes("At Sea"));
+});
+
+test("table of contents page numbers match the real page plan", () => {
+  const entries = [chapter("c1", "Boot Camp"), record(), chapter("c2", "At Sea"), record({ itemId: "i2", archiveId: "FH0002" })];
+  const plan = buildPlan(p3(), entries, fonts());
+  const toc = plan.pages.filter((p) => p.kind === "toc");
+  assert.ok(toc.length >= 1);
+  const tocText = toc.map(texts).join(" ");
+  for (const id of ["c1", "c2", "i1", "i2"]) {
+    const start = plan.pages.find((p) => p.itemId === id)!.index;
+    assert.ok(new RegExp(`\\b${start}\\b`).test(tocText), `${id} → p. ${start}`);
+  }
+  // A long contents list spills onto more pages without shifting the numbers it prints.
+  const many = Array.from({ length: 80 }, (_, i) => record({ itemId: `r${i}`, archiveId: `FH${String(i).padStart(4, "0")}`, scans: [img("P1")], envelopes: [], transcription: "<p>Short.</p>" }));
+  const big = buildPlan(p3(), many, fonts());
+  assert.ok(big.pages.filter((p) => p.kind === "toc").length >= 2);
+  const lastStart = big.pages.find((p) => p.itemId === "r79")!.index;
+  assert.ok(big.pages.filter((p) => p.kind === "toc").map(texts).join(" ").includes(String(lastStart)));
+});
+
+test("facing layout puts each scan on a left page with its own transcription opposite", () => {
+  const rec = record({ pageTexts: { "Page 1 Front": "<p>First page words.</p>", "Page 1 Back": "<p>Second page words.</p>" } });
+  const plan = buildPlan(p3({ facing: true, toc: { enabled: false, records: false } }), [rec], fonts());
+  const scans = plan.pages.filter((p) => p.kind === "scan");
+  assert.equal(scans.length, 2);
+  for (const sp of scans) {
+    assert.equal(sp.index % 2, 0, "scan on the left");
+    assert.equal(plan.pages[sp.index].kind, "text", "transcription opposite");
+  }
+  assert.ok(texts(plan.pages[scans[0].index]).includes("First"));
+  assert.ok(texts(plan.pages[scans[1].index]).includes("Second"));
+});
+
+test("printer rules: Lulu gutter tiers, even page count, spine width", () => {
+  assert.equal(gutterIn(PRINTERS.lulu, 50), 0);
+  assert.equal(gutterIn(PRINTERS.lulu, 200), 0.5);
+  assert.ok(Math.abs(PRINTERS.lulu.spineIn(444) - 1.06) < 1e-9);
+  const plan = buildPlan({ ...meta, settings: { ...meta.settings, printer: "lulu" } }, [record({ envelopes: [], scans: [img("P1")], transcription: "<p>Hi</p>" })], fonts());
+  assert.equal(plan.pages.length % 2, 0);
+  assert.equal(plan.bleedPt, 9);
+  const c = coverSize(PRINTERS.lulu, 6, 9, 444);
+  assert.ok(Math.abs(c.widthPt / 72 - (12 + 1.06 + 0.25)) < 1e-6);
+});
+
+test("preflight catches page count, low resolution and missing bleed; generic is never print-ready", () => {
+  const luluMeta = { ...meta, settings: { ...meta.settings, printer: "lulu" } };
+  const low = { ...img("Page 1 Front"), width: 900, height: 1260 };
+  const plan = buildPlan(luluMeta, [record({ scans: [low] })], fonts());
+  const r = runPreflight(plan, [], "lulu", fonts());
+  assert.equal(r.printReady, false);
+  assert.ok(r.items.some((i) => i.level === "error" && /minimum of 32/.test(i.message)));
+  assert.ok(r.items.some((i) => i.level === "error" && /DPI/.test(i.message)));
+  const doc = makeTemplate("photo-fit");
+  doc.boxes = [{ ...(doc.boxes[0] as any), x: 0, y: 0, w: 612, h: 300, mode: "fill" }];
+  const im = { fileId: "u", label: "u", path: "pages/x.jpg", source: "print" as const, derivativeId: null, width: 6000, height: 4000, bucket: "book-images" as const };
+  const edge = buildPlan(luluMeta, [page(doc, { [doc.boxes[0].id]: im })], fonts());
+  assert.ok(runPreflight(edge, [], "lulu", fonts()).items.some((i) => /bleed/.test(i.message) && i.level === "error"));
+  assert.equal(runPreflight(buildPlan(meta, [record()], fonts()), [], "generic", fonts()).printReady, false);
+  const stale = runPreflight(plan, [{ level: "error", archiveId: "FH0001", itemId: "i1", message: "changed" }], "lulu", fonts());
+  assert.ok(stale.items.some((i) => i.message === "changed"));
+});
+
+test("a clean Lulu book with enough pages passes preflight", () => {
+  const many = Array.from({ length: 12 }, (_, i) => record({ itemId: `r${i}`, archiveId: `FH${i}` }));
+  const m = { ...ef, settings: { ...ef.settings, printer: "lulu" } };
+  const plan = buildPlan(m, many, fonts());
+  const r = runPreflight(plan, [], "lulu", fonts());
+  assert.deepEqual(r.items.filter((i) => i.level === "error"), []);
+  assert.equal(r.printReady, true);
+});
+
+test("cover spread: back, spine, front sized from the page count", () => {
+  const m = { ...meta, settings: { ...meta.settings, printer: "lulu" } };
+  const cp = buildCoverPlan(m, { template: "cloth", title: "Letters", subtitle: "", author: "Fran", backText: "Back", spineText: true, image: null }, null, 300, fonts());
+  assert.ok(Math.abs(cp.widthPt / 72 - (17 + 300 / 444 + 0.06 + 0.25)) < 1e-6);
+  assert.ok(cp.pages[0].elements.some((e) => e.t === "text" && e.rotate));
+  const thin = buildCoverPlan(m, { template: "classic", title: "Letters", subtitle: "", author: "", backText: "", spineText: true, image: null }, null, 40, fonts());
+  assert.ok(!thin.pages[0].elements.some((e) => e.t === "text" && e.rotate));
+});
+
+test("classic theme with no printer keeps the original layout", () => {
+  const a = buildPlan(ef, [record()], fonts());
+  const b = buildPlan({ ...ef, settings: { ...ef.settings, theme: "classic", printer: "generic" } }, [record()], fonts());
+  assert.equal(a.pages.length, b.pages.length);
+  assert.equal(a.margins?.inside, 72);
+  const w = buildPlan({ ...ef, settings: { ...ef.settings, theme: "modern" } }, [record()], fonts());
+  assert.ok(w.pages.length !== a.pages.length || w.margins?.inside !== 72);
+});
