@@ -522,10 +522,13 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
       dpiWarning(img, dpi, null, src.itemId);
       if (captionH) {
         const capTop = (box.mode === "fit" ? r.y + r.h : area.y + area.h) + 2;
-        writeBlock(page, [{ text: box.caption!.trim(), italic: true, bold: false }], capTop, L.captionSize, 12, { align: "center", tone: "muted" });
+        let cy = capTop;
+        for (const line of breakLines([{ text: box.caption!.trim(), italic: true, bold: false }], L.captionSize, area.w)) {
+          cy += 12;
+          drawLine(page.elements, line, area.x, cy - 1, area.w, L.captionSize, { justify: false, align: "center", tone: "muted" });
+        }
       }
     }
-    // writeBlock lays text out across the column; re-anchor caption lines to their box.
   }
 
   if (fonts.missing.size) {
