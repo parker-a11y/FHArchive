@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { BOOK_FONT_FILES, createBookFonts, type BookFonts } from "@/lib/book/fonts";
 import { buildPlan, LAYOUT } from "@/lib/book/layout";
-import { PRINT_DPI_GOOD, PRINT_DPI_MIN, type BookMeta, type BookPlan, type BookRecordSource, type FontKey, type PlannedPage } from "@/lib/book/types";
+import { PRINT_DPI_GOOD, PRINT_DPI_MIN, type BookEntry, type BookMeta, type BookPlan, type FontKey, type PlannedPage } from "@/lib/book/types";
 
 let fontsPromise: Promise<Record<FontKey, Uint8Array>> | null = null;
 function loadFontBytes() {
@@ -29,7 +29,7 @@ const FONT_CSS: Record<FontKey, { fontStyle: string; fontWeight: number }> = {
   boldItalic: { fontStyle: "italic", fontWeight: 600 },
 };
 
-export function useBookPlan(meta: BookMeta | null, records: BookRecordSource[]) {
+export function useBookPlan(meta: BookMeta | null, records: BookEntry[]) {
   const [bytes, setBytes] = useState<Record<FontKey, Uint8Array> | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -153,7 +153,7 @@ export function BookPreview({ plan, fonts, jumpTo }: { plan: BookPlan; fonts: Bo
   );
 }
 
-function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage; plan: BookPlan; scale: number; asc: number; lineH: number; guides: boolean }) {
+export function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage; plan: BookPlan; scale: number; asc: number; lineH: number; guides: boolean }) {
   const recto = page.index % 2 === 1;
   const left = recto ? LAYOUT.marginInside : LAYOUT.marginOutside;
   const right = recto ? LAYOUT.marginOutside : LAYOUT.marginInside;
@@ -169,6 +169,23 @@ function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage
         </span>
       )}
       {page.elements.map((el, i) => {
+        if (el.t === "image" && el.clip) {
+          const c = el.clip;
+          return (
+            <div key={i} className="absolute overflow-hidden" style={{ left: c.x * scale, top: c.y * scale, width: c.w * scale, height: c.h * scale }}>
+              {el.image.previewUrl ? (
+                <img src={el.image.previewUrl} alt={el.image.label} className="absolute max-w-none" style={{ left: (el.x - c.x) * scale, top: (el.y - c.y) * scale, width: el.w * scale, height: el.h * scale }} loading="lazy" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center border text-xs">{el.image.label}</div>
+              )}
+              {guides && (
+                <span className="absolute right-1 top-1 rounded px-1 text-[10px] font-medium text-background" style={{ background: el.dpi >= PRINT_DPI_GOOD ? "var(--book-muted)" : el.dpi >= PRINT_DPI_MIN ? "var(--book-ink)" : "var(--book-guide)" }}>
+                  {el.dpi ? `${el.dpi} DPI` : "? DPI"}
+                </span>
+              )}
+            </div>
+          );
+        }
         if (el.t === "image")
           return (
             <div key={i} className="absolute" style={{ left: el.x * scale, top: el.y * scale, width: el.w * scale, height: el.h * scale }}>
@@ -199,7 +216,7 @@ function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage
               fontFamily: "BookGaramond, serif",
               fontSize: el.size * scale,
               lineHeight: lineH,
-              color: el.tone === "muted" ? "var(--book-muted)" : "var(--book-ink)",
+              color: el.tone === "muted" ? "var(--book-muted)" : el.tone === "note" ? "var(--book-note)" : "var(--book-ink)",
               fontKerning: "none",
               fontVariantLigatures: "none",
               fontFeatureSettings: '"liga" 0, "clig" 0, "calt" 0, "kern" 0',

@@ -55,6 +55,7 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 
 ## Book Builder
 - Book projects (`book_projects`, `book_items`, `book_exports`) only reference archive records and never write to letters, scans or transcriptions; this keeps the archive the single source of truth.
+- Custom pages are `book_items` of type `page` whose `page_doc` holds boxes in points; archive/gallery images are referenced by ID and uploads live in the private `book-images` bucket, so the layout engine renders them like letters and nothing in the archive is copied or cropped.
 - Layouts are selected per book in `settings` and implemented as branches of the one layout engine; add future layouts there rather than in the preview or PDF writer.
 - One layout engine (`src/lib/book/layout.ts`) produces the page plan for both the preview and the PDF, measured with the same embedded EB Garamond files; this keeps on-screen page numbers identical to the export.
 - PDFs are written incrementally in stored parts (structure/fonts, image batches, xref) by a leased background runner driven by an every-minute schedule, then streamed as one file through a signed download route; this keeps memory per request bounded for large books.

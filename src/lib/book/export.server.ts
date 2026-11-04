@@ -115,7 +115,7 @@ async function step(db: Db, job: any, deadline: number) {
       return;
     }
     const fonts = createBookFonts(await loadFontBytes(db));
-    const plan = buildPlan(book.meta, book.records, fonts);
+    const plan = buildPlan(book.meta, book.entries, fonts);
     const head = await writeHead(plan, fonts, { title: book.meta.title, subtitle: book.meta.subtitle });
     const path = `exports/${job.id}/part-000.bin`;
     await upload(db, path, head.bytes);
@@ -126,6 +126,13 @@ async function step(db: Db, job: any, deadline: number) {
       trim_in: [book.meta.trimWidthIn, book.meta.trimHeightIn],
       settings: book.meta.settings,
       page_count: plan.pages.length,
+      custom_pages: book.pages.map((p) => ({
+        item_id: p.itemId,
+        template: p.doc.template,
+        source_fingerprint: p.fingerprint,
+        pages: plan.pages.filter((pg) => pg.itemId === p.itemId).map((pg) => pg.index),
+        images: Object.values(p.images).filter(Boolean).map((i) => ({ file_id: i!.fileId, bucket: i!.bucket ?? "scans", path: i!.path, source: i!.source, px: [i!.width, i!.height] })),
+      })),
       records: await Promise.all(
         book.records.map(async (r) => ({
           archive_id: r.archiveId,
@@ -167,7 +174,7 @@ async function step(db: Db, job: any, deadline: number) {
     const part = new PartBuilder();
     while (i < images.length && part.size < PART_LIMIT && (Date.now() < deadline || part.size === 0)) {
       const slot = images[i];
-      const { data, error } = await db.storage.from("scans").download(slot.path);
+      const { data, error } = await db.storage.from(slot.bucket ?? "scans").download(slot.path);
       if (error || !data) throw new Error(`Scan could not be read: ${slot.path}`);
       const bytes = new Uint8Array(await data.arrayBuffer());
       const info = readJpegInfo(bytes);

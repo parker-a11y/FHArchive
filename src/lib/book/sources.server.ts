@@ -4,7 +4,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readableRecordTranscription } from "@/lib/combined-transcription.server";
-import type { BookImage, BookMeta, BookRecordSource, BookSettings, BookWarning } from "./types";
+import type { BookEntry, BookImage, BookMeta, BookPageSource, BookRecordSource, BookSettings, BookWarning, CustomPageDoc, ImageRef } from "./types";
 
 type Db = SupabaseClient<any, "public", any>;
 
@@ -45,9 +45,14 @@ function dateLabel(l: { date_as_written: string | null; normalized_date: string 
 export type LoadedBook = {
   meta: BookMeta;
   records: BookRecordSource[];
+  pages: BookPageSource[];
+  /** Records and custom pages in book order. */
+  entries: BookEntry[];
   warnings: BookWarning[];
-  items: Array<{ id: string; position: number; letter_id: string | null; source_fingerprint: string | null }>;
+  items: ItemRow[];
 };
+
+type ItemRow = { id: string; position: number; item_type: string; letter_id: string | null; page_doc: unknown; source_fingerprint: string | null };
 
 export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boolean } = {}): Promise<LoadedBook> {
   const { data: book, error } = await db.from("book_projects").select("*").eq("id", bookId).maybeSingle();
@@ -55,12 +60,12 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
   if (!book) throw new Error("Book not found");
   const { data: itemRows, error: iErr } = await db
     .from("book_items")
-    .select("id, position, letter_id, source_fingerprint")
+    .select("id, position, item_type, letter_id, page_doc, source_fingerprint")
     .eq("book_id", bookId)
     .order("position", { ascending: true });
   if (iErr) throw new Error(iErr.message);
   const items = (itemRows ?? []) as LoadedBook["items"];
-  const letterIds = [...new Set(items.map((i) => i.letter_id).filter(Boolean) as string[])];
+  const letterIds = [...new Set(items.filter((i) => i.item_type !== "page").map((i) => i.letter_id).filter(Boolean) as string[])];
 
   const letters = await inChunks(letterIds, async (c) => {
     const { data, error: e } = await db
@@ -101,7 +106,21 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
   const records: BookRecordSource[] = [];
   const toSign: string[] = [];
 
+  const pageItems = items.filter((i) => i.item_type === "page");
+  const pages = await resolvePageEntries(db, pageItems, opts);
+  const pageById = new Map(pages.map((p) => [p.itemId, p]));
+  const entries: BookEntry[] = [];
+
   for (const item of items) {
+    if (item.item_type === "page") {
+      const pg = pageById.get(item.id);
+      if (pg) {
+        entries.push(pg);
+        if (pg.storedFingerprint && pg.storedFingerprint !== pg.fingerprint)
+          warnings.push({ level: "error", archiveId: null, itemId: item.id, message: `${pg.doc.name || "Custom page"}: an archive image on this page changed. Open the page and save it (or refresh) to accept the current version.` });
+      }
+      continue;
+    }
     const l: any = item.letter_id ? byLetter.get(item.letter_id) : null;
     if (!l) {
       warnings.push({ level: "error", archiveId: null, itemId: item.id, message: "This record is no longer in the archive. Remove it from the book." });
@@ -158,7 +177,7 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
     if (item.source_fingerprint && item.source_fingerprint !== fingerprint)
       warnings.push({ level: "error", archiveId: l.archive_id, itemId: item.id, message: "This record changed in the archive after it was added. Review and refresh it before exporting." });
 
-    records.push({
+    const recEntry: BookRecordSource = {
       itemId: item.id,
       letterId: l.id,
       archiveId: l.archive_id,
@@ -179,7 +198,9 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
       updatedAt: l.updated_at ?? null,
       thumbUrl: thumbPath,
       hasEnvelopeFlag: !!l.has_envelope,
-    });
+    };
+    records.push(recEntry);
+    entries.push(recEntry);
   }
 
   if (opts.previewUrls) {
@@ -203,5 +224,100 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
     trimHeightIn: Number(book.trim_height_in) || 11,
     settings: normalizeSettings(book.settings),
   };
-  return { meta, records, warnings, items };
+  return { meta, records, pages, entries, warnings, items };
+}
+
+// ---- custom pages ---------------------------------------------------------
+
+export function normalizeDoc(raw: unknown): CustomPageDoc {
+  const d = (raw ?? {}) as Partial<CustomPageDoc>;
+  return {
+    template: typeof d.template === "string" ? d.template : "blank",
+    name: typeof d.name === "string" ? d.name : undefined,
+    folio: d.folio !== false,
+    boxes: Array.isArray(d.boxes) ? d.boxes : [],
+    flow: d.flow && typeof d.flow === "object" ? { heading: d.flow.heading ?? "", text: d.flow.text ?? "" } : null,
+  };
+}
+
+/** Resolves the archive/gallery/upload images used on custom pages (read-only). */
+export async function resolvePageEntries(db: Db, items: Array<Pick<ItemRow, "id" | "page_doc" | "source_fingerprint">>, opts: { previewUrls?: boolean } = {}): Promise<BookPageSource[]> {
+  const docs = items.map((i) => ({ item: i, doc: normalizeDoc(i.page_doc) }));
+  const refs = docs.flatMap((d) => d.doc.boxes.flatMap((b) => (b.kind === "image" && b.ref ? [b.ref] : [])));
+  const fileIds = [...new Set(refs.flatMap((r) => (r.source === "archive" ? [r.fileId] : [])))];
+  const photoIds = [...new Set(refs.flatMap((r) => (r.source === "gallery" ? [r.photoId] : [])))];
+  const files = await inChunks(fileIds, async (c) => {
+    const { data, error } = await db.from("digital_files").select("id, label, original_filename, master_path, master_mime").in("id", c);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+  const derivs = await inChunks(fileIds, async (c) => {
+    const { data, error } = await db.from("file_derivatives").select("id, file_id, kind, status, storage_path, width, height").in("file_id", c);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+  const photos = await inChunks(photoIds, async (c) => {
+    const { data, error } = await db.from("photos").select("id, caption, front_path, front_view_path, back_path, back_view_path").in("id", c);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+  const fileById = new Map((files as any[]).map((f) => [f.id, f]));
+  const photoById = new Map((photos as any[]).map((p) => [p.id, p]));
+  const isJpeg = (p: string | null | undefined) => !!p && /\.jpe?g$/i.test(p);
+
+  const resolve = (ref: ImageRef): (BookImage & { _view?: string }) | null => {
+    if (ref.source === "upload") {
+      return { fileId: ref.path, label: ref.name || "Uploaded image", path: ref.path, source: "print", derivativeId: null, width: ref.w, height: ref.h, bucket: "book-images", _view: ref.viewPath || ref.path };
+    }
+    if (ref.source === "gallery") {
+      const p: any = photoById.get(ref.photoId);
+      if (!p) return null;
+      const view = ref.side === "back" ? p.back_view_path : p.front_view_path;
+      const orig = ref.side === "back" ? p.back_path : p.front_path;
+      const path = isJpeg(orig) && (ref.w ?? 0) > 2400 ? orig : view ?? (isJpeg(orig) ? orig : null);
+      if (!path) return null;
+      return { fileId: ref.photoId, label: ref.label || p.caption || "Photograph", path, source: path === orig ? "master" : "view", derivativeId: null, width: ref.w ?? 0, height: ref.h ?? 0, bucket: "scans", _view: view ?? path };
+    }
+    const f: any = fileById.get(ref.fileId);
+    if (!f) return null;
+    const ds = (derivs as any[]).filter((d) => d.file_id === f.id && d.status === "complete" && d.storage_path);
+    const print = ds.find((d) => d.kind === "print");
+    const view = ds.find((d) => d.kind === "jpeg");
+    const label = `${ref.archiveId ? `${ref.archiveId} ` : ""}${(f.label ?? "").trim() || f.original_filename || "Scan"}`;
+    if (print) return { fileId: f.id, label, path: print.storage_path, source: "print", derivativeId: print.id, width: print.width ?? 0, height: print.height ?? 0, bucket: "scans", _view: view?.storage_path ?? print.storage_path };
+    if (view) return { fileId: f.id, label, path: view.storage_path, source: "view", derivativeId: view.id, width: view.width ?? ref.w ?? 0, height: view.height ?? ref.h ?? 0, bucket: "scans", _view: view.storage_path };
+    if (/jpe?g/i.test(f.master_mime ?? "")) return { fileId: f.id, label, path: f.master_path, source: "master", derivativeId: null, width: ref.w ?? 0, height: ref.h ?? 0, bucket: "scans", _view: f.master_path };
+    return null;
+  };
+
+  const out: BookPageSource[] = [];
+  const sign: Record<"scans" | "book-images", Set<string>> = { scans: new Set(), "book-images": new Set() };
+  for (const { item, doc } of docs) {
+    const images: Record<string, BookImage | null> = {};
+    for (const b of doc.boxes) {
+      if (b.kind !== "image") continue;
+      const img = b.ref ? resolve(b.ref) : null;
+      images[b.id] = img;
+      if (img && opts.previewUrls && img._view) sign[img.bucket ?? "scans"].add(img._view);
+    }
+    const fingerprint = (
+      await sha256(JSON.stringify(Object.entries(images).sort().map(([k, v]) => [k, v?.path ?? null, v?.width ?? 0, v?.height ?? 0, v?.derivativeId ?? null])))
+    ).slice(0, 32);
+    out.push({ type: "page", itemId: item.id, doc, images, fingerprint, storedFingerprint: item.source_fingerprint });
+  }
+  if (opts.previewUrls) {
+    for (const bucket of ["scans", "book-images"] as const) {
+      const paths = [...sign[bucket]];
+      const signed = new Map<string, string>();
+      for (let i = 0; i < paths.length; i += 100) {
+        const { data } = await db.storage.from(bucket).createSignedUrls(paths.slice(i, i + 100), 3600);
+        for (const s of data ?? []) if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
+      }
+      for (const p of out)
+        for (const img of Object.values(p.images) as Array<(BookImage & { _view?: string }) | null>)
+          if (img && (img.bucket ?? "scans") === bucket && img._view) img.previewUrl = signed.get(img._view) ?? null;
+    }
+  }
+  for (const p of out) for (const img of Object.values(p.images) as Array<(BookImage & { _view?: string }) | null>) if (img) delete img._view;
+  return out;
 }
