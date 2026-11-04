@@ -177,7 +177,7 @@ export function PageEditor({ entry, meta, fonts, bookId, onClose, onSaved }: { e
   const first = plan.pages[0];
   return (
     <Dialog open onOpenChange={(o) => { if (!o) { if (dirty && !confirm("Close without saving your changes to this page?")) return; onClose(); } }}>
-      <DialogContent className="flex h-[94vh] max-w-[min(1240px,96vw)] flex-col gap-3 overflow-hidden p-4">
+      <DialogContent className="flex h-[94vh] w-[96vw] max-w-[1240px] sm:max-w-[1240px] flex-col gap-3 overflow-hidden p-4">
         <DialogHeader>
           <DialogTitle className="font-serif">Edit page — {doc.name || "Custom page"}</DialogTitle>
         </DialogHeader>

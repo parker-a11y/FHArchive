@@ -72,7 +72,7 @@ export function ImagePicker({ bookId, onClose, onPick }: { bookId: string; onClo
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[85vh] max-w-3xl overflow-auto">
+      <DialogContent className="max-h-[85vh] max-w-3xl sm:max-w-3xl overflow-auto">
         <DialogHeader>
           <DialogTitle className="font-serif">Choose an image</DialogTitle>
         </DialogHeader>
