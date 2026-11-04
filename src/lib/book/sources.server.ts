@@ -4,7 +4,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readableRecordTranscription } from "@/lib/combined-transcription.server";
-import type { BookEntry, BookImage, BookMeta, BookPageSource, BookRecordSource, BookSettings, BookWarning, CustomPageDoc, ImageRef } from "./types";
+import type { BookEntry, BookImage, BookMeta, BookPageSource, BookRecordSource, BookSettings, BookWarning, ChapterDoc, CoverDoc, CustomPageDoc, ImageRef } from "./types";
 
 type Db = SupabaseClient<any, "public", any>;
 
@@ -18,7 +18,16 @@ export async function sha256(text: string) {
 
 export function normalizeSettings(raw: unknown): BookSettings {
   const s = (raw ?? {}) as Partial<BookSettings>;
-  return { scansPerPage: s.scansPerPage === 2 ? 2 : 1, titlePage: s.titlePage !== false, envelopeFirst: s.envelopeFirst !== false };
+  return {
+    scansPerPage: s.scansPerPage === 2 ? 2 : 1,
+    titlePage: s.titlePage !== false,
+    envelopeFirst: s.envelopeFirst !== false,
+    facing: s.facing === true,
+    theme: typeof s.theme === "string" ? s.theme : "classic",
+    printer: typeof s.printer === "string" ? s.printer : "generic",
+    toc: { enabled: s.toc?.enabled === true, records: s.toc?.records === true },
+    front: { colophon: s.front?.colophon === true, colophonText: typeof s.front?.colophonText === "string" ? s.front.colophonText : "", dedication: typeof s.front?.dedication === "string" ? s.front.dedication : "" },
+  };
 }
 
 const clean = (v: unknown) => {
@@ -65,7 +74,7 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
     .order("position", { ascending: true });
   if (iErr) throw new Error(iErr.message);
   const items = (itemRows ?? []) as LoadedBook["items"];
-  const letterIds = [...new Set(items.filter((i) => i.item_type !== "page").map((i) => i.letter_id).filter(Boolean) as string[])];
+  const letterIds = [...new Set(items.filter((i) => i.item_type === "record").map((i) => i.letter_id).filter(Boolean) as string[])];
 
   const letters = await inChunks(letterIds, async (c) => {
     const { data, error: e } = await db
@@ -93,6 +102,18 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
     return data ?? [];
   });
 
+  // Per-scan text for the facing-page layout (read-only; not part of the source fingerprint).
+  const pageRows = await inChunks(letterIds, async (c) => {
+    const { data, error: e } = await db.from("scan_transcriptions").select("file_id, page_index, verified_text, ai_text").in("letter_id", c).order("page_index", { ascending: true });
+    if (e) throw new Error(e.message);
+    return data ?? [];
+  });
+  const textByFile = new Map<string, string>();
+  for (const t of pageRows as any[]) {
+    const text = t.verified_text?.trim() ? String(t.verified_text) : String(t.ai_text ?? "");
+    if (!text.trim()) continue;
+    textByFile.set(t.file_id, textByFile.has(t.file_id) ? `${textByFile.get(t.file_id)}\n\n${text}` : text);
+  }
   const byLetter = new Map(letters.map((l: any) => [l.id, l]));
   const derivByFile = new Map<string, any[]>();
   for (const d of derivs as any[]) {
@@ -119,6 +140,10 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
         if (pg.storedFingerprint && pg.storedFingerprint !== pg.fingerprint)
           warnings.push({ level: "error", archiveId: null, itemId: item.id, message: `${pg.doc.name || "Custom page"}: an archive image on this page changed. Open the page and save it (or refresh) to accept the current version.` });
       }
+      continue;
+    }
+    if (item.item_type === "chapter") {
+      entries.push({ type: "chapter", itemId: item.id, doc: normalizeChapter(item.page_doc) });
       continue;
     }
     const l: any = item.letter_id ? byLetter.get(item.letter_id) : null;
@@ -198,6 +223,7 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
       updatedAt: l.updated_at ?? null,
       thumbUrl: thumbPath,
       hasEnvelopeFlag: !!l.has_envelope,
+      pageTexts: Object.fromEntries(scans.flatMap((sc) => (textByFile.has(sc.fileId) ? [[sc.fileId, textByFile.get(sc.fileId)!]] : []))),
     };
     records.push(recEntry);
     entries.push(recEntry);
@@ -228,6 +254,38 @@ export async function loadBook(db: Db, bookId: string, opts: { previewUrls?: boo
 }
 
 // ---- custom pages ---------------------------------------------------------
+
+export function normalizeChapter(raw: unknown): ChapterDoc {
+  const d = (raw ?? {}) as Partial<ChapterDoc>;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  return { title: str(d.title) || "Untitled chapter", subtitle: str(d.subtitle), epigraph: str(d.epigraph), epigraphSource: str(d.epigraphSource) };
+}
+
+export function normalizeCover(raw: unknown, meta: { title: string; subtitle: string | null }): CoverDoc {
+  const d = (raw ?? {}) as Partial<CoverDoc>;
+  const str = (v: unknown, dflt = "") => (typeof v === "string" ? v : dflt);
+  return {
+    template: d.template === "photo" || d.template === "cloth" ? d.template : "classic",
+    title: str(d.title, meta.title),
+    subtitle: str(d.subtitle, meta.subtitle ?? ""),
+    author: str(d.author),
+    backText: str(d.backText),
+    spineText: d.spineText !== false,
+    image: d.image && typeof d.image === "object" ? (d.image as ImageRef) : null,
+  };
+}
+
+/** Reads a book's cover design and resolves its image (read-only). */
+export async function loadCover(db: Db, bookId: string, meta: { title: string; subtitle: string | null }, opts: { previewUrls?: boolean } = {}) {
+  const { data } = await db.from("book_covers").select("doc").eq("book_id", bookId).maybeSingle();
+  const doc = normalizeCover(data?.doc, meta);
+  let image: BookImage | null = null;
+  if (doc.image) {
+    const [p] = await resolvePageEntries(db, [{ id: "cover", source_fingerprint: null, page_doc: { template: "cover", folio: false, boxes: [{ id: "cover", kind: "image", x: 0, y: 0, w: 1, h: 1, ref: doc.image, mode: "fill" }] } }], opts);
+    image = p?.images.cover ?? null;
+  }
+  return { doc, image, saved: !!data };
+}
 
 export function normalizeDoc(raw: unknown): CustomPageDoc {
   const d = (raw ?? {}) as Partial<CustomPageDoc>;
