@@ -602,8 +602,37 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
     });
   }
 
+  // ---- chapters (Phase 3) -------------------------------------------------------
+  function renderChapter(ch: BookChapterSource) {
+    const title = ch.doc.title?.trim() || "Untitled chapter";
+    currentChapter = title;
+    currentRecordLabel = title;
+    toRightHand();
+    const p = newPage("chapter", { itemId: ch.itemId, archiveId: null }, { folio: false });
+    let y = H * 0.3;
+    y = writeBlock(p, [{ text: title, italic: false, bold: false }], y, theme.chapterSize, theme.chapterSize * 1.3, { align: "center" });
+    if (ch.doc.subtitle?.trim()) y = writeBlock(p, [{ text: ch.doc.subtitle.trim(), italic: true, bold: false }], y + 4, 13, 19, { align: "center", tone: "muted" });
+    if (theme.ornament) y = writeBlock(p, [{ text: theme.ornament, italic: false, bold: false }], y + 14, 16, 22, { align: "center", tone: "muted" });
+    else {
+      y += 18;
+      p.elements.push({ t: "rule", x: leftOf(p.index) + contentW * 0.42, y, w: contentW * 0.16 });
+    }
+    if (ch.doc.epigraph?.trim()) {
+      y += 26;
+      for (const para of ch.doc.epigraph.trim().split(/\n{2,}/)) y = writeBlock(p, [{ text: para.replace(/\n/g, " "), italic: true, bold: false }], y, 11.5, 17, { align: "center", indent: 56 }) + 4;
+      if (ch.doc.epigraphSource?.trim()) writeBlock(p, [{ text: `— ${ch.doc.epigraphSource.trim()}`, italic: false, bold: false }], y + 2, 9.5, 14, { align: "right", indent: 56, tone: "muted" });
+    }
+  }
+
   // ---- custom pages (Phase 2) ------------------------------------------------
-  function renderCustom(src: BookPageSource) {
+  function renderCustom(src0: BookPageSource) {
+    // Templates are drawn on an 8.5 × 11 in page; other trims scale them proportionally.
+    const sx = W / PAGE_W;
+    const sy = H / PAGE_H;
+    const src: BookPageSource =
+      sx === 1 && sy === 1
+        ? src0
+        : { ...src0, doc: { ...src0.doc, boxes: src0.doc.boxes.map((b) => ({ ...b, x: b.x * sx, y: b.y * sy, w: b.w * sx, h: b.h * sy })) } };
     const doc = src.doc;
     const owner = { itemId: src.itemId, archiveId: null };
     const label = doc.name || "Custom page";
@@ -654,7 +683,7 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
         continue;
       }
       const captionH = box.caption?.trim() && box.mode !== "bleed" ? 18 : 0;
-      const area = box.mode === "bleed" ? { x: 0, y: 0, w: W, h: H } : { x: box.x, y: box.y, w: box.w, h: Math.max(20, box.h - captionH) };
+      const area = box.mode === "bleed" ? { x: -bleed, y: -bleed, w: W + bleed * 2, h: H + bleed * 2 } : { x: box.x, y: box.y, w: box.w, h: Math.max(20, box.h - captionH) };
       const r = box.mode === "fit" ? containRect(img.width, img.height, area) : coverRect(img.width, img.height, area);
       const dpi = img.width > 0 ? Math.round(Math.min(img.width / (r.w / 72), img.height / (r.h / 72))) : 0;
       page.elements.push({ t: "image", ...r, image: img, dpi, ...(box.mode === "fit" ? {} : { clip: area }) });
@@ -670,10 +699,155 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
     }
   }
 
+  // ---- fill the reserved contents pages now that every page number is known
+  for (const tp of tocPages) {
+    const x0 = leftOf(tp.page.index);
+    for (const line of tp.lines) {
+      const target = pages.find((pg) => pg.itemId === line.itemId);
+      if (!target) continue;
+      const num = String(target.index);
+      const size = line.level === 0 ? 12 : 10;
+      const font: FontKey = line.level === 0 ? "regular" : "italic";
+      const indent = line.level === 0 ? 0 : 18;
+      const numW = fonts.width("regular", num, size);
+      const room = contentW - indent - numW - 24;
+      let text = printableText(line.text);
+      while (text.length > 3 && fonts.width(font, text, size) > room) text = `${text.slice(0, -2).trimEnd()}…`;
+      const tw = fonts.width(font, text, size);
+      tp.page.elements.push({ t: "text", x: x0 + indent, y: line.y, size, font, text, tone: "ink" });
+      const dotW = fonts.width("regular", " .", size);
+      const dots = Math.max(0, Math.floor((contentW - indent - tw - numW - 12) / dotW));
+      if (dots > 0) {
+        const leader = " .".repeat(dots);
+        const lw = fonts.width("regular", leader, size);
+        tp.page.elements.push({ t: "text", x: x0 + contentW - numW - 6 - lw, y: line.y, size, font: "regular", text: leader, tone: "muted" });
+      }
+      tp.page.elements.push({ t: "text", x: x0 + contentW - numW, y: line.y, size, font: "regular", text: num, tone: "ink" });
+    }
+  }
+
   if (fonts.missing.size) {
     warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Some characters are not in the book typeface and print as “?”: ${[...fonts.missing].join(" ")}` });
   }
-  return { widthPt: W, heightPt: H, pages, warnings };
+  const t = theme.tones;
+  return {
+    widthPt: W,
+    heightPt: H,
+    pages,
+    warnings,
+    bleedPt: bleed,
+    margins: { top: L.marginTop, bottom: L.marginBottom, inside: L.marginInside, outside: L.marginOutside },
+    tones: { ink: t.ink, muted: t.muted, note: t.note, paper: t.paper },
+  };
+}
+
+// ---- cover (Phase 3) -----------------------------------------------------------
+
+/**
+ * Lays out the full cover spread (back, spine, front) as one page including
+ * bleed. Spine width follows the printer profile and the interior page count.
+ */
+export function buildCoverPlan(meta: BookMeta, cover: CoverDoc, image: BookImage | null, interiorPages: number, fonts: BookFonts): BookPlan & { spineIn: number } {
+  const profile = printerFor(meta.settings.printer);
+  const theme = themeFor(meta.settings.theme);
+  const W = meta.trimWidthIn * 72;
+  const H = meta.trimHeightIn * 72;
+  const size = coverSize(profile, meta.trimWidthIn, meta.trimHeightIn, interiorPages);
+  const b = size.bleedPt;
+  const S = size.spinePt;
+  const safe = Math.max(profile.safeIn * 72, 36);
+  const els: PageElement[] = [];
+  const warnings: BookWarning[] = [];
+  const back = { x: b, y: b, w: W, h: H };
+  const spine = { x: b + W, y: b, w: S, h: H };
+  const front = { x: b + W + S, y: b, w: W, h: H };
+  const dark = cover.template !== "classic";
+  const textTone: Tone = dark ? "paper" : "ink";
+  const mutedTone: Tone = dark ? "paper" : "muted";
+
+  const wrap = (text: string, font: FontKey, sz: number, maxW: number) => {
+    const out: string[] = [];
+    for (const para of printableText(text).replace(/\r\n?/g, "\n").split("\n")) {
+      let line = "";
+      for (const word of para.split(/\s+/).filter(Boolean)) {
+        const next = line ? `${line} ${word}` : word;
+        if (line && fonts.width(font, next, sz) > maxW) {
+          out.push(line);
+          line = word;
+        } else line = next;
+      }
+      out.push(line);
+    }
+    return out;
+  };
+  const centered = (text: string, panel: { x: number; w: number }, top: number, sz: number, lead: number, font: FontKey, tone: Tone) => {
+    let y = top;
+    for (const line of wrap(text, font, sz, panel.w - safe * 2)) {
+      y += lead;
+      if (!line) continue;
+      els.push({ t: "text", x: panel.x + (panel.w - fonts.width(font, line, sz)) / 2, y, size: sz, font, text: line, tone });
+    }
+    return y;
+  };
+
+  if (dark) els.push({ t: "fill", x: 0, y: 0, w: size.widthPt, h: size.heightPt, color: theme.tones.cover });
+
+  // Front
+  if (cover.template === "photo" && image) {
+    const area = { x: front.x, y: 0, w: front.w + b, h: size.heightPt };
+    const r = coverRect(image.width, image.height, area);
+    const dpi = image.width > 0 ? Math.round(Math.min(image.width / (r.w / 72), image.height / (r.h / 72))) : 0;
+    els.push({ t: "image", ...r, image, dpi, clip: area });
+    els.push({ t: "fill", x: front.x, y: b + H * 0.66, w: front.w + b, h: H * 0.34 + b, color: theme.tones.cover });
+    let y = centered(cover.title || meta.title, front, b + H * 0.69, 28, 34, "bold", "paper");
+    if (cover.subtitle) y = centered(cover.subtitle, front, y + 4, 14, 19, "italic", "paper");
+    if (cover.author) centered(cover.author, front, b + H - safe - 30, 13, 18, "regular", "paper");
+    if (dpi && dpi < 200) warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Cover photo prints at about ${dpi} DPI (below 200); it may look soft.` });
+  } else {
+    let y = centered(cover.title || meta.title, front, b + H * 0.16, 30, 37, "bold", textTone);
+    if (cover.subtitle) y = centered(cover.subtitle, front, y + 6, 15, 21, "italic", mutedTone);
+    if (theme.ornament && !image) centered(theme.ornament, front, y + 16, 18, 24, "regular", mutedTone);
+    if (image) {
+      const box = { x: front.x + safe + 18, y: b + H * 0.38, w: W - (safe + 18) * 2, h: H * 0.4 };
+      const r = containRect(image.width, image.height, box);
+      const dpi = image.width > 0 ? Math.round(Math.min(image.width / (r.w / 72), image.height / (r.h / 72))) : 0;
+      els.push({ t: "image", ...r, image, dpi });
+      if (dpi && dpi < 200) warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Cover photo prints at about ${dpi} DPI (below 200); it may look soft.` });
+    }
+    if (cover.author) centered(cover.author, front, b + H - safe - 34, 14, 19, "regular", textTone);
+  }
+
+  // Back
+  if (cover.template === "photo") els.push({ t: "fill", x: 0, y: 0, w: back.x + back.w + S, h: size.heightPt, color: theme.tones.cover });
+  if (cover.backText.trim()) {
+    let y = b + H * 0.18;
+    for (const para of cover.backText.trim().split(/\n{2,}/)) y = centered(para.replace(/\n/g, " "), { x: back.x + 24, w: back.w - 48 }, y, 11, 16, "regular", cover.template === "photo" ? "paper" : textTone) + 8;
+  }
+
+  // Spine
+  const spineText = [cover.title || meta.title, cover.author].filter(Boolean).join("   ·   ");
+  if (cover.spineText && spineText) {
+    if (size.spineIn < profile.spineTextMinIn) {
+      warnings.push({ level: "info", archiveId: null, itemId: null, message: `The spine is ${size.spineIn.toFixed(3)} in wide; ${profile.name.split(" —")[0]} allows spine text from ${profile.spineTextMinIn} in, so it is left off.` });
+    } else {
+      let sz = Math.min(14, S * 0.5);
+      while (sz > 6 && fonts.width("regular", printableText(spineText), sz) > H - safe * 2) sz -= 0.5;
+      const len = fonts.width("regular", printableText(spineText), sz);
+      els.push({ t: "text", x: spine.x + S / 2 - sz * 0.33, y: b + (H - len) / 2, size: sz, font: "regular", text: printableText(spineText), tone: cover.template === "classic" ? "ink" : "paper", rotate: true });
+    }
+  }
+
+  if (fonts.missing.size) warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Some characters are not in the book typeface and print as “?”: ${[...fonts.missing].join(" ")}` });
+  const t = theme.tones;
+  return {
+    widthPt: size.widthPt,
+    heightPt: size.heightPt,
+    pages: [{ index: 1, folio: null, kind: "cover", itemId: null, archiveId: null, elements: els }],
+    warnings,
+    bleedPt: 0,
+    tones: { ink: t.ink, muted: t.muted, note: t.note, paper: t.paper },
+    spineIn: size.spineIn,
+  };
 }
 
 const TEXT_STYLES: Record<string, { size: number; leading: number; italic: boolean; tone: "ink" | "muted" | "note" }> = {
