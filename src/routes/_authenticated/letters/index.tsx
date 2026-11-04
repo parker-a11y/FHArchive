@@ -1,3 +1,4 @@
+import { SendToBookDialog } from "@/components/book/SendToBookDialog";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
