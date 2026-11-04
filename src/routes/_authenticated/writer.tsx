@@ -17,6 +17,7 @@ import {
   saveWriterSettings,
   sendWriterMessage,
 } from "@/lib/writer.functions";
+import { WRITER_MAX_RECORDS, fitWriterIds } from "@/lib/writer-limits";
 
 type Search = { ids?: string; session?: string };
 
