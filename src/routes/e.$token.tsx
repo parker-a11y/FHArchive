@@ -46,7 +46,8 @@ function SharedEmailPage() {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const printedRef = useRef(false);
   const { token } = Route.useParams();
-  const printPdf = () => window.open(`/e/${token}/pdf`, "_blank");
+  // Same-tab navigation: new tabs get blocked by popup blockers and on iPhone/iPad.
+  const printPdf = () => { window.location.href = `/e/${token}/pdf`; };
   useEffect(() => {
     if (printedRef.current || !html) return;
     if (new URLSearchParams(window.location.search).get("print") !== "1") return;
