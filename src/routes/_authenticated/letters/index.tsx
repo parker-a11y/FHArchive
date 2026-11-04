@@ -987,6 +987,9 @@ function LettersTable() {
                 </Link>
               </Button>
             )}
+            {canEdit && selectedRecords.length > 0 && (
+              <SendToBookDialog archiveIds={selectedRecords.map((r) => r.identifier)} />
+            )}
             {!isGuestViewer && transcribableSelected.length > 0 && (
               <Button
                 variant="outline"
