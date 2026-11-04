@@ -1,3 +1,4 @@
+import { displayLogin } from "@/lib/login-identifier";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -167,7 +168,7 @@ function UserManagementPage() {
               <TableBody>
                 {(data?.profiles ?? []).map((profile) => (
                   <TableRow key={profile.id}>
-                    <TableCell className="font-medium">{profile.email}</TableCell>
+                    <TableCell className="font-medium">{displayLogin(profile.email)}</TableCell>
                     <TableCell>{profile.full_name || "—"}</TableCell>
                     <TableCell>
                       <span
@@ -360,7 +361,7 @@ function AddAccountDialog() {
           <div className="space-y-3">
             <div className="rounded-md border bg-muted/40 p-3 text-sm">
               <div>
-                <span className="text-muted-foreground">Email: </span>
+                <span className="text-muted-foreground">Sign in as: </span>
                 {created.email}
               </div>
               <div className="mt-1 font-mono">
@@ -373,7 +374,7 @@ function AddAccountDialog() {
               size="sm"
               onClick={() => {
                 void navigator.clipboard.writeText(
-                  `Email: ${created.email}\nPassword: ${created.password}`,
+                  `Sign in as: ${created.email}\nPassword: ${created.password}`,
                 );
                 toast.success("Copied to clipboard");
               }}
@@ -385,13 +386,13 @@ function AddAccountDialog() {
         ) : (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="new-email">Email</Label>
+              <Label htmlFor="new-email">Email or username</Label>
               <Input
                 id="new-email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+                placeholder="name@example.com or a username"
                 list={CONTACT_EMAIL_LIST_ID}
                 autoComplete="off"
               />
