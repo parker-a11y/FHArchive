@@ -3520,6 +3520,54 @@ export type Database = {
         }
         Relationships: []
       }
+      writing_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          messages: Json
+          record_ids: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          messages?: Json
+          record_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          messages?: Json
+          record_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      writing_settings: {
+        Row: {
+          id: number
+          instructions: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          instructions?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          instructions?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

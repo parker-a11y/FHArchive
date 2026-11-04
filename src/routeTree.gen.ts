@@ -30,6 +30,7 @@ import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
 import { Route as AuthenticatedStorageBoxesRouteImport } from './routes/_authenticated/storage-boxes'
 import { Route as AuthenticatedTimelineRouteImport } from './routes/_authenticated/timeline'
+import { Route as AuthenticatedWriterRouteImport } from './routes/_authenticated/writer'
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as ApiSendSampleEmailRouteImport } from './routes/api/send-sample-email'
 import { Route as DTokenRouteImport } from './routes/d.$token'
@@ -185,6 +186,11 @@ const AuthenticatedStorageBoxesRoute =
 const AuthenticatedTimelineRoute = AuthenticatedTimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWriterRoute = AuthenticatedWriterRouteImport.update({
+  id: '/writer',
+  path: '/writer',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ATokenRoute = ATokenRouteImport.update({
@@ -487,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof AuthenticatedSearchRoute
   '/storage-boxes': typeof AuthenticatedStorageBoxesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
+  '/writer': typeof AuthenticatedWriterRoute
   '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
@@ -557,6 +564,7 @@ export interface FileRoutesByTo {
   '/search': typeof AuthenticatedSearchRoute
   '/storage-boxes': typeof AuthenticatedStorageBoxesRoute
   '/timeline': typeof AuthenticatedTimelineRoute
+  '/writer': typeof AuthenticatedWriterRoute
   '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
@@ -630,6 +638,7 @@ export interface FileRoutesById {
   '/_authenticated/search': typeof AuthenticatedSearchRoute
   '/_authenticated/storage-boxes': typeof AuthenticatedStorageBoxesRoute
   '/_authenticated/timeline': typeof AuthenticatedTimelineRoute
+  '/_authenticated/writer': typeof AuthenticatedWriterRoute
   '/a/$token': typeof ATokenRoute
   '/api/send-sample-email': typeof ApiSendSampleEmailRoute
   '/d/$token': typeof DTokenRoute
@@ -704,6 +713,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/storage-boxes'
     | '/timeline'
+    | '/writer'
     | '/a/$token'
     | '/api/send-sample-email'
     | '/d/$token'
@@ -774,6 +784,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/storage-boxes'
     | '/timeline'
+    | '/writer'
     | '/a/$token'
     | '/api/send-sample-email'
     | '/d/$token'
@@ -846,6 +857,7 @@ export interface FileRouteTypes {
     | '/_authenticated/search'
     | '/_authenticated/storage-boxes'
     | '/_authenticated/timeline'
+    | '/_authenticated/writer'
     | '/a/$token'
     | '/api/send-sample-email'
     | '/d/$token'
@@ -1077,6 +1089,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof AuthenticatedTimelineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/writer': {
+      id: '/_authenticated/writer'
+      path: '/writer'
+      fullPath: '/writer'
+      preLoaderRoute: typeof AuthenticatedWriterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/a/$token': {
@@ -1439,6 +1458,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
   AuthenticatedStorageBoxesRoute: typeof AuthenticatedStorageBoxesRoute
   AuthenticatedTimelineRoute: typeof AuthenticatedTimelineRoute
+  AuthenticatedWriterRoute: typeof AuthenticatedWriterRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedAdminAskHistoryRoute: typeof AuthenticatedAdminAskHistoryRoute
   AuthenticatedAdminLeftoverNamesRoute: typeof AuthenticatedAdminLeftoverNamesRoute
@@ -1483,6 +1503,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSearchRoute: AuthenticatedSearchRoute,
   AuthenticatedStorageBoxesRoute: AuthenticatedStorageBoxesRoute,
   AuthenticatedTimelineRoute: AuthenticatedTimelineRoute,
+  AuthenticatedWriterRoute: AuthenticatedWriterRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedAdminAskHistoryRoute: AuthenticatedAdminAskHistoryRoute,
   AuthenticatedAdminLeftoverNamesRoute: AuthenticatedAdminLeftoverNamesRoute,
