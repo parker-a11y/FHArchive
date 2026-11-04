@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import {
+import { Feather,
   Sparkles,
   LayoutDashboard,
   Files,
@@ -47,6 +47,7 @@ const NAV = [
   { to: "/storage-boxes", label: "Storage Boxes", icon: Boxes },
   { to: "/photos", label: "Photos", icon: Images },
   { to: "/books", label: "Book Builder", icon: BookOpen, editorOnly: true },
+  { to: "/writer", label: "Writing Assistant", icon: Feather, editorOnly: true },
   { to: "/timeline", label: "Timeline", icon: Clock },
   { to: "/search", label: "Search", icon: Search },
   { to: "/queues", label: "Work Queues", icon: ListChecks, adminOnly: true },

@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { Feather, Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -975,6 +975,13 @@ function LettersTable() {
                   </Button>
                 }
               />
+            )}
+            {!isGuestViewer && selectedRecords.length > 0 && (
+              <Button asChild variant="outline" size="sm" className="gap-2">
+                <Link to="/writer" search={{ ids: selectedRecords.map((r) => r.identifier).join(",") }}>
+                  <Feather className="size-4" /> Write with AI ({selectedRecords.length})
+                </Link>
+              </Button>
             )}
             {!isGuestViewer && transcribableSelected.length > 0 && (
               <Button
