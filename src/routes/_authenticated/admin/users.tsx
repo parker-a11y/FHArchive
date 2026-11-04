@@ -1,3 +1,4 @@
+import { displayLogin } from "@/lib/login-identifier";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -167,7 +168,7 @@ function UserManagementPage() {
               <TableBody>
                 {(data?.profiles ?? []).map((profile) => (
                   <TableRow key={profile.id}>
-                    <TableCell className="font-medium">{profile.email}</TableCell>
+                    <TableCell className="font-medium">{displayLogin(profile.email)}</TableCell>
                     <TableCell>{profile.full_name || "—"}</TableCell>
                     <TableCell>
                       <span
