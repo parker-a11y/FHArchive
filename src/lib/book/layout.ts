@@ -19,8 +19,13 @@ import {
   type FontKey,
   type PageElement,
   type PlannedPage,
+  type BookChapterSource,
+  type CoverDoc,
+  type Tone,
 } from "./types";
-import { containRect, coverRect, sortedBoxes } from "./templates";
+import { containRect, coverRect, sortedBoxes, PAGE_W, PAGE_H } from "./templates";
+import { themeFor } from "./themes";
+import { coverSize, gutterIn, printerFor } from "./printers";
 
 export const LAYOUT = {
   marginTop: 66,
@@ -42,12 +47,55 @@ type Line = { words: Word[]; hard: boolean; indent: number };
 const fontFor = (i: { italic: boolean; bold: boolean }): FontKey =>
   i.bold && i.italic ? "boldItalic" : i.bold ? "bold" : i.italic ? "italic" : "regular";
 
+/**
+ * Lays out the whole book. Printer profiles can widen the inside margin as the
+ * page count grows, so the plan is recomputed until the gutter is stable, then
+ * blank pages are added at the end to meet the printer's page-count rule.
+ */
 export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts): BookPlan {
+  const profile = printerFor(meta.settings.printer);
+  let gutter = 0;
+  let plan = planOnce(meta, entries, fonts, 0);
+  for (let i = 0; i < 4; i++) {
+    const need = gutterIn(profile, plan.pages.length) * 72;
+    if (need === gutter) break;
+    gutter = need;
+    plan = planOnce(meta, entries, fonts, gutter);
+  }
+  let padded = 0;
+  while (profile.pageMultiple > 1 && plan.pages.length % profile.pageMultiple !== 0) {
+    plan.pages.push({ index: plan.pages.length + 1, folio: null, kind: "blank", itemId: null, archiveId: null, elements: [] });
+    padded++;
+  }
+  plan.paddedPages = padded;
+  return plan;
+}
+
+function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutterPt: number): BookPlan {
   const W = meta.trimWidthIn * 72;
   const H = meta.trimHeightIn * 72;
   const pages: PlannedPage[] = [];
   const warnings: BookWarning[] = [];
-  const L = LAYOUT;
+  const theme = themeFor(meta.settings.theme);
+  const profile = printerFor(meta.settings.printer);
+  const safe = profile.safeIn * 72;
+  const bleed = profile.bleedIn * 72;
+  const headBaseline = Math.max(theme.headBaseline, safe + 10);
+  const folioFromBottom = Math.max(theme.folioFromBottom, safe + 4);
+  const L = {
+    ...LAYOUT,
+    headBaseline,
+    folioFromBottom,
+    marginTop: Math.max(theme.marginTop, headBaseline + 22),
+    marginBottom: Math.max(theme.marginBottom, folioFromBottom + 30),
+    marginInside: Math.max(theme.marginInside, safe) + gutterPt,
+    marginOutside: Math.max(theme.marginOutside, safe),
+    body: theme.body,
+    leading: theme.leading,
+    paraGap: theme.paraGap,
+    captionSize: theme.captionSize,
+  };
+  const settings = meta.settings;
   const contentW = W - L.marginInside - L.marginOutside;
   const bottom = H - L.marginBottom;
 
