@@ -437,7 +437,7 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
     // Facing pages: introduction, then each scan on a left page with its own transcription opposite.
     const pageTexts = rec.pageTexts;
     if (settings.facing && rec.scans.length && pageTexts && rec.scans.some((s) => pageTexts[s.fileId]?.trim())) {
-      envelopeIntro(rec);
+      envelopeIntro(rec, false);
       rec.scans.forEach((img, si) => {
         toLeftHand();
         const sp = newPage("scan", rec);
@@ -461,60 +461,10 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
       }
       headerDone = true;
     }
-    if (false as boolean) {
-      toRightHand();
-      const page = newPage("envelope", rec, { folio: false });
-      const infoH = introHeight(rec);
-      const x0 = leftOf(page.index);
-      if (!rec.envelopes.length) {
-        writeIntro(page, rec, H * 0.36);
-      } else {
-        const gap = 22;
-        const areaTop = L.marginTop;
-        const areaH = bottom - areaTop - infoH - 28;
-        const [front, back] = rec.envelopes;
-        let onFirst = [front];
-        let stacked = true;
-        if (back) {
-          // Try both on one page: stacked (landscape envelopes) or side by side (portrait).
-          const st = [fit(front, contentW, (areaH - gap) / 2 - 16), fit(back, contentW, (areaH - gap) / 2 - 16)];
-          const sb = [fit(front, (contentW - gap) / 2, areaH - 16), fit(back, (contentW - gap) / 2, areaH - 16)];
-          const area = (a: { w: number; h: number }[]) => a.reduce((s2, b) => s2 + b.w * b.h, 0);
-          const best = area(st) >= area(sb) ? st : sb;
-          stacked = best === st;
-          if (best.every((b) => Math.max(b.w, b.h) >= LEGIBLE_LONG_SIDE)) onFirst = [front, back];
-        }
-        if (onFirst.length === 2) {
-          if (stacked) {
-            const slot = (areaH - gap) / 2;
-            onFirst.forEach((img, k) => placeImage(page, img, { x: x0, y: areaTop + k * (slot + gap), w: contentW, h: slot }, rec));
-          } else {
-            const slot = (contentW - gap) / 2;
-            onFirst.forEach((img, k) => placeImage(page, img, { x: x0 + k * (slot + gap), y: areaTop, w: slot, h: areaH }, rec));
-          }
-        } else {
-          placeImage(page, front, { x: x0, y: areaTop, w: contentW, h: areaH }, rec);
-        }
-        writeIntro(page, rec, bottom - infoH);
-        // Envelopes that did not fit legibly get their own unnumbered pages.
-        for (const img of rec.envelopes.slice(onFirst.length)) {
-          const extra = newPage("envelope", rec, { folio: false });
-          placeImage(extra, img, { x: leftOf(extra.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
-        }
-      }
-      // 2 — blank reverse(s) so the first handwritten page opens on the right
-      toRightHand();
-      // 3 — each original letter page on its own full page
-      for (const img of rec.scans) {
-        const sp = newPage("scan", rec);
-        placeImage(sp, img, { x: leftOf(sp.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
-      }
-      headerDone = true;
-    }
 
     // Original (non-envelope-first) order: letter pages, then envelope.
     const perPage = meta.settings.scansPerPage === 2 ? 2 : 1;
-    const legacy = !meta.settings.envelopeFirst;
+    const legacy = !meta.settings.envelopeFirst && !settings.facing;
     for (let i = 0; legacy && i < rec.scans.length; i += perPage) {
       const page = newPage("scan", rec, { head: headerDone });
       let top = L.marginTop;
@@ -564,6 +514,51 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
       const y = recordHeader(page, rec);
       writeBlock(page, [{ text: "No scans or transcription are available for this record.", italic: true, bold: false }], y, 10, 14, { align: "center", tone: "muted" });
     }
+  }
+
+  function envelopeIntro(rec: BookRecordSource, reverse = true) {
+    toRightHand();
+    const page = newPage("envelope", rec, { folio: false });
+    const infoH = introHeight(rec);
+    const x0 = leftOf(page.index);
+    if (!rec.envelopes.length) {
+      writeIntro(page, rec, H * 0.36);
+    } else {
+      const gap = 22;
+      const areaTop = L.marginTop;
+      const areaH = bottom - areaTop - infoH - 28;
+      const [front, back] = rec.envelopes;
+      let onFirst = [front];
+      let stacked = true;
+      if (back) {
+        // Try both on one page: stacked (landscape envelopes) or side by side (portrait).
+        const st = [fit(front, contentW, (areaH - gap) / 2 - 16), fit(back, contentW, (areaH - gap) / 2 - 16)];
+        const sb = [fit(front, (contentW - gap) / 2, areaH - 16), fit(back, (contentW - gap) / 2, areaH - 16)];
+        const area = (a: { w: number; h: number }[]) => a.reduce((s2, b) => s2 + b.w * b.h, 0);
+        const best = area(st) >= area(sb) ? st : sb;
+        stacked = best === st;
+        if (best.every((b) => Math.max(b.w, b.h) >= LEGIBLE_LONG_SIDE)) onFirst = [front, back];
+      }
+      if (onFirst.length === 2) {
+        if (stacked) {
+          const slot = (areaH - gap) / 2;
+          onFirst.forEach((img, k) => placeImage(page, img, { x: x0, y: areaTop + k * (slot + gap), w: contentW, h: slot }, rec));
+        } else {
+          const slot = (contentW - gap) / 2;
+          onFirst.forEach((img, k) => placeImage(page, img, { x: x0 + k * (slot + gap), y: areaTop, w: slot, h: areaH }, rec));
+        }
+      } else {
+        placeImage(page, front, { x: x0, y: areaTop, w: contentW, h: areaH }, rec);
+      }
+      writeIntro(page, rec, bottom - infoH);
+      // Envelopes that did not fit legibly get their own unnumbered pages.
+      for (const img of rec.envelopes.slice(onFirst.length)) {
+        const extra = newPage("envelope", rec, { folio: false });
+        placeImage(extra, img, { x: leftOf(extra.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+      }
+    }
+    // blank reverse(s) so the first handwritten page opens on the right
+    if (reverse) toRightHand();
   }
 
   // ---- shared paragraph flow (transcriptions and research essays) -------------
