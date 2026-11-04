@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Download, GripVertical, ImageUp, Loader2, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Download, FilePlus2, GripVertical, ImageUp, LayoutTemplate, Loader2, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookPreview, useBookPlan } from "@/components/book/BookPreview";
+import { PageEditor } from "@/components/book/PageEditor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { TEMPLATES, templateName } from "@/lib/book/templates";
 import {
+  addCustomPage,
   addBookRecords,
   advanceBookExport,
   getBookEditor,
@@ -29,7 +33,7 @@ import {
 } from "@/lib/book/book.functions";
 import { parseArchiveIds } from "@/lib/book/ids";
 import { preparePrintCopy, printCopyTargets } from "@/lib/book/print-copies";
-import type { BookRecordSource, BookWarning } from "@/lib/book/types";
+import { isPageEntry, recordEntries, type BookEntry, type BookPageSource, type BookRecordSource, type BookWarning } from "@/lib/book/types";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/books/$bookId")({
@@ -58,10 +62,12 @@ function BookEditor() {
   const qc = useQueryClient();
   const key = ["book", bookId];
   const { data, isLoading, error, refetch } = useQuery({ queryKey: key, queryFn: () => getBookEditor({ data: { id: bookId } }), enabled: canEdit });
-  const [order, setOrder] = useState<BookRecordSource[]>([]);
+  const [order, setOrder] = useState<BookEntry[]>([]);
   useEffect(() => {
-    if (data) setOrder(data.records);
+    if (data) setOrder(data.entries);
   }, [data]);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [addingAt, setAddingAt] = useState<number | null | undefined>(undefined);
   const meta = data?.meta ?? null;
   const { plan, fonts, error: fontErr } = useBookPlan(meta, order);
   const [jump, setJump] = useState<number | null>(null);
@@ -71,7 +77,7 @@ function BookEditor() {
 
   const reload = () => qc.invalidateQueries({ queryKey: key });
 
-  async function persistOrder(next: BookRecordSource[]) {
+  async function persistOrder(next: BookEntry[]) {
     setOrder(next);
     try {
       await reorderBookItems({ data: { bookId, itemIds: next.map((r) => r.itemId) } });
@@ -90,7 +96,7 @@ function BookEditor() {
     <>
       <PageHeader
         title={meta.title}
-        description={`${order.length} record${order.length === 1 ? "" : "s"} · ${plan ? `${plan.pages.length} printed pages` : "calculating pages…"} · 8.5 × 11 in portrait · Classic Literary`}
+        description={`${recordEntries(order).length} record${recordEntries(order).length === 1 ? "" : "s"}${order.length - recordEntries(order).length ? ` · ${order.length - recordEntries(order).length} custom page${order.length - recordEntries(order).length === 1 ? "" : "s"}` : ""} · ${plan ? `${plan.pages.length} printed pages` : "calculating pages…"} · 8.5 × 11 in portrait · Classic Literary`}
         actions={
           <Button variant="outline" asChild>
             <Link to="/books">All books</Link>
@@ -102,6 +108,11 @@ function BookEditor() {
         <div className="grid gap-6 xl:grid-cols-[minmax(380px,460px)_1fr]">
           <div className="space-y-6">
             <AddRecords bookId={bookId} count={order.length} onAdded={reload} />
+            <section className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
+              <h2 className="mr-auto font-serif text-lg">Custom pages</h2>
+              <Button size="sm" onClick={() => setAddingAt(null)}><FilePlus2 className="mr-1 h-4 w-4" /> Add page</Button>
+              <p className="w-full text-xs text-muted-foreground">Introductions, photo pages, dividers and research essays. Use the + on any row to insert a page right after it.</p>
+            </section>
             <section className="rounded-lg border bg-card">
               <div className="flex flex-wrap items-center gap-2 border-b p-3">
                 <h2 className="mr-auto font-serif text-lg">Book sequence</h2>
@@ -119,6 +130,8 @@ function BookEditor() {
                 pagesOf={pagesOf}
                 firstPageOf={firstPageOf}
                 onJump={setJump}
+                onEditPage={(p) => setEditing(p.itemId)}
+                onInsertAfter={(i) => setAddingAt(i + 1)}
                 onMove={persistOrder}
                 onRemove={async (r) => {
                   setOrder((o) => o.filter((x) => x.itemId !== r.itemId));
@@ -127,7 +140,7 @@ function BookEditor() {
                 }}
                 onRefresh={async (r) => {
                   await refreshBookSources({ data: { bookId, itemIds: [r.itemId] } });
-                  toast.success(`${r.archiveId} refreshed to the archive's current version`);
+                  toast.success(`${isPageEntry(r) ? r.doc.name || "Page" : r.archiveId} refreshed to the archive's current version`);
                   reload();
                 }}
               />
@@ -139,12 +152,51 @@ function BookEditor() {
               {plan && fonts ? <BookPreview plan={plan} fonts={fonts} jumpTo={jump} /> : <p className="p-6 text-sm text-muted-foreground">Preparing preview…</p>}
             </section>
             <WarningsPanel warnings={allWarnings} bookId={bookId} onRefreshed={reload} />
-            <PrintCopiesPanel records={order} onDone={reload} />
+            <PrintCopiesPanel records={recordEntries(order)} onDone={reload} />
             <ExportPanel bookId={bookId} exports={data.exports} blocked={blocking.length > 0 || !order.length} onChange={reload} />
           </div>
         </div>
       </div>
+      {addingAt !== undefined && (
+        <TemplateChooser
+          onClose={() => setAddingAt(undefined)}
+          onChoose={async (template) => {
+            try {
+              const r = await addCustomPage({ data: { bookId, template, atPosition: addingAt ?? undefined } });
+              setAddingAt(undefined);
+              await qc.invalidateQueries({ queryKey: key });
+              setEditing(r.id);
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
+          }}
+        />
+      )}
+      {editing && fonts && (() => {
+        const entry = order.find((e): e is BookPageSource => isPageEntry(e) && e.itemId === editing);
+        return entry ? <PageEditor key={editing} entry={entry} meta={meta} fonts={fonts} bookId={bookId} onClose={() => setEditing(null)} onSaved={reload} /> : null;
+      })()}
     </>
+  );
+}
+
+function TemplateChooser({ onClose, onChoose }: { onClose: () => void; onChoose: (id: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="font-serif">Choose a page template</DialogTitle>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {TEMPLATES.map((t) => (
+            <Button key={t.id} variant="outline" disabled={busy} className="h-auto justify-start py-3 text-left" onClick={async () => { setBusy(true); await onChoose(t.id); setBusy(false); }}>
+              <LayoutTemplate className="mr-2 h-4 w-4 shrink-0" /> {t.name}
+            </Button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -286,16 +338,18 @@ function AddRecords({ bookId, count, onAdded }: { bookId: string; count: number;
 }
 
 function SequenceList({
-  records, warnings, pagesOf, firstPageOf, onJump, onMove, onRemove, onRefresh,
+  records, warnings, pagesOf, firstPageOf, onJump, onMove, onRemove, onRefresh, onEditPage, onInsertAfter,
 }: {
-  records: BookRecordSource[];
+  records: BookEntry[];
+  onEditPage: (p: BookPageSource) => void;
+  onInsertAfter: (index: number) => void;
   warnings: BookWarning[];
   pagesOf: (id: string) => number;
   firstPageOf: (id: string) => number | null;
   onJump: (p: number) => void;
-  onMove: (next: BookRecordSource[]) => void;
-  onRemove: (r: BookRecordSource) => void;
-  onRefresh: (r: BookRecordSource) => void;
+  onMove: (next: BookEntry[]) => void;
+  onRemove: (r: BookEntry) => void;
+  onRefresh: (r: BookEntry) => void;
 }) {
   const [drag, setDrag] = useState<number | null>(null);
   const [over, setOver] = useState<number | null>(null);
@@ -312,16 +366,54 @@ function SequenceList({
       {records.map((r, i) => {
         const stale = warnings.some((w) => w.itemId === r.itemId && w.level === "error");
         const first = firstPageOf(r.itemId);
+        const handlers = {
+          draggable: true,
+          onDragStart: () => setDrag(i),
+          onDragOver: (e: React.DragEvent) => { e.preventDefault(); setOver(i); },
+          onDragEnd: () => { setDrag(null); setOver(null); },
+          onDrop: (e: React.DragEvent) => { e.preventDefault(); if (drag !== null) move(drag, i); setDrag(null); setOver(null); },
+        };
+        const tools = (label: string) => (
+          <>
+            <Button size="icon" variant="ghost" aria-label={`Insert a custom page after ${label}`} title="Insert a custom page after this" onClick={() => onInsertAfter(i)}>
+              <Plus className="h-4 w-4" />
+            </Button>
+            <div className="flex shrink-0 flex-col">
+              <button type="button" aria-label="Move up" className="rounded p-0.5 hover:bg-muted disabled:opacity-30" disabled={i === 0} onClick={() => move(i, i - 1)}><ArrowUp className="h-3.5 w-3.5" /></button>
+              <button type="button" aria-label="Move down" className="rounded p-0.5 hover:bg-muted disabled:opacity-30" disabled={i === records.length - 1} onClick={() => move(i, i + 1)}><ArrowDown className="h-3.5 w-3.5" /></button>
+            </div>
+          </>
+        );
+        const rowClass = `flex items-center gap-2 p-2 text-sm ${over === i && drag !== null && drag !== i ? "bg-accent/40" : ""} ${drag === i ? "opacity-50" : ""}`;
+        if (isPageEntry(r)) {
+          const name = r.doc.name || templateName(r.doc.template);
+          return (
+            <li key={r.itemId} {...handlers} className={rowClass}>
+              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" aria-hidden />
+              <span className="w-6 shrink-0 text-right tabular-nums text-muted-foreground">{i + 1}</span>
+              <div className="flex h-12 w-9 shrink-0 items-center justify-center rounded-sm border border-dashed bg-muted/40"><LayoutTemplate className="h-4 w-4 text-muted-foreground" /></div>
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => first && onJump(first)} title="Show in preview">
+                <span className="font-medium">{name}</span>
+                <span className="block truncate text-xs text-muted-foreground">Custom page · {templateName(r.doc.template)} · {pagesOf(r.itemId)} pp{first ? ` from p. ${first}` : ""}</span>
+                {stale && <span className="mt-0.5 block text-xs font-medium text-destructive">An archive image on this page changed</span>}
+              </button>
+              {stale && (
+                <Button size="icon" variant="outline" aria-label={`Refresh ${name}`} title="Accept the archive's current version" onClick={() => onRefresh(r)}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              )}
+              <Button size="icon" variant="outline" aria-label={`Edit ${name}`} title="Edit this page" onClick={() => onEditPage(r)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              {tools(name)}
+              <Button size="icon" variant="ghost" aria-label={`Remove ${name} from book`} title="Remove this page from the book" onClick={() => onRemove(r)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </li>
+          );
+        }
         return (
-          <li
-            key={r.itemId}
-            draggable
-            onDragStart={() => setDrag(i)}
-            onDragOver={(e) => { e.preventDefault(); setOver(i); }}
-            onDragEnd={() => { setDrag(null); setOver(null); }}
-            onDrop={(e) => { e.preventDefault(); if (drag !== null) move(drag, i); setDrag(null); setOver(null); }}
-            className={`flex items-center gap-2 p-2 text-sm ${over === i && drag !== null && drag !== i ? "bg-accent/40" : ""} ${drag === i ? "opacity-50" : ""}`}
-          >
+          <li key={r.itemId} {...handlers} className={rowClass}>
             <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" aria-hidden />
             <span className="w-6 shrink-0 text-right tabular-nums text-muted-foreground">{i + 1}</span>
             {r.thumbUrl ? <img src={r.thumbUrl} alt="" className="h-12 w-9 shrink-0 rounded-sm border object-cover" /> : <div className="h-12 w-9 shrink-0 rounded-sm border bg-muted" />}
@@ -341,10 +433,7 @@ function SequenceList({
                 <RefreshCw className="h-4 w-4" />
               </Button>
             )}
-            <div className="flex shrink-0 flex-col">
-              <button type="button" aria-label="Move up" className="rounded p-0.5 hover:bg-muted disabled:opacity-30" disabled={i === 0} onClick={() => move(i, i - 1)}><ArrowUp className="h-3.5 w-3.5" /></button>
-              <button type="button" aria-label="Move down" className="rounded p-0.5 hover:bg-muted disabled:opacity-30" disabled={i === records.length - 1} onClick={() => move(i, i + 1)}><ArrowDown className="h-3.5 w-3.5" /></button>
-            </div>
+            {tools(r.archiveId)}
             <Button size="icon" variant="ghost" aria-label={`Remove ${r.archiveId} from book`} title="Remove from this book (the archive record stays)" onClick={() => onRemove(r)}>
               <Trash2 className="h-4 w-4" />
             </Button>
