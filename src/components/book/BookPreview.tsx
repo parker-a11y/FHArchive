@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { BOOK_FONT_FILES, createBookFonts, type BookFonts } from "@/lib/book/fonts";
 import { buildPlan, LAYOUT } from "@/lib/book/layout";
+import { rgbCss } from "@/lib/book/themes";
 import { PRINT_DPI_GOOD, PRINT_DPI_MIN, type BookEntry, type BookMeta, type BookPlan, type FontKey, type PlannedPage } from "@/lib/book/types";
 
 let fontsPromise: Promise<Record<FontKey, Uint8Array>> | null = null;
@@ -155,12 +156,17 @@ export function BookPreview({ plan, fonts, jumpTo }: { plan: BookPlan; fonts: Bo
 
 export function PageView({ page, plan, scale, asc, lineH, guides }: { page: PlannedPage; plan: BookPlan; scale: number; asc: number; lineH: number; guides: boolean }) {
   const recto = page.index % 2 === 1;
-  const left = recto ? LAYOUT.marginInside : LAYOUT.marginOutside;
-  const right = recto ? LAYOUT.marginOutside : LAYOUT.marginInside;
+  const m = plan.margins ?? { top: LAYOUT.marginTop, bottom: LAYOUT.marginBottom, inside: LAYOUT.marginInside, outside: LAYOUT.marginOutside };
+  const left = recto ? m.inside : m.outside;
+  const right = recto ? m.outside : m.inside;
+  const t = plan.tones;
+  const vars = t
+    ? ({ "--book-paper": rgbCss(t.paper), "--book-ink": rgbCss(t.ink), "--book-muted": rgbCss(t.muted), "--book-note": rgbCss(t.note), "--book-on-dark": rgbCss(t.paper) } as CSSProperties)
+    : { "--book-on-dark": "var(--book-paper)" } as CSSProperties;
   return (
     <div
       className="relative overflow-hidden shadow-md"
-      style={{ width: plan.widthPt * scale, height: plan.heightPt * scale, background: "var(--book-paper)", color: "var(--book-ink)" }}
+      style={{ ...vars, width: plan.widthPt * scale, height: plan.heightPt * scale, background: "var(--book-paper)", color: "var(--book-ink)" }}
       aria-label={`Page ${page.index}`}
     >
       {page.kind === "blank" && guides && (
@@ -204,6 +210,8 @@ export function PageView({ page, plan, scale, asc, lineH, guides }: { page: Plan
               )}
             </div>
           );
+        if (el.t === "fill")
+          return <div key={i} className="absolute" style={{ left: el.x * scale, top: el.y * scale, width: el.w * scale, height: el.h * scale, background: rgbCss(el.color) }} />;
         if (el.t === "rule")
           return <div key={i} className="absolute" style={{ left: el.x * scale, top: el.y * scale, width: el.w * scale, borderTop: "0.5px solid var(--book-muted)" }} />;
         return (
@@ -211,12 +219,13 @@ export function PageView({ page, plan, scale, asc, lineH, guides }: { page: Plan
             key={i}
             className="absolute whitespace-pre"
             style={{
-              left: el.x * scale,
-              top: (el.y - asc * el.size) * scale,
+              left: (el.rotate ? el.x + asc * el.size : el.x) * scale,
+              top: (el.rotate ? el.y : el.y - asc * el.size) * scale,
+              ...(el.rotate ? { transform: "rotate(90deg)", transformOrigin: "0 0" } : {}),
               fontFamily: "BookGaramond, serif",
               fontSize: el.size * scale,
               lineHeight: lineH,
-              color: el.tone === "muted" ? "var(--book-muted)" : el.tone === "note" ? "var(--book-note)" : "var(--book-ink)",
+              color: el.tone === "muted" ? "var(--book-muted)" : el.tone === "note" ? "var(--book-note)" : el.tone === "paper" ? "var(--book-on-dark)" : "var(--book-ink)",
               fontKerning: "none",
               fontVariantLigatures: "none",
               fontFeatureSettings: '"liga" 0, "clig" 0, "calt" 0, "kern" 0',
@@ -234,8 +243,8 @@ export function PageView({ page, plan, scale, asc, lineH, guides }: { page: Plan
             borderColor: "var(--book-guide)",
             left: left * scale,
             right: right * scale,
-            top: LAYOUT.marginTop * scale,
-            bottom: LAYOUT.marginBottom * scale,
+            top: m.top * scale,
+            bottom: m.bottom * scale,
           }}
         />
       )}

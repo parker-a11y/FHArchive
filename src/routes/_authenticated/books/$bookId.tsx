@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Download, FilePlus2, GripVertical, ImageUp, LayoutTemplate, Loader2, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowDown, BookMarked, ArrowUp, CheckCircle2, Download, FilePlus2, GripVertical, ImageUp, LayoutTemplate, Loader2, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,16 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookPreview, useBookPlan } from "@/components/book/BookPreview";
 import { PageEditor } from "@/components/book/PageEditor";
+import { BookDesignPanel, ChapterDialog, CoverPanel, PreflightPanel } from "@/components/book/Phase3Panels";
+import { runPreflight } from "@/lib/book/preflight";
+import { themeFor } from "@/lib/book/themes";
+import { printerFor } from "@/lib/book/printers";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TEMPLATES, templateName } from "@/lib/book/templates";
 import {
   addCustomPage,
+  addChapter,
+  saveChapter,
   addBookRecords,
   advanceBookExport,
   getBookEditor,
@@ -33,7 +39,7 @@ import {
 } from "@/lib/book/book.functions";
 import { parseArchiveIds } from "@/lib/book/ids";
 import { preparePrintCopy, printCopyTargets } from "@/lib/book/print-copies";
-import { isPageEntry, recordEntries, type BookEntry, type BookPageSource, type BookRecordSource, type BookWarning } from "@/lib/book/types";
+import { isChapterEntry, isPageEntry, recordEntries, type BookChapterSource, type BookEntry, type BookPageSource, type BookRecordSource, type BookWarning } from "@/lib/book/types";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/books/$bookId")({
@@ -68,6 +74,7 @@ function BookEditor() {
   }, [data]);
   const [editing, setEditing] = useState<string | null>(null);
   const [addingAt, setAddingAt] = useState<number | null | undefined>(undefined);
+  const [chapterAt, setChapterAt] = useState<{ at?: number; entry?: BookChapterSource } | null>(null);
   const meta = data?.meta ?? null;
   const { plan, fonts, error: fontErr } = useBookPlan(meta, order);
   const [jump, setJump] = useState<number | null>(null);
@@ -91,12 +98,15 @@ function BookEditor() {
   const pagesOf = (itemId: string) => plan?.pages.filter((p) => p.itemId === itemId).length ?? 0;
   const allWarnings: BookWarning[] = [...data.warnings, ...(plan?.warnings ?? [])];
   const blocking = allWarnings.filter((w) => w.level === "error");
+  const preflight = plan && fonts ? runPreflight(plan, data.warnings, meta.settings.printer, fonts) : null;
+  const custom = order.filter(isPageEntry).length;
+  const chapters = order.filter(isChapterEntry).length;
 
   return (
     <>
       <PageHeader
         title={meta.title}
-        description={`${recordEntries(order).length} record${recordEntries(order).length === 1 ? "" : "s"}${order.length - recordEntries(order).length ? ` · ${order.length - recordEntries(order).length} custom page${order.length - recordEntries(order).length === 1 ? "" : "s"}` : ""} · ${plan ? `${plan.pages.length} printed pages` : "calculating pages…"} · 8.5 × 11 in portrait · Classic Literary`}
+        description={`${recordEntries(order).length} record${recordEntries(order).length === 1 ? "" : "s"}${chapters ? ` · ${chapters} chapter${chapters === 1 ? "" : "s"}` : ""}${custom ? ` · ${custom} custom page${custom === 1 ? "" : "s"}` : ""} · ${plan ? `${plan.pages.length} printed pages` : "calculating pages…"} · ${meta.trimWidthIn} × ${meta.trimHeightIn} in · ${themeFor(meta.settings.theme).name} · ${printerFor(meta.settings.printer).name.split(" —")[0]}`}
         actions={
           <Button variant="outline" asChild>
             <Link to="/books">All books</Link>
@@ -105,13 +115,15 @@ function BookEditor() {
       />
       <div className="space-y-6 p-4 md:p-6">
         <BookDetails data={data} onSaved={reload} />
+        <BookDesignPanel key={JSON.stringify(meta.settings) + meta.trimWidthIn} meta={meta} onSaved={reload} />
         <div className="grid gap-6 xl:grid-cols-[minmax(380px,460px)_1fr]">
           <div className="space-y-6">
             <AddRecords bookId={bookId} count={order.length} onAdded={reload} />
             <section className="flex flex-wrap items-center gap-2 rounded-lg border bg-card p-3">
-              <h2 className="mr-auto font-serif text-lg">Custom pages</h2>
+              <h2 className="mr-auto font-serif text-lg">Chapters &amp; custom pages</h2>
+              <Button size="sm" variant="outline" onClick={() => setChapterAt({})}><BookMarked className="mr-1 h-4 w-4" /> Add chapter</Button>
               <Button size="sm" onClick={() => setAddingAt(null)}><FilePlus2 className="mr-1 h-4 w-4" /> Add page</Button>
-              <p className="w-full text-xs text-muted-foreground">Introductions, photo pages, dividers and research essays. Use the + on any row to insert a page right after it.</p>
+              <p className="w-full text-xs text-muted-foreground">Chapters group the letters that follow them. Custom pages hold introductions, photos, dividers and research essays. Use the + on any row to insert a page right after it, or drag a chapter into place.</p>
             </section>
             <section className="rounded-lg border bg-card">
               <div className="flex flex-wrap items-center gap-2 border-b p-3">
@@ -131,6 +143,7 @@ function BookEditor() {
                 firstPageOf={firstPageOf}
                 onJump={setJump}
                 onEditPage={(p) => setEditing(p.itemId)}
+                onEditChapter={(c) => setChapterAt({ entry: c })}
                 onInsertAfter={(i) => setAddingAt(i + 1)}
                 onMove={persistOrder}
                 onRemove={async (r) => {
@@ -140,7 +153,7 @@ function BookEditor() {
                 }}
                 onRefresh={async (r) => {
                   await refreshBookSources({ data: { bookId, itemIds: [r.itemId] } });
-                  toast.success(`${isPageEntry(r) ? r.doc.name || "Page" : r.archiveId} refreshed to the archive's current version`);
+                  toast.success(`${isPageEntry(r) ? r.doc.name || "Page" : isChapterEntry(r) ? r.doc.title : r.archiveId} refreshed to the archive's current version`);
                   reload();
                 }}
               />
@@ -152,8 +165,10 @@ function BookEditor() {
               {plan && fonts ? <BookPreview plan={plan} fonts={fonts} jumpTo={jump} /> : <p className="p-6 text-sm text-muted-foreground">Preparing preview…</p>}
             </section>
             <WarningsPanel warnings={allWarnings} bookId={bookId} onRefreshed={reload} />
+            <PreflightPanel result={preflight} />
             <PrintCopiesPanel records={recordEntries(order)} onDone={reload} />
-            <ExportPanel bookId={bookId} exports={data.exports} blocked={blocking.length > 0 || !order.length} onChange={reload} />
+            <ExportPanel bookId={bookId} exports={data.exports} blocked={blocking.length > 0 || !order.length} onChange={reload} printReady={!!preflight?.printReady} printerName={printerFor(meta.settings.printer).name} />
+            <CoverPanel bookId={bookId} meta={meta} fonts={fonts} interiorPages={plan?.pages.length ?? 0} initial={data.cover.doc} initialImage={data.cover.image} onSaved={reload} exportBlocked={blocking.length > 0 || !order.length} />
           </div>
         </div>
       </div>
@@ -166,6 +181,22 @@ function BookEditor() {
               setAddingAt(undefined);
               await qc.invalidateQueries({ queryKey: key });
               setEditing(r.id);
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
+          }}
+        />
+      )}
+      {chapterAt && (
+        <ChapterDialog
+          initial={chapterAt.entry?.doc ?? null}
+          onClose={() => setChapterAt(null)}
+          onSave={async (doc) => {
+            try {
+              if (chapterAt.entry) await saveChapter({ data: { itemId: chapterAt.entry.itemId, doc } });
+              else await addChapter({ data: { bookId, doc, atPosition: chapterAt.at } });
+              setChapterAt(null);
+              reload();
             } catch (e) {
               toast.error((e as Error).message);
             }
@@ -203,7 +234,7 @@ function TemplateChooser({ onClose, onChoose }: { onClose: () => void; onChoose:
 function BookDetails({ data, onSaved }: { data: Editor; onSaved: () => void }) {
   const [title, setTitle] = useState(data.meta.title);
   const [subtitle, setSubtitle] = useState(data.meta.subtitle ?? "");
-  const save = async (patch: { id: string; title?: string; subtitle?: string | null; settings?: { scansPerPage: 1 | 2; titlePage: boolean; envelopeFirst: boolean } }) => {
+  const save = async (patch: { id: string; title?: string; subtitle?: string | null }) => {
     try {
       await updateBook({ data: patch });
       onSaved();
@@ -211,9 +242,8 @@ function BookDetails({ data, onSaved }: { data: Editor; onSaved: () => void }) {
       toast.error((e as Error).message);
     }
   };
-  const s = data.meta.settings;
   return (
-    <section className="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-[1fr_1fr_auto]">
+    <section className="grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-2">
       <div className="space-y-1">
         <Label htmlFor="bt">Title</Label>
         <Input id="bt" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={() => title.trim() && title !== data.meta.title && save({ id: data.meta.id, title })} />
@@ -221,20 +251,6 @@ function BookDetails({ data, onSaved }: { data: Editor; onSaved: () => void }) {
       <div className="space-y-1">
         <Label htmlFor="bs">Subtitle</Label>
         <Input id="bs" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} onBlur={() => subtitle !== (data.meta.subtitle ?? "") && save({ id: data.meta.id, subtitle: subtitle || null })} />
-      </div>
-      <div className="flex flex-col justify-end gap-2 text-sm">
-        <div className="flex items-center gap-2">
-          <Switch id="tp" checked={s.titlePage} onCheckedChange={(v) => save({ id: data.meta.id, settings: { ...s, titlePage: v } })} />
-          <Label htmlFor="tp">Title page</Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch id="ef" checked={s.envelopeFirst} onCheckedChange={(v) => save({ id: data.meta.id, settings: { ...s, envelopeFirst: v } })} />
-          <Label htmlFor="ef">Classic Literary — Envelope First</Label>
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch id="two" disabled={s.envelopeFirst} checked={!s.envelopeFirst && s.scansPerPage === 2} onCheckedChange={(v) => save({ id: data.meta.id, settings: { ...s, scansPerPage: v ? 2 : 1 } })} />
-          <Label htmlFor="two">Two letter scans per page</Label>
-        </div>
       </div>
     </section>
   );
@@ -338,9 +354,10 @@ function AddRecords({ bookId, count, onAdded }: { bookId: string; count: number;
 }
 
 function SequenceList({
-  records, warnings, pagesOf, firstPageOf, onJump, onMove, onRemove, onRefresh, onEditPage, onInsertAfter,
+  records, warnings, pagesOf, firstPageOf, onJump, onMove, onRemove, onRefresh, onEditPage, onEditChapter, onInsertAfter,
 }: {
   records: BookEntry[];
+  onEditChapter: (c: BookChapterSource) => void;
   onEditPage: (p: BookPageSource) => void;
   onInsertAfter: (index: number) => void;
   warnings: BookWarning[];
@@ -385,6 +402,26 @@ function SequenceList({
           </>
         );
         const rowClass = `flex items-center gap-2 p-2 text-sm ${over === i && drag !== null && drag !== i ? "bg-accent/40" : ""} ${drag === i ? "opacity-50" : ""}`;
+        if (isChapterEntry(r)) {
+          return (
+            <li key={r.itemId} {...handlers} className={`${rowClass} bg-muted/30`}>
+              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground" aria-hidden />
+              <span className="w-6 shrink-0 text-right tabular-nums text-muted-foreground">{i + 1}</span>
+              <div className="flex h-12 w-9 shrink-0 items-center justify-center rounded-sm border bg-background"><BookMarked className="h-4 w-4 text-muted-foreground" /></div>
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => first && onJump(first)} title="Show in preview">
+                <span className="font-serif font-medium">{r.doc.title}</span>
+                <span className="block truncate text-xs text-muted-foreground">Chapter{r.doc.subtitle ? ` · ${r.doc.subtitle}` : ""}{first ? ` · p. ${first}` : ""}</span>
+              </button>
+              <Button size="icon" variant="outline" aria-label={`Edit chapter ${r.doc.title}`} title="Edit this chapter" onClick={() => onEditChapter(r)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              {tools(r.doc.title)}
+              <Button size="icon" variant="ghost" aria-label={`Remove chapter ${r.doc.title}`} title="Remove this chapter (its letters stay in the book)" onClick={() => onRemove(r)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </li>
+          );
+        }
         if (isPageEntry(r)) {
           const name = r.doc.name || templateName(r.doc.template);
           return (
@@ -524,7 +561,7 @@ function PrintCopiesPanel({ records, onDone }: { records: BookRecordSource[]; on
   );
 }
 
-function ExportPanel({ bookId, exports, blocked, onChange }: { bookId: string; exports: Editor["exports"]; blocked: boolean; onChange: () => void }) {
+function ExportPanel({ bookId, exports, blocked, onChange, printReady, printerName }: { bookId: string; exports: Editor["exports"]; blocked: boolean; onChange: () => void; printReady: boolean; printerName: string }) {
   const [starting, setStarting] = useState(false);
   const [live, setLive] = useState<Record<string, any>>({});
   const active = exports.find((e: any) => e.status === "queued" || e.status === "running");
@@ -582,11 +619,14 @@ function ExportPanel({ bookId, exports, blocked, onChange }: { bookId: string; e
             }
           }}
         >
-          {starting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Create PDF
+          {starting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} {printReady ? "Create print-ready PDF" : "Create proof PDF"}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Standard 8.5 × 11 in PDF for home printing and sharing, with fonts embedded and scans at their stored resolution. It is not yet tailored to a particular print company (Blurb, Lulu, BookBaby), so it is not labelled print-ready. The export runs on the server, so you can close this page; each PDF keeps a record of exactly which record versions it used.
+        {printReady
+          ? `The interior PDF is set up for ${printerName}: trim, bleed, safe area and gutter follow its rules, and fonts are embedded. Upload it with the cover PDF.`
+          : "A proof PDF for home printing and checking. Choose a printer in Book design and clear the preflight problems to make a print-ready file."}{" "}
+        The export runs on the server, so you can close this page; each PDF keeps a record of exactly which record versions, theme and printer settings it used.
       </p>
       {!exports.length && <p className="text-sm text-muted-foreground">No exports yet.</p>}
       <ul className="divide-y">
@@ -597,7 +637,7 @@ function ExportPanel({ bookId, exports, blocked, onChange }: { bookId: string; e
             <li key={e.id} className="space-y-1 py-2 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-auto">
-                  {new Date(e.created_at).toLocaleString()} · {e.status === "done" ? `${e.page_count} pages · ${(Number(e.file_size) / 1e6).toFixed(1)} MB` : e.step ?? e.status}
+                  {e.kind === "cover" ? "Cover · " : "Interior · "}{e.status === "done" ? (e.print_ready ? `Print-ready (${e.profile}) · ` : "Proof · ") : ""}{new Date(e.created_at).toLocaleString()} · {e.status === "done" ? `${e.page_count} pages · ${(Number(e.file_size) / 1e6).toFixed(1)} MB` : e.step ?? e.status}
                 </span>
                 {e.status === "done" && (
                   <>

@@ -19,8 +19,13 @@ import {
   type FontKey,
   type PageElement,
   type PlannedPage,
+  type BookChapterSource,
+  type CoverDoc,
+  type Tone,
 } from "./types";
-import { containRect, coverRect, sortedBoxes } from "./templates";
+import { containRect, coverRect, sortedBoxes, PAGE_W, PAGE_H } from "./templates";
+import { themeFor } from "./themes";
+import { coverSize, gutterIn, printerFor } from "./printers";
 
 export const LAYOUT = {
   marginTop: 66,
@@ -42,12 +47,55 @@ type Line = { words: Word[]; hard: boolean; indent: number };
 const fontFor = (i: { italic: boolean; bold: boolean }): FontKey =>
   i.bold && i.italic ? "boldItalic" : i.bold ? "bold" : i.italic ? "italic" : "regular";
 
+/**
+ * Lays out the whole book. Printer profiles can widen the inside margin as the
+ * page count grows, so the plan is recomputed until the gutter is stable, then
+ * blank pages are added at the end to meet the printer's page-count rule.
+ */
 export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts): BookPlan {
+  const profile = printerFor(meta.settings.printer);
+  let gutter = 0;
+  let plan = planOnce(meta, entries, fonts, 0);
+  for (let i = 0; i < 4; i++) {
+    const need = gutterIn(profile, plan.pages.length) * 72;
+    if (need === gutter) break;
+    gutter = need;
+    plan = planOnce(meta, entries, fonts, gutter);
+  }
+  let padded = 0;
+  while (profile.pageMultiple > 1 && plan.pages.length % profile.pageMultiple !== 0) {
+    plan.pages.push({ index: plan.pages.length + 1, folio: null, kind: "blank", itemId: null, archiveId: null, elements: [] });
+    padded++;
+  }
+  plan.paddedPages = padded;
+  return plan;
+}
+
+function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutterPt: number): BookPlan {
   const W = meta.trimWidthIn * 72;
   const H = meta.trimHeightIn * 72;
   const pages: PlannedPage[] = [];
   const warnings: BookWarning[] = [];
-  const L = LAYOUT;
+  const theme = themeFor(meta.settings.theme);
+  const profile = printerFor(meta.settings.printer);
+  const safe = profile.safeIn * 72;
+  const bleed = profile.bleedIn * 72;
+  const headBaseline = Math.max(theme.headBaseline, safe + 10);
+  const folioFromBottom = Math.max(theme.folioFromBottom, safe + 4);
+  const L = {
+    ...LAYOUT,
+    headBaseline,
+    folioFromBottom,
+    marginTop: Math.max(theme.marginTop, headBaseline + 22),
+    marginBottom: Math.max(theme.marginBottom, folioFromBottom + 30),
+    marginInside: Math.max(theme.marginInside, safe) + gutterPt,
+    marginOutside: Math.max(theme.marginOutside, safe),
+    body: theme.body,
+    leading: theme.leading,
+    paraGap: theme.paraGap,
+    captionSize: theme.captionSize,
+  };
+  const settings = meta.settings;
   const contentW = W - L.marginInside - L.marginOutside;
   const bottom = H - L.marginBottom;
 
@@ -174,6 +222,7 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
 
   // ---- pages ----------------------------------------------------------------
   let currentRecordLabel: string | null = null;
+  let currentChapter: string | null = null;
   function newPage(kind: PlannedPage["kind"], rec: { itemId: string; archiveId: string | null } | null, opts: { head?: boolean; folio?: boolean } = {}) {
     const index = pages.length + 1;
     const page: PlannedPage = {
@@ -190,9 +239,11 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
       const fw = fonts.width("regular", folio, 9);
       page.elements.push({ t: "text", x: (W - fw) / 2, y: H - L.folioFromBottom, size: 9, font: "regular", text: folio, tone: "muted" });
       if (opts.head !== false) {
-        const label = printableText(index % 2 === 0 ? meta.title : currentRecordLabel ?? meta.title);
-        const lines = breakLines([{ text: label, italic: true, bold: false }], 9, contentW);
-        drawLine(page.elements, lines[0], leftOf(index), L.headBaseline, contentW, 9, { justify: false, align: "center", tone: "muted" });
+        let label = printableText(index % 2 === 0 ? currentChapter ?? meta.title : currentRecordLabel ?? meta.title);
+        if (theme.headCaps) label = label.toUpperCase();
+        const hs = theme.headCaps ? 8 : 9;
+        const lines = breakLines([{ text: label, italic: !theme.headCaps, bold: false }], hs, contentW);
+        drawLine(page.elements, lines[0], leftOf(index), L.headBaseline, contentW, hs, { justify: false, align: "center", tone: "muted" });
       }
     }
     return page;
@@ -268,13 +319,76 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
     let y = H * 0.34;
     y = writeBlock(p, [{ text: meta.title, italic: false, bold: true }], y, 26, 34, { align: "center" });
     if (meta.subtitle) y = writeBlock(p, [{ text: meta.subtitle, italic: true, bold: false }], y + 6, 15, 21, { align: "center", tone: "muted" });
-    newPage("blank", null);
-  }
+    if (settings.front?.colophon) colophon();
+    else newPage("blank", null);
+  } else if (settings.front?.colophon) colophon();
 
   /** Pads with an intentionally blank page so the next page is right-hand (odd). */
-  const toRightHand = () => {
+  function toRightHand() {
     if (pages.length % 2 === 1) newPage("blank", null);
-  };
+  }
+  /** Pads so the next page is left-hand (even). */
+  function toLeftHand() {
+    if (pages.length % 2 === 0) newPage("blank", null);
+  }
+
+  /** Copyright / colophon page: only the text the editor wrote, set small near the foot. */
+  function colophon() {
+    const p = newPage("front", null, { folio: false });
+    const lines = (settings.front?.colophonText ?? "").replace(/\r\n?/g, "\n").split("\n");
+    const h = lines.length * 13;
+    let y = Math.max(L.marginTop, H * 0.62 - h / 2);
+    for (const line of lines) {
+      if (!line.trim()) {
+        y += 8;
+        continue;
+      }
+      y = writeBlock(p, [{ text: line.trim(), italic: false, bold: false }], y, 9, 13, { align: "center", tone: "muted" });
+    }
+  }
+
+  const dedication = settings.front?.dedication?.trim();
+  if (dedication) {
+    toRightHand();
+    const p = newPage("front", null, { folio: false });
+    const paras = dedication.replace(/\r\n?/g, "\n").split("\n");
+    let y = H * 0.32;
+    for (const para of paras) y = para.trim() ? writeBlock(p, [{ text: para.trim(), italic: true, bold: false }], y, 13, 20, { align: "center", indent: 50 }) : y + 10;
+  }
+
+  // ---- table of contents: reserved now (its length depends only on the entry list), filled at the end
+  type TocLine = { level: 0 | 1; text: string; itemId: string };
+  const tocLines: TocLine[] = [];
+  if (settings.toc?.enabled) {
+    for (const e of entries) {
+      if (e.type === "chapter") tocLines.push({ level: 0, text: e.doc.title || "Untitled chapter", itemId: e.itemId });
+      else if (e.type === "page") {
+        if (e.doc.flow?.heading?.trim()) tocLines.push({ level: 0, text: e.doc.flow.heading.trim(), itemId: e.itemId });
+      } else if (settings.toc.records) {
+        tocLines.push({ level: 1, text: [e.archiveId, e.dateLabel ?? "Undated", e.author ? `from ${e.author}` : null].filter(Boolean).join(" · "), itemId: e.itemId });
+      }
+    }
+  }
+  const tocPages: Array<{ page: PlannedPage; lines: Array<TocLine & { y: number }> }> = [];
+  if (tocLines.length) {
+    toRightHand();
+    let page = newPage("toc", null, { folio: false });
+    let y = writeBlock(page, [{ text: "Contents", italic: false, bold: false }], L.marginTop, 20, 26, { align: "center" }) + 22;
+    let cur: (typeof tocPages)[number] = { page, lines: [] };
+    tocPages.push(cur);
+    for (const line of tocLines) {
+      const lh = line.level === 0 ? 22 : 16;
+      if (y + lh > bottom) {
+        page = newPage("toc", null, { folio: false });
+        cur = { page, lines: [] };
+        tocPages.push(cur);
+        y = L.marginTop;
+      }
+      y += lh;
+      cur.lines.push({ ...line, y });
+    }
+  }
+  if (pages.length) toRightHand();
 
   /** Identifying lines under the envelope; only catalogued facts, nothing invented. */
   function introLines(rec: BookRecordSource) {
@@ -312,54 +426,34 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
       renderCustom(entry);
       continue;
     }
+    if (entry.type === "chapter") {
+      renderChapter(entry);
+      continue;
+    }
     const rec = entry;
     currentRecordLabel = rec.dateLabel ?? rec.title ?? rec.archiveId;
     let headerDone = false;
 
-    if (meta.settings.envelopeFirst) {
-      // 1 — envelope / introduction on a right-hand page, no folio or running head
-      toRightHand();
-      const page = newPage("envelope", rec, { folio: false });
-      const infoH = introHeight(rec);
-      const x0 = leftOf(page.index);
-      if (!rec.envelopes.length) {
-        writeIntro(page, rec, H * 0.36);
-      } else {
-        const gap = 22;
-        const areaTop = L.marginTop;
-        const areaH = bottom - areaTop - infoH - 28;
-        const [front, back] = rec.envelopes;
-        let onFirst = [front];
-        let stacked = true;
-        if (back) {
-          // Try both on one page: stacked (landscape envelopes) or side by side (portrait).
-          const st = [fit(front, contentW, (areaH - gap) / 2 - 16), fit(back, contentW, (areaH - gap) / 2 - 16)];
-          const sb = [fit(front, (contentW - gap) / 2, areaH - 16), fit(back, (contentW - gap) / 2, areaH - 16)];
-          const area = (a: { w: number; h: number }[]) => a.reduce((s2, b) => s2 + b.w * b.h, 0);
-          const best = area(st) >= area(sb) ? st : sb;
-          stacked = best === st;
-          if (best.every((b) => Math.max(b.w, b.h) >= LEGIBLE_LONG_SIDE)) onFirst = [front, back];
-        }
-        if (onFirst.length === 2) {
-          if (stacked) {
-            const slot = (areaH - gap) / 2;
-            onFirst.forEach((img, k) => placeImage(page, img, { x: x0, y: areaTop + k * (slot + gap), w: contentW, h: slot }, rec));
-          } else {
-            const slot = (contentW - gap) / 2;
-            onFirst.forEach((img, k) => placeImage(page, img, { x: x0 + k * (slot + gap), y: areaTop, w: slot, h: areaH }, rec));
-          }
-        } else {
-          placeImage(page, front, { x: x0, y: areaTop, w: contentW, h: areaH }, rec);
-        }
-        writeIntro(page, rec, bottom - infoH);
-        // Envelopes that did not fit legibly get their own unnumbered pages.
-        for (const img of rec.envelopes.slice(onFirst.length)) {
-          const extra = newPage("envelope", rec, { folio: false });
-          placeImage(extra, img, { x: leftOf(extra.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
-        }
-      }
-      // 2 — blank reverse(s) so the first handwritten page opens on the right
-      toRightHand();
+    // Facing pages: introduction, then each scan on a left page with its own transcription opposite.
+    const pageTexts = rec.pageTexts;
+    if (settings.facing && rec.scans.length && pageTexts && rec.scans.some((s) => pageTexts[s.fileId]?.trim())) {
+      envelopeIntro(rec, false);
+      rec.scans.forEach((img, si) => {
+        toLeftHand();
+        const sp = newPage("scan", rec);
+        placeImage(sp, img, { x: leftOf(sp.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+        const tp = newPage("text", rec);
+        const label = `${img.label || `Page ${si + 1}`} · ${rec.transcriptionVerified ? "Transcription" : "Transcription, not yet human-verified"}`;
+        const y = writeBlock(tp, [{ text: label, italic: true, bold: false }], L.marginTop - 8, 10, 14, { align: "center", tone: "muted" }) + 12;
+        const blocks = parseTranscription(pageTexts[img.fileId] ?? "");
+        if (blocks.length) flowBlocks(blocks, tp, y, rec, "ink");
+        else writeBlock(tp, [{ text: "No transcription for this page.", italic: true, bold: false }], y, 10, 14, { align: "center", tone: "muted" });
+      });
+      continue;
+    }
+
+    if (meta.settings.envelopeFirst || settings.facing) {
+      envelopeIntro(rec);
       // 3 — each original letter page on its own full page
       for (const img of rec.scans) {
         const sp = newPage("scan", rec);
@@ -370,7 +464,7 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
 
     // Original (non-envelope-first) order: letter pages, then envelope.
     const perPage = meta.settings.scansPerPage === 2 ? 2 : 1;
-    const legacy = !meta.settings.envelopeFirst;
+    const legacy = !meta.settings.envelopeFirst && !settings.facing;
     for (let i = 0; legacy && i < rec.scans.length; i += perPage) {
       const page = newPage("scan", rec, { head: headerDone });
       let top = L.marginTop;
@@ -422,6 +516,51 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
     }
   }
 
+  function envelopeIntro(rec: BookRecordSource, reverse = true) {
+    toRightHand();
+    const page = newPage("envelope", rec, { folio: false });
+    const infoH = introHeight(rec);
+    const x0 = leftOf(page.index);
+    if (!rec.envelopes.length) {
+      writeIntro(page, rec, H * 0.36);
+    } else {
+      const gap = 22;
+      const areaTop = L.marginTop;
+      const areaH = bottom - areaTop - infoH - 28;
+      const [front, back] = rec.envelopes;
+      let onFirst = [front];
+      let stacked = true;
+      if (back) {
+        // Try both on one page: stacked (landscape envelopes) or side by side (portrait).
+        const st = [fit(front, contentW, (areaH - gap) / 2 - 16), fit(back, contentW, (areaH - gap) / 2 - 16)];
+        const sb = [fit(front, (contentW - gap) / 2, areaH - 16), fit(back, (contentW - gap) / 2, areaH - 16)];
+        const area = (a: { w: number; h: number }[]) => a.reduce((s2, b) => s2 + b.w * b.h, 0);
+        const best = area(st) >= area(sb) ? st : sb;
+        stacked = best === st;
+        if (best.every((b) => Math.max(b.w, b.h) >= LEGIBLE_LONG_SIDE)) onFirst = [front, back];
+      }
+      if (onFirst.length === 2) {
+        if (stacked) {
+          const slot = (areaH - gap) / 2;
+          onFirst.forEach((img, k) => placeImage(page, img, { x: x0, y: areaTop + k * (slot + gap), w: contentW, h: slot }, rec));
+        } else {
+          const slot = (contentW - gap) / 2;
+          onFirst.forEach((img, k) => placeImage(page, img, { x: x0 + k * (slot + gap), y: areaTop, w: slot, h: areaH }, rec));
+        }
+      } else {
+        placeImage(page, front, { x: x0, y: areaTop, w: contentW, h: areaH }, rec);
+      }
+      writeIntro(page, rec, bottom - infoH);
+      // Envelopes that did not fit legibly get their own unnumbered pages.
+      for (const img of rec.envelopes.slice(onFirst.length)) {
+        const extra = newPage("envelope", rec, { folio: false });
+        placeImage(extra, img, { x: leftOf(extra.index), y: L.marginTop, w: contentW, h: bottom - L.marginTop }, rec);
+      }
+    }
+    // blank reverse(s) so the first handwritten page opens on the right
+    if (reverse) toRightHand();
+  }
+
   // ---- shared paragraph flow (transcriptions and research essays) -------------
   function flowBlocks(blocks: ReturnType<typeof parseTranscription>, startPage: PlannedPage, startY: number, owner: { itemId: string; archiveId: string | null }, tone: "ink" | "note") {
     let page = startPage;
@@ -463,8 +602,37 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
     });
   }
 
+  // ---- chapters (Phase 3) -------------------------------------------------------
+  function renderChapter(ch: BookChapterSource) {
+    const title = ch.doc.title?.trim() || "Untitled chapter";
+    currentChapter = title;
+    currentRecordLabel = title;
+    toRightHand();
+    const p = newPage("chapter", { itemId: ch.itemId, archiveId: null }, { folio: false });
+    let y = H * 0.3;
+    y = writeBlock(p, [{ text: title, italic: false, bold: false }], y, theme.chapterSize, theme.chapterSize * 1.3, { align: "center" });
+    if (ch.doc.subtitle?.trim()) y = writeBlock(p, [{ text: ch.doc.subtitle.trim(), italic: true, bold: false }], y + 4, 13, 19, { align: "center", tone: "muted" });
+    if (theme.ornament) y = writeBlock(p, [{ text: theme.ornament, italic: false, bold: false }], y + 14, 16, 22, { align: "center", tone: "muted" });
+    else {
+      y += 18;
+      p.elements.push({ t: "rule", x: leftOf(p.index) + contentW * 0.42, y, w: contentW * 0.16 });
+    }
+    if (ch.doc.epigraph?.trim()) {
+      y += 26;
+      for (const para of ch.doc.epigraph.trim().split(/\n{2,}/)) y = writeBlock(p, [{ text: para.replace(/\n/g, " "), italic: true, bold: false }], y, 11.5, 17, { align: "center", indent: 56 }) + 4;
+      if (ch.doc.epigraphSource?.trim()) writeBlock(p, [{ text: `— ${ch.doc.epigraphSource.trim()}`, italic: false, bold: false }], y + 2, 9.5, 14, { align: "right", indent: 56, tone: "muted" });
+    }
+  }
+
   // ---- custom pages (Phase 2) ------------------------------------------------
-  function renderCustom(src: BookPageSource) {
+  function renderCustom(src0: BookPageSource) {
+    // Templates are drawn on an 8.5 × 11 in page; other trims scale them proportionally.
+    const sx = W / PAGE_W;
+    const sy = H / PAGE_H;
+    const src: BookPageSource =
+      sx === 1 && sy === 1
+        ? src0
+        : { ...src0, doc: { ...src0.doc, boxes: src0.doc.boxes.map((b) => ({ ...b, x: b.x * sx, y: b.y * sy, w: b.w * sx, h: b.h * sy })) } };
     const doc = src.doc;
     const owner = { itemId: src.itemId, archiveId: null };
     const label = doc.name || "Custom page";
@@ -515,7 +683,7 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
         continue;
       }
       const captionH = box.caption?.trim() && box.mode !== "bleed" ? 18 : 0;
-      const area = box.mode === "bleed" ? { x: 0, y: 0, w: W, h: H } : { x: box.x, y: box.y, w: box.w, h: Math.max(20, box.h - captionH) };
+      const area = box.mode === "bleed" ? { x: -bleed, y: -bleed, w: W + bleed * 2, h: H + bleed * 2 } : { x: box.x, y: box.y, w: box.w, h: Math.max(20, box.h - captionH) };
       const r = box.mode === "fit" ? containRect(img.width, img.height, area) : coverRect(img.width, img.height, area);
       const dpi = img.width > 0 ? Math.round(Math.min(img.width / (r.w / 72), img.height / (r.h / 72))) : 0;
       page.elements.push({ t: "image", ...r, image: img, dpi, ...(box.mode === "fit" ? {} : { clip: area }) });
@@ -531,10 +699,155 @@ export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts
     }
   }
 
+  // ---- fill the reserved contents pages now that every page number is known
+  for (const tp of tocPages) {
+    const x0 = leftOf(tp.page.index);
+    for (const line of tp.lines) {
+      const target = pages.find((pg) => pg.itemId === line.itemId);
+      if (!target) continue;
+      const num = String(target.index);
+      const size = line.level === 0 ? 12 : 10;
+      const font: FontKey = line.level === 0 ? "regular" : "italic";
+      const indent = line.level === 0 ? 0 : 18;
+      const numW = fonts.width("regular", num, size);
+      const room = contentW - indent - numW - 24;
+      let text = printableText(line.text);
+      while (text.length > 3 && fonts.width(font, text, size) > room) text = `${text.slice(0, -2).trimEnd()}…`;
+      const tw = fonts.width(font, text, size);
+      tp.page.elements.push({ t: "text", x: x0 + indent, y: line.y, size, font, text, tone: "ink" });
+      const dotW = fonts.width("regular", " .", size);
+      const dots = Math.max(0, Math.floor((contentW - indent - tw - numW - 12) / dotW));
+      if (dots > 0) {
+        const leader = " .".repeat(dots);
+        const lw = fonts.width("regular", leader, size);
+        tp.page.elements.push({ t: "text", x: x0 + contentW - numW - 6 - lw, y: line.y, size, font: "regular", text: leader, tone: "muted" });
+      }
+      tp.page.elements.push({ t: "text", x: x0 + contentW - numW, y: line.y, size, font: "regular", text: num, tone: "ink" });
+    }
+  }
+
   if (fonts.missing.size) {
     warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Some characters are not in the book typeface and print as “?”: ${[...fonts.missing].join(" ")}` });
   }
-  return { widthPt: W, heightPt: H, pages, warnings };
+  const t = theme.tones;
+  return {
+    widthPt: W,
+    heightPt: H,
+    pages,
+    warnings,
+    bleedPt: bleed,
+    margins: { top: L.marginTop, bottom: L.marginBottom, inside: L.marginInside, outside: L.marginOutside },
+    tones: { ink: t.ink, muted: t.muted, note: t.note, paper: t.paper },
+  };
+}
+
+// ---- cover (Phase 3) -----------------------------------------------------------
+
+/**
+ * Lays out the full cover spread (back, spine, front) as one page including
+ * bleed. Spine width follows the printer profile and the interior page count.
+ */
+export function buildCoverPlan(meta: BookMeta, cover: CoverDoc, image: BookImage | null, interiorPages: number, fonts: BookFonts): BookPlan & { spineIn: number } {
+  const profile = printerFor(meta.settings.printer);
+  const theme = themeFor(meta.settings.theme);
+  const W = meta.trimWidthIn * 72;
+  const H = meta.trimHeightIn * 72;
+  const size = coverSize(profile, meta.trimWidthIn, meta.trimHeightIn, interiorPages);
+  const b = size.bleedPt;
+  const S = size.spinePt;
+  const safe = Math.max(profile.safeIn * 72, 36);
+  const els: PageElement[] = [];
+  const warnings: BookWarning[] = [];
+  const back = { x: b, y: b, w: W, h: H };
+  const spine = { x: b + W, y: b, w: S, h: H };
+  const front = { x: b + W + S, y: b, w: W, h: H };
+  const dark = cover.template !== "classic";
+  const textTone: Tone = dark ? "paper" : "ink";
+  const mutedTone: Tone = dark ? "paper" : "muted";
+
+  const wrap = (text: string, font: FontKey, sz: number, maxW: number) => {
+    const out: string[] = [];
+    for (const para of printableText(text).replace(/\r\n?/g, "\n").split("\n")) {
+      let line = "";
+      for (const word of para.split(/\s+/).filter(Boolean)) {
+        const next = line ? `${line} ${word}` : word;
+        if (line && fonts.width(font, next, sz) > maxW) {
+          out.push(line);
+          line = word;
+        } else line = next;
+      }
+      out.push(line);
+    }
+    return out;
+  };
+  const centered = (text: string, panel: { x: number; w: number }, top: number, sz: number, lead: number, font: FontKey, tone: Tone) => {
+    let y = top;
+    for (const line of wrap(text, font, sz, panel.w - safe * 2)) {
+      y += lead;
+      if (!line) continue;
+      els.push({ t: "text", x: panel.x + (panel.w - fonts.width(font, line, sz)) / 2, y, size: sz, font, text: line, tone });
+    }
+    return y;
+  };
+
+  if (dark) els.push({ t: "fill", x: 0, y: 0, w: size.widthPt, h: size.heightPt, color: theme.tones.cover });
+
+  // Front
+  if (cover.template === "photo" && image) {
+    const area = { x: front.x, y: 0, w: front.w + b, h: size.heightPt };
+    const r = coverRect(image.width, image.height, area);
+    const dpi = image.width > 0 ? Math.round(Math.min(image.width / (r.w / 72), image.height / (r.h / 72))) : 0;
+    els.push({ t: "image", ...r, image, dpi, clip: area });
+    els.push({ t: "fill", x: front.x, y: b + H * 0.66, w: front.w + b, h: H * 0.34 + b, color: theme.tones.cover });
+    let y = centered(cover.title || meta.title, front, b + H * 0.69, 28, 34, "bold", "paper");
+    if (cover.subtitle) y = centered(cover.subtitle, front, y + 4, 14, 19, "italic", "paper");
+    if (cover.author) centered(cover.author, front, b + H - safe - 30, 13, 18, "regular", "paper");
+    if (dpi && dpi < 200) warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Cover photo prints at about ${dpi} DPI (below 200); it may look soft.` });
+  } else {
+    let y = centered(cover.title || meta.title, front, b + H * 0.16, 30, 37, "bold", textTone);
+    if (cover.subtitle) y = centered(cover.subtitle, front, y + 6, 15, 21, "italic", mutedTone);
+    if (theme.ornament && !image) centered(theme.ornament, front, y + 16, 18, 24, "regular", mutedTone);
+    if (image) {
+      const box = { x: front.x + safe + 18, y: b + H * 0.38, w: W - (safe + 18) * 2, h: H * 0.4 };
+      const r = containRect(image.width, image.height, box);
+      const dpi = image.width > 0 ? Math.round(Math.min(image.width / (r.w / 72), image.height / (r.h / 72))) : 0;
+      els.push({ t: "image", ...r, image, dpi });
+      if (dpi && dpi < 200) warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Cover photo prints at about ${dpi} DPI (below 200); it may look soft.` });
+    }
+    if (cover.author) centered(cover.author, front, b + H - safe - 34, 14, 19, "regular", textTone);
+  }
+
+  // Back
+  if (cover.template === "photo") els.push({ t: "fill", x: 0, y: 0, w: back.x + back.w + S, h: size.heightPt, color: theme.tones.cover });
+  if (cover.backText.trim()) {
+    let y = b + H * 0.18;
+    for (const para of cover.backText.trim().split(/\n{2,}/)) y = centered(para.replace(/\n/g, " "), { x: back.x + 24, w: back.w - 48 }, y, 11, 16, "regular", cover.template === "photo" ? "paper" : textTone) + 8;
+  }
+
+  // Spine
+  const spineText = [cover.title || meta.title, cover.author].filter(Boolean).join("   ·   ");
+  if (cover.spineText && spineText) {
+    if (size.spineIn < profile.spineTextMinIn) {
+      warnings.push({ level: "info", archiveId: null, itemId: null, message: `The spine is ${size.spineIn.toFixed(3)} in wide; ${profile.name.split(" —")[0]} allows spine text from ${profile.spineTextMinIn} in, so it is left off.` });
+    } else {
+      let sz = Math.min(14, S * 0.5);
+      while (sz > 6 && fonts.width("regular", printableText(spineText), sz) > H - safe * 2) sz -= 0.5;
+      const len = fonts.width("regular", printableText(spineText), sz);
+      els.push({ t: "text", x: spine.x + S / 2 - sz * 0.33, y: b + (H - len) / 2, size: sz, font: "regular", text: printableText(spineText), tone: cover.template === "classic" ? "ink" : "paper", rotate: true });
+    }
+  }
+
+  if (fonts.missing.size) warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Some characters are not in the book typeface and print as “?”: ${[...fonts.missing].join(" ")}` });
+  const t = theme.tones;
+  return {
+    widthPt: size.widthPt,
+    heightPt: size.heightPt,
+    pages: [{ index: 1, folio: null, kind: "cover", itemId: null, archiveId: null, elements: els }],
+    warnings,
+    bleedPt: 0,
+    tones: { ink: t.ink, muted: t.muted, note: t.note, paper: t.paper },
+    spineIn: size.spineIn,
+  };
 }
 
 const TEXT_STYLES: Record<string, { size: number; leading: number; italic: boolean; tone: "ink" | "muted" | "note" }> = {

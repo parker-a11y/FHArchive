@@ -51,14 +51,27 @@ export const updateBook = createServerFn({ method: "POST" })
         title: z.string().trim().min(1).max(200).optional(),
         subtitle: z.string().trim().max(300).nullable().optional(),
         description: z.string().max(4000).nullable().optional(),
-        settings: z.object({ scansPerPage: z.union([z.literal(1), z.literal(2)]), titlePage: z.boolean(), envelopeFirst: z.boolean().optional() }).optional(),
+        settings: z
+          .object({
+            scansPerPage: z.union([z.literal(1), z.literal(2)]),
+            titlePage: z.boolean(),
+            envelopeFirst: z.boolean().optional(),
+            facing: z.boolean().optional(),
+            theme: z.enum(["classic", "wartime", "modern", "keepsake"]).optional(),
+            printer: z.enum(["generic", "lulu", "blurb", "bookbaby"]).optional(),
+            toc: z.object({ enabled: z.boolean(), records: z.boolean() }).optional(),
+            front: z.object({ colophon: z.boolean(), colophonText: z.string().max(4000), dedication: z.string().max(2000) }).optional(),
+          })
+          .optional(),
+        trim: z.enum(["8.5x11", "6x9"]).optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertEditor(context);
-    const { id: bookId, ...patch } = data;
-    const { error } = await context.supabase.from("book_projects").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", bookId);
+    const { id: bookId, trim, ...patch } = data;
+    const size = trim === "6x9" ? { trim_width_in: 6, trim_height_in: 9 } : trim === "8.5x11" ? { trim_width_in: 8.5, trim_height_in: 11 } : {};
+    const { error } = await context.supabase.from("book_projects").update({ ...patch, ...size, updated_at: new Date().toISOString() }).eq("id", bookId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -106,13 +119,16 @@ export const getBookEditor = createServerFn({ method: "GET" })
     const { data: book } = await db.from("book_projects").select("description, saved_custom_order, updated_at").eq("id", data.id).single();
     const { data: exports } = await db
       .from("book_exports")
-      .select("id, status, progress, total, step, error, attempts, page_count, file_size, warnings, created_at, finished_at")
+      .select("id, kind, profile, print_ready, status, progress, total, step, error, attempts, page_count, file_size, warnings, created_at, finished_at")
       .eq("book_id", data.id)
       .order("created_at", { ascending: false })
       .limit(20);
     const { items: _items, ...rest } = loaded;
+    const { loadCover } = await import("./sources.server");
+    const cover = await loadCover(db, data.id, loaded.meta, { previewUrls: true });
     return {
       ...rest,
+      cover,
       description: (book?.description as string | null) ?? null,
       hasSavedOrder: Array.isArray(book?.saved_custom_order) && (book!.saved_custom_order as unknown[]).length > 0,
       exports: exports ?? [],
@@ -308,7 +324,7 @@ export const searchBookCandidates = createServerFn({ method: "POST" })
 
 export const startBookExport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ bookId: id }).parse(d))
+  .inputValidator((d: unknown) => z.object({ bookId: id, kind: z.enum(["interior", "cover"]).optional() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertEditor(context);
     const { loadBook } = await import("./sources.server");
@@ -316,7 +332,7 @@ export const startBookExport = createServerFn({ method: "POST" })
     const blocking = loaded.warnings.filter((w) => w.level === "error");
     if (blocking.length) throw new Error("Some records changed in the archive or are missing. Review and refresh them before exporting.");
     if (!loaded.entries.length) throw new Error("Add at least one record or page before exporting.");
-    const { data: row, error } = await context.supabase.from("book_exports").insert({ book_id: data.bookId, profile: "standard", status: "queued", step: "Waiting to start" }).select("id").single();
+    const { data: row, error } = await context.supabase.from("book_exports").insert({ book_id: data.bookId, profile: loaded.meta.settings.printer ?? "generic", kind: data.kind ?? "interior", status: "queued", step: "Waiting to start" }).select("id").single();
     if (error) throw new Error(error.message);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { runBookExportTicks } = await import("./export.server");
@@ -494,4 +510,61 @@ export const signBookImage = createServerFn({ method: "POST" })
     await assertEditor(context);
     const { data: s } = await context.supabase.storage.from("book-images").createSignedUrl(data.path, 3600);
     return { url: s?.signedUrl ?? null };
+  });
+
+// ---- Phase 3: chapters and cover ---------------------------------------------
+
+const chapterDoc = z.object({ title: z.string().trim().min(1).max(200), subtitle: z.string().max(300).optional(), epigraph: z.string().max(2000).optional(), epigraphSource: z.string().max(300).optional() });
+
+export const addChapter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ bookId: id, doc: chapterDoc, atPosition: z.number().int().min(0).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const db = context.supabase;
+    const { data: row, error } = await db.from("book_items").insert({ book_id: data.bookId, item_type: "chapter", letter_id: null, page_doc: data.doc, position: 0 }).select("id").single();
+    if (error) throw new Error(error.message);
+    const { data: existing } = await db.from("book_items").select("id").eq("book_id", data.bookId).neq("id", row.id).order("position");
+    const ids = (existing ?? []).map((e: any) => e.id as string);
+    const at = data.atPosition === undefined ? ids.length : Math.min(data.atPosition, ids.length);
+    ids.splice(at, 0, row.id);
+    await writeOrder(db, ids);
+    await db.from("book_projects").update({ updated_at: new Date().toISOString() }).eq("id", data.bookId);
+    return { id: row.id as string };
+  });
+
+export const saveChapter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ itemId: id, doc: chapterDoc }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const { data: row, error } = await context.supabase.from("book_items").update({ page_doc: data.doc }).eq("id", data.itemId).eq("item_type", "chapter").select("book_id").single();
+    if (error) throw new Error(error.message);
+    await context.supabase.from("book_projects").update({ updated_at: new Date().toISOString() }).eq("id", row.book_id);
+    return { ok: true };
+  });
+
+export const saveCover = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        bookId: id,
+        doc: z.object({
+          template: z.enum(["classic", "photo", "cloth"]),
+          title: z.string().max(200),
+          subtitle: z.string().max(300),
+          author: z.string().max(200),
+          backText: z.string().max(4000),
+          spineText: z.boolean(),
+          image: imageRef.nullable(),
+        }),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const { error } = await context.supabase.from("book_covers").upsert({ book_id: data.bookId, doc: data.doc, updated_at: new Date().toISOString() });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

@@ -9,12 +9,12 @@
  * embedded byte-for-byte (no re-compression), and fonts are embedded whole.
  */
 import type { BookFonts } from "./fonts";
-import type { BookPlan, FontKey } from "./types";
+import type { BookPlan, FontKey, Tone } from "./types";
 
 const enc = new TextEncoder();
 const FONT_KEYS: FontKey[] = ["regular", "italic", "bold", "boldItalic"];
 const FONT_RES: Record<FontKey, string> = { regular: "F1", italic: "F2", bold: "F3", boldItalic: "F4" };
-const TONES = { ink: "0.11 0.10 0.09 rg", muted: "0.40 0.37 0.34 rg", note: "0.36 0.25 0.16 rg" } as const;
+const DEFAULT_TONES = { ink: [0.11, 0.1, 0.09], muted: [0.4, 0.37, 0.34], note: [0.36, 0.25, 0.16], paper: [0.98, 0.96, 0.92] } as Record<Tone, [number, number, number]>;
 
 const n = (v: number) => {
   const r = Math.round(v * 100) / 100;
@@ -146,6 +146,10 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
 
   const W = plan.widthPt;
   const H = plan.heightPt;
+  const tones = { ...DEFAULT_TONES, ...(plan.tones ?? {}) };
+  const toneOp = (t: Tone) => `${tones[t].map(n).join(" ")} rg`;
+  // Bleed: the page is enlarged on every side and content shifted in, so the trim stays where the layout put it.
+  const b = plan.bleedPt ?? 0;
   for (let pi = 0; pi < plan.pages.length; pi++) {
     const p = plan.pages[pi];
     const ops: string[] = [];
@@ -157,6 +161,8 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
         xobjects.add(slot);
         const clip = el.clip ? `${n(el.clip.x)} ${n(H - el.clip.y - el.clip.h)} ${n(el.clip.w)} ${n(el.clip.h)} re W n ` : "";
         ops.push(`q ${clip}${n(el.w)} 0 0 ${n(el.h)} ${n(el.x)} ${n(H - el.y - el.h)} cm /Im${slot.num} Do Q`);
+      } else if (el.t === "fill") {
+        ops.push(`q ${el.color.map(n).join(" ")} rg ${n(el.x)} ${n(H - el.y - el.h)} ${n(el.w)} ${n(el.h)} re f Q`);
       } else if (el.t === "rule") {
         ops.push(`q 0.55 0.5 0.45 RG 0.5 w ${n(el.x)} ${n(H - el.y)} m ${n(el.x + el.w)} ${n(H - el.y)} l S Q`);
       } else {
@@ -169,15 +175,21 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
         }
         if (!hex) continue;
         fontsUsed.add(el.font);
-        ops.push(`BT ${TONES[el.tone]} /${FONT_RES[el.font]} ${n(el.size)} Tf 1 0 0 1 ${n(el.x)} ${n(H - el.y)} Tm <${hex}> Tj ET`);
+        const tm = el.rotate ? `0 -1 1 0 ${n(el.x)} ${n(H - el.y)}` : `1 0 0 1 ${n(el.x)} ${n(H - el.y)}`;
+        ops.push(`BT ${toneOp(el.tone)} /${FONT_RES[el.font]} ${n(el.size)} Tf ${tm} Tm <${hex}> Tj ET`);
       }
     }
     const fontDict = [...fontsUsed].map((k) => `/${FONT_RES[k]} ${fontNums[k].type0} 0 R`).join(" ");
     const xoDict = [...xobjects].map((s) => `/Im${s.num} ${s.num} 0 R`).join(" ");
-    const box = `[0 0 ${n(W)} ${n(H)}]`;
+    const media = `[0 0 ${n(W + b * 2)} ${n(H + b * 2)}]`;
+    const trim = `[${n(b)} ${n(b)} ${n(W + b)} ${n(H + b)}]`;
+    if (b) {
+      ops.unshift(`q 1 0 0 1 ${n(b)} ${n(b)} cm`);
+      ops.push("Q");
+    }
     part.object(
       pageNums[pi].page,
-      `<< /Type /Page /Parent ${pagesNum} 0 R /MediaBox ${box} /TrimBox ${box} /Resources << /Font << ${fontDict} >> /XObject << ${xoDict} >> >> /Contents ${pageNums[pi].content} 0 R >>`,
+      `<< /Type /Page /Parent ${pagesNum} 0 R /MediaBox ${media} /BleedBox ${media} /TrimBox ${trim} /Resources << /Font << ${fontDict} >> /XObject << ${xoDict} >> >> /Contents ${pageNums[pi].content} 0 R >>`,
     );
     const content = await deflate(enc.encode(ops.join("\n")));
     part.stream(pageNums[pi].content, "/Filter /FlateDecode", content);
