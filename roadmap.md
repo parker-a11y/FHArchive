@@ -49,3 +49,5 @@
 - [x] Phase 1 — core Book Builder (projects, record selection, ordering, letter → envelope → transcription layout, preview, background PDF export, print copies, source-change checks)
 - [ ] Phase 2 — custom page builder (waiting for your go-ahead)
 - [ ] Phase 3 — advanced publishing and Blurb/Lulu/BookBaby profiles (waiting for your go-ahead)
+
+- [x] Book Builder Phase 3: chapters, contents, front matter, themes, facing pages, Lulu/Blurb/BookBaby profiles, preflight, cover designer (23 tests; real 156-page Lulu test book + cover exported and checked)
