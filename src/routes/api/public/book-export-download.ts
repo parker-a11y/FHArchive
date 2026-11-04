@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/book-export-download")({
           return new Response("This download link has expired. Open Book Builder and download again.", { status: 403 });
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: row } = await supabaseAdmin.from("book_exports").select("id, status, state, file_size, book_id, created_at").eq("id", id).maybeSingle();
+        const { data: row } = await supabaseAdmin.from("book_exports").select("id, kind, status, state, file_size, book_id, created_at").eq("id", id).maybeSingle();
         if (!row || row.status !== "done") return new Response("Export not ready", { status: 404 });
         const { data: book } = await supabaseAdmin.from("book_projects").select("title").eq("id", row.book_id).maybeSingle();
         const parts = ((row.state as any)?.parts ?? []) as Array<{ path: string; size: number }>;
