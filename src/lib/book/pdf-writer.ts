@@ -14,7 +14,7 @@ import type { BookPlan, FontKey } from "./types";
 const enc = new TextEncoder();
 const FONT_KEYS: FontKey[] = ["regular", "italic", "bold", "boldItalic"];
 const FONT_RES: Record<FontKey, string> = { regular: "F1", italic: "F2", bold: "F3", boldItalic: "F4" };
-const TONES = { ink: "0.11 0.10 0.09 rg", muted: "0.40 0.37 0.34 rg" } as const;
+const TONES = { ink: "0.11 0.10 0.09 rg", muted: "0.40 0.37 0.34 rg", note: "0.36 0.25 0.16 rg" } as const;
 
 const n = (v: number) => {
   const r = Math.round(v * 100) / 100;
@@ -99,7 +99,7 @@ function utf16Hex(s: string) {
   return `<${h}>`;
 }
 
-export type ImageSlot = { num: number; path: string };
+export type ImageSlot = { num: number; path: string; bucket?: "scans" | "book-images" };
 
 export type HeadResult = {
   bytes: Uint8Array;
@@ -125,7 +125,7 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
   for (const p of plan.pages)
     for (const el of p.elements)
       if (el.t === "image" && !imageByPath.has(el.image.path)) {
-        const slot = { num: next++, path: el.image.path };
+        const slot: ImageSlot = { num: next++, path: el.image.path, bucket: el.image.bucket ?? "scans" };
         imageByPath.set(el.image.path, slot);
         images.push(slot);
       }
@@ -155,7 +155,8 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
       if (el.t === "image") {
         const slot = imageByPath.get(el.image.path)!;
         xobjects.add(slot);
-        ops.push(`q ${n(el.w)} 0 0 ${n(el.h)} ${n(el.x)} ${n(H - el.y - el.h)} cm /Im${slot.num} Do Q`);
+        const clip = el.clip ? `${n(el.clip.x)} ${n(H - el.clip.y - el.clip.h)} ${n(el.clip.w)} ${n(el.clip.h)} re W n ` : "";
+        ops.push(`q ${clip}${n(el.w)} 0 0 ${n(el.h)} ${n(el.x)} ${n(H - el.y - el.h)} cm /Im${slot.num} Do Q`);
       } else if (el.t === "rule") {
         ops.push(`q 0.55 0.5 0.45 RG 0.5 w ${n(el.x)} ${n(H - el.y)} m ${n(el.x + el.w)} ${n(H - el.y)} l S Q`);
       } else {
