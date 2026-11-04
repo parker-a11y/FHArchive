@@ -66,10 +66,11 @@ export async function runWriterTurn(opts: {
   instructions: string;
   material: string;
   history: WriterMessage[];
+  prior?: string;
 }): Promise<string> {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("The writing assistant is not configured on the server.");
-  const system = `${opts.instructions.trim()}\n\n${OUTPUT_RULES}\n\nARCHIVE RECORDS FOR THIS SESSION:\n\n${opts.material || "(no records selected)"}`;
+  const system = `${opts.instructions.trim()}\n\n${OUTPUT_RULES}\n\nARCHIVE RECORDS FOR THIS SESSION:\n\n${opts.material || "(no records selected)"}${opts.prior ? `\n\nPREVIOUSLY SENT/SCHEDULED EMAILS AND BLOG POSTS (newest and most related first). Use these for continuity: keep the established voice and style, pick up running threads, refer back to earlier posts where natural (e.g. "as we saw last week"), and avoid repeating the same quotes or framing. They are not archival evidence; quote letters only from the records above.\n\n${opts.prior}` : ""}`;
   const input = opts.history.map((m) => ({
     role: m.role,
     content: [{ type: m.role === "assistant" ? "output_text" : "input_text", text: m.content }],
@@ -132,4 +133,35 @@ export async function runWriterTurn(opts: {
   }
   if (!out.trim()) throw new Error(failure || "The AI returned an empty reply (it may have declined). Try a different instruction.");
   return out.replace(/^```(?:html)?\s*/i, "").replace(/```\s*$/, "").trim();
+}
+
+const strip = (s: string) =>
+  String(s ?? "").replace(/<style[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+
+/** Previously sent/scheduled emails and published posts, for continuity of threads and style. Read-only. */
+export async function gatherPriorWriting(db: any, recordIds: string[]): Promise<string> {
+  const [{ data: emails }, { data: posts }] = await Promise.all([
+    db.from("archive_emails").select("subject,message_body,status,sent_at,scheduled_for,created_at")
+      .in("status", ["sent", "scheduled", "queued"]).order("created_at", { ascending: false }).limit(40),
+    db.from("weekly_recaps").select("title,lede,body_md,kind,status,created_at")
+      .order("created_at", { ascending: false }).limit(25),
+  ]);
+  const items: { text: string; related: boolean }[] = [];
+  for (const e of emails ?? []) {
+    const body = strip(e.message_body);
+    if (!body) continue;
+    const when = (e.sent_at || e.scheduled_for || e.created_at || "").slice(0, 10);
+    items.push({ text: `[EMAIL ${e.status} ${when}] ${e.subject ?? ""}\n${body.slice(0, 1500)}`, related: recordIds.some((id) => body.includes(id)) });
+  }
+  for (const p of posts ?? []) {
+    if (p.status && !["published", "ready", "draft"].includes(p.status) && p.status !== "sent") { /* keep all statuses but failed */ }
+    if (p.status === "failed") continue;
+    const body = strip(`${p.lede ?? ""} ${p.body_md ?? ""}`);
+    if (!body) continue;
+    items.push({ text: `[${String(p.kind ?? "post").toUpperCase()} ${String(p.created_at ?? "").slice(0, 10)}] ${p.title ?? ""}\n${body.slice(0, 1500)}`, related: recordIds.some((id) => body.includes(id)) });
+  }
+  items.sort((a, b) => Number(b.related) - Number(a.related));
+  let out = "", total = 0;
+  for (const it of items) { if (total + it.text.length > 40000) break; out += it.text + "\n\n"; total += it.text.length; }
+  return out.trim();
 }
