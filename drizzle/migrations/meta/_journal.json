@@ -71,6 +71,13 @@
       "when": 1793732045824,
       "tag": "0009_book_builder",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793750570688,
+      "tag": "0010_writing_assistant",
+      "breakpoints": true
     }
   ]
 }
