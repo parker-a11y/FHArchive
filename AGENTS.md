@@ -60,3 +60,5 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 - PDFs are written incrementally in stored parts (structure/fonts, image batches, xref) by a leased background runner driven by an every-minute schedule, then streamed as one file through a signed download route; this keeps memory per request bounded for large books.
 - Full-resolution print copies are new `file_derivatives` rows of kind `print`, made in the browser from the untouched TIFF masters and oriented to match the viewing copy; the server cannot decode large TIFFs.
 - Each book item stores the source fingerprint it was added or refreshed at; exports are blocked while any record changed, and each export keeps a manifest of fingerprints, image derivatives and transcription hashes for auditing.
+
+- The Writing Assistant (`/writer`) saves its conversations and standing instructions in the database, reads FH records without changing them, and hands drafts to the existing email/blog composer. This keeps history in the archive and avoids a second send path.
