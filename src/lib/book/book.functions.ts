@@ -87,7 +87,7 @@ export const duplicateBook = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (cErr) throw new Error(cErr.message);
-    const { data: items } = await db.from("book_items").select("position, item_type, letter_id, options, source_fingerprint").eq("book_id", data.id);
+    const { data: items } = await db.from("book_items").select("position, item_type, letter_id, page_doc, options, source_fingerprint").eq("book_id", data.id);
     if (items?.length) {
       const { error: iErr } = await db.from("book_items").insert(items.map((i: any) => ({ ...i, book_id: copy.id, source_checked_at: new Date().toISOString() })));
       if (iErr) throw new Error(iErr.message);
@@ -190,12 +190,18 @@ export const sortBookItems = createServerFn({ method: "POST" })
     await assertEditor(context);
     const db = context.supabase;
     const { data: items } = await db.from("book_items").select("id, letter_id, position").eq("book_id", data.bookId).order("position");
-    const list = (items ?? []) as Array<{ id: string; letter_id: string }>;
+    const all = (items ?? []) as Array<{ id: string; letter_id: string | null }>;
+    // Custom pages keep their exact slots; only letters are re-sorted around them.
+    const list = all.filter((i) => i.letter_id) as Array<{ id: string; letter_id: string }>;
+    const placeInto = (sortedRecords: string[]) => {
+      let k = 0;
+      return all.map((i) => (i.letter_id ? sortedRecords[k++] : i.id));
+    };
     const { data: book } = await db.from("book_projects").select("saved_custom_order").eq("id", data.bookId).single();
     if (data.mode === "restore") {
       const saved = (book?.saved_custom_order ?? []) as string[];
-      const known = saved.filter((s) => list.some((l) => l.id === s));
-      const rest = list.map((l) => l.id).filter((x) => !known.includes(x));
+      const known = saved.filter((s) => all.some((l) => l.id === s));
+      const rest = all.map((l) => l.id).filter((x) => !known.includes(x));
       await writeOrder(db, [...known, ...rest]);
       return { ok: true };
     }
@@ -210,8 +216,8 @@ export const sortBookItems = createServerFn({ method: "POST" })
       return data.mode === "oldest" ? c : -c;
     });
     // Keep the custom order so it can be restored later.
-    await db.from("book_projects").update({ saved_custom_order: list.map((l) => l.id), updated_at: new Date().toISOString() }).eq("id", data.bookId);
-    await writeOrder(db, sorted.map((s) => s.id));
+    await db.from("book_projects").update({ saved_custom_order: all.map((l) => l.id), updated_at: new Date().toISOString() }).eq("id", data.bookId);
+    await writeOrder(db, placeInto(sorted.map((s) => s.id)));
     return { ok: true };
   });
 
@@ -237,6 +243,12 @@ export const refreshBookSources = createServerFn({ method: "POST" })
       if (data.itemIds && !data.itemIds.includes(r.itemId)) continue;
       if (r.storedFingerprint === r.fingerprint) continue;
       await context.supabase.from("book_items").update({ source_fingerprint: r.fingerprint, source_checked_at: new Date().toISOString() }).eq("id", r.itemId);
+      n++;
+    }
+    for (const p of loaded.pages) {
+      if (data.itemIds && !data.itemIds.includes(p.itemId)) continue;
+      if (p.storedFingerprint === p.fingerprint) continue;
+      await context.supabase.from("book_items").update({ source_fingerprint: p.fingerprint, source_checked_at: new Date().toISOString() }).eq("id", p.itemId);
       n++;
     }
     return { refreshed: n };
@@ -302,7 +314,7 @@ export const startBookExport = createServerFn({ method: "POST" })
     const loaded = await loadBook(context.supabase, data.bookId);
     const blocking = loaded.warnings.filter((w) => w.level === "error");
     if (blocking.length) throw new Error("Some records changed in the archive or are missing. Review and refresh them before exporting.");
-    if (!loaded.records.length) throw new Error("Add at least one record before exporting.");
+    if (!loaded.entries.length) throw new Error("Add at least one record or page before exporting.");
     const { data: row, error } = await context.supabase.from("book_exports").insert({ book_id: data.bookId, profile: "standard", status: "queued", step: "Waiting to start" }).select("id").single();
     if (error) throw new Error(error.message);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -360,4 +372,125 @@ export const getExportManifest = createServerFn({ method: "GET" })
     await assertEditor(context);
     const { data: row } = await context.supabase.from("book_exports").select("manifest").eq("id", data.exportId).maybeSingle();
     return row?.manifest ?? null;
+  });
+
+// ---- Phase 2: custom pages --------------------------------------------------
+
+const num = z.number().finite().min(-2000).max(4000);
+const imageRef = z.union([
+  z.object({ source: z.literal("archive"), fileId: id, archiveId: z.string().max(40).optional(), label: z.string().max(300).optional(), w: z.number().optional(), h: z.number().optional() }),
+  z.object({ source: z.literal("gallery"), photoId: id, side: z.enum(["front", "back"]), label: z.string().max(300).optional(), w: z.number().optional(), h: z.number().optional() }),
+  z.object({ source: z.literal("upload"), path: z.string().max(500).regex(/^pages\//), viewPath: z.string().max(500).regex(/^pages\//), name: z.string().max(300).optional(), w: z.number(), h: z.number() }),
+]);
+const pageBox = z.union([
+  z.object({ id: z.string().max(60), kind: z.literal("text"), x: num, y: num, w: num, h: num, z: z.number().optional(), text: z.string().max(60000), style: z.enum(["heading", "body", "caption", "quote", "note"]), align: z.enum(["left", "center", "right"]), bold: z.boolean().optional(), italic: z.boolean().optional() }),
+  z.object({ id: z.string().max(60), kind: z.literal("image"), x: num, y: num, w: num, h: num, z: z.number().optional(), ref: imageRef.nullable(), mode: z.enum(["fit", "fill", "bleed"]), caption: z.string().max(1000).optional() }),
+]);
+const pageDoc = z.object({
+  template: z.string().max(40),
+  name: z.string().max(120).optional(),
+  folio: z.boolean(),
+  boxes: z.array(pageBox).max(60),
+  flow: z.object({ heading: z.string().max(300).optional(), text: z.string().max(400000) }).nullable().optional(),
+});
+
+async function stampPage(db: any, itemId: string) {
+  const { resolvePageEntries } = await import("./sources.server");
+  const { data: row } = await db.from("book_items").select("id, page_doc, source_fingerprint").eq("id", itemId).single();
+  const [p] = await resolvePageEntries(db, [row]);
+  if (p) await db.from("book_items").update({ source_fingerprint: p.fingerprint, source_checked_at: new Date().toISOString() }).eq("id", itemId);
+}
+
+export const addCustomPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ bookId: id, template: z.string().max(40), atPosition: z.number().int().min(0).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const db = context.supabase;
+    const { makeTemplate } = await import("./templates");
+    const doc = makeTemplate(data.template);
+    const { data: row, error } = await db.from("book_items").insert({ book_id: data.bookId, item_type: "page", letter_id: null, page_doc: doc, position: 0 }).select("id").single();
+    if (error) throw new Error(error.message);
+    const { data: existing } = await db.from("book_items").select("id").eq("book_id", data.bookId).neq("id", row.id).order("position");
+    const ids = (existing ?? []).map((e: any) => e.id as string);
+    const at = data.atPosition === undefined ? ids.length : Math.min(data.atPosition, ids.length);
+    ids.splice(at, 0, row.id);
+    await writeOrder(db, ids);
+    await stampPage(db, row.id);
+    await db.from("book_projects").update({ updated_at: new Date().toISOString() }).eq("id", data.bookId);
+    return { id: row.id as string };
+  });
+
+export const saveCustomPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ itemId: id, doc: pageDoc }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const db = context.supabase;
+    const { data: row, error } = await db.from("book_items").update({ page_doc: data.doc }).eq("id", data.itemId).eq("item_type", "page").select("book_id").single();
+    if (error) throw new Error(error.message);
+    await stampPage(db, data.itemId);
+    await db.from("book_projects").update({ updated_at: new Date().toISOString() }).eq("id", row.book_id);
+    return { ok: true };
+  });
+
+/** Scans and envelopes of one FH record, for the custom-page image picker (read-only). */
+export const listArchiveImages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ archiveId: z.string().trim().min(1).max(40) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const db = context.supabase;
+    const { parseArchiveIds } = await import("./ids");
+    const aid = parseArchiveIds(data.archiveId)[0] ?? data.archiveId.toUpperCase();
+    const { data: l } = await db.from("letters").select("id, archive_id, title").eq("archive_id", aid).maybeSingle();
+    if (!l) return { archiveId: aid, found: false, images: [] as Array<{ fileId: string; label: string; url: string | null; w: number; h: number }> };
+    const { data: files } = await db.from("digital_files").select("id, label, original_filename, sort_order").eq("letter_id", l.id).order("sort_order");
+    const { data: ds } = await db.from("file_derivatives").select("file_id, kind, status, storage_path, width, height").eq("letter_id", l.id).eq("status", "complete");
+    const rows = (files ?? []).map((f: any) => {
+      const mine = (ds ?? []).filter((d: any) => d.file_id === f.id);
+      const view = mine.find((d: any) => d.kind === "jpeg");
+      const thumb = mine.find((d: any) => d.kind === "thumbnail") ?? view;
+      const print = mine.find((d: any) => d.kind === "print");
+      return { fileId: f.id as string, label: ((f.label ?? "").trim() || f.original_filename || "Scan") as string, thumb: thumb?.storage_path as string | undefined, w: (print?.width ?? view?.width ?? 0) as number, h: (print?.height ?? view?.height ?? 0) as number };
+    });
+    const paths = rows.map((r) => r.thumb).filter(Boolean) as string[];
+    const signed = new Map<string, string>();
+    if (paths.length) {
+      const { data: s } = await db.storage.from("scans").createSignedUrls(paths, 3600);
+      for (const x of s ?? []) if (x.path && x.signedUrl) signed.set(x.path, x.signedUrl);
+    }
+    return { archiveId: l.archive_id as string, found: true, images: rows.map((r) => ({ fileId: r.fileId, label: r.label, url: r.thumb ? signed.get(r.thumb) ?? null : null, w: r.w, h: r.h })) };
+  });
+
+/** Photo Gallery items for the image picker (read-only). */
+export const listGalleryImages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertEditor(context);
+    const db = context.supabase;
+    const { data } = await db.from("photos").select("id, caption, front_thumb_path, front_view_path, back_thumb_path, back_view_path, sort_order").order("sort_order", { ascending: true, nullsFirst: true }).limit(1000);
+    const rows = (data ?? []) as any[];
+    const paths = rows.flatMap((r) => [r.front_thumb_path ?? r.front_view_path, r.back_thumb_path ?? r.back_view_path]).filter(Boolean) as string[];
+    const signed = new Map<string, string>();
+    for (let i = 0; i < paths.length; i += 100) {
+      const { data: s } = await db.storage.from("scans").createSignedUrls(paths.slice(i, i + 100), 3600);
+      for (const x of s ?? []) if (x.path && x.signedUrl) signed.set(x.path, x.signedUrl);
+    }
+    return rows.flatMap((r) => {
+      const out: Array<{ photoId: string; side: "front" | "back"; label: string; url: string | null }> = [];
+      if (r.front_view_path) out.push({ photoId: r.id, side: "front", label: r.caption || "Photograph", url: signed.get(r.front_thumb_path ?? r.front_view_path) ?? null });
+      if (r.back_view_path) out.push({ photoId: r.id, side: "back", label: `${r.caption || "Photograph"} (back)`, url: signed.get(r.back_thumb_path ?? r.back_view_path) ?? null });
+      return out;
+    });
+  });
+
+/** Signs a freshly uploaded book image so the editor can show it straight away. */
+export const signBookImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ path: z.string().max(500).regex(/^pages\//) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertEditor(context);
+    const { data: s } = await context.supabase.storage.from("book-images").createSignedUrl(data.path, 3600);
+    return { url: s?.signedUrl ?? null };
   });
