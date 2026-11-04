@@ -9,7 +9,7 @@ export const Route = createFileRoute("/e/$token")({
       retryUntilFound(() => getSharedEmail({ data: { token: params.token } })),
       retryUntilFound(() => getSharedEmailHtml({ data: { token: params.token } })),
     ]);
-    return { email, html };
+    return { email, html, text: html ? htmlToReadableText(html) : "" };
   },
   headers: () => NO_STORE_HEADERS,
   head: ({ loaderData }) => ({
@@ -35,14 +35,14 @@ export const Route = createFileRoute("/e/$token")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "robots", content: "noindex, nofollow, noarchive" },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: SharedEmailPage,
 });
 
 function SharedEmailPage() {
-  const { email, html } = Route.useLoaderData();
+  const { email, html, text } = Route.useLoaderData();
   const frameRef = useRef<HTMLIFrameElement>(null);
   const printedRef = useRef(false);
   const { token } = Route.useParams();
@@ -93,10 +93,27 @@ function SharedEmailPage() {
             if (doc) frame.style.height = `${doc.documentElement.scrollHeight + 32}px`;
           }}
         />
+        {/* Plain-text copy in the page itself so AI tools and readers that can't open embedded frames can still read it. */}
+        <article className="sr-only" aria-label="Email text">
+          <h1>{email.subject}</h1>
+          {text.split(/\n{2,}/).map((para, i) => <p key={i}>{para}</p>)}
+        </article>
       </div>
       <footer className="px-4 py-6 text-center text-xs text-muted-foreground">
         The Francis Files · shared privately by link
       </footer>
     </main>
   );
+}
+
+function htmlToReadableText(html: string): string {
+  return html
+    .replace(/<(script|style|head)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, href, inner) => `${inner} (${href})`)
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li|tr|blockquote|table|section)>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;|&rsquo;|&lsquo;/g, "'").replace(/&ldquo;|&rdquo;/g, '"')
+    .replace(/[ \t]+/g, " ").replace(/\n[ \t]+/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
