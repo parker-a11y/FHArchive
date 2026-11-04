@@ -97,3 +97,51 @@ test("Envelope First: each scan gets its own page, every scan appears once", () 
   assert.equal(scanPages.length, 2);
   assert.ok(scanPages.every((p) => p.elements.filter((e) => e.t === "image").length === 1));
 });
+
+// ---- Phase 2: custom pages ----
+import { makeTemplate, TEMPLATES, coverRect, containRect, snapBox, SAFE } from "./templates";
+import type { BookPageSource } from "./types";
+
+const page = (doc = makeTemplate("photo-fit"), images: BookPageSource["images"] = {}): BookPageSource => ({ type: "page", itemId: "p1", doc, images, fingerprint: "f", storedFingerprint: "f" });
+
+test("offers 17 templates, each producing a valid page", () => {
+  assert.equal(TEMPLATES.length, 17);
+  for (const t of TEMPLATES) {
+    const plan = buildPlan(meta, [page(makeTemplate(t.id))], fonts());
+    assert.ok(plan.pages.length >= 1, t.id);
+    assert.ok(plan.pages.every((p) => p.kind === "custom"), t.id);
+  }
+});
+
+test("custom pages share one sequence with letters", () => {
+  const plan = buildPlan(meta, [page(makeTemplate("divider")), record(), page(makeTemplate("text"))], fonts());
+  assert.equal(plan.pages[0].kind, "custom");
+  assert.equal(plan.pages[plan.pages.length - 1].kind, "custom");
+  assert.equal(plan.pages[0].folio, null); // dividers print no page number
+});
+
+test("fit never crops; fill covers the box and is clipped to it", () => {
+  const box = { x: 0, y: 0, w: 400, h: 400 };
+  const fit = containRect(2000, 1000, box);
+  assert.deepEqual([fit.w, fit.h], [400, 200]);
+  const fill = coverRect(2000, 1000, box);
+  assert.deepEqual([fill.w, fill.h], [800, 400]);
+  const doc = makeTemplate("photo-bleed");
+  const im = { fileId: "u", label: "u", path: "pages/x.jpg", source: "print" as const, derivativeId: null, width: 6000, height: 4000, bucket: "book-images" as const };
+  const plan = buildPlan(meta, [page(doc, { [doc.boxes[0].id]: im })], fonts());
+  const el = plan.pages[0].elements.find((e) => e.t === "image")!;
+  assert.ok(el.t === "image" && el.clip && el.clip.w === 612 && el.clip.h === 792 && el.h === 792 && el.w > 612);
+});
+
+test("snaps a moved box to the margin", () => {
+  const { box } = snapBox({ x: SAFE.x + 4, y: 200, w: 100, h: 100 }, [], "move");
+  assert.equal(box.x, SAFE.x);
+});
+
+test("a long research essay flows across several numbered pages", () => {
+  const doc = makeTemplate("essay");
+  doc.flow = { heading: "The Navy Years", text: Array.from({ length: 40 }, (_, i) => `Paragraph ${i}. ` + "Research text about the war years. ".repeat(20)).join("\n\n") };
+  const plan = buildPlan(meta, [page(doc)], fonts());
+  assert.ok(plan.pages.length >= 6);
+  assert.ok(plan.pages.every((p) => p.folio !== null));
+});
