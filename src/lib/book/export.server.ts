@@ -5,9 +5,12 @@
  * from the page itself — the export never depends on a browser staying open.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { buildPlan } from "./layout";
+import { buildCoverPlan, buildPlan } from "./layout";
+import { runPreflight } from "./preflight";
+import { printerFor } from "./printers";
+import { themeFor } from "./themes";
 import { BOOK_FONT_FILES, createBookFonts } from "./fonts";
-import { loadBook, sha256 } from "./sources.server";
+import { loadBook, loadCover, sha256 } from "./sources.server";
 import { PartBuilder, imageObjectDict, readJpegInfo, writeHead, writeXref, type ImageSlot } from "./pdf-writer";
 import type { FontKey } from "./types";
 
@@ -115,15 +118,31 @@ async function step(db: Db, job: any, deadline: number) {
       return;
     }
     const fonts = createBookFonts(await loadFontBytes(db));
-    const plan = buildPlan(book.meta, book.entries, fonts);
-    const head = await writeHead(plan, fonts, { title: book.meta.title, subtitle: book.meta.subtitle });
+    const interior = buildPlan(book.meta, book.entries, fonts);
+    const isCover = job.kind === "cover";
+    const preflight = runPreflight(interior, book.warnings, book.meta.settings.printer, fonts);
+    let plan = interior;
+    let coverInfo: Record<string, unknown> | null = null;
+    if (isCover) {
+      const cover = await loadCover(db, job.book_id, book.meta);
+      const cp = buildCoverPlan(book.meta, cover.doc, cover.image, interior.pages.length, fonts);
+      plan = cp;
+      coverInfo = { template: cover.doc.template, spine_in: Number(cp.spineIn.toFixed(4)), interior_pages: interior.pages.length, size_in: [cp.widthPt / 72, cp.heightPt / 72], image: cover.image ? { bucket: cover.image.bucket ?? "scans", path: cover.image.path, px: [cover.image.width, cover.image.height] } : null };
+      for (const w of cp.warnings) if (w.level === "warning" && /DPI/.test(w.message) && preflight.printReady) preflight.printReady = false;
+    }
+    const head = await writeHead(plan, fonts, { title: isCover ? `${book.meta.title} — cover` : book.meta.title, subtitle: book.meta.subtitle });
     const path = `exports/${job.id}/part-000.bin`;
     await upload(db, path, head.bytes);
 
     const manifest = {
       generated_at: new Date().toISOString(),
-      profile: "standard-8.5x11",
+      kind: isCover ? "cover" : "interior",
+      profile: printerFor(book.meta.settings.printer).id,
+      theme: themeFor(book.meta.settings.theme).id,
       trim_in: [book.meta.trimWidthIn, book.meta.trimHeightIn],
+      bleed_in: printerFor(book.meta.settings.printer).bleedIn,
+      cover: coverInfo,
+      preflight,
       settings: book.meta.settings,
       page_count: plan.pages.length,
       custom_pages: book.pages.map((p) => ({
@@ -154,6 +173,7 @@ async function step(db: Db, job: any, deadline: number) {
       total: images.length + 2,
       page_count: plan.pages.length,
       manifest,
+      print_ready: preflight.printReady,
       warnings: [...book.warnings, ...plan.warnings],
       state: {
         phase: images.length ? "images" : "finish",
