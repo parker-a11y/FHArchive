@@ -487,6 +487,32 @@ export type Database = {
         }
         Relationships: []
       }
+      book_covers: {
+        Row: {
+          book_id: string
+          doc: Json
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          doc?: Json
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          doc?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_covers_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: true
+            referencedRelation: "book_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       book_exports: {
         Row: {
           attempts: number
@@ -496,10 +522,12 @@ export type Database = {
           file_size: number | null
           finished_at: string | null
           id: string
+          kind: string
           lease_until: string | null
           manifest: Json | null
           owner_id: string
           page_count: number | null
+          print_ready: boolean
           profile: string
           progress: number
           state: Json
@@ -517,10 +545,12 @@ export type Database = {
           file_size?: number | null
           finished_at?: string | null
           id?: string
+          kind?: string
           lease_until?: string | null
           manifest?: Json | null
           owner_id?: string
           page_count?: number | null
+          print_ready?: boolean
           profile?: string
           progress?: number
           state?: Json
@@ -538,10 +568,12 @@ export type Database = {
           file_size?: number | null
           finished_at?: string | null
           id?: string
+          kind?: string
           lease_until?: string | null
           manifest?: Json | null
           owner_id?: string
           page_count?: number | null
+          print_ready?: boolean
           profile?: string
           progress?: number
           state?: Json
