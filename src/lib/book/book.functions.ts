@@ -110,8 +110,9 @@ export const getBookEditor = createServerFn({ method: "GET" })
       .eq("book_id", data.id)
       .order("created_at", { ascending: false })
       .limit(20);
+    const { items: _items, ...rest } = loaded;
     return {
-      ...loaded,
+      ...rest,
       description: (book?.description as string | null) ?? null,
       hasSavedOrder: Array.isArray(book?.saved_custom_order) && (book!.saved_custom_order as unknown[]).length > 0,
       exports: exports ?? [],
