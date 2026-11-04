@@ -124,9 +124,9 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
   const pageNums = plan.pages.map(() => ({ page: next++, content: next++ }));
   for (const p of plan.pages)
     for (const el of p.elements)
-      if (el.t === "image" && !imageByPath.has(el.image.path)) {
+      if (el.t === "image" && !imageByPath.has(`${el.image.bucket ?? "scans"}:${el.image.path}`)) {
         const slot: ImageSlot = { num: next++, path: el.image.path, bucket: el.image.bucket ?? "scans" };
-        imageByPath.set(el.image.path, slot);
+        imageByPath.set(`${slot.bucket}:${el.image.path}`, slot);
         images.push(slot);
       }
 
@@ -153,7 +153,7 @@ export async function writeHead(plan: BookPlan, fonts: BookFonts, info: { title:
     const fontsUsed = new Set<FontKey>();
     for (const el of p.elements) {
       if (el.t === "image") {
-        const slot = imageByPath.get(el.image.path)!;
+        const slot = imageByPath.get(`${el.image.bucket ?? "scans"}:${el.image.path}`)!;
         xobjects.add(slot);
         const clip = el.clip ? `${n(el.clip.x)} ${n(H - el.clip.y - el.clip.h)} ${n(el.clip.w)} ${n(el.clip.h)} re W n ` : "";
         ops.push(`q ${clip}${n(el.w)} 0 0 ${n(el.h)} ${n(el.x)} ${n(H - el.y - el.h)} cm /Im${slot.num} Do Q`);
