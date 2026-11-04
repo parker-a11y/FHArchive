@@ -17,6 +17,7 @@ import {
   saveWriterSettings,
   sendWriterMessage,
 } from "@/lib/writer.functions";
+import { WRITER_MAX_RECORDS, fitWriterIds } from "@/lib/writer-limits";
 
 type Search = { ids?: string; session?: string };
 
@@ -46,7 +47,8 @@ function WriterPage() {
   const navigate = Route.useNavigate();
   const qc = useQueryClient();
   const [sessionId, setSessionId] = useState<string | null>(search.session ?? null);
-  const [ids, setIds] = useState<string[]>(() => parse(search.ids ?? ""));
+  const [ids, setIds] = useState<string[]>(() => fitWriterIds(parse(search.ids ?? "")).ids);
+  const [excess, setExcess] = useState<string[]>(() => fitWriterIds(parse(search.ids ?? "")).dropped);
   const [records, setRecords] = useState<Rec[]>([]);
   const [idInput, setIdInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -57,12 +59,22 @@ function WriterPage() {
 
   const sessions = useQuery({ queryKey: ["writer-sessions"], queryFn: () => listWriterSessions() });
 
+  function applyIds(next: string[]) {
+    const fitted = fitWriterIds(next);
+    setIds(fitted.ids);
+    setExcess(fitted.dropped);
+  }
+
+  function attachNextBatch() {
+    applyIds(excess);
+  }
+
   useEffect(() => {
     if (!sessionId) return;
     getWriterSession({ data: { id: sessionId } })
       .then(({ session, records }) => {
         setMessages(session.messages ?? []);
-        setIds(session.record_ids ?? []);
+        applyIds(session.record_ids ?? []);
         setRecords(records as Rec[]);
       })
       .catch((e) => toast.error(e.message));
@@ -73,7 +85,7 @@ function WriterPage() {
   function startNew() {
     setSessionId(null);
     setMessages([]);
-    setIds([]);
+    applyIds([]);
     setRecords([]);
     navigate({ search: {} });
   }
@@ -146,12 +158,24 @@ function WriterPage() {
             <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)}>Instructions</Button>
           </div>
         </div>
+        {excess.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+            <span>
+              The assistant reads up to {WRITER_MAX_RECORDS} letters at a time. You sent {ids.length + excess.length} — the first{" "}
+              {ids.length} are attached, and {excess.length} are not ({excess.slice(0, 4).join(", ")}
+              {excess.length > 4 ? `, +${excess.length - 4} more` : ""}).
+            </span>
+            <Button size="sm" variant="outline" onClick={attachNextBatch}>
+              Attach the next {Math.min(WRITER_MAX_RECORDS, excess.length)} instead
+            </Button>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2 py-3">
-          <span className="text-sm text-muted-foreground">Records:</span>
+          <span className="text-sm text-muted-foreground">Records ({ids.length}):</span>
           {ids.map((id) => (
             <span key={id} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-sm">
               <Link to="/letters/$archiveId" params={{ archiveId: id }} className="hover:underline">{id}</Link>
-              <button aria-label={`Remove ${id}`} onClick={() => setIds((x) => x.filter((y) => y !== id))}><X className="size-3" /></button>
+              <button aria-label={`Remove ${id}`} onClick={() => applyIds(ids.filter((y) => y !== id))}><X className="size-3" /></button>
             </span>
           ))}
           <Input
@@ -160,7 +184,7 @@ function WriterPage() {
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                setIds((x) => Array.from(new Set([...x, ...parse(idInput)])));
+                applyIds([...ids, ...parse(idInput)]);
                 setIdInput("");
               }
             }}

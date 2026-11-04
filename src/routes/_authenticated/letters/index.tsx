@@ -10,6 +10,7 @@ import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
 import { parseRecordNumber } from "@/lib/box-ranges";
+import { WRITER_MAX_RECORDS } from "@/lib/writer-limits";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import {
   EmailScratchpadButton,
@@ -259,7 +260,7 @@ function loadViewState(): SavedViewState | null {
 
 
 function LettersTable() {
-  const { isGuestViewer, isAdmin } = useAuth();
+  const { isGuestViewer, isAdmin, canEdit } = useAuth();
   const navigate = useNavigate({ from: "/letters/" });
   const qc = useQueryClient();
   const search = Route.useSearch();
@@ -976,10 +977,13 @@ function LettersTable() {
                 }
               />
             )}
-            {!isGuestViewer && selectedRecords.length > 0 && (
+            {canEdit && selectedRecords.length > 0 && (
               <Button asChild variant="outline" size="sm" className="gap-2">
                 <Link to="/writer" search={{ ids: selectedRecords.map((r) => r.identifier).join(",") }}>
-                  <Feather className="size-4" /> Write with AI ({selectedRecords.length})
+                  <Feather className="size-4" />
+                  {selectedRecords.length > WRITER_MAX_RECORDS
+                    ? `Send to Writing Assistant (first ${WRITER_MAX_RECORDS} of ${selectedRecords.length})`
+                    : `Send to Writing Assistant (${selectedRecords.length})`}
                 </Link>
               </Button>
             )}

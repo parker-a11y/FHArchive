@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { DEFAULT_WRITER_INSTRUCTIONS } from "./writer-default-instructions";
+import { WRITER_MAX_RECORDS } from "./writer-limits";
 
 async function assertEditor(context: any) {
   const { data } = await context.supabase.rpc("can_edit_archive", { _user_id: context.userId });
@@ -17,7 +18,7 @@ function cleanIds(v: unknown): string[] {
         .map((x) => (/^FH-?\d{1,4}$/.test(x) ? `FH${x.replace(/\D/g, "").padStart(4, "0")}` : ""))
         .filter(Boolean),
     ),
-  ).slice(0, 25);
+  ).slice(0, WRITER_MAX_RECORDS);
 }
 
 export const getWriterSettings = createServerFn({ method: "GET" })
