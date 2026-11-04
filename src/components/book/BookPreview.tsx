@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -161,8 +161,8 @@ export function PageView({ page, plan, scale, asc, lineH, guides }: { page: Plan
   const right = recto ? m.outside : m.inside;
   const t = plan.tones;
   const vars = t
-    ? ({ "--book-paper": rgbCss(t.paper), "--book-ink": rgbCss(t.ink), "--book-muted": rgbCss(t.muted), "--book-note": rgbCss(t.note), "--book-on-dark": rgbCss(t.paper) } as React.CSSProperties)
-    : { "--book-on-dark": "var(--book-paper)" } as React.CSSProperties;
+    ? ({ "--book-paper": rgbCss(t.paper), "--book-ink": rgbCss(t.ink), "--book-muted": rgbCss(t.muted), "--book-note": rgbCss(t.note), "--book-on-dark": rgbCss(t.paper) } as CSSProperties)
+    : { "--book-on-dark": "var(--book-paper)" } as CSSProperties;
   return (
     <div
       className="relative overflow-hidden shadow-md"
