@@ -80,7 +80,10 @@ function WriterPage() {
       .catch((e) => toast.error(e.message));
   }, [sessionId]);
 
-  useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth" }), [messages.length, busy]);
+  useEffect(() => {
+    // Newer browsers return a Promise here; never return it as React's cleanup.
+    bottom.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, busy]);
 
   function startNew() {
     setSessionId(null);
