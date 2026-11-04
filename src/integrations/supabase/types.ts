@@ -569,6 +569,7 @@ export type Database = {
           item_type: string
           letter_id: string | null
           options: Json
+          page_doc: Json | null
           position: number
           source_checked_at: string | null
           source_fingerprint: string | null
@@ -580,6 +581,7 @@ export type Database = {
           item_type?: string
           letter_id?: string | null
           options?: Json
+          page_doc?: Json | null
           position?: number
           source_checked_at?: string | null
           source_fingerprint?: string | null
@@ -591,6 +593,7 @@ export type Database = {
           item_type?: string
           letter_id?: string | null
           options?: Json
+          page_doc?: Json | null
           position?: number
           source_checked_at?: string | null
           source_fingerprint?: string | null
