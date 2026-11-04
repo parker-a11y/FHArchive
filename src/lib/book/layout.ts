@@ -222,6 +222,7 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
 
   // ---- pages ----------------------------------------------------------------
   let currentRecordLabel: string | null = null;
+  let currentChapter: string | null = null;
   function newPage(kind: PlannedPage["kind"], rec: { itemId: string; archiveId: string | null } | null, opts: { head?: boolean; folio?: boolean } = {}) {
     const index = pages.length + 1;
     const page: PlannedPage = {
@@ -238,9 +239,11 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
       const fw = fonts.width("regular", folio, 9);
       page.elements.push({ t: "text", x: (W - fw) / 2, y: H - L.folioFromBottom, size: 9, font: "regular", text: folio, tone: "muted" });
       if (opts.head !== false) {
-        const label = printableText(index % 2 === 0 ? meta.title : currentRecordLabel ?? meta.title);
-        const lines = breakLines([{ text: label, italic: true, bold: false }], 9, contentW);
-        drawLine(page.elements, lines[0], leftOf(index), L.headBaseline, contentW, 9, { justify: false, align: "center", tone: "muted" });
+        let label = printableText(index % 2 === 0 ? currentChapter ?? meta.title : currentRecordLabel ?? meta.title);
+        if (theme.headCaps) label = label.toUpperCase();
+        const hs = theme.headCaps ? 8 : 9;
+        const lines = breakLines([{ text: label, italic: !theme.headCaps, bold: false }], hs, contentW);
+        drawLine(page.elements, lines[0], leftOf(index), L.headBaseline, contentW, hs, { justify: false, align: "center", tone: "muted" });
       }
     }
     return page;
@@ -316,13 +319,76 @@ function planOnce(meta: BookMeta, entries: BookEntry[], fonts: BookFonts, gutter
     let y = H * 0.34;
     y = writeBlock(p, [{ text: meta.title, italic: false, bold: true }], y, 26, 34, { align: "center" });
     if (meta.subtitle) y = writeBlock(p, [{ text: meta.subtitle, italic: true, bold: false }], y + 6, 15, 21, { align: "center", tone: "muted" });
-    newPage("blank", null);
-  }
+    if (settings.front?.colophon) colophon();
+    else newPage("blank", null);
+  } else if (settings.front?.colophon) colophon();
 
   /** Pads with an intentionally blank page so the next page is right-hand (odd). */
-  const toRightHand = () => {
+  function toRightHand() {
     if (pages.length % 2 === 1) newPage("blank", null);
-  };
+  }
+  /** Pads so the next page is left-hand (even). */
+  function toLeftHand() {
+    if (pages.length % 2 === 0) newPage("blank", null);
+  }
+
+  /** Copyright / colophon page: only the text the editor wrote, set small near the foot. */
+  function colophon() {
+    const p = newPage("front", null, { folio: false });
+    const lines = (settings.front?.colophonText ?? "").replace(/\r\n?/g, "\n").split("\n");
+    const h = lines.length * 13;
+    let y = Math.max(L.marginTop, H * 0.62 - h / 2);
+    for (const line of lines) {
+      if (!line.trim()) {
+        y += 8;
+        continue;
+      }
+      y = writeBlock(p, [{ text: line.trim(), italic: false, bold: false }], y, 9, 13, { align: "center", tone: "muted" });
+    }
+  }
+
+  const dedication = settings.front?.dedication?.trim();
+  if (dedication) {
+    toRightHand();
+    const p = newPage("front", null, { folio: false });
+    const paras = dedication.replace(/\r\n?/g, "\n").split("\n");
+    let y = H * 0.32;
+    for (const para of paras) y = para.trim() ? writeBlock(p, [{ text: para.trim(), italic: true, bold: false }], y, 13, 20, { align: "center", indent: 50 }) : y + 10;
+  }
+
+  // ---- table of contents: reserved now (its length depends only on the entry list), filled at the end
+  type TocLine = { level: 0 | 1; text: string; itemId: string };
+  const tocLines: TocLine[] = [];
+  if (settings.toc?.enabled) {
+    for (const e of entries) {
+      if (e.type === "chapter") tocLines.push({ level: 0, text: e.doc.title || "Untitled chapter", itemId: e.itemId });
+      else if (e.type === "page") {
+        if (e.doc.flow?.heading?.trim()) tocLines.push({ level: 0, text: e.doc.flow.heading.trim(), itemId: e.itemId });
+      } else if (settings.toc.records) {
+        tocLines.push({ level: 1, text: [e.archiveId, e.dateLabel ?? "Undated", e.author ? `from ${e.author}` : null].filter(Boolean).join(" · "), itemId: e.itemId });
+      }
+    }
+  }
+  const tocPages: Array<{ page: PlannedPage; lines: Array<TocLine & { y: number }> }> = [];
+  if (tocLines.length) {
+    toRightHand();
+    let page = newPage("toc", null, { folio: false });
+    let y = writeBlock(page, [{ text: "Contents", italic: false, bold: false }], L.marginTop, 20, 26, { align: "center" }) + 22;
+    let cur: (typeof tocPages)[number] = { page, lines: [] };
+    tocPages.push(cur);
+    for (const line of tocLines) {
+      const lh = line.level === 0 ? 22 : 16;
+      if (y + lh > bottom) {
+        page = newPage("toc", null, { folio: false });
+        cur = { page, lines: [] };
+        tocPages.push(cur);
+        y = L.marginTop;
+      }
+      y += lh;
+      cur.lines.push({ ...line, y });
+    }
+  }
+  if (pages.length) toRightHand();
 
   /** Identifying lines under the envelope; only catalogued facts, nothing invented. */
   function introLines(rec: BookRecordSource) {
