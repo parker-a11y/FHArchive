@@ -89,7 +89,7 @@ export const sendWriterMessage = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     await assertEditor(context);
-    const { gatherRecordMaterial, runWriterTurn } = await import("./writer.server");
+    const { gatherRecordMaterial, gatherPriorWriting, runWriterTurn } = await import("./writer.server");
     const db = context.supabase;
     let session: any = null;
     if (data.sessionId) {
@@ -109,7 +109,8 @@ export const sendWriterMessage = createServerFn({ method: "POST" })
     const missing = data.recordIds.filter((id) => !material.found.some((f: any) => f.archive_id === id));
     if (missing.length) throw new Error(`Not found in the archive: ${missing.join(", ")}`);
 
-    const reply = await runWriterTurn({ instructions, material: material.text, history: history.slice(-20) });
+    const prior = await gatherPriorWriting(db, data.recordIds).catch(() => "");
+    const reply = await runWriterTurn({ instructions, material: material.text, history: history.slice(-20), prior });
     history.push({ role: "assistant", content: reply, at: new Date().toISOString() });
     const titleMatch = reply.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
     const autoTitle = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").trim().slice(0, 140) : null;
