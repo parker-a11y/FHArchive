@@ -1,3 +1,4 @@
+import { SendToBookDialog } from "@/components/book/SendToBookDialog";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
@@ -986,6 +987,9 @@ function LettersTable() {
                     : `Send to Writing Assistant (${selectedRecords.length})`}
                 </Link>
               </Button>
+            )}
+            {canEdit && selectedRecords.length > 0 && (
+              <SendToBookDialog archiveIds={selectedRecords.map((r) => r.identifier)} />
             )}
             {!isGuestViewer && transcribableSelected.length > 0 && (
               <Button
