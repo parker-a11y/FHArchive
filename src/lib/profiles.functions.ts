@@ -1,3 +1,4 @@
+import { toLoginEmail, isUsernameEmail, displayLogin } from "@/lib/login-identifier";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -271,9 +272,11 @@ export const createAccount = createServerFn({ method: "POST" })
       role: "guest" | "archivist";
       password?: string;
     }) => {
-      const email = input.email?.trim().toLowerCase();
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        throw new Error("Enter a valid email address");
+      const email = toLoginEmail(input.email ?? "");
+      if (!email) {
+        throw new Error(
+          "Enter a valid email, or a username of 3–32 letters, numbers, dots, dashes or underscores",
+        );
       }
       if (input.password && input.password.length < 8) {
         throw new Error("Password must be at least 8 characters");
@@ -308,7 +311,7 @@ export const createAccount = createServerFn({ method: "POST" })
     if (createError || !created?.user) {
       const msg = createError?.message ?? "Could not create the account";
       throw new Error(
-        /already/i.test(msg) ? "An account with that email already exists" : msg,
+        /already/i.test(msg) ? "An account with that email or username already exists" : msg,
       );
     }
 
@@ -332,7 +335,7 @@ export const createAccount = createServerFn({ method: "POST" })
       .insert({ user_id: newUserId, role: data.role });
     if (roleError) throw roleError;
 
-    if (data.role === "archivist") {
+    if (data.role === "archivist" && !isUsernameEmail(data.email)) {
       try {
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
         await sendTemplateEmail("archivist-granted", data.email, {
@@ -347,5 +350,5 @@ export const createAccount = createServerFn({ method: "POST" })
       }
     }
 
-    return { ok: true, userId: newUserId, email: data.email, password: generated };
+    return { ok: true, userId: newUserId, email: displayLogin(data.email), password: generated };
   });

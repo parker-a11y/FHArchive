@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toLoginEmail } from "@/lib/login-identifier";
 
 /** Only same-origin relative paths may be used as a post-login redirect. */
 function safeNext(value: unknown): string | undefined {
@@ -62,7 +63,12 @@ function AuthPage() {
     setBusy(true);
     setSignUpMessage(null);
     if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const loginEmail = toLoginEmail(email);
+      if (!loginEmail) {
+        setBusy(false);
+        return toast.error("Enter your email address or username");
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
       setBusy(false);
       if (error) return toast.error(error.message);
       toast.success("Signed in");
@@ -118,11 +124,12 @@ function AuthPage() {
       <div className="w-full max-w-sm">
         <form onSubmit={submit} className="space-y-4 rounded border border-border bg-card p-5">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{mode === "in" ? "Email or username" : "Email"}</Label>
             <Input
               id="email"
-              type="email"
-              autoComplete="email"
+              type={mode === "in" ? "text" : "email"}
+              autoCapitalize="none"
+              autoComplete={mode === "in" ? "username" : "email"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
