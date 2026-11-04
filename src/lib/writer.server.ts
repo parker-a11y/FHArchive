@@ -154,7 +154,6 @@ export async function gatherPriorWriting(db: any, recordIds: string[]): Promise<
     items.push({ text: `[EMAIL ${e.status} ${when}] ${e.subject ?? ""}\n${body.slice(0, 1500)}`, related: recordIds.some((id) => body.includes(id)) });
   }
   for (const p of posts ?? []) {
-    if (p.status && !["published", "ready", "draft"].includes(p.status) && p.status !== "sent") { /* keep all statuses but failed */ }
     if (p.status === "failed") continue;
     const body = strip(`${p.lede ?? ""} ${p.body_md ?? ""}`);
     if (!body) continue;

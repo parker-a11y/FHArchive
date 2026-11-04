@@ -62,3 +62,4 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 - Each book item stores the source fingerprint it was added or refreshed at; exports are blocked while any record changed, and each export keeps a manifest of fingerprints, image derivatives and transcription hashes for auditing.
 
 - The Writing Assistant (`/writer`) saves its conversations and standing instructions in the database, reads FH records without changing them, and hands drafts to the existing email/blog composer. This keeps history in the archive and avoids a second send path.
+- Writing Assistant reads recent sent/scheduled emails and recap/blog posts (read-only) as continuity context, never as archival evidence; this keeps voice and threads consistent without new quote sources.
