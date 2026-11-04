@@ -12,12 +12,15 @@ import {
   type BookImage,
   type BookMeta,
   type BookPlan,
+  type BookEntry,
+  type BookPageSource,
   type BookRecordSource,
   type BookWarning,
   type FontKey,
   type PageElement,
   type PlannedPage,
 } from "./types";
+import { containRect, coverRect, sortedBoxes } from "./templates";
 
 export const LAYOUT = {
   marginTop: 66,
@@ -39,7 +42,7 @@ type Line = { words: Word[]; hard: boolean; indent: number };
 const fontFor = (i: { italic: boolean; bold: boolean }): FontKey =>
   i.bold && i.italic ? "boldItalic" : i.bold ? "bold" : i.italic ? "italic" : "regular";
 
-export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: BookFonts): BookPlan {
+export function buildPlan(meta: BookMeta, entries: BookEntry[], fonts: BookFonts): BookPlan {
   const W = meta.trimWidthIn * 72;
   const H = meta.trimHeightIn * 72;
   const pages: PlannedPage[] = [];
@@ -147,7 +150,7 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
     y: number,
     maxW: number,
     size: number,
-    opts: { justify: boolean; align?: "left" | "center"; tone?: "ink" | "muted" },
+    opts: { justify: boolean; align?: "left" | "center" | "right"; tone?: "ink" | "muted" | "note" },
   ) {
     const space = fonts.width("regular", " ", size);
     const total = line.words.reduce((a, w) => a + w.width, 0);
@@ -158,6 +161,7 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
     }
     let x = x0;
     if (opts.align === "center") x = x0 + (maxW - (total + space * (line.words.length - 1))) / 2;
+    if (opts.align === "right") x = x0 + (maxW - (total + space * (line.words.length - 1)));
     for (const w of line.words) {
       let sx = x;
       for (const s of w.segs) {
@@ -170,7 +174,7 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
 
   // ---- pages ----------------------------------------------------------------
   let currentRecordLabel: string | null = null;
-  function newPage(kind: PlannedPage["kind"], rec: BookRecordSource | null, opts: { head?: boolean; folio?: boolean } = {}) {
+  function newPage(kind: PlannedPage["kind"], rec: { itemId: string; archiveId: string | null } | null, opts: { head?: boolean; folio?: boolean } = {}) {
     const index = pages.length + 1;
     const page: PlannedPage = {
       index,
@@ -201,7 +205,7 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
     top: number,
     size: number,
     leading: number,
-    opts: { align?: "left" | "center"; tone?: "ink" | "muted"; indent?: number } = {},
+    opts: { align?: "left" | "center" | "right"; tone?: "ink" | "muted" | "note"; indent?: number } = {},
   ) {
     const x0 = leftOf(page.index) + (opts.indent ?? 0);
     const w = contentW - (opts.indent ?? 0) * 2;
@@ -232,12 +236,16 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
       const cw = fonts.width("italic", caption, L.captionSize);
       page.elements.push({ t: "text", x: box.x + (box.w - cw) / 2, y: y + h + 12, size: L.captionSize, font: "italic", text: caption, tone: "muted" });
     }
+    dpiWarning(img, dpi, rec.archiveId, rec.itemId);
+  }
+
+  function dpiWarning(img: BookImage, dpi: number, archiveId: string | null, itemId: string) {
     if (!img.width || !img.height) {
-      warnings.push({ level: "warning", archiveId: rec.archiveId, itemId: rec.itemId, message: `${img.label || "Scan"}: image size unknown, resolution could not be checked.` });
+      warnings.push({ level: "warning", archiveId, itemId, message: `${img.label || "Scan"}: image size unknown, resolution could not be checked.` });
     } else if (dpi < PRINT_DPI_MIN) {
-      warnings.push({ level: "warning", archiveId: rec.archiveId, itemId: rec.itemId, message: `${img.label || "Scan"} prints at about ${dpi} DPI (below ${PRINT_DPI_MIN}); it may look soft in print.` });
+      warnings.push({ level: "warning", archiveId, itemId, message: `${img.label || "Scan"} prints at about ${dpi} DPI (below ${PRINT_DPI_MIN}); it may look soft in print.` });
     } else if (dpi < PRINT_DPI_GOOD) {
-      warnings.push({ level: "info", archiveId: rec.archiveId, itemId: rec.itemId, message: `${img.label || "Scan"} prints at about ${dpi} DPI (under the ideal ${PRINT_DPI_GOOD}).` });
+      warnings.push({ level: "info", archiveId, itemId, message: `${img.label || "Scan"} prints at about ${dpi} DPI (under the ideal ${PRINT_DPI_GOOD}).` });
     }
   }
 
@@ -299,7 +307,12 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
   const LEGIBLE_LONG_SIDE = 4.25 * 72;
 
   // ---- records ----------------------------------------------------------------
-  for (const rec of records) {
+  for (const entry of entries) {
+    if (entry.type === "page") {
+      renderCustom(entry);
+      continue;
+    }
+    const rec = entry;
     currentRecordLabel = rec.dateLabel ?? rec.title ?? rec.archiveId;
     let headerDone = false;
 
@@ -399,41 +412,7 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
       const label = rec.transcriptionVerified ? "Transcription" : "Transcription · not yet human-verified";
       y = writeBlock(page, [{ text: label, italic: true, bold: false }], y - 8, 10, 14, { align: "center", tone: "muted" }) + 12;
 
-      blocks.forEach((block, bi) => {
-        const indent = block.kind === "quote" ? 24 : block.kind === "item" ? 12 : 0;
-        const size = block.kind === "heading" ? 12.5 : L.body;
-        const inl = block.kind === "heading" ? block.inlines.map((i) => ({ ...i, bold: true })) : block.inlines;
-        const x0 = () => leftOf(page.index) + indent;
-        const w = contentW - indent * (block.kind === "quote" ? 2 : 1);
-        const lines = breakLines(inl, size, w);
-        if (bi > 0) y += L.paraGap;
-        let at = 0;
-        while (at < lines.length) {
-          const room = Math.floor((bottom - y) / L.leading + 0.001);
-          const remaining = lines.length - at;
-          let take = Math.min(room, remaining);
-          if (take < remaining) {
-            // No lone first line at the foot of a page, no lone last line at the head.
-            if (take === 1 && remaining > 1) take = 0;
-            if (remaining - take === 1 && take >= 2) take -= 1;
-            if (block.kind === "heading") take = 0;
-          }
-          if (take <= 0) {
-            page = newPage("text", rec);
-            y = L.marginTop;
-            continue;
-          }
-          for (let k = 0; k < take; k++) {
-            y += L.leading;
-            drawLine(page.elements, lines[at + k], x0(), y - 4, w, size, { justify: true });
-          }
-          at += take;
-          if (at < lines.length) {
-            page = newPage("text", rec);
-            y = L.marginTop;
-          }
-        }
-      });
+      flowBlocks(blocks, page, y, rec, "ink");
     }
 
     if (!headerDone) {
@@ -443,8 +422,134 @@ export function buildPlan(meta: BookMeta, records: BookRecordSource[], fonts: Bo
     }
   }
 
+  // ---- shared paragraph flow (transcriptions and research essays) -------------
+  function flowBlocks(blocks: ReturnType<typeof parseTranscription>, startPage: PlannedPage, startY: number, owner: { itemId: string; archiveId: string | null }, tone: "ink" | "note") {
+    let page = startPage;
+    let y = startY;
+    blocks.forEach((block, bi) => {
+      const indent = block.kind === "quote" ? 24 : block.kind === "item" ? 12 : 0;
+      const size = block.kind === "heading" ? 12.5 : L.body;
+      const inl = block.kind === "heading" ? block.inlines.map((i) => ({ ...i, bold: true })) : block.inlines;
+      const x0 = () => leftOf(page.index) + indent;
+      const w = contentW - indent * (block.kind === "quote" ? 2 : 1);
+      const lines = breakLines(inl, size, w);
+      if (bi > 0) y += L.paraGap;
+      let at = 0;
+      while (at < lines.length) {
+        const room = Math.floor((bottom - y) / L.leading + 0.001);
+        const remaining = lines.length - at;
+        let take = Math.min(room, remaining);
+        if (take < remaining) {
+          // No lone first line at the foot of a page, no lone last line at the head.
+          if (take === 1 && remaining > 1) take = 0;
+          if (remaining - take === 1 && take >= 2) take -= 1;
+          if (block.kind === "heading") take = 0;
+        }
+        if (take <= 0) {
+          page = newPage(startPage.kind, owner);
+          y = L.marginTop;
+          continue;
+        }
+        for (let k = 0; k < take; k++) {
+          y += L.leading;
+          drawLine(page.elements, lines[at + k], x0(), y - 4, w, size, { justify: true, tone });
+        }
+        at += take;
+        if (at < lines.length) {
+          page = newPage(startPage.kind, owner);
+          y = L.marginTop;
+        }
+      }
+    });
+  }
+
+  // ---- custom pages (Phase 2) ------------------------------------------------
+  function renderCustom(src: BookPageSource) {
+    const doc = src.doc;
+    const owner = { itemId: src.itemId, archiveId: null };
+    const label = doc.name || "Custom page";
+    if (doc.flow) {
+      currentRecordLabel = doc.flow.heading?.trim() || meta.title;
+      const page = newPage("custom", owner, { head: false, folio: doc.folio });
+      let y = L.marginTop;
+      if (doc.flow.heading?.trim()) y = writeBlock(page, [{ text: doc.flow.heading.trim(), italic: false, bold: false }], y, 18, 24, { align: "center" });
+      y = writeBlock(page, [{ text: "Modern commentary", italic: true, bold: false }], y + 2, 8.5, 13, { align: "center", tone: "note" }) + 10;
+      const blocks = parseTranscription(plainToHtml(doc.flow.text));
+      if (!blocks.length) warnings.push({ level: "warning", archiveId: null, itemId: src.itemId, message: `${label}: the essay has no text yet.` });
+      flowBlocks(blocks, page, y, owner, "note");
+      return;
+    }
+    const page = newPage("custom", owner, { head: false, folio: doc.folio });
+    for (const box of sortedBoxes(doc.boxes)) {
+      if (box.kind === "text") {
+        const st = TEXT_STYLES[box.style] ?? TEXT_STYLES.body;
+        let y = box.y;
+        if (box.style === "note") {
+          y += 12;
+          page.elements.push({ t: "text", x: box.x, y: y - 2, size: 8, font: "italic", text: "Editor’s note", tone: "note" });
+          y += 2;
+        }
+        const italic = box.italic ?? st.italic;
+        const bold = box.bold ?? false;
+        const paras = box.text.replace(/\r\n?/g, "\n").split(/\n{2,}/);
+        let overflow = false;
+        paras.forEach((para, pi) => {
+          if (overflow) return;
+          if (pi > 0) y += st.leading * 0.45;
+          const inl = para.split("\n").flatMap((t, k) => (k ? [{ text: "", italic, bold, br: true }, { text: t, italic, bold }] : [{ text: t, italic, bold }]));
+          for (const line of breakLines(inl, st.size, box.w)) {
+            if (y + st.leading > box.y + box.h + 0.5) {
+              overflow = true;
+              break;
+            }
+            y += st.leading;
+            drawLine(page.elements, line, box.x, y - (st.leading - st.size) * 0.35, box.w, st.size, { justify: box.align === "left" && box.style === "body", align: box.align, tone: st.tone });
+          }
+        });
+        if (overflow) warnings.push({ level: "warning", archiveId: null, itemId: src.itemId, message: `${label}: some text does not fit in its box and is cut off. Make the box larger or the text shorter.` });
+        continue;
+      }
+      const img = src.images[box.id] ?? null;
+      if (!img) {
+        warnings.push({ level: "warning", archiveId: null, itemId: src.itemId, message: box.ref ? `${label}: an image could not be found and is left out.` : `${label}: an image box is empty.` });
+        continue;
+      }
+      const captionH = box.caption?.trim() && box.mode !== "bleed" ? 18 : 0;
+      const area = box.mode === "bleed" ? { x: 0, y: 0, w: W, h: H } : { x: box.x, y: box.y, w: box.w, h: Math.max(20, box.h - captionH) };
+      const r = box.mode === "fit" ? containRect(img.width, img.height, area) : coverRect(img.width, img.height, area);
+      const dpi = img.width > 0 ? Math.round(Math.min(img.width / (r.w / 72), img.height / (r.h / 72))) : 0;
+      page.elements.push({ t: "image", ...r, image: img, dpi, ...(box.mode === "fit" ? {} : { clip: area }) });
+      dpiWarning(img, dpi, null, src.itemId);
+      if (captionH) {
+        const capTop = (box.mode === "fit" ? r.y + r.h : area.y + area.h) + 2;
+        writeBlock(page, [{ text: box.caption!.trim(), italic: true, bold: false }], capTop, L.captionSize, 12, { align: "center", tone: "muted" });
+      }
+    }
+    // writeBlock lays text out across the column; re-anchor caption lines to their box.
+  }
+
   if (fonts.missing.size) {
     warnings.push({ level: "warning", archiveId: null, itemId: null, message: `Some characters are not in the book typeface and print as “?”: ${[...fonts.missing].join(" ")}` });
   }
   return { widthPt: W, heightPt: H, pages, warnings };
+}
+
+const TEXT_STYLES: Record<string, { size: number; leading: number; italic: boolean; tone: "ink" | "muted" | "note" }> = {
+  heading: { size: 20, leading: 26, italic: false, tone: "ink" },
+  body: { size: 11.5, leading: 16.5, italic: false, tone: "ink" },
+  caption: { size: 9, leading: 12.5, italic: true, tone: "muted" },
+  quote: { size: 14, leading: 20, italic: true, tone: "ink" },
+  note: { size: 10.5, leading: 15, italic: false, tone: "note" },
+};
+
+/** Plain pasted text → paragraphs; blank lines separate paragraphs, single newlines are kept. */
+export function plainToHtml(text: string) {
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`)
+    .join("");
 }
