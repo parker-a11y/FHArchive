@@ -1,55 +1,30 @@
-# Book Builder — Architecture Proposal (awaiting approval)
+# Book Builder — Phase 2: Custom Pages
 
-## What I found in the current archive
-- **Records**: FH records live in the existing records table (FH IDs, dates, author/recipient, origin/destination, location line, storage). Book Builder will only *point to* these — no copies.
-- **Scans**: each record's files are kept in order (sort order, page label such as letter page vs. envelope, rotation, the "include in transcription" flag). Originals (TIFF/JPEG/PDF) are kept untouched in private storage, with generated viewing JPEGs and thumbnails that record their pixel width and height — so resolution can be checked without opening the files.
-- **Envelopes**: already identified by file label (the same logic Envelope Review and the "no envelope" setting use). Book Builder reuses it, so it never guesses or substitutes an envelope.
-- **Transcriptions**: stored per scanned page (verified text preferred over AI text), with formatted text and an existing helper that joins pages into one combined transcription. Book Builder reuses that helper, so the text matches what you already see.
-- **Search**: the All Records search (date, From/To, location, text) and range/shift-click selection can be reused in the "Add records" picker.
-- **Access**: Admin / Archivist / Guest roles. Book Builder will be **Admin and Archivist** (editors) only; guests won't see it.
-- **PDF today**: only browser "print to PDF" pages for emails and labels, plus a PDF page reader. No true book PDF engine yet.
+Phase 2 adds pages you create yourself (introductions, photo pages, research essays, section dividers) that sit in the same ordered list as the letters. The letters, scans and transcriptions stay untouched. Phase 3 (themes, chapters, table of contents, covers, printer profiles) still waits for your separate OK.
 
-## Proposed approach
+## What you'll be able to do
+- **+ Add Page** button in the book's list, and "Insert page here" between any two items. Custom pages drag and reorder exactly like letters.
+- **Pick a template** (17), each a starting layout you can change:
+  1. Blank page 2. Section divider 3. Full-page text 4. Text with heading 5. Quotation page 6. Single photo, fit 7. Single photo, full-bleed 8. Photo + caption 9. Photo top, text below 10. Text left, photo right 11. Two photos 12. Four-photo grid 13. Photo collage (3) 14. Map / document page 15. Timeline / dates list 16. Dedication / epigraph 17. Research essay (long-form)
+- **Visual page editor**: click a page to edit it on a true-to-size page. Add text boxes and image boxes, move and resize them by dragging, snap to margins, centre lines and other boxes, undo/redo (Ctrl/Cmd+Z, Shift+Z), delete, bring forward/back.
+- **Text**: heading, body, caption and quotation styles in EB Garamond; bold/italic; left/centre/right.
+- **Images**: upload new photos, or pick from the archive (FH record scans, envelopes, Photo Gallery). Each image box can be **Fit** (whole image, never cropped), **Fill** (fills the box, cropped visually only — the original file is never altered) or **Full-bleed** (edge to edge). Low-resolution warnings work the same as for letters.
+- **Long-form research flow**: the Research essay template flows text across as many pages as needed with automatic page numbers, like transcriptions do, so you can paste a long piece.
+- **Modern vs. historical**: custom-page text is styled visibly differently (sans-serif small caps label "Editor's note" option, different tone) from transcribed letter text, per the archival rule.
+- Preview and PDF show custom pages identically, with the same page numbers.
 
-### Data stored (new and separate, archive never changed)
-- **Book projects**: title, subtitle, description, theme, trim size/orientation, margins, print preferences, cover settings (later phases), timestamps.
-- **Book items**: the ordered sequence. Each item is either a *record reference* (FH record + per-book options like one or two scans per page) or a *custom page* (Phase 2). One ordered list means letters and custom pages always share one sequence.
-- **Book exports**: history of each generated PDF (type, page count, warnings, file, date).
-- **Book images** storage area (Phase 2) for uploaded photos, kept apart from archive scans.
-- Duplicating a project copies only these book rows, never archive data.
+## Safeguards
+- Archive images used on custom pages are referenced, not copied or edited; "Fill" cropping is a display setting only.
+- Uploaded book images go to their own private storage area, separate from archive scans.
+- If an archive image used on a custom page changes, the page is flagged like a changed letter.
+- Existing books keep working unchanged.
 
-### Book Builder screens
-- **Dashboard** (`Book Builder` in sidebar): project cards with page count and last edited, plus New, Rename, Duplicate and Delete.
-- **Project editor**:
-  - Left: a numbered, drag-sortable list (same drag behaviour as scans and photos) with up/down arrows, remove-from-book, "Sort oldest→newest / newest→oldest" and "Restore saved custom order" (the previous order is kept as a snapshot).
-  - Each row shows FH ID, date, from/to, location, thumbnail, scan count, envelope ✓/✗ and transcription ✓/✗, plus warnings.
-  - **Add records** panel: paste FH IDs ("FH0012, FH0040–FH0055"), or search/filter with checkboxes and Add selected. Every record page also gets an "Add to book" button.
-  - Right: live preview.
-- Order saves automatically after each change.
+## Testing
+- Add one of each template to a test book with real records, check editor ↔ preview ↔ PDF match, page numbering, snapping/undo, fit/fill/full-bleed in the PDF, and a 6+ page research essay.
 
-### Layout and pagination (one engine for preview and PDF)
-- A single **layout engine** turns the sequence into physical pages: record header, then each letter scan (fit inside margins, centred, never cropped, optional two per page), then envelope front/back if they exist, then the transcription flowing across as many pages as needed. Paragraphs are kept intact where possible, with no overlaps.
-- The preview shows these same computed pages, so the on-screen page numbers match the PDF.
-- Classic Literary theme: ivory pages, serif type (EB Garamond, embedded), small page numbers, running header with the book title and letter date, and a quiet metadata line. Missing information is left out, never invented.
-
-### PDF generation
-- I'll build the PDF on the server with **pdf-lib**, a pure-JavaScript library that can embed fonts and place images at exact sizes. Sizes are in points (8.5 × 11 in = 612 × 792).
-- **Image quality**: it uses the original JPEG masters directly. TIFF masters can't be embedded directly, so it uses the largest generated JPEG instead and the warning names that record. If you want true full-resolution TIFF reproduction later, that needs a high-quality JPEG conversion step, which I'll propose in Phase 3.
-- **Resolution warnings**: effective DPI = pixel size ÷ printed size, with warnings below 300 DPI and errors below 150. Missing scans, missing transcriptions and records with no envelope are listed too.
-- **Large books**: the server has limited memory and time per request. Export therefore runs as a background job in chunks of a few records, assembles the PDF, saves it to private storage and reports progress in the UI. Exports appear in history with a download link.
-- The export is built around a "print profile" object (trim, bleed, gutter, colour mode). Phase 1 includes only "Standard 8.5×11 (home/digital)". Blurb, Lulu and BookBaby profiles plug in later. Nothing will be labelled "print-ready" until a provider profile and preflight checks exist.
-
-### Archival safeguards
-- Read-only access to records, scans and transcriptions. Nothing is edited, cropped or replaced.
-- Transcription text is rendered exactly as stored, including uncertainty markers. Modern commentary (Phase 2) gets a visibly different style.
-- If a source record changes after it was added, the project shows "Source updated — refresh" rather than silently overwriting anything.
-
-## Phases
-1. **Phase 1 (on approval)**: dashboard, projects, add by ID/search/record page, drag and arrow reordering, sorting, autosave, the letter → envelope → transcription layout, Classic Literary at 8.5×11, preview (single page and spread, zoom), background PDF export with history, missing-file and low-resolution warnings. I'll test it with a 10–15 letter book and check the PDF contents and order.
-2. **Phase 2 (after your OK)**: + Add Page, 17 templates, visual editor (text, images, captions, snapping, undo/redo), uploads and archive-image picker, long-form research flow, full-bleed/fit/fill options.
-3. **Phase 3 (after your OK)**: themes, chapters, front/back matter, auto table of contents, facing-page transcription, cover designer, Blurb/Lulu/BookBaby profiles from their published specs, spine calculation, preflight, reusable templates.
-
-## Risks to know
-- TIFF-only records use the largest generated JPEG until full-resolution conversion is added (Phase 3).
-- Very large books (100+ letters, many gigabytes of scans) will take minutes to export. They will run in the background, not instantly.
-- Printer specs change over time. In Phase 3 I'll check current provider documents and flag anything I can't confirm.
+## Technical details
+- `book_items` gains `item_type` ('record' | 'page') and `page_doc` jsonb (template id, boxes with x/y/w/h in points, text runs, image refs `{source:'archive'|'gallery'|'upload', id, mode}`); `letter_id` becomes nullable with a check constraint. Editor-scoped RLS unchanged.
+- New private `book-images` bucket with editor RLS on `storage.objects`; uploads get a viewing copy via the existing derivative helper.
+- `layout.ts` gains a `page` branch producing `PlannedPage` kind `custom`; long-form boxes reuse the transcription text flow. `ImageBox` gains `crop`/`bleed`; `pdf-writer.ts` adds clipping paths for Fill and bleed handling.
+- Editor: `src/components/book/PageEditor.tsx` with pointer-based drag/resize, snap guides, command-stack undo/redo; templates in `src/lib/book/templates.ts`.
+- Unit tests for template generation, fill crop math, snapping and long-form pagination.
