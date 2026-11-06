@@ -49,6 +49,24 @@ export function PhotoRecordList() {
   const [boxOpen, setBoxOpen] = useState(false);
   const [sleeveOpen, setSleeveOpen] = useState(false);
   const [sleeve, setSleeve] = useState("");
+  const [view, setView] = useState<View>("list");
+  const [density, setDensity] = useState<Density>("md");
+  const [zoomId, setZoomId] = useState<string | null>(null);
+
+  // Read the remembered view after mount, so the server render and the first
+  // paint always agree.
+  useEffect(() => {
+    setView((v) => readStored(VIEW_KEY, ["list", "grid"] as const) ?? v);
+    setDensity((d) => readStored(DENSITY_KEY, ["sm", "md", "lg"] as const) ?? d);
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem(VIEW_KEY, view);
+      localStorage.setItem(DENSITY_KEY, density);
+    } catch {
+      /* storage unavailable — the view just isn't remembered */
+    }
+  }, [view, density]);
 
   const rows = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -116,6 +134,11 @@ export function PhotoRecordList() {
         <Select label="Batch" value={batch} onChange={setBatch} options={[["", "All batches"], ...(batches.data ?? []).map((b) => [b.id, b.name || new Date(b.created_at).toLocaleDateString()] as [string, string])]} />
         <Select label="Sleeve" value={sleeve} onChange={setSleeve} options={[["", "All sleeves"], ["__none", "No sleeve"], ...d.sleeves.map((x) => [x.id, x.code.replace("-", " ")] as [string, string])]} />
         <Select label="Sort" value={sort} onChange={(v) => setSort(v as Sort)} options={[["ph", "PH number"], ["ph-desc", "PH number, newest"], ["uploaded", "Upload date"], ["caption", "Subtitle"]]} />
+        <div className="ml-auto flex items-center gap-1 rounded-md border border-border p-0.5" role="group" aria-label="Record list view">
+          <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} aria-pressed={view === "list"} onClick={() => setView("list")}><ListChecks className="mr-1 size-4" />List</Button>
+          <Button size="sm" variant={view === "grid" ? "secondary" : "ghost"} aria-pressed={view === "grid"} onClick={() => setView("grid")}><LayoutGrid className="mr-1 size-4" />Grid</Button>
+        </div>
+        {view === "grid" && <Select label="Thumbnail size" value={density} onChange={(v) => setDensity(v as Density)} options={[["sm", "Small thumbnails"], ["md", "Medium thumbnails"], ["lg", "Large thumbnails"]]} />}
       </div>
 
       <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2 text-sm">
