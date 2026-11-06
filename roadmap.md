@@ -45,9 +45,19 @@
 - [x] Simplify photo intake: front + optional back image, writing on back, title, date, people, place, box
 - [x] Bulk Photo Upload: drag photos into an Unassigned bucket, then pick photos there to create records
 
+## Photo Archive, Organizer, Gallery & Photo Storage
+- [x] Stage A — permanent PH numbers (PH00001…), counter + safe assignment on upload, admin-approved backfill of the 53 existing photos, legacy FH photo links resolve to the photo
+- [x] Stage B — optional details (people, date as written + sortable years, location, verbatim inscription, information source, back transcription) and category list/manager seeded with the 12 starting categories
+- [x] Stage C — batch uploader with live counts, failed-only retry without duplicates, named upload batches (real multi-file drag-and-drop upload verified: each file took the next PH number)
+- [x] Stage D — admin Photo Organizer: large photo, category buttons, working sets (uncategorized/all/recent/batch/category), keyboard nav, autosave details, new-category creation
+- [x] Stage E — Photo Record List with search/sort, checkbox + shift-range + select-all, bulk category and box actions; PHOTO-### boxes with contents and printable labels on Storage Boxes
+- [x] Stage F — "The Photo Archive" gallery: justified lazy-loaded grid, category and search filtering, immersive viewer with zoom/fullscreen/keyboard, stable PH links, guest downloads limited to viewing JPEGs
+- [x] Photo connections: link a photo to letters, other photos or people with certainty and a note; shown in the viewer and as a linked-photographs strip on the letter page
+- [ ] Printable PHOTO box labels — printed from Storage Boxes and checked
+
 ## Book Builder
 - [x] Phase 1 — core Book Builder (projects, record selection, ordering, letter → envelope → transcription layout, preview, background PDF export, print copies, source-change checks)
-- [ ] Phase 2 — custom page builder (waiting for your go-ahead)
-- [ ] Phase 3 — advanced publishing and Blurb/Lulu/BookBaby profiles (waiting for your go-ahead)
+- [x] Phase 2 — custom page builder (templates, drag/resize editor, archive/gallery images, essay pagination)
+- [x] Phase 3 — advanced publishing and Blurb/Lulu/BookBaby profiles
 
 - [x] Book Builder Phase 3: chapters, contents, front matter, themes, facing pages, Lulu/Blurb/BookBaby profiles, preflight, cover designer (23 tests; real 156-page Lulu test book + cover exported and checked)
