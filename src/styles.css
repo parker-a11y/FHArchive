@@ -59,6 +59,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-gallery-ivory: var(--gallery-ivory);
+  --color-gallery-ink: var(--gallery-ink);
+  --color-gallery-rule: var(--gallery-rule);
+  --color-gallery-stage: var(--gallery-stage);
+  --color-gallery-stage-foreground: var(--gallery-stage-foreground);
 }
 
 :root {
@@ -68,6 +73,11 @@
   --book-muted: oklch(0.5 0.015 60);
   --book-guide: oklch(0.65 0.15 25);
   --book-note: oklch(0.42 0.06 55);
+  --gallery-ivory: oklch(0.975 0.012 85);
+  --gallery-ink: oklch(0.24 0.008 60);
+  --gallery-rule: oklch(0.86 0.014 80);
+  --gallery-stage: oklch(0.16 0.006 60);
+  --gallery-stage-foreground: oklch(0.94 0.01 85);
   --radius: 0.75rem;
   --background: oklch(0.972 0.004 90);
   --foreground: oklch(0.235 0.012 65);

@@ -24,6 +24,7 @@ import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authentic
 import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
 import { Route as AuthenticatedEnvelopesRouteImport } from './routes/_authenticated/envelopes'
 import { Route as AuthenticatedPhotoInboxRouteImport } from './routes/_authenticated/photo-inbox'
+import { Route as AuthenticatedPhotoOrganizerRouteImport } from './routes/_authenticated/photo-organizer'
 import { Route as AuthenticatedPhotosRouteImport } from './routes/_authenticated/photos'
 import { Route as AuthenticatedQueuesRouteImport } from './routes/_authenticated/queues'
 import { Route as AuthenticatedQuotationsRouteImport } from './routes/_authenticated/quotations'
@@ -59,6 +60,7 @@ import { Route as AuthenticatedOnThisDateDateRouteImport } from './routes/_authe
 import { Route as AuthenticatedOrganizationsIndexRouteImport } from './routes/_authenticated/organizations/index'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
+import { Route as AuthenticatedPhotosPhIdRouteImport } from './routes/_authenticated/photos_.$phId'
 import { Route as AuthenticatedPlacesIndexRouteImport } from './routes/_authenticated/places/index'
 import { Route as AuthenticatedPlacesPlaceIdRouteImport } from './routes/_authenticated/places/$placeId'
 import { Route as AuthenticatedRecapsIndexRouteImport } from './routes/_authenticated/recaps/index'
@@ -157,6 +159,12 @@ const AuthenticatedPhotoInboxRoute = AuthenticatedPhotoInboxRouteImport.update({
   path: '/photo-inbox',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPhotoOrganizerRoute =
+  AuthenticatedPhotoOrganizerRouteImport.update({
+    id: '/photo-organizer',
+    path: '/photo-organizer',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPhotosRoute = AuthenticatedPhotosRouteImport.update({
   id: '/photos',
   path: '/photos',
@@ -350,6 +358,11 @@ const AuthenticatedPeoplePersonIdRoute =
     path: '/people/$personId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPhotosPhIdRoute = AuthenticatedPhotosPhIdRouteImport.update({
+  id: '/photos_/$phId',
+  path: '/photos/$phId',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPlacesIndexRoute =
   AuthenticatedPlacesIndexRouteImport.update({
     id: '/places/',
@@ -487,6 +500,7 @@ export interface FileRoutesByFullPath {
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
+  '/photo-organizer': typeof AuthenticatedPhotoOrganizerRoute
   '/photos': typeof AuthenticatedPhotosRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
@@ -515,6 +529,7 @@ export interface FileRoutesByFullPath {
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
   '/on-this-date/$date': typeof AuthenticatedOnThisDateDateRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
+  '/photos/$phId': typeof AuthenticatedPhotosPhIdRoute
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
   '/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
@@ -558,6 +573,7 @@ export interface FileRoutesByTo {
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
+  '/photo-organizer': typeof AuthenticatedPhotoOrganizerRoute
   '/photos': typeof AuthenticatedPhotosRoute
   '/queues': typeof AuthenticatedQueuesRoute
   '/quotations': typeof AuthenticatedQuotationsRoute
@@ -587,6 +603,7 @@ export interface FileRoutesByTo {
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
   '/on-this-date/$date': typeof AuthenticatedOnThisDateDateRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
+  '/photos/$phId': typeof AuthenticatedPhotosPhIdRoute
   '/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
   '/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
@@ -632,6 +649,7 @@ export interface FileRoutesById {
   '/_authenticated/emails': typeof AuthenticatedEmailsRoute
   '/_authenticated/envelopes': typeof AuthenticatedEnvelopesRoute
   '/_authenticated/photo-inbox': typeof AuthenticatedPhotoInboxRoute
+  '/_authenticated/photo-organizer': typeof AuthenticatedPhotoOrganizerRoute
   '/_authenticated/photos': typeof AuthenticatedPhotosRoute
   '/_authenticated/queues': typeof AuthenticatedQueuesRoute
   '/_authenticated/quotations': typeof AuthenticatedQuotationsRoute
@@ -661,6 +679,7 @@ export interface FileRoutesById {
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
   '/_authenticated/on-this-date/$date': typeof AuthenticatedOnThisDateDateRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
+  '/_authenticated/photos_/$phId': typeof AuthenticatedPhotosPhIdRoute
   '/_authenticated/places/$placeId': typeof AuthenticatedPlacesPlaceIdRoute
   '/_authenticated/recaps/$weekStart': typeof AuthenticatedRecapsWeekStartRoute
   '/_authenticated/sources/$dsId': typeof AuthenticatedSourcesDsIdRoute
@@ -707,6 +726,7 @@ export interface FileRouteTypes {
     | '/emails'
     | '/envelopes'
     | '/photo-inbox'
+    | '/photo-organizer'
     | '/photos'
     | '/queues'
     | '/quotations'
@@ -735,6 +755,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/on-this-date/$date'
     | '/people/$personId'
+    | '/photos/$phId'
     | '/places/$placeId'
     | '/recaps/$weekStart'
     | '/sources/$dsId'
@@ -778,6 +799,7 @@ export interface FileRouteTypes {
     | '/emails'
     | '/envelopes'
     | '/photo-inbox'
+    | '/photo-organizer'
     | '/photos'
     | '/queues'
     | '/quotations'
@@ -807,6 +829,7 @@ export interface FileRouteTypes {
     | '/letters/$archiveId'
     | '/on-this-date/$date'
     | '/people/$personId'
+    | '/photos/$phId'
     | '/places/$placeId'
     | '/recaps/$weekStart'
     | '/sources/$dsId'
@@ -851,6 +874,7 @@ export interface FileRouteTypes {
     | '/_authenticated/emails'
     | '/_authenticated/envelopes'
     | '/_authenticated/photo-inbox'
+    | '/_authenticated/photo-organizer'
     | '/_authenticated/photos'
     | '/_authenticated/queues'
     | '/_authenticated/quotations'
@@ -880,6 +904,7 @@ export interface FileRouteTypes {
     | '/_authenticated/letters/$archiveId'
     | '/_authenticated/on-this-date/$date'
     | '/_authenticated/people/$personId'
+    | '/_authenticated/photos_/$phId'
     | '/_authenticated/places/$placeId'
     | '/_authenticated/recaps/$weekStart'
     | '/_authenticated/sources/$dsId'
@@ -1047,6 +1072,13 @@ declare module '@tanstack/react-router' {
       path: '/photo-inbox'
       fullPath: '/photo-inbox'
       preLoaderRoute: typeof AuthenticatedPhotoInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/photo-organizer': {
+      id: '/_authenticated/photo-organizer'
+      path: '/photo-organizer'
+      fullPath: '/photo-organizer'
+      preLoaderRoute: typeof AuthenticatedPhotoOrganizerRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/photos': {
@@ -1294,6 +1326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/photos_/$phId': {
+      id: '/_authenticated/photos_/$phId'
+      path: '/photos/$phId'
+      fullPath: '/photos/$phId'
+      preLoaderRoute: typeof AuthenticatedPhotosPhIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/places/': {
       id: '/_authenticated/places/'
       path: '/places'
@@ -1452,6 +1491,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
   AuthenticatedEnvelopesRoute: typeof AuthenticatedEnvelopesRoute
   AuthenticatedPhotoInboxRoute: typeof AuthenticatedPhotoInboxRoute
+  AuthenticatedPhotoOrganizerRoute: typeof AuthenticatedPhotoOrganizerRoute
   AuthenticatedPhotosRoute: typeof AuthenticatedPhotosRoute
   AuthenticatedQueuesRoute: typeof AuthenticatedQueuesRoute
   AuthenticatedQuotationsRoute: typeof AuthenticatedQuotationsRoute
@@ -1471,6 +1511,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
   AuthenticatedOnThisDateDateRoute: typeof AuthenticatedOnThisDateDateRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
+  AuthenticatedPhotosPhIdRoute: typeof AuthenticatedPhotosPhIdRoute
   AuthenticatedPlacesPlaceIdRoute: typeof AuthenticatedPlacesPlaceIdRoute
   AuthenticatedRecapsWeekStartRoute: typeof AuthenticatedRecapsWeekStartRoute
   AuthenticatedSourcesDsIdRoute: typeof AuthenticatedSourcesDsIdRoute
@@ -1497,6 +1538,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
   AuthenticatedEnvelopesRoute: AuthenticatedEnvelopesRoute,
   AuthenticatedPhotoInboxRoute: AuthenticatedPhotoInboxRoute,
+  AuthenticatedPhotoOrganizerRoute: AuthenticatedPhotoOrganizerRoute,
   AuthenticatedPhotosRoute: AuthenticatedPhotosRoute,
   AuthenticatedQueuesRoute: AuthenticatedQueuesRoute,
   AuthenticatedQuotationsRoute: AuthenticatedQuotationsRoute,
@@ -1516,6 +1558,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,
   AuthenticatedOnThisDateDateRoute: AuthenticatedOnThisDateDateRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
+  AuthenticatedPhotosPhIdRoute: AuthenticatedPhotosPhIdRoute,
   AuthenticatedPlacesPlaceIdRoute: AuthenticatedPlacesPlaceIdRoute,
   AuthenticatedRecapsWeekStartRoute: AuthenticatedRecapsWeekStartRoute,
   AuthenticatedSourcesDsIdRoute: AuthenticatedSourcesDsIdRoute,

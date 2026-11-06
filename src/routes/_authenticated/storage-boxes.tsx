@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { displayDate, labelOf, STORAGE_TYPES } from "@/lib/archive";
 import { condenseRanges } from "@/lib/box-ranges";
 import { groupStorageBoxes, type StorageBoxRecord } from "@/lib/storage-boxes";
+import { PhotoBoxesSection } from "@/components/photos/PhotoBoxesSection";
 
 const storageBoxOptions = queryOptions({
   queryKey: ["storage-box-records"],
@@ -74,7 +75,7 @@ function StorageBoxes() {
     <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3 sm:px-8">
       <div className="relative min-w-0 flex-1 sm:max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input aria-label="Search storage boxes and records" placeholder="Search boxes, FH numbers or titles…" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input aria-label="Search storage boxes and records" placeholder="Search boxes, FH or PH numbers, titles…" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
       <Button variant="ghost" size="sm" onClick={() => setExpanded(new Set(visible.map((g) => g.name)))}>Expand all</Button>
       <Button variant="ghost" size="sm" onClick={() => setExpanded(new Set())}>Collapse all</Button>
@@ -113,5 +114,6 @@ function StorageBoxes() {
         </section>;
       })}
     </div>
+    <PhotoBoxesSection search={search} />
   </>;
 }
