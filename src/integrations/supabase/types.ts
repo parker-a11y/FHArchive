@@ -2758,6 +2758,47 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_links: {
+        Row: {
+          certainty: string
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          photo_id: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          certainty?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          photo_id: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          certainty?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          photo_id?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_links_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photos: {
         Row: {
           back_path: string | null
