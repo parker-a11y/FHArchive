@@ -165,6 +165,16 @@ function LetterPage() {
     enabled: !isLoading && !letter,
   });
 
+  // Former FH photographs now live in the Photo Archive; send old links there.
+  useEffect(() => {
+    if (letter?.record_type !== "moved_to_gallery") return;
+    let alive = true;
+    supabase.from("photos").select("id, ph_id").eq("legacy_archive_id", archiveId).maybeSingle().then(({ data }) => {
+      if (alive && data) navigate({ to: "/photos", search: { photo: data.ph_id ?? data.id }, replace: true });
+    });
+    return () => { alive = false; };
+  }, [letter?.record_type, archiveId, navigate]);
+
   const { data: all = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
   const { data: containers = [] } = useQuery({ queryKey: ["containers"], queryFn: fetchContainers });
 
