@@ -1,563 +1,209 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
-import { Download, ImagePlus, Loader2, Maximize2, RefreshCw, Search, Trash2, UploadCloud, X } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/AppShell";
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { deliverFile } from "@/lib/download";
-import { reorderScans, type ScanDropTarget } from "@/lib/scan-order";
-import {
-  backfillViewCopies,
-  convertExistingPhotos,
-  createPhoto,
-  deletePhoto,
-  fetchPhotoOriginal,
-  fetchPhotos,
-  missingViewCount,
-  pendingConversionCount,
-  updatePhoto,
-  savePhotoOrder,
-  viewPath,
-  type Photo,
-} from "@/lib/photos";
+import { fetchPhotos, viewPath, type Photo } from "@/lib/photos";
+import { fetchBoxes, fetchCategories, fetchCategoryLinks, linksByPhoto } from "@/lib/photo-catalog";
+import { matchesCategories } from "@/lib/photo-archive";
+import { SignedImg } from "@/components/photos/SignedImg";
+import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
 
+type GallerySearch = { q?: string; cats?: string; all?: boolean; photo?: string; sort?: "curated" | "ph" | "date" };
 
-const photosOptions = queryOptions({ queryKey: ["photos"], queryFn: fetchPhotos });
-
-export const Route = createFileRoute("/_authenticated/photos")({
-  head: () => ({
-    meta: [
-      { title: "Photos — The Francis Files" },
-      { name: "description", content: "A simple gallery of family photographs with captions and notes." },
-      { property: "og:title", content: "Photos — The Francis Files" },
-      { property: "og:description", content: "A simple gallery of family photographs with captions and notes." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(photosOptions),
-  pendingComponent: () => (
-    <AppShell>
-      <PageHeader title="Photos" />
-      <p className="p-8 text-sm text-muted-foreground">Loading photos…</p>
-    </AppShell>
-  ),
-  errorComponent: ({ reset }) => (
-    <AppShell>
-      <PageHeader title="Photos" />
-      <div className="space-y-3 p-8">
-        <p>Photos could not be loaded.</p>
-        <Button variant="outline" onClick={reset}>Try again</Button>
-      </div>
-    </AppShell>
-  ),
-  component: () => (
-    <AppShell>
-      <Gallery />
-    </AppShell>
-  ),
+export const galleryOptions = queryOptions({
+  queryKey: ["photo-gallery"],
+  queryFn: async () => {
+    const [photos, categories, links, boxes] = await Promise.all([fetchPhotos(), fetchCategories(), fetchCategoryLinks(), fetchBoxes()]);
+    return { photos, categories, links, boxes };
+  },
 });
 
-function useSigned(path: string | null) {
-  const [url, setUrl] = useState("");
-  useEffect(() => {
-    let alive = true;
-    setUrl("");
-    if (path)
-      supabase.storage
-        .from("scans")
-        .createSignedUrl(path, 3600)
-        .then(({ data }) => alive && setUrl(data?.signedUrl ?? ""));
-    return () => {
-      alive = false;
-    };
-  }, [path]);
-  return url;
-}
+export const Route = createFileRoute("/_authenticated/photos")({
+  validateSearch: (s: Record<string, unknown>): GallerySearch => ({
+    q: typeof s.q === "string" && s.q ? s.q : undefined,
+    cats: typeof s.cats === "string" && s.cats ? s.cats : undefined,
+    all: s.all === true || s.all === "true" ? true : undefined,
+    photo: typeof s.photo === "string" && s.photo ? s.photo : undefined,
+    sort: s.sort === "ph" || s.sort === "date" ? s.sort : undefined,
+  }),
+  head: () => ({ meta: [
+    { title: "The Photo Archive — The Francis Files" },
+    { name: "description", content: "A visual history of the Harrington and Harley families, preserved across generations." },
+    { property: "og:title", content: "The Photo Archive — The Francis Files" },
+    { property: "og:description", content: "Browse the Harrington and Harley family photographs by category, person, place and date." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(galleryOptions),
+  pendingComponent: () => <AppShell><p className="p-10 font-display text-xl text-muted-foreground">Opening the Photo Archive…</p></AppShell>,
+  errorComponent: ({ reset }) => <AppShell><div className="space-y-3 p-10"><p>The Photo Archive could not be loaded.</p><Button variant="outline" onClick={reset}>Try again</Button></div></AppShell>,
+  component: () => <AppShell><Gallery /></AppShell>,
+});
 
-function Img({ path, alt, className }: { path: string | null; alt: string; className?: string }) {
-  const url = useSigned(path);
-  return url ? (
-    <img src={url} alt={alt} className={className} loading="lazy" />
-  ) : (
-    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-      {path ? "…" : "No preview"}
-    </div>
-  );
+const PAGE = 90;
+
+function haystack(p: Photo, cats: string[]) {
+  return [p.ph_id, p.legacy_archive_id, p.caption, p.people, p.date_text, p.location, p.inscription, p.notes, p.back_transcription, p.info_source, ...cats]
+    .filter(Boolean).join(" ").toLowerCase();
 }
 
 function Gallery() {
-  const { data: photos } = useSuspenseQuery(photosOptions);
-  const { canEdit } = useAuth();
-  const qc = useQueryClient();
-  const [q, setQ] = useState("");
-  const [adding, setAdding] = useState(false);
-  const [open, setOpen] = useState<Photo | null>(null);
-  const [dropping, setDropping] = useState(0);
-  const [converting, setConverting] = useState(false);
-  const [dragged, setDragged] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<ScanDropTarget | null>(null);
-  const [ordering, setOrdering] = useState(false);
-  const suppressClick = useRef(false);
-  const [backfilling, setBackfilling] = useState<{ done: number; total: number } | null>(null);
-  const pending = useQuery({ queryKey: ["photos-pending"], queryFn: pendingConversionCount, enabled: canEdit !== false });
-  const missingViews = useQuery({ queryKey: ["photos-missing-views"], queryFn: missingViewCount, enabled: canEdit !== false });
+  const { data } = useSuspenseQuery(galleryOptions);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/photos" });
+  const { isAdmin, canEdit } = useAuth();
+  const [qDraft, setQDraft] = useState(search.q ?? "");
+  const [limit, setLimit] = useState(PAGE);
+  const sentinel = useRef<HTMLDivElement>(null);
+
+  const catName = useMemo(() => new Map(data.categories.map((c) => [c.id, c.name])), [data.categories]);
+  const byPhoto = useMemo(() => linksByPhoto(data.links), [data.links]);
+  const boxById = useMemo(() => new Map(data.boxes.map((b) => [b.id, b])), [data.boxes]);
+  const chosen = useMemo(() => (search.cats ? search.cats.split(",").filter((id) => catName.has(id)) : []), [search.cats, catName]);
+  const mode = search.all ? "all" : "any";
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if ((search.q ?? "") !== qDraft.trim()) navigate({ search: (s) => ({ ...s, q: qDraft.trim() || undefined }), replace: true });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [qDraft, search.q, navigate]);
 
   const shown = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    if (!t) return photos;
-    return photos.filter((p) => `${p.caption ?? ""} ${p.notes ?? ""}`.toLowerCase().includes(t));
-  }, [photos, q]);
+    const needle = (search.q ?? "").toLowerCase().split(/\s+/).filter(Boolean);
+    let list = data.photos.filter((p) => {
+      const ids = byPhoto.get(p.id) ?? [];
+      if (!matchesCategories(ids, chosen, mode)) return false;
+      if (!needle.length) return true;
+      const h = haystack(p, ids.map((id) => catName.get(id) ?? ""));
+      return needle.every((w) => h.includes(w));
+    });
+    if (search.sort === "ph") list = [...list].sort((a, b) => (a.ph_seq ?? 1e9) - (b.ph_seq ?? 1e9));
+    if (search.sort === "date") list = [...list].sort((a, b) => (a.date_year_start ?? 9999) - (b.date_year_start ?? 9999) || (a.ph_seq ?? 0) - (b.ph_seq ?? 0));
+    return list;
+  }, [data.photos, byPhoto, chosen, mode, search.q, search.sort, catName]);
 
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["photos"] });
-    qc.invalidateQueries({ queryKey: ["photos-pending"] });
-    qc.invalidateQueries({ queryKey: ["photos-missing-views"] });
-  };
+  useEffect(() => setLimit(PAGE), [search.q, search.cats, search.all, search.sort]);
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver((e) => { if (e[0]?.isIntersecting) setLimit((l) => l + PAGE); }, { rootMargin: "1200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [shown.length]);
 
-  const movePhoto = async (id: string, target: ScanDropTarget) => {
-    if (!canEdit || ordering || id === target.id) return;
-    const next = reorderScans(photos, id, target);
-    if (next.every((p, i) => p.id === photos[i]?.id)) return;
-    setOrdering(true);
-    qc.setQueryData(photosOptions.queryKey, next);
-    try {
-      await savePhotoOrder(next);
-      toast.success("Photo order saved");
-    } catch (e) {
-      qc.setQueryData(photosOptions.queryKey, photos);
-      toast.error((e as Error).message);
-    } finally {
-      setOrdering(false);
-      qc.invalidateQueries({ queryKey: ["photos"] });
-    }
-  };
+  const openIndex = search.photo ? shown.findIndex((p) => p.ph_id === search.photo || p.id === search.photo || p.legacy_archive_id === search.photo) : -1;
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const l of data.links) m.set(l.category_id, (m.get(l.category_id) ?? 0) + 1);
+    return m;
+  }, [data.links]);
 
-  const backfill = async () => {
-    setBackfilling({ done: 0, total: missingViews.data ?? 0 });
-    try {
-      const { done, failed } = await backfillViewCopies((done, total) => setBackfilling({ done, total }));
-      if (failed.length) {
-        toast.warning(`Made ${done} large viewing copies; ${failed.length} failed`, {
-          description: failed.slice(0, 3).join(" · "),
-        });
-      } else {
-        toast.success(`Made large viewing copies for ${done} photo${done === 1 ? "" : "s"}`);
-      }
-      refresh();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setBackfilling(null);
-    }
+  const toggleCat = (id: string) => {
+    const next = chosen.includes(id) ? chosen.filter((c) => c !== id) : [...chosen, id];
+    navigate({ search: (s) => ({ ...s, cats: next.join(",") || undefined }), replace: true });
   };
-
-  const bulk = async (files: File[]) => {
-    const imgs = files.filter((f) => f.type.startsWith("image/") || /\.(tiff?|jpe?g|png|heic)$/i.test(f.name));
-    if (!imgs.length) return;
-    setDropping(imgs.length);
-    let ok = 0;
-    for (const f of imgs) {
-      try {
-        await createPhoto({ front: f });
-        ok++;
-      } catch (e) {
-        toast.error((e as Error).message);
-      }
-      setDropping((n) => n - 1);
-    }
-    toast.success(`Added ${ok} photo${ok === 1 ? "" : "s"}`);
-    refresh();
-  };
-
-  const convert = async () => {
-    setConverting(true);
-    try {
-      const n = await convertExistingPhotos();
-      toast.success(`Moved ${n} photo${n === 1 ? "" : "s"} into the gallery`);
-      refresh();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setConverting(false);
-    }
-  };
+  const reset = () => { setQDraft(""); navigate({ search: (s) => ({ sort: s.sort }), replace: true }); };
+  const filtered = chosen.length > 0 || !!search.q;
 
   return (
-    <div
-      onDragOver={(e) => canEdit && e.dataTransfer.types.includes("Files") && e.preventDefault()}
-      onDrop={(e) => {
-        if (!canEdit || !e.dataTransfer.files.length) return;
-        e.preventDefault();
-        bulk(Array.from(e.dataTransfer.files));
-      }}
-    >
-      <PageHeader
-        title="Photos"
-        description={`${photos.length} photo${photos.length === 1 ? "" : "s"} · drag photos anywhere on this page to add them`}
-        actions={
-          canEdit !== false ? (
-            <Button onClick={() => setAdding(true)}>
-              <ImagePlus className="mr-1 h-4 w-4" /> New Photo
-            </Button>
-          ) : null
-        }
-      />
-      <div className="space-y-4 px-4 py-4 sm:px-8">
-        {!!pending.data && (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
-            <span>{pending.data} older photo{pending.data === 1 ? "" : "s"} (FH photo records and Unassigned Photos) can be moved here.</span>
-            <Button size="sm" variant="outline" onClick={convert} disabled={converting}>
-              {converting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
-              Move them into the gallery
-            </Button>
+    <div className="min-h-full bg-gallery-ivory text-gallery-ink">
+      <header className="mx-auto max-w-6xl px-5 pb-8 pt-12 text-center sm:pt-16">
+        <p className="text-[11px] uppercase tracking-[0.35em] text-muted-foreground">The Francis Files</p>
+        <h1 className="mt-3 font-display text-4xl font-light tracking-tight sm:text-6xl">The Photo Archive</h1>
+        <p className="mx-auto mt-4 max-w-xl font-display text-lg italic text-muted-foreground sm:text-xl">
+          A visual history of the Harrington and Harley families, preserved across generations.
+        </p>
+        <div className="mx-auto mt-6 h-px w-16 bg-gallery-rule" />
+        {(isAdmin || canEdit) && (
+          <div className="mt-6 flex justify-center gap-2">
+            {isAdmin && <Button asChild size="sm" variant="outline"><Link to="/photo-organizer">Photo Organizer</Link></Button>}
+            {isAdmin && <Button asChild size="sm" variant="ghost"><Link to="/photo-organizer" search={{ tab: "upload" }}>Upload photographs</Link></Button>}
           </div>
         )}
-        {!!missingViews.data && (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 text-sm">
-            <span>
-              {missingViews.data} photo{missingViews.data === 1 ? "" : "s"} only have a small preview — a large, sharp viewing copy can be made for each.
-            </span>
-            <Button size="sm" variant="outline" onClick={backfill} disabled={!!backfilling}>
-              {backfilling ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1 h-4 w-4" />}
-              {backfilling ? `Making copies ${backfilling.done}/${backfilling.total}…` : "Make large viewing copies"}
-            </Button>
+      </header>
+
+      <div className="sticky top-0 z-20 border-y border-gallery-rule bg-gallery-ivory/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-0 flex-1 sm:max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input aria-label="Search photographs" value={qDraft} onChange={(e) => setQDraft(e.target.value)}
+                placeholder="Search people, places, dates, inscriptions, PH or FH numbers…"
+                className="rounded-full border-gallery-rule bg-background/70 pl-9" />
+            </div>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <SlidersHorizontal className="size-3.5" />
+              <select aria-label="Sort photographs" value={search.sort ?? "curated"} onChange={(e) => navigate({ search: (s) => ({ ...s, sort: e.target.value === "curated" ? undefined : (e.target.value as "ph" | "date") }), replace: true })}
+                className="rounded-full border border-gallery-rule bg-background/70 px-3 py-1.5 text-xs text-foreground">
+                <option value="curated">Curated order</option>
+                <option value="date">By date</option>
+                <option value="ph">By PH number</option>
+              </select>
+            </label>
+            <span className="text-xs text-muted-foreground">{shown.length} of {data.photos.length} photographs</span>
+            {filtered && <Button size="sm" variant="ghost" onClick={reset}><X className="mr-1 size-3.5" />Reset</Button>}
           </div>
-        )}
-        {dropping > 0 && (
-          <p className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Uploading {dropping}…
-          </p>
-        )}
-        <div className="relative max-w-sm">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-8" placeholder="Search captions and notes" value={q} onChange={(e) => setQ(e.target.value)} />
+          {data.categories.length > 0 && (
+            <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
+              {data.categories.map((c) => {
+                const on = chosen.includes(c.id);
+                return (
+                  <button key={c.id} type="button" aria-pressed={on} onClick={() => toggleCat(c.id)}
+                    className={`shrink-0 rounded-full border px-3 py-1 text-xs transition ${on ? "border-gallery-ink bg-gallery-ink text-gallery-ivory" : "border-gallery-rule text-gallery-ink hover:border-gallery-ink/50"}`}>
+                    {c.name} <span className="opacity-50">{counts.get(c.id) ?? 0}</span>
+                  </button>
+                );
+              })}
+              {chosen.length > 1 && (
+                <button type="button" onClick={() => navigate({ search: (s) => ({ ...s, all: s.all ? undefined : true }), replace: true })}
+                  className="shrink-0 rounded-full px-3 py-1 text-xs text-muted-foreground underline-offset-4 hover:underline">
+                  {mode === "all" ? "Matching all · switch to any" : "Matching any · switch to all"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
+      </div>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
         {shown.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">No photos yet.</p>
+          <p className="py-24 text-center font-display text-xl italic text-muted-foreground">{data.photos.length ? "No photographs match these filters." : "No photographs yet."}</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {shown.map((p) => (
-              <Button
-                key={p.id}
-                variant="ghost"
-                type="button"
-                data-photo-id={p.id}
-                aria-label={p.caption || "Untitled photo"}
-                draggable={!!canEdit && !ordering}
-                onClick={() => { if (!suppressClick.current) setOpen(p); }}
-                onDragStart={(e) => {
-                  if (!canEdit || ordering) { e.preventDefault(); return; }
-                  suppressClick.current = true;
-                  setDragged(p.id);
-                  e.dataTransfer.effectAllowed = "move";
-                  e.dataTransfer.setData("application/x-archive-photo", p.id);
-                }}
-                onDragOver={(e) => {
-                  if (!dragged || ordering || p.id === dragged) return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.dataTransfer.dropEffect = "move";
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setDropTarget({ id: p.id, side: e.clientX < rect.left + rect.width / 2 ? "before" : "after" });
-                }}
-                onDrop={(e) => {
-                  const id = e.dataTransfer.getData("application/x-archive-photo");
-                  if (!id || !canEdit || ordering) return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const target: ScanDropTarget = { id: p.id, side: e.clientX < rect.left + rect.width / 2 ? "before" : "after" };
-                  setDragged(null);
-                  setDropTarget(null);
-                  void movePhoto(id, target);
-                }}
-                onDragEnd={() => {
-                  setDragged(null);
-                  setDropTarget(null);
-                  window.setTimeout(() => { suppressClick.current = false; }, 0);
-                }}
-                className={`group relative block h-auto overflow-visible whitespace-normal rounded-md border border-border bg-card p-0 text-left font-normal transition hover:shadow-md ${dragged === p.id ? "opacity-40" : ""} ${canEdit && !ordering ? "cursor-grab active:cursor-grabbing" : ""}`}
-              >
-                {dropTarget?.id === p.id && <span aria-hidden="true" className={`pointer-events-none absolute inset-y-0 z-10 w-1 bg-primary ${dropTarget.side === "before" ? "-left-2" : "-right-2"}`} />}
-                <div className="pointer-events-none aspect-square overflow-hidden rounded-t-md bg-muted">
-                  <Img path={viewPath(p.front_path, p.front_thumb_path)} alt={p.caption ?? "Photo"} className="h-full w-full object-cover" />
-                </div>
-                <div className="truncate px-2 py-1.5 text-xs">{p.caption || <span className="text-muted-foreground">Untitled</span>}</div>
-              </Button>
+          <div className="columns-2 gap-4 sm:columns-3 lg:columns-4 2xl:columns-5 [column-fill:_balance]">
+            {shown.slice(0, limit).map((p) => (
+              <figure key={p.id} className="mb-4 break-inside-avoid">
+                <Link to="/photos" search={(s: GallerySearch) => ({ ...s, photo: p.ph_id ?? p.id })} replace={false} resetScroll={false}
+                  className="group relative block overflow-hidden rounded-sm border border-gallery-rule bg-background shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <SignedImg path={viewPath(p.front_path, p.front_thumb_path, p.front_view_path && !p.front_thumb_path ? p.front_view_path : null)} alt={p.caption || p.ph_id || "Photograph"}
+                    className="block h-auto w-full transition duration-500 group-hover:scale-[1.015]" />
+                  <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 bg-gradient-to-t from-gallery-stage/80 to-transparent px-3 pb-2.5 pt-8 text-gallery-stage-foreground opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <span className="block font-mono text-[10px] tracking-widest opacity-80">{p.ph_id}</span>
+                    {p.caption && <span className="block font-display text-base leading-tight">{p.caption}</span>}
+                  </figcaption>
+                </Link>
+              </figure>
             ))}
           </div>
         )}
-      </div>
-      <NewPhotoDialog open={adding} onOpenChange={setAdding} onSaved={refresh} />
-      {open && <PhotoViewer photo={open} canEdit={canEdit !== false} onClose={() => setOpen(null)} onChanged={refresh} />}
-    </div>
-  );
-}
+        {limit < shown.length && <div ref={sentinel} className="h-10" />}
+      </main>
 
-function FilePick({ label, file, onFile }: { label: string; file: File | null; onFile: (f: File | null) => void }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState("");
-  useEffect(() => {
-    if (!file || /tiff?$/i.test(file.type) || /\.tiff?$/i.test(file.name)) return setPreview("");
-    const u = URL.createObjectURL(file);
-    setPreview(u);
-    return () => URL.revokeObjectURL(u);
-  }, [file]);
-  return (
-    <div
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onFile(e.dataTransfer.files[0] ?? null);
-      }}
-      onClick={() => ref.current?.click()}
-      className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/30 p-2 text-center text-xs text-muted-foreground hover:bg-muted/60"
-    >
-      <input ref={ref} type="file" accept="image/*,.tif,.tiff" hidden onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
-      {preview ? (
-        <img src={preview} alt={label} className="h-full w-full object-contain" />
-      ) : file ? (
-        <span className="break-all">{file.name}</span>
-      ) : (
-        <>
-          <UploadCloud className="h-6 w-6" />
-          <span>{label}</span>
-        </>
+      {openIndex >= 0 && (
+        <PhotoLightbox
+          photos={shown}
+          index={openIndex}
+          canDownloadOriginal={!!canEdit}
+          categoryNames={(p) => (byPhoto.get(p.id) ?? []).map((id) => catName.get(id) ?? "").filter(Boolean)}
+          boxLabel={(p) => { const b = p.box_id ? boxById.get(p.box_id) : null; return b ? [b.code, b.name].filter(Boolean).join(" — ") : null; }}
+          onIndex={(i) => navigate({ search: (s) => ({ ...s, photo: shown[i].ph_id ?? shown[i].id }), replace: true, resetScroll: false })}
+          onClose={() => navigate({ search: (s) => ({ ...s, photo: undefined }), resetScroll: false })}
+        />
       )}
     </div>
-  );
-}
-
-function NewPhotoDialog({ open, onOpenChange, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; onSaved: () => void }) {
-  const [front, setFront] = useState<File | null>(null);
-  const [back, setBack] = useState<File | null>(null);
-  const [caption, setCaption] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
-  const reset = () => {
-    setFront(null);
-    setBack(null);
-    setCaption("");
-    setNotes("");
-  };
-  const save = async () => {
-    if (!front) return;
-    setSaving(true);
-    try {
-      await createPhoto({ front, back, caption, notes });
-      toast.success("Photo added");
-      reset();
-      onOpenChange(false);
-      onSaved();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  };
-  return (
-    <Dialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>New Photo</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-2 gap-3">
-          <FilePick label="Front (required)" file={front} onFile={setFront} />
-          <FilePick label="Back (optional)" file={back} onFile={setBack} />
-        </div>
-        <Input placeholder="Caption (optional)" value={caption} onChange={(e) => setCaption(e.target.value)} />
-        <Textarea rows={4} placeholder="Notes — date, people, writing on back, research…" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        <Button onClick={save} disabled={!front || saving}>
-          {saving && <Loader2 className="mr-1 h-4 w-4 animate-spin" />} Save photo
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function PhotoViewer({ photo, canEdit, onClose, onChanged }: { photo: Photo; canEdit: boolean; onClose: () => void; onChanged: () => void }) {
-  const [side, setSide] = useState<"front" | "back">("front");
-  const [caption, setCaption] = useState(photo.caption ?? "");
-  const [notes, setNotes] = useState(photo.notes ?? "");
-  const [busy, setBusy] = useState(false);
-  /** The photo is popped out to fill the whole screen. */
-  const [full, setFull] = useState(false);
-  const [file, setFile] = useState<{ blob: Blob; name: string } | null>(null);
-  const [getting, setGetting] = useState(false);
-  const [fileError, setFileError] = useState("");
-  const dirty = caption !== (photo.caption ?? "") || notes !== (photo.notes ?? "");
-  const original = side === "front" ? photo.front_path : photo.back_path;
-  const path =
-    side === "front"
-      ? viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)
-      : viewPath(photo.back_path, photo.back_thumb_path, photo.back_view_path);
-
-  // The original file is fetched as soon as the photo opens (and again when
-  // flipping to the back) so Download can hand it over straight from the click.
-  useEffect(() => {
-    let alive = true;
-    setFile(null);
-    setFileError("");
-    if (!original) return;
-    setGetting(true);
-    fetchPhotoOriginal(original)
-      .then((f) => alive && setFile(f))
-      .catch((e) => alive && setFileError((e as Error).message || "This photo's file could not be opened."))
-      .finally(() => alive && setGetting(false));
-    return () => {
-      alive = false;
-    };
-  }, [original]);
-
-
-  return (
-    <>
-      <Dialog open onOpenChange={(o) => !o && onClose()}>
-        <DialogContent
-          className="max-h-[95vh] max-w-3xl overflow-y-auto"
-        >
-        <DialogHeader>
-          <DialogTitle>{photo.caption || "Photo"}</DialogTitle>
-        </DialogHeader>
-          <button
-            type="button"
-            onClick={() => setFull(true)}
-            title="Click to view full screen"
-            aria-label="View this photo full screen"
-            className="flex max-h-[60vh] w-full cursor-zoom-in items-center justify-center bg-muted"
-          >
-            <Img path={path} alt={side} className="max-h-[60vh] w-auto object-contain" />
-          </button>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => setFull(true)} title="Fill the screen with this photo">
-            <Maximize2 className="mr-1 h-4 w-4" /> Full screen
-          </Button>
-          {photo.back_path && (
-            <>
-              <Button size="sm" variant={side === "front" ? "default" : "outline"} onClick={() => setSide("front")}>Front</Button>
-              <Button size="sm" variant={side === "back" ? "default" : "outline"} onClick={() => setSide("back")}>Back</Button>
-            </>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!file}
-            title={fileError || "Downloads the original file at full quality"}
-            onClick={() => file && deliverFile(file.blob, file.name)}
-          >
-            {getting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
-            {fileError ? "Download unavailable" : getting ? "Preparing…" : "Download"}
-          </Button>
-          {fileError && <span className="text-xs text-muted-foreground">{fileError}</span>}
-
-        </div>
-
-        {canEdit ? (
-          <>
-            <Input placeholder="Caption" value={caption} onChange={(e) => setCaption(e.target.value)} />
-            <Textarea rows={5} placeholder="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-            <div className="flex justify-between gap-2">
-              <Button
-                variant="outline"
-                disabled={busy}
-                onClick={async () => {
-                  if (!confirm("Delete this photo?")) return;
-                  setBusy(true);
-                  try {
-                    await deletePhoto(photo);
-                    onChanged();
-                    onClose();
-                  } catch (e) {
-                    toast.error((e as Error).message);
-                    setBusy(false);
-                  }
-                }}
-              >
-                <Trash2 className="mr-1 h-4 w-4" /> Delete
-              </Button>
-              <Button
-                disabled={!dirty || busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    await updatePhoto(photo.id, { caption, notes });
-                    toast.success("Saved");
-                    onChanged();
-                    onClose();
-                  } catch (e) {
-                    toast.error((e as Error).message);
-                    setBusy(false);
-                  }
-                }}
-              >
-                Save
-              </Button>
-            </div>
-          </>
-        ) : (
-          photo.notes && <p className="whitespace-pre-wrap text-sm">{photo.notes}</p>
-        )}
-        {/* The pop-out is nested inside the viewer so the dialog behind it — and
-            screen readers — treat it as part of the viewer, not a click elsewhere. */}
-        {full && <FullPhoto photo={photo} side={side} onSide={setSide} onClose={() => setFull(false)} />}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-/** Full-viewport photo view: the picture fills the screen; a click or Esc closes it. */
-function FullPhoto({
-  photo,
-  side,
-  onSide,
-  onClose,
-}: {
-  photo: Photo;
-  side: "front" | "back";
-  onSide: (s: "front" | "back") => void;
-  onClose: () => void;
-}) {
-  const path =
-    side === "front"
-      ? viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)
-      : viewPath(photo.back_path, photo.back_thumb_path, photo.back_view_path);
-
-  return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="inset-0 flex h-[100dvh] max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-black p-0 sm:left-0 sm:top-0 sm:h-full sm:max-h-none sm:max-w-none sm:translate-x-0 sm:translate-y-0 sm:rounded-none sm:p-0 [&>button]:hidden">
-        <DialogTitle className="sr-only">{`${photo.caption || "Photo"} full screen`}</DialogTitle>
-        <div className="flex shrink-0 items-center justify-between gap-2 py-2">
-          <span className="truncate text-sm text-white/80">{photo.caption || "Photo"}</span>
-          <div className="flex shrink-0 items-center gap-2">
-            {photo.back_path && (
-              <>
-                <Button size="sm" variant={side === "front" ? "secondary" : "outline"} onClick={() => onSide("front")}>
-                  Front
-                </Button>
-                <Button size="sm" variant={side === "back" ? "secondary" : "outline"} onClick={() => onSide("back")}>
-                  Back
-                </Button>
-              </>
-            )}
-            <Button size="sm" variant="outline" onClick={onClose}>
-              <X className="mr-1 h-4 w-4" /> Close
-            </Button>
-          </div>
-        </div>
-        <div className="flex min-h-0 flex-1 items-center justify-center py-2" onClick={onClose}>
-          <Img path={path} alt={side} className="max-h-full max-w-full object-contain" />
-        </div>
-        <p className="shrink-0 pb-2 text-center text-xs text-white/50">Click the photo or press Esc to close</p>
-      </DialogContent>
-    </Dialog>
   );
 }
