@@ -19,10 +19,23 @@ export type Photo = {
   legacy_archive_id: string | null;
   created_at: string;
   sort_order: number | null;
+  ph_seq: number | null;
+  ph_id: string | null;
+  batch_id: string | null;
+  box_id: string | null;
+  people: string | null;
+  date_text: string | null;
+  date_year_start: number | null;
+  date_year_end: number | null;
+  location: string | null;
+  inscription: string | null;
+  info_source: string | null;
+  back_transcription: string | null;
+  original_filename: string | null;
 };
 
 const COLS =
-  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at, sort_order";
+  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at, sort_order, ph_seq, ph_id, batch_id, box_id, people, date_text, date_year_start, date_year_end, location, inscription, info_source, back_transcription, original_filename";
 
 export async function fetchPhotos(): Promise<Photo[]> {
   const out: Photo[] = [];
@@ -70,7 +83,7 @@ async function uploadOne(file: File): Promise<{ path: string; thumb: string | nu
   return { path, thumb, view };
 }
 
-export async function createPhoto(input: { front: File; back?: File | null; caption?: string; notes?: string }) {
+export async function createPhoto(input: { front: File; back?: File | null; caption?: string; notes?: string; batchId?: string | null }) {
   const [front, back] = await Promise.all([uploadOne(input.front), input.back ? uploadOne(input.back) : null]);
   const { data: auth } = await supabase.auth.getUser();
   const { error } = await supabase.from("photos").insert({
@@ -83,6 +96,8 @@ export async function createPhoto(input: { front: File; back?: File | null; capt
     caption: input.caption?.trim() || null,
     notes: input.notes?.trim() || null,
     created_by: auth.user?.id ?? null,
+    batch_id: input.batchId ?? null,
+    original_filename: input.front.name,
   });
   if (error) {
     const paths = [front.path, front.thumb, front.view, back?.path, back?.thumb, back?.view].filter(Boolean) as string[];
@@ -95,6 +110,16 @@ export async function updatePhoto(id: string, patch: { caption: string; notes: s
   const { error } = await supabase
     .from("photos")
     .update({ caption: patch.caption.trim() || null, notes: patch.notes.trim() || null, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/** Attach (or replace) the reverse-side scan on an existing photograph. */
+export async function attachPhotoBack(id: string, file: File) {
+  const b = await uploadOne(file);
+  const { error } = await supabase
+    .from("photos")
+    .update({ back_path: b.path, back_thumb_path: b.thumb, back_view_path: b.view, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw error;
 }
