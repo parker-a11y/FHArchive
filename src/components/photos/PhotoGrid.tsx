@@ -1,4 +1,4 @@
-import { ExternalLink, Maximize2 } from "lucide-react";
+import { ExternalLink, Loader2, Maximize2, RotateCcw, RotateCw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { type Photo } from "@/lib/photos";
@@ -19,6 +19,10 @@ type Props = {
   boxOf: (p: Photo) => string | null;
   recOf: (p: Photo) => PhotoRecordRef | null;
   onZoom: (id: string) => void;
+  /** Permanently rotate the viewing copy 90° left or right. */
+  onRotate: (p: Photo, degrees: 90 | -90) => void;
+  /** Photos whose rotation is currently being saved. */
+  rotating: ReadonlySet<string>;
   density: Density;
 };
 
@@ -27,7 +31,7 @@ type Props = {
  * works exactly as in the list (click to toggle, Shift-click for a range) so the
  * bulk bar above behaves the same in either view.
  */
-export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf, onZoom, density }: Props) {
+export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf, onZoom, onRotate, rotating, density }: Props) {
   if (!rows.length) {
     return <p className="rounded-md border border-dashed border-border p-10 text-center text-sm text-muted-foreground">No photographs match these filters.</p>;
   }
@@ -70,6 +74,32 @@ export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf,
               {p.back_path && (
                 <span className="absolute bottom-1 right-1 rounded bg-background/80 px-1 py-0.5 text-[10px] text-muted-foreground backdrop-blur">reverse</span>
               )}
+              <span className="absolute bottom-1 left-1 flex gap-1 opacity-0 transition focus-within:opacity-100 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                {rotating.has(p.id) ? (
+                  <span className="rounded bg-background p-1 shadow-sm"><Loader2 className="size-3.5 animate-spin text-muted-foreground" /></span>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      aria-label={`Rotate ${p.ph_id ?? "photograph"} left and save`}
+                      title="Rotate left 90° and save"
+                      onClick={() => onRotate(p, -90)}
+                      className="rounded bg-background p-1 text-muted-foreground shadow-sm transition hover:text-foreground"
+                    >
+                      <RotateCcw className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Rotate ${p.ph_id ?? "photograph"} right and save`}
+                      title="Rotate right 90° and save"
+                      onClick={() => onRotate(p, 90)}
+                      className="rounded bg-background p-1 text-muted-foreground shadow-sm transition hover:text-foreground"
+                    >
+                      <RotateCw className="size-3.5" />
+                    </button>
+                  </>
+                )}
+              </span>
             </div>
             <div className="min-w-0 space-y-0.5 px-2 py-1.5">
               <div className="flex items-center justify-between gap-1">
