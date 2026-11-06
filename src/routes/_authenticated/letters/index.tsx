@@ -10,6 +10,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { BoxLabelDialog } from "@/components/letter/BoxLabelDialog";
+import { JacketLabelDialog } from "@/components/letter/JacketLabelDialog";
 import { parseRecordNumber } from "@/lib/box-ranges";
 import { WRITER_MAX_RECORDS } from "@/lib/writer-limits";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
@@ -967,6 +968,9 @@ function LettersTable() {
                   </Button>
                 }
               />
+            )}
+            {canEdit && selectedRecords.length > 1 && (
+              <JacketLabelDialog ids={selectedRecords.map((r) => r.id)} />
             )}
             {isAdmin && selectedRecords.length > 0 && (
               <EmailArchiveDialog
