@@ -1,36 +1,18 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { test } from "node:test";
 import { applySelectionClick, categoryKey, formatPhId, matchesCategories, nextBoxCode, normalizeBoxCode, parsePhotoYears } from "./photo-archive";
 
-describe("PH identifiers", () => {
-  it("pads to five digits", () => expect(formatPhId(1)).toBe("PH00001"));
-  it("expands beyond five digits", () => expect(formatPhId(123456)).toBe("PH123456"));
-});
-
-describe("category names", () => {
-  it("treats capitalization and spacing as the same name", () =>
-    expect(categoryKey("  Harley   family ")).toBe(categoryKey("Harley Family")));
-});
-
-describe("photo boxes", () => {
-  it("normalizes PHOTO codes", () => expect(normalizeBoxCode("photo 3")).toBe("PHOTO-003"));
-  it("suggests the next code", () => expect(nextBoxCode(["PHOTO-001", "PHOTO-002"])).toBe("PHOTO-003"));
-});
-
-describe("selection", () => {
-  const ids = ["a", "b", "c", "d", "e"];
-  it("shift-click selects a continuous range", () =>
-    expect([...applySelectionClick(ids, new Set(["b"]), "b", "e", true)].sort()).toEqual(["b", "c", "d", "e"]));
-  it("plain click toggles one", () => expect(applySelectionClick(ids, new Set(["b"]), "b", "b", false).size).toBe(0));
-});
-
-describe("approximate dates", () => {
-  it("reads a decade", () => expect(parsePhotoYears("1940s")).toEqual({ start: 1940, end: 1949 }));
-  it("reads circa", () => expect(parsePhotoYears("Circa 1937")).toEqual({ start: 1937, end: 1937 }));
-  it("reads a range", () => expect(parsePhotoYears("1935–1940")).toEqual({ start: 1935, end: 1940 }));
-  it("leaves unclear dates alone", () => expect(parsePhotoYears("summer, unknown")).toBeNull());
-});
-
-describe("category filters", () => {
-  it("any matches one", () => expect(matchesCategories(["x"], ["x", "y"], "any")).toBe(true));
-  it("all requires every one", () => expect(matchesCategories(["x"], ["x", "y"], "all")).toBe(false));
-});
+test("PH numbers pad to five digits", () => assert.equal(formatPhId(1), "PH00001"));
+test("PH numbers expand beyond five digits", () => assert.equal(formatPhId(123456), "PH123456"));
+test("category names ignore capitalization and spacing", () => assert.equal(categoryKey("  Harley   family "), categoryKey("Harley Family")));
+test("photo box codes normalize", () => assert.equal(normalizeBoxCode("photo 3"), "PHOTO-003"));
+test("next photo box code", () => assert.equal(nextBoxCode(["PHOTO-001", "PHOTO-002"]), "PHOTO-003"));
+test("shift-click selects a continuous range", () =>
+  assert.deepEqual([...applySelectionClick(["a", "b", "c", "d", "e"], new Set(["b"]), "b", "e", true)].sort(), ["b", "c", "d", "e"]));
+test("plain click toggles one", () => assert.equal(applySelectionClick(["a", "b"], new Set(["b"]), "b", "b", false).size, 0));
+test("decade date", () => assert.deepEqual(parsePhotoYears("1940s"), { start: 1940, end: 1949 }));
+test("circa date", () => assert.deepEqual(parsePhotoYears("Circa 1937"), { start: 1937, end: 1937 }));
+test("date range", () => assert.deepEqual(parsePhotoYears("1935–1940"), { start: 1935, end: 1940 }));
+test("unclear date stays unparsed", () => assert.equal(parsePhotoYears("summer, unknown"), null));
+test("match any category", () => assert.equal(matchesCategories(["x"], ["x", "y"], "any"), true));
+test("match all categories", () => assert.equal(matchesCategories(["x"], ["x", "y"], "all"), false));
