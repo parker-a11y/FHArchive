@@ -179,7 +179,7 @@ function Gallery() {
               <figure key={p.id} className="mb-4 break-inside-avoid">
                 <Link to="/photos" search={(s: GallerySearch) => ({ ...s, photo: p.ph_id ?? p.id })} replace={false} resetScroll={false}
                   className="group relative block overflow-hidden rounded-sm border border-gallery-rule bg-background shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <SignedImg path={viewPath(p.front_path, p.front_thumb_path, p.front_view_path && !p.front_thumb_path ? p.front_view_path : null)} alt={p.caption || p.ph_id || "Photograph"}
+                  <SignedImg path={p.front_thumb_path ?? viewPath(p.front_path, null, p.front_view_path)} alt={p.caption || p.ph_id || "Photograph"}
                     className="block h-auto w-full transition duration-500 group-hover:scale-[1.015]" />
                   <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 bg-gradient-to-t from-gallery-stage/80 to-transparent px-3 pb-2.5 pt-8 text-gallery-stage-foreground opacity-0 transition duration-300 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:opacity-100">
                     <span className="block font-mono text-[10px] tracking-widest opacity-80">{p.ph_id}</span>
