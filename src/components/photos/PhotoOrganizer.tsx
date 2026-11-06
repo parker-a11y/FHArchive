@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ImagePlus, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ImagePlus, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { PhotoConnectionsEditor } from "@/components/photos/PhotoConnections";
 import { usePhotoData } from "@/components/photos/usePhotoData";
 import { EmailPhotosButton } from "@/components/photos/EmailPhotosButton";
 import { nextSleeveCode, sleeveLabel } from "@/lib/photo-archive";
+import { photoRecordRef, usePhotoRecords } from "@/lib/photo-links";
 
 type SetKind = "uncategorized" | "all" | "recent" | `batch:${string}` | `cat:${string}`;
 const RECENT_DAYS = 30;
@@ -53,6 +54,8 @@ export function PhotoOrganizer() {
   const list = ids.map((id) => byId.get(id)).filter(Boolean) as Photo[];
   const photo = list[Math.min(pos, list.length - 1)];
   const mine = photo ? d.byPhoto.get(photo.id) ?? [] : [];
+  const records = usePhotoRecords();
+  const rec = photo ? photoRecordRef(photo, records.data ?? new Map()) : null;
 
   const toggle = async (catId: string) => {
     if (!photo) return;
@@ -103,13 +106,19 @@ export function PhotoOrganizer() {
           <div className="min-w-0 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-mono text-sm tracking-widest">{photo.ph_id ?? "Unnumbered"}{photo.legacy_archive_id && <span className="ml-2 text-xs text-muted-foreground">formerly {photo.legacy_archive_id}</span>}</p>
+                <p className="font-mono text-sm tracking-widest">{photo.ph_id ?? "Unnumbered"}{photo.legacy_archive_id && <a href={`/letters/${photo.legacy_archive_id}`} target="_blank" rel="noreferrer" className="ml-2 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">formerly {photo.legacy_archive_id}</a>}</p>
                 {photo.caption && <p className="truncate font-display text-lg">{photo.caption}</p>}
               </div>
               <div className="flex shrink-0 gap-1">
                 <Button size="icon" variant="outline" aria-label="Previous photograph" disabled={pos === 0} onClick={() => go(-1)}><ChevronLeft /></Button>
                 <Button size="icon" variant="outline" aria-label="Next photograph" disabled={pos >= list.length - 1} onClick={() => go(1)}><ChevronRight /></Button>
                 <Button size="icon" variant="outline" aria-label="Zoom" onClick={() => setZoomOpen(true)}><Maximize2 /></Button>
+                {rec && (
+                  <Button size="sm" variant="outline" title={`Open the ${rec.archive_id} record`}
+                    onClick={() => window.open(rec.href, "_blank", "noopener")}>
+                    <ExternalLink className="mr-1 size-4" /><span className="hidden sm:inline">Open {rec.archive_id}</span>
+                  </Button>
+                )}
               </div>
             </div>
             <button type="button" onClick={() => setZoomOpen(true)} className="flex h-[52vh] w-full cursor-zoom-in items-center justify-center rounded-md bg-muted lg:h-[68vh]">

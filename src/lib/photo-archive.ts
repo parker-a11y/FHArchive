@@ -91,3 +91,18 @@ export function sleeveLabel(s: { code: string; name: string | null; created_at: 
   const date = new Date(s.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   return [s.code.replace("-", " "), date, s.name].filter(Boolean).join(" — ");
 }
+
+/** The archive record a photograph points at: a connected letter, else the FH number it was converted from. */
+export type PhotoRecordRef = { archive_id: string; title: string | null; href: string; via: "linked" | "legacy" };
+
+export function photoRecordRef(
+  photo: { id: string; legacy_archive_id: string | null },
+  linked: Map<string, PhotoRecordRef>,
+): PhotoRecordRef | null {
+  const hit = linked.get(photo.id);
+  if (hit) return hit;
+  if (photo.legacy_archive_id) {
+    return { archive_id: photo.legacy_archive_id, title: null, href: `/letters/${photo.legacy_archive_id}`, via: "legacy" };
+  }
+  return null;
+}

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Boxes, FolderInput, Layers, Loader2, Search, Tag, Trash2, X } from "lucide-react";
+import { Boxes, ExternalLink, FolderInput, Layers, Loader2, Search, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,12 +13,15 @@ import { SignedImg } from "@/components/photos/SignedImg";
 import { usePhotoData } from "@/components/photos/usePhotoData";
 import { EmailPhotosButton } from "@/components/photos/EmailPhotosButton";
 import { SleeveLabelButton } from "@/components/photos/SleeveLabelButton";
+import { photoRecordRef, usePhotoRecords, type PhotoRecordRef } from "@/lib/photo-links";
 
 type Sort = "ph" | "ph-desc" | "uploaded" | "caption";
 
 export function PhotoRecordList() {
   const d = usePhotoData();
   const batches = useQuery({ queryKey: ["photo-batches"], queryFn: fetchBatches });
+  const records = usePhotoRecords();
+  const recs: Map<string, PhotoRecordRef> = records.data ?? new Map();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [box, setBox] = useState("");
@@ -130,14 +133,28 @@ export function PhotoRecordList() {
             {rows.map((p) => {
               const on = sel.has(p.id);
               const b = p.box_id ? d.boxById.get(p.box_id) : null;
+              const rec = photoRecordRef(p, recs);
               return (
                 <tr key={p.id} className={`cursor-pointer border-t border-border/60 select-none ${on ? "bg-accent/60" : "hover:bg-muted/40"}`}
                   onClick={(e) => click(p.id, e.shiftKey)}>
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                     <Checkbox aria-label={`Select ${p.ph_id ?? "photograph"}`} checked={on} onClick={(e) => { e.preventDefault(); click(p.id, e.shiftKey); }} />
                   </td>
-                  <td className="px-2 py-1.5"><div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded bg-muted"><SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="max-h-12 max-w-12 object-contain" /></div></td>
-                  <td className="px-2 py-1.5 font-mono text-xs">{p.ph_id ?? "—"}{p.legacy_archive_id && <div className="text-[10px] text-muted-foreground">{p.legacy_archive_id}</div>}</td>
+                  <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}
+                    title={rec ? `Double-click to open the ${rec.archive_id} record` : undefined}
+                    onDoubleClick={(e) => { e.stopPropagation(); if (rec) window.open(rec.href, "_blank", "noopener"); }}>
+                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded bg-muted"><SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="max-h-12 max-w-12 object-contain" /></div>
+                  </td>
+                  <td className="px-2 py-1.5 font-mono text-xs">
+                    <span onClick={(e) => e.stopPropagation()}>{p.ph_id ?? "—"}</span>
+                    {rec && (
+                      <a href={rec.href} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}
+                        title={`Open the ${rec.archive_id} record`}
+                        className="mt-0.5 flex w-fit items-center gap-1 text-[10px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+                        {rec.archive_id}<ExternalLink className="size-3" />
+                      </a>
+                    )}
+                  </td>
                   <td className="px-2 py-1.5">{p.caption || <span className="text-muted-foreground">—</span>}</td>
                   <td className="px-2 py-1.5 text-xs text-muted-foreground">{(d.byPhoto.get(p.id) ?? []).map((c) => d.catName.get(c)).join(", ") || "—"}</td>
                   <td className="px-2 py-1.5 text-xs">{new Date(p.created_at).toLocaleDateString()}</td>
@@ -149,7 +166,7 @@ export function PhotoRecordList() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">Click a row or checkbox to select; Shift-click selects a continuous range.</p>
+      <p className="text-xs text-muted-foreground">Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab.</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
     </div>
