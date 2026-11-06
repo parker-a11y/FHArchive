@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Boxes, ExternalLink, FolderInput, Layers, LayoutGrid, ListChecks, Loader2, Search, Tag, Trash2, X } from "lucide-react";
+import { Boxes, ExternalLink, FolderInput, Layers, LayoutGrid, ListChecks, Loader2, RotateCcw, RotateCw, Search, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { type Photo } from "@/lib/photos";
+import { rotatePhotoView, type Photo } from "@/lib/photos";
 import { assignBox, assignSleeve, createBox, createSleeve, deleteSleeve, fetchBatches, moveSleeves, renameSleeve, setCategory } from "@/lib/photo-catalog";
 import { applySelectionClick, nextBoxCode, nextSleeveCode, sleeveLabel } from "@/lib/photo-archive";
 import { SignedImg } from "@/components/photos/SignedImg";
@@ -53,6 +53,18 @@ export function PhotoRecordList() {
   const [density, setDensity] = useState<Density>("md");
   const [zoomId, setZoomId] = useState<string | null>(null);
   const [viewReady, setViewReady] = useState(false);
+  const [rotating, setRotating] = useState<Set<string>>(new Set());
+
+  const rotate = async (p: Photo, degrees: 90 | -90) => {
+    if (rotating.has(p.id)) return;
+    setRotating((s) => new Set(s).add(p.id));
+    try {
+      const patch = await rotatePhotoView(p, degrees);
+      d.patch((old) => ({ ...old, photos: old.photos.map((x) => (x.id === p.id ? { ...x, ...patch } : x)) }));
+      toast.success(`Rotation saved for ${p.ph_id ?? "photograph"}`);
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setRotating((s) => { const n = new Set(s); n.delete(p.id); return n; }); }
+  };
 
   // Read the remembered view after mount, so the server render and the first
   // paint always agree. Nothing is written back until the read has landed,
@@ -177,13 +189,15 @@ export function PhotoRecordList() {
           boxOf={(p) => (p.box_id ? d.boxById.get(p.box_id)?.code ?? null : null)}
           recOf={(p) => photoRecordRef(p, recs)}
           onZoom={setZoomId}
+          onRotate={(p, deg) => void rotate(p, deg)}
+          rotating={rotating}
           density={density}
         />
       ) : (
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
-            <tr><th className="w-10 px-2 py-2" /><th className="w-16 px-2 py-2">Photo</th><th className="w-28 px-2 py-2">PH</th><th className="px-2 py-2">Subtitle</th><th className="px-2 py-2">Categories</th><th className="w-28 px-2 py-2">Uploaded</th><th className="w-28 px-2 py-2">Sleeve</th><th className="w-28 px-2 py-2">Box</th></tr>
+            <tr><th className="w-10 px-2 py-2" /><th className="w-16 px-2 py-2">Photo</th><th className="w-16 px-2 py-2">Rotate</th><th className="w-28 px-2 py-2">PH</th><th className="px-2 py-2">Subtitle</th><th className="px-2 py-2">Categories</th><th className="w-28 px-2 py-2">Uploaded</th><th className="w-28 px-2 py-2">Sleeve</th><th className="w-28 px-2 py-2">Box</th></tr>
           </thead>
           <tbody>
             {rows.map((p) => {
@@ -200,6 +214,16 @@ export function PhotoRecordList() {
                     title={rec ? `Double-click to open the ${rec.archive_id} record` : undefined}
                     onDoubleClick={(e) => { e.stopPropagation(); if (rec) window.open(rec.href, "_blank", "noopener"); }}>
                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded bg-muted"><SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="max-h-12 max-w-12 object-contain" /></div>
+                  </td>
+                  <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
+                    {rotating.has(p.id) ? (
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Saving rotation" />
+                    ) : (
+                      <div className="flex gap-0.5">
+                        <Button size="icon" variant="ghost" className="size-7" aria-label={`Rotate ${p.ph_id ?? "photograph"} left and save`} title="Rotate left 90° and save" onClick={() => void rotate(p, -90)}><RotateCcw className="size-3.5" /></Button>
+                        <Button size="icon" variant="ghost" className="size-7" aria-label={`Rotate ${p.ph_id ?? "photograph"} right and save`} title="Rotate right 90° and save" onClick={() => void rotate(p, 90)}><RotateCw className="size-3.5" /></Button>
+                      </div>
+                    )}
                   </td>
                   <td className="px-2 py-1.5 font-mono text-xs">
                     <span onClick={(e) => e.stopPropagation()}>{p.ph_id ?? "—"}</span>
@@ -224,8 +248,8 @@ export function PhotoRecordList() {
       </div>
       )}
       <p className="text-xs text-muted-foreground">{view === "grid"
-        ? "Click a tile to select it (Shift-click for a range), double-click to open its archive record, or use the corner button to view it full size."
-        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab."}</p>
+        ? "Click a tile to select it (Shift-click for a range), double-click to open its archive record, or hover for the full-size and rotate buttons. Rotating saves permanently."
+        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab. The rotate buttons save permanently."}</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
       {zoomId && (
