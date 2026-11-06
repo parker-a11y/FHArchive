@@ -8,15 +8,15 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { condenseRanges } from "@/lib/box-ranges";
-import { createBox, fetchBoxes, updateBox, type PhotoBox } from "@/lib/photo-catalog";
-import { nextBoxCode } from "@/lib/photo-archive";
+import { createBox, fetchBoxes, fetchSleeves, moveSleeves, updateBox, type PhotoBox } from "@/lib/photo-catalog";
+import { nextBoxCode, sleeveLabel } from "@/lib/photo-archive";
 
-type Row = { id: string; ph_id: string | null; ph_seq: number | null; caption: string | null; box_id: string | null };
+type Row = { id: string; ph_id: string | null; ph_seq: number | null; caption: string | null; box_id: string | null; sleeve_id: string | null };
 
 async function fetchBoxedPhotos(): Promise<Row[]> {
   const out: Row[] = [];
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await supabase.from("photos").select("id, ph_id, ph_seq, caption, box_id").not("box_id", "is", null).order("ph_seq").order("id").range(from, from + 999);
+    const { data, error } = await supabase.from("photos").select("id, ph_id, ph_seq, caption, box_id, sleeve_id").not("box_id", "is", null).order("ph_seq").order("id").range(from, from + 999);
     if (error) throw error;
     out.push(...(data ?? []));
     if (!data || data.length < 1000) return out;
@@ -47,13 +47,14 @@ export function PhotoBoxesSection({ search }: { search: string }) {
   const qc = useQueryClient();
   const boxes = useQuery({ queryKey: ["photo-boxes"], queryFn: fetchBoxes });
   const photos = useQuery({ queryKey: ["photo-box-contents"], queryFn: fetchBoxedPhotos });
+  const sleeves = useQuery({ queryKey: ["photo-sleeves"], queryFn: fetchSleeves });
   const [open, setOpen] = useState<Set<string>>(new Set());
   const byBox = useMemo(() => {
     const m = new Map<string, Row[]>();
     for (const p of photos.data ?? []) if (p.box_id) m.set(p.box_id, [...(m.get(p.box_id) ?? []), p]);
     return m;
   }, [photos.data]);
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["photo-boxes"] }); qc.invalidateQueries({ queryKey: ["photo-gallery"] }); };
+  const refresh = () => { qc.invalidateQueries({ queryKey: ["photo-boxes"] }); qc.invalidateQueries({ queryKey: ["photo-sleeves"] }); qc.invalidateQueries({ queryKey: ["photo-box-contents"] }); qc.invalidateQueries({ queryKey: ["photo-gallery"] }); };
   const needle = search.trim().toLowerCase();
   const list = (boxes.data ?? []).filter((b) => !needle || [b.code, b.name, b.location].some((v) => v?.toLowerCase().includes(needle)) || (byBox.get(b.id) ?? []).some((r) => r.ph_id?.toLowerCase().includes(needle) || r.caption?.toLowerCase().includes(needle)));
 
@@ -91,8 +92,22 @@ export function PhotoBoxesSection({ search }: { search: string }) {
                   </>}
                   <Button size="sm" variant="outline" onClick={() => printLabel(b, rows)}><Printer className="mr-1 size-4" />Print label</Button>
                 </div>
+                {(sleeves.data ?? []).filter((x) => x.box_id === b.id).map((x) => {
+                  const inS = rows.filter((r) => r.sleeve_id === x.id);
+                  return (
+                    <div key={x.id} className="flex flex-wrap items-center gap-2 rounded border border-border/70 px-2 py-1.5 text-xs">
+                      <span className="font-mono font-medium">{sleeveLabel(x)}</span>
+                      <span className="text-muted-foreground">{inS.length} photograph{inS.length === 1 ? "" : "s"}{inS.length ? ` · ${condenseRanges(inS.map((r) => r.ph_id).filter(Boolean) as string[])}` : ""}</span>
+                      {isAdmin && <select aria-label={`Move ${x.code}`} value={b.id} className="ml-auto rounded-md border border-input bg-background px-1.5 py-0.5"
+                        onChange={(e) => void moveSleeves([x.id], e.target.value || null).then(() => { toast.success(`${x.code.replace("-", " ")} moved`); refresh(); }, (er: Error) => toast.error(er.message))}>
+                        <option value="">Take out of box</option>
+                        {(boxes.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.code}</option>)}
+                      </select>}
+                    </div>
+                  );
+                })}
                 <div className="flex flex-wrap gap-1.5">
-                  {rows.map((r) => (
+                  {rows.filter((r) => !r.sleeve_id).map((r) => (
                     <Link key={r.id} to="/photos" search={{ photo: r.ph_id ?? r.id }} title={r.caption ?? undefined}
                       className="rounded border border-border px-2 py-0.5 font-mono text-xs hover:border-primary hover:text-primary">{r.ph_id ?? "Unnumbered"}</Link>
                   ))}

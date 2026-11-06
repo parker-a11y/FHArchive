@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { attachPhotoBack, deletePhoto, viewPath, type Photo } from "@/lib/photos";
-import { assignBox, createCategory, fetchBatches, savePhotoDetails, setCategory, type PhotoDetails } from "@/lib/photo-catalog";
+import { assignBox, assignSleeve, createCategory, createSleeve, fetchBatches, savePhotoDetails, setCategory, type PhotoDetails } from "@/lib/photo-catalog";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
 import { PhotoConnectionsEditor } from "@/components/photos/PhotoConnections";
 import { usePhotoData } from "@/components/photos/usePhotoData";
+import { nextSleeveCode, sleeveLabel } from "@/lib/photo-archive";
 
 type SetKind = "uncategorized" | "all" | "recent" | `batch:${string}` | `cat:${string}`;
 const RECENT_DAYS = 30;
