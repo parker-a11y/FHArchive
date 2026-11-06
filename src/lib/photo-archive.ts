@@ -75,3 +75,19 @@ export function matchesCategories(photoCats: readonly string[], chosen: readonly
   if (!chosen.length) return true;
   return mode === "all" ? chosen.every((c) => photoCats.includes(c)) : chosen.some((c) => photoCats.includes(c));
 }
+
+/** Suggest the next SLEEVE-### code after the existing ones. */
+export function nextSleeveCode(codes: string[]): string {
+  let max = 0;
+  for (const c of codes) {
+    const m = /^SLEEVE-(\d+)$/.exec(c);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return "SLEEVE-" + String(max + 1).padStart(3, "0");
+}
+
+/** "SLEEVE 001 — Nov 6, 2026" (plus the optional name). */
+export function sleeveLabel(s: { code: string; name: string | null; created_at: string }): string {
+  const date = new Date(s.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return [s.code.replace("-", " "), date, s.name].filter(Boolean).join(" — ");
+}
