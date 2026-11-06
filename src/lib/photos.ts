@@ -5,6 +5,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { canDerive, makeDerivatives } from "@/lib/derivatives";
 import { legacyPhotoNotes } from "@/lib/photo-notes";
+import { rotateBlob } from "@/lib/rotate";
+import { photoRotationSources } from "@/lib/photo-rotation";
 
 export type Photo = {
   id: string;
@@ -114,6 +116,36 @@ export async function updatePhoto(id: string, patch: { caption: string; notes: s
     .update({ caption: patch.caption.trim() || null, notes: patch.notes.trim() || null, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw error;
+}
+
+/** Save new rotated derivatives together; retain masters and older shared images. */
+export async function rotatePhotoView(photo: Photo, degrees: 90 | -90) {
+  const sources = photoRotationSources(photo);
+  const token = crypto.randomUUID();
+  const patch = {
+    front_view_path: `photos/${photo.id}_${token}_view.jpg`,
+    front_thumb_path: `photos/${photo.id}_${token}_thumb.jpg`,
+  };
+  const uploaded: string[] = [];
+  try {
+    for (const [source, destination] of [[sources.view, patch.front_view_path], [sources.thumb, patch.front_thumb_path]]) {
+      const { data, error } = await supabase.storage.from("scans").createSignedUrl(source, 600);
+      if (error || !data?.signedUrl) throw new Error(error?.message ?? "Could not read the photograph");
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) throw new Error(`Could not load the photograph (${response.status})`);
+      const rotated = await rotateBlob(await response.blob(), degrees);
+      const result = await supabase.storage.from("scans").upload(destination, rotated.blob, { contentType: "image/jpeg", upsert: false });
+      if (result.error) throw result.error;
+      uploaded.push(destination);
+    }
+    const { data, error } = await supabase.from("photos")
+      .update({ ...patch, updated_at: new Date().toISOString() }).eq("id", photo.id).select("id").single();
+    if (error || !data) throw new Error(error?.message ?? "Rotation could not be saved");
+    return patch;
+  } catch (error) {
+    if (uploaded.length) await supabase.storage.from("scans").remove(uploaded);
+    throw error;
+  }
 }
 
 /** Attach (or replace) the reverse-side scan on an existing photograph. */

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ImagePlus, Loader2, Maximize2, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ImagePlus, Loader2, Maximize2, Plus, RotateCcw, RotateCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { attachPhotoBack, deletePhoto, viewPath, type Photo } from "@/lib/photos";
+import { attachPhotoBack, deletePhoto, rotatePhotoView, viewPath, type Photo } from "@/lib/photos";
 import { assignBox, assignSleeve, createCategory, createSleeve, fetchBatches, savePhotoDetails, setCategory, type PhotoDetails } from "@/lib/photo-catalog";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
@@ -28,6 +28,8 @@ export function PhotoOrganizer() {
   const [ids, setIds] = useState<string[]>([]);
   const [pos, setPos] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
+  const [rotating, setRotating] = useState(false);
+  const rotationLock = useRef(false);
 
   const build = (k: SetKind) => {
     const cutoff = Date.now() - RECENT_DAYS * 864e5;
@@ -56,6 +58,18 @@ export function PhotoOrganizer() {
   const mine = photo ? d.byPhoto.get(photo.id) ?? [] : [];
   const records = usePhotoRecords();
   const rec = photo ? photoRecordRef(photo, records.data ?? new Map()) : null;
+
+  const rotate = async (degrees: 90 | -90) => {
+    if (!photo || rotationLock.current) return;
+    rotationLock.current = true;
+    setRotating(true);
+    try {
+      const patch = await rotatePhotoView(photo, degrees);
+      d.patch((old) => ({ ...old, photos: old.photos.map((p) => p.id === photo.id ? { ...p, ...patch } : p) }));
+      toast.success("Rotation saved");
+    } catch (error) { toast.error((error as Error).message); }
+    finally { rotationLock.current = false; setRotating(false); }
+  };
 
   const toggle = async (catId: string) => {
     if (!photo) return;
@@ -90,7 +104,7 @@ export function PhotoOrganizer() {
           <option value="uncategorized">Uncategorized</option>
           <option value="all">All photographs</option>
           <option value="recent">Recently uploaded (30 days)</option>
-          {(batches.data ?? []).length > 0 && <optgroup label="Upload batch">{batches.data!.map((b) => <option key={b.id} value={`batch:${b.id}`}>{b.name || `Batch of ${new Date(b.created_at).toLocaleDateString()}`}</option>)}</optgroup>}
+          {(batches.data ?? []).length > 0 && <optgroup label="Upload batch">{(batches.data ?? []).map((b) => <option key={b.id} value={`batch:${b.id}`}>{b.name || `Batch of ${new Date(b.created_at).toLocaleDateString()}`}</option>)}</optgroup>}
           {d.categories.length > 0 && <optgroup label="Category">{d.categories.map((c) => <option key={c.id} value={`cat:${c.id}`}>{c.name}</option>)}</optgroup>}
         </select>
         <Button size="sm" variant="ghost" onClick={() => choose(kind)}>Refresh set</Button>
@@ -121,8 +135,13 @@ export function PhotoOrganizer() {
                 )}
               </div>
             </div>
+            <div className="flex items-center gap-1">
+              <Button size="icon" variant="outline" aria-label="Rotate left and save" title="Rotate left 90° and save" disabled={rotating} onClick={() => void rotate(-90)}><RotateCcw className="size-4" /></Button>
+              <Button size="icon" variant="outline" aria-label="Rotate right and save" title="Rotate right 90° and save" disabled={rotating} onClick={() => void rotate(90)}><RotateCw className="size-4" /></Button>
+              {rotating && <span role="status" className="flex items-center gap-1 text-xs text-muted-foreground"><Loader2 className="size-3 animate-spin" />Saving rotation…</span>}
+            </div>
             <button type="button" onClick={() => setZoomOpen(true)} className="flex h-[52vh] w-full cursor-zoom-in items-center justify-center rounded-md bg-muted lg:h-[68vh]">
-              <SignedImg key={photo.id} eager path={viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)} alt={photo.caption || photo.ph_id || "Photograph"} className="h-full w-full object-contain" />
+              <SignedImg key={`${photo.id}:${photo.front_view_path}`} eager path={viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)} alt={photo.caption || photo.ph_id || "Photograph"} className="h-full w-full object-contain" />
             </button>
             <p className="text-xs text-muted-foreground">← → move between photographs · number keys 1–9 toggle the first nine categories</p>
           </div>
