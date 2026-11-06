@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Boxes, ExternalLink, FolderInput, Layers, Loader2, Search, Tag, Trash2, X } from "lucide-react";
+import { Boxes, ExternalLink, FolderInput, Layers, LayoutGrid, ListChecks, Loader2, Search, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,9 +13,25 @@ import { SignedImg } from "@/components/photos/SignedImg";
 import { usePhotoData } from "@/components/photos/usePhotoData";
 import { EmailPhotosButton } from "@/components/photos/EmailPhotosButton";
 import { SleeveLabelButton } from "@/components/photos/SleeveLabelButton";
+import { PhotoGrid, type Density } from "@/components/photos/PhotoGrid";
+import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
 import { photoRecordRef, usePhotoRecords, type PhotoRecordRef } from "@/lib/photo-links";
 
 type Sort = "ph" | "ph-desc" | "uploaded" | "caption";
+type View = "list" | "grid";
+
+const VIEW_KEY = "photo_record_view";
+const DENSITY_KEY = "photo_record_density";
+
+/** Remembered between visits; defaults to the table. */
+function readStored<T extends string>(key: string, allowed: readonly T[]): T | null {
+  try {
+    const v = localStorage.getItem(key);
+    return allowed.includes(v as T) ? (v as T) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function PhotoRecordList() {
   const d = usePhotoData();
