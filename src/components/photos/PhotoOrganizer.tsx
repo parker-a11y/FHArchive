@@ -9,6 +9,7 @@ import { attachPhotoBack, deletePhoto, viewPath, type Photo } from "@/lib/photos
 import { assignBox, createCategory, fetchBatches, savePhotoDetails, setCategory, type PhotoDetails } from "@/lib/photo-catalog";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
+import { PhotoConnectionsEditor } from "@/components/photos/PhotoConnections";
 import { usePhotoData } from "@/components/photos/usePhotoData";
 
 type SetKind = "uncategorized" | "all" | "recent" | `batch:${string}` | `cat:${string}`;
@@ -117,6 +118,7 @@ export function PhotoOrganizer() {
           <aside className="space-y-4">
             <CategoryPanel photo={photo} mine={mine} onToggle={toggle} />
             <BoxPicker photo={photo} />
+            <PhotoConnectionsEditor photoId={photo.id} />
             <DetailsPanel key={photo.id} photo={photo} onDeleted={() => { setIds((x) => x.filter((id) => id !== photo.id)); d.refresh(); }} />
           </aside>
         </div>
