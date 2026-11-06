@@ -2635,59 +2635,236 @@ export type Database = {
           },
         ]
       }
+      photo_batches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      photo_boxes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          location: string | null
+          name: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
+      photo_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          name_key: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          name_key?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          name_key?: string | null
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      photo_category_links: {
+        Row: {
+          category_id: string
+          created_at: string
+          photo_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          photo_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          photo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_category_links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "photo_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_category_links_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_counter: {
+        Row: {
+          id: number
+          last_seq: number
+          numbering_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          last_seq?: number
+          numbering_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          last_seq?: number
+          numbering_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           back_path: string | null
           back_thumb_path: string | null
+          back_transcription: string | null
           back_view_path: string | null
+          batch_id: string | null
+          box_id: string | null
           caption: string | null
           created_at: string
           created_by: string | null
+          date_text: string | null
+          date_year_end: number | null
+          date_year_start: number | null
           front_path: string
           front_thumb_path: string | null
           front_view_path: string | null
           id: string
+          info_source: string | null
+          inscription: string | null
           legacy_archive_id: string | null
           legacy_source: string | null
+          location: string | null
           notes: string | null
+          original_filename: string | null
+          people: string | null
+          ph_id: string | null
+          ph_seq: number | null
           sort_order: number | null
           updated_at: string
         }
         Insert: {
           back_path?: string | null
           back_thumb_path?: string | null
+          back_transcription?: string | null
           back_view_path?: string | null
+          batch_id?: string | null
+          box_id?: string | null
           caption?: string | null
           created_at?: string
           created_by?: string | null
+          date_text?: string | null
+          date_year_end?: number | null
+          date_year_start?: number | null
           front_path: string
           front_thumb_path?: string | null
           front_view_path?: string | null
           id?: string
+          info_source?: string | null
+          inscription?: string | null
           legacy_archive_id?: string | null
           legacy_source?: string | null
+          location?: string | null
           notes?: string | null
+          original_filename?: string | null
+          people?: string | null
+          ph_id?: string | null
+          ph_seq?: number | null
           sort_order?: number | null
           updated_at?: string
         }
         Update: {
           back_path?: string | null
           back_thumb_path?: string | null
+          back_transcription?: string | null
           back_view_path?: string | null
+          batch_id?: string | null
+          box_id?: string | null
           caption?: string | null
           created_at?: string
           created_by?: string | null
+          date_text?: string | null
+          date_year_end?: number | null
+          date_year_start?: number | null
           front_path?: string
           front_thumb_path?: string | null
           front_view_path?: string | null
           id?: string
+          info_source?: string | null
+          inscription?: string | null
           legacy_archive_id?: string | null
           legacy_source?: string | null
+          location?: string | null
           notes?: string | null
+          original_filename?: string | null
+          people?: string | null
+          ph_id?: string | null
+          ph_seq?: number | null
           sort_order?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photos_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "photo_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_box_id_fkey"
+            columns: ["box_id"]
+            isOneToOne: false
+            referencedRelation: "photo_boxes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       places: {
         Row: {
@@ -3609,6 +3786,7 @@ export type Database = {
     }
     Functions: {
       archive_owner_id: { Args: never; Returns: string }
+      assign_ph_numbers: { Args: never; Returns: number }
       backup_pending_objects: {
         Args: { _limit?: number }
         Returns: {
