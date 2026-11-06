@@ -163,6 +163,19 @@ export function PhotoRecordList() {
         </>}
       </div>
 
+      {view === "grid" ? (
+        <PhotoGrid
+          rows={rows}
+          sel={sel}
+          onPick={click}
+          catNames={(p) => (d.byPhoto.get(p.id) ?? []).map((c) => d.catName.get(c) ?? "").filter(Boolean)}
+          sleeveOf={(p) => (p.sleeve_id && d.sleeveById.get(p.sleeve_id)?.code.replace("-", " ")) || null}
+          boxOf={(p) => (p.box_id ? d.boxById.get(p.box_id)?.code ?? null : null)}
+          recOf={(p) => photoRecordRef(p, recs)}
+          onZoom={setZoomId}
+          density={density}
+        />
+      ) : (
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
@@ -205,9 +218,23 @@ export function PhotoRecordList() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab.</p>
+      )}
+      <p className="text-xs text-muted-foreground">{view === "grid"
+        ? "Click a tile to select it (Shift-click for a range), double-click to open its archive record, or use the corner button to view it full size."
+        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab."}</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
+      {zoomId && (
+        <PhotoLightbox
+          photos={rows}
+          index={Math.max(0, rows.findIndex((p) => p.id === zoomId))}
+          canDownloadOriginal
+          categoryNames={(p) => (d.byPhoto.get(p.id) ?? []).map((id) => d.catName.get(id) ?? "")}
+          boxLabel={(p) => (p.box_id ? d.boxById.get(p.box_id)?.code ?? null : null)}
+          onIndex={(i) => setZoomId(rows[i]?.id ?? null)}
+          onClose={() => setZoomId(null)}
+        />
+      )}
     </div>
   );
 }
