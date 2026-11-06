@@ -1,4 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { PhotoRecordRef } from "@/lib/photo-archive";
 
 export type LinkType = "letter" | "photo" | "person";
 export type Certainty = "documented" | "recollection" | "tentative";
@@ -81,4 +83,39 @@ export async function updatePhotoLink(id: string, certainty: Certainty) {
 export async function removePhotoLink(id: string) {
   const { error } = await supabase.from("photo_links").delete().eq("id", id);
   if (error) throw error;
+}
+
+const CERTAINTY_RANK: Record<string, number> = { documented: 0, recollection: 1, tentative: 2 };
+
+/** For every photograph, the archive record to open: its connected letter, best certainty first. */
+export async function fetchPhotoRecords(): Promise<Map<string, PhotoRecordRef>> {
+  const { data: rows, error } = await supabase.from("photo_links")
+    .select("photo_id,target_id,certainty").eq("target_type", "letter");
+  if (error) throw error;
+  const ids = [...new Set((rows ?? []).map((r) => r.target_id))];
+  let letters: { id: string; archive_id: string | null; title: string | null }[] = [];
+  if (ids.length) {
+    const { data, error: e2 } = await supabase.from("letters").select("id,archive_id,title").in("id", ids);
+    if (e2) throw e2;
+    letters = (data ?? []) as typeof letters;
+  }
+  const byId = new Map(letters.map((x) => [x.id, x]));
+  const best = new Map<string, { rank: number; rec: PhotoRecordRef }>();
+  for (const r of rows ?? []) {
+    const x = byId.get(r.target_id);
+    if (!x?.archive_id) continue;
+    const rank = CERTAINTY_RANK[r.certainty] ?? 9;
+    const cur = best.get(r.photo_id);
+    if (cur && cur.rank <= rank) continue;
+    best.set(r.photo_id, {
+      rank,
+      rec: { archive_id: x.archive_id, title: x.title, href: `/letters/${x.archive_id}`, via: "linked" },
+    });
+  }
+  return new Map([...best].map(([photoId, v]) => [photoId, v.rec]));
+}
+
+/** Shared across the organizer tools so the record button appears without re-querying per photo. */
+export function usePhotoRecords() {
+  return useQuery({ queryKey: ["photo-records"], queryFn: fetchPhotoRecords, staleTime: 60_000 });
 }
