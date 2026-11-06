@@ -51,7 +51,7 @@ export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf,
           >
             <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-muted">
               <SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="h-full w-full object-contain" />
-              <span className="absolute left-1 top-1 rounded bg-background/80 p-0.5 backdrop-blur" onClick={(e) => e.stopPropagation()}>
+              <span className="absolute left-1 top-1 rounded bg-background p-0.5 shadow-sm" onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   aria-label={`Select ${p.ph_id ?? "photograph"}`}
                   checked={on}
