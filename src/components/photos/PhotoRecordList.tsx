@@ -11,6 +11,7 @@ import { assignBox, assignSleeve, createBox, createSleeve, deleteSleeve, fetchBa
 import { applySelectionClick, nextBoxCode, nextSleeveCode, sleeveLabel } from "@/lib/photo-archive";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { usePhotoData } from "@/components/photos/usePhotoData";
+import { SleeveLabelButton } from "@/components/photos/SleeveLabelButton";
 
 type Sort = "ph" | "ph-desc" | "uploaded" | "caption";
 
@@ -302,6 +303,7 @@ function SleevesPanel() {
                   <option value="">No box</option>
                   {d.boxes.map((b) => <option key={b.id} value={b.id}>{b.code}</option>)}
                 </select>
+                <SleeveLabelButton sleeve={x} boxCode={box?.code} phIds={d.photos.filter((p) => p.sleeve_id === x.id && p.ph_id).sort((a, b) => (a.ph_seq ?? 0) - (b.ph_seq ?? 0)).map((p) => p.ph_id!)} />
                 <Button size="icon" variant="ghost" className="size-7" aria-label={`Delete ${x.code}`} disabled={busy}
                   onClick={() => confirm(`Delete ${x.code}? Its photographs stay in their box, unsleeved.`) && void run(() => deleteSleeve(x.id), "Sleeve deleted")}><Trash2 className="size-3.5" /></Button>
               </li>

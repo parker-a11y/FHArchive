@@ -12,6 +12,8 @@ type LabelProps = {
   dateText: string;
   title?: string;
   lines?: string[];
+  /** Override the big identifier size for longer IDs (e.g. "SLEEVE 001"). */
+  idFontSize?: string;
 };
 
 /**
@@ -38,12 +40,12 @@ export function LabelCard(props: LabelProps) {
   );
 }
 
-function LabelFace({ archiveId, dateText, title = "", lines = [] }: LabelProps) {
+function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "1.1in" }: LabelProps) {
   return (
     <div className="flex h-[6in] w-[4in] flex-col items-center justify-center border border-border bg-white text-center">
       <div
         className="archive-id leading-none font-bold text-black"
-        style={{ fontSize: "1.1in", letterSpacing: "0.02em" }}
+        style={{ fontSize: idFontSize, letterSpacing: "0.02em" }}
       >
         {archiveId}
       </div>
@@ -199,7 +201,9 @@ export function EntryLabelDialog({
   defaultDate,
   defaultTitle = "",
   lines,
+  idFontSize,
 }: {
+  idFontSize?: string;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   archiveId: string;
@@ -240,6 +244,7 @@ export function EntryLabelDialog({
               dateText={dateText}
               title={titleText}
               lines={lines}
+              idFontSize={idFontSize}
             />
           </div>
           <div className="flex shrink-0 items-center self-center sm:self-stretch">
