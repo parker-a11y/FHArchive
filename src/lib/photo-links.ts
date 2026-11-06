@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-export { photoRecordRef, type PhotoRecordRef } from "@/lib/photo-archive";
+import { photoRecordRef, type PhotoRecordRef } from "@/lib/photo-archive";
+export { photoRecordRef, type PhotoRecordRef };
 
 export type LinkType = "letter" | "photo" | "person";
 export type Certainty = "documented" | "recollection" | "tentative";
