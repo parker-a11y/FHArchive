@@ -20,3 +20,7 @@ test("match all categories", () => assert.equal(matchesCategories(["x"], ["x", "
 import { nextSleeveCode as _nextSleeve } from "./photo-archive";
 test("sleeve numbering starts at SLEEVE-001", () => assert.equal(_nextSleeve([]), "SLEEVE-001"));
 test("sleeve numbering follows the highest sleeve", () => assert.equal(_nextSleeve(["SLEEVE-002", "SLEEVE-010", "PHOTO-050"]), "SLEEVE-011"));
+
+import { photoEmailMessage as _pem } from "./photo-email";
+test("photo email embeds front and back by PH number", () =>
+  assert.equal(_pem([{ ph_id: "PH00006", caption: "Skip", back_view_path: "b.jpg" }], true), "[[photo:PH00006:1|PH00006 — Skip]]\n\n[[photo:PH00006:2|PH00006 — reverse]]"));

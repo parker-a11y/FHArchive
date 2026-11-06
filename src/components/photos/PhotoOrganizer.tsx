@@ -11,6 +11,7 @@ import { SignedImg } from "@/components/photos/SignedImg";
 import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
 import { PhotoConnectionsEditor } from "@/components/photos/PhotoConnections";
 import { usePhotoData } from "@/components/photos/usePhotoData";
+import { EmailPhotosButton } from "@/components/photos/EmailPhotosButton";
 import { nextSleeveCode, sleeveLabel } from "@/lib/photo-archive";
 
 type SetKind = "uncategorized" | "all" | "recent" | `batch:${string}` | `cat:${string}`;
@@ -198,6 +199,7 @@ function BoxPicker({ photo }: { photo: Photo }) {
   };
   return (
     <section className="space-y-2 rounded-md border border-border p-3 text-sm">
+      <div className="flex justify-end"><EmailPhotosButton photos={[photo]} label="Email this photo" /></div>
       <div className="flex items-center gap-2">
         <label htmlFor="org-sleeve" className="w-24 font-medium">Sleeve</label>
         <select id="org-sleeve" value={photo.sleeve_id ?? ""} onChange={(e) => void changeSleeve(e.target.value || null)} className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1.5">
