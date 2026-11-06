@@ -52,21 +52,25 @@ export function PhotoRecordList() {
   const [view, setView] = useState<View>("list");
   const [density, setDensity] = useState<Density>("md");
   const [zoomId, setZoomId] = useState<string | null>(null);
+  const [viewReady, setViewReady] = useState(false);
 
   // Read the remembered view after mount, so the server render and the first
-  // paint always agree.
+  // paint always agree. Nothing is written back until the read has landed,
+  // otherwise the first paint would overwrite the stored choice.
   useEffect(() => {
-    setView((v) => readStored(VIEW_KEY, ["list", "grid"] as const) ?? v);
-    setDensity((d) => readStored(DENSITY_KEY, ["sm", "md", "lg"] as const) ?? d);
+    setView(readStored(VIEW_KEY, ["list", "grid"] as const) ?? "list");
+    setDensity(readStored(DENSITY_KEY, ["sm", "md", "lg"] as const) ?? "md");
+    setViewReady(true);
   }, []);
   useEffect(() => {
+    if (!viewReady) return;
     try {
       localStorage.setItem(VIEW_KEY, view);
       localStorage.setItem(DENSITY_KEY, density);
     } catch {
       /* storage unavailable — the view just isn't remembered */
     }
-  }, [view, density]);
+  }, [view, density, viewReady]);
 
   const rows = useMemo(() => {
     const n = q.trim().toLowerCase();
