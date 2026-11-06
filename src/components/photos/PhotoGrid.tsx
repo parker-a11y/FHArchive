@@ -46,7 +46,7 @@ export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf,
             onDoubleClick={() => rec && window.open(rec.href, "_blank", "noopener")}
             title={rec ? `Click to select · double-click to open the ${rec.archive_id} record` : "Click to select"}
             className={`group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-md border transition ${
-              on ? "border-primary bg-accent/60 ring-2 ring-primary/40" : "border-border hover:border-primary/50 hover:bg-muted/40"
+              on ? "border-primary bg-accent ring-2 ring-primary" : "border-border hover:border-primary/50 hover:bg-muted/40"
             }`}
           >
             <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-muted">
