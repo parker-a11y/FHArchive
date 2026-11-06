@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -124,4 +123,4 @@ export function PhotoConnectionsEditor({ photoId }: { photoId: string }) {
   );
 }
 
-export { Link };
+

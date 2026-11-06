@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { viewPath, originalName, fetchPhotoOriginal, type Photo } from "@/lib/photos";
 import { deliverFile } from "@/lib/download";
+import { PhotoConnectionList, usePhotoLinks } from "@/components/photos/PhotoConnections";
 import { signPhotoPath, useSignedPath } from "@/components/photos/SignedImg";
 
 type Props = {
@@ -171,6 +172,7 @@ export function PhotoLightbox({ photos, index, categoryNames, boxLabel, canDownl
               <div key={k}><dt className="text-[11px] uppercase tracking-widest opacity-60">{k}</dt><dd className="mt-0.5 whitespace-pre-wrap">{v}</dd></div>
             ))}
           </dl>
+          <LightboxConnections photoId={photo.id} />
           <p className="mt-6 text-xs opacity-50">← → to browse · double-click to zoom · Esc to close</p>
         </aside>
       )}
@@ -194,5 +196,16 @@ function NavBtn({ side, onClick }: { side: "left" | "right"; onClick: () => void
       className={`absolute top-1/2 hidden -translate-y-1/2 rounded-full p-3 opacity-60 transition hover:bg-gallery-stage-foreground/10 hover:opacity-100 sm:block ${side === "left" ? "left-2" : "right-2"}`}>
       <Icon className="size-7" />
     </button>
+  );
+}
+
+function LightboxConnections({ photoId }: { photoId: string }) {
+  const { data = [] } = usePhotoLinks(photoId);
+  if (!data.length) return null;
+  return (
+    <div className="mt-5 border-t border-gallery-stage-foreground/15 pt-4">
+      <p className="mb-2 text-[11px] uppercase tracking-widest opacity-60">Connected records</p>
+      <PhotoConnectionList links={data} tone="stage" />
+    </div>
   );
 }
