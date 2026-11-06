@@ -87,7 +87,7 @@ async function uploadOne(file: File): Promise<{ path: string; thumb: string | nu
 export async function createPhoto(input: { front: File; back?: File | null; caption?: string; notes?: string; batchId?: string | null }) {
   const [front, back] = await Promise.all([uploadOne(input.front), input.back ? uploadOne(input.back) : null]);
   const { data: auth } = await supabase.auth.getUser();
-  const { error } = await supabase.from("photos").insert({
+  const { data, error } = await supabase.from("photos").insert({
     front_path: front.path,
     front_thumb_path: front.thumb,
     front_view_path: front.view,
@@ -99,12 +99,13 @@ export async function createPhoto(input: { front: File; back?: File | null; capt
     created_by: auth.user?.id ?? null,
     batch_id: input.batchId ?? null,
     original_filename: input.front.name,
-  });
+  }).select("id, ph_id").single();
   if (error) {
     const paths = [front.path, front.thumb, front.view, back?.path, back?.thumb, back?.view].filter(Boolean) as string[];
     await supabase.storage.from("scans").remove(paths);
     throw error;
   }
+  return { id: data?.id as string, phId: (data?.ph_id as string | null) ?? null, thumbPath: front.thumb ?? front.view };
 }
 
 export async function updatePhoto(id: string, patch: { caption: string; notes: string }) {

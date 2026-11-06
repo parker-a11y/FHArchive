@@ -8,7 +8,9 @@ import { createPhoto } from "@/lib/photos";
 import { createBatch, type PhotoBatch } from "@/lib/photo-catalog";
 import { galleryOptions } from "@/routes/_authenticated/photos";
 
-type Item = { key: string; file: File; status: "waiting" | "uploading" | "done" | "failed"; error?: string };
+import { supabase } from "@/integrations/supabase/client";
+
+type Item = { key: string; file: File; status: "waiting" | "uploading" | "done" | "failed"; error?: string; phId?: string; thumbUrl?: string };
 const isImage = (f: File) => f.type.startsWith("image/") || /\.(tiff?|jpe?g|png)$/i.test(f.name);
 const PARALLEL = 2;
 
@@ -44,7 +46,15 @@ export function BatchUpload() {
         while (next < queue.length) {
           const it = queue[next++];
           set(it.key, { status: "uploading", error: undefined });
-          try { await createPhoto({ front: it.file, batchId: b.id }); set(it.key, { status: "done" }); }
+          try {
+            const res = await createPhoto({ front: it.file, batchId: b.id });
+            let thumbUrl: string | undefined;
+            if (res.thumbPath) {
+              const { data: s } = await supabase.storage.from("scans").createSignedUrl(res.thumbPath, 3600);
+              thumbUrl = s?.signedUrl;
+            }
+            set(it.key, { status: "done", phId: res.phId ?? undefined, thumbUrl });
+          }
           catch (e) { set(it.key, { status: "failed", error: (e as Error).message }); }
         }
       };
@@ -96,7 +106,13 @@ export function BatchUpload() {
             {items.map((i) => (
               <li key={i.key} className="flex items-center gap-2 px-3 py-1.5">
                 {i.status === "done" ? <CheckCircle2 className="size-4 text-primary" /> : i.status === "failed" ? <XCircle className="size-4 text-destructive" /> : i.status === "uploading" ? <Loader2 className="size-4 animate-spin" /> : <span className="size-4" />}
-                <span className="min-w-0 flex-1 truncate">{i.file.name}</span>
+                {i.thumbUrl ? (
+                  <img src={i.thumbUrl} alt={i.phId ?? i.file.name} className="size-10 shrink-0 rounded-sm border border-border object-cover" />
+                ) : i.status === "done" ? (
+                  <span className="size-10 shrink-0 rounded-sm border border-border bg-muted" />
+                ) : null}
+                {i.phId && <span className="archive-id shrink-0 font-semibold">{i.phId}</span>}
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">{i.file.name}</span>
                 {i.error && <span className="truncate text-xs text-destructive" title={i.error}>{i.error}</span>}
               </li>
             ))}
