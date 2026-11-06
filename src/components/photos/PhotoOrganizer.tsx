@@ -110,7 +110,7 @@ export function PhotoOrganizer() {
               </div>
             </div>
             <button type="button" onClick={() => setZoomOpen(true)} className="flex h-[52vh] w-full cursor-zoom-in items-center justify-center rounded-md bg-muted lg:h-[68vh]">
-              <SignedImg key={photo.id} eager path={viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)} alt={photo.caption || photo.ph_id || "Photograph"} className="max-h-full max-w-full object-contain" />
+              <SignedImg key={photo.id} eager path={viewPath(photo.front_path, photo.front_thumb_path, photo.front_view_path)} alt={photo.caption || photo.ph_id || "Photograph"} className="h-full w-full object-contain" />
             </button>
             <p className="text-xs text-muted-foreground">← → move between photographs · number keys 1–9 toggle the first nine categories</p>
           </div>
