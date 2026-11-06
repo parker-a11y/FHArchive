@@ -20,7 +20,7 @@ export type InlinePhoto = {
 const CAP_SRC = String.raw`(?:\|[^\]\n<>]*)?`;
 
 /** Same token, with no capture groups — safe inside split() and replace(). */
-export const PHOTO_TOKEN_SRC = String.raw`\[\[photo:(?:FH|DS)-?\d{3,}:\d+${CAP_SRC}\]\]`;
+export const PHOTO_TOKEN_SRC = String.raw`\[\[photo:(?:(?:FH|DS)-?\d{3,}|PH\d{5,}):\d+${CAP_SRC}\]\]`;
 
 export const PHOTO_TOKEN_RE = new RegExp(PHOTO_TOKEN_SRC, "gi");
 
@@ -84,7 +84,7 @@ export function extractPhotoTokens(text: string): string[] {
 
 /** Identifier + page for one token. */
 export function parsePhotoToken(token: string): { identifier: string; page: number } | null {
-  const m = /^\[\[photo:((?:FH|DS)-?\d{3,}):(\d+)(?:\|[^\]]*)?\]\]$/i.exec(token.trim());
+  const m = /^\[\[photo:((?:FH|DS)-?\d{3,}|PH\d{5,}):(\d+)(?:\|[^\]]*)?\]\]$/i.exec(token.trim());
   if (!m) return null;
   return { identifier: m[1]!.toUpperCase(), page: Math.max(1, Number(m[2])) };
 }

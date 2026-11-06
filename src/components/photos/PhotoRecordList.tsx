@@ -11,6 +11,7 @@ import { assignBox, assignSleeve, createBox, createSleeve, deleteSleeve, fetchBa
 import { applySelectionClick, nextBoxCode, nextSleeveCode, sleeveLabel } from "@/lib/photo-archive";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { usePhotoData } from "@/components/photos/usePhotoData";
+import { EmailPhotosButton } from "@/components/photos/EmailPhotosButton";
 import { SleeveLabelButton } from "@/components/photos/SleeveLabelButton";
 
 type Sort = "ph" | "ph-desc" | "uploaded" | "caption";
@@ -113,6 +114,7 @@ export function PhotoRecordList() {
           </select>
           <Button size="sm" disabled={busy} onClick={() => setBoxOpen(true)}><Boxes className="mr-1 size-4" />Assign to Box</Button>
           <Button size="sm" variant="outline" disabled={busy} onClick={() => void clearBox()}>Clear box</Button>
+          <EmailPhotosButton photos={rows.filter((p) => sel.has(p.id)).concat(d.photos.filter((p) => sel.has(p.id) && !rows.includes(p)))} label={`Email ${sel.size}`} />
           <Button size="sm" disabled={busy} onClick={() => setSleeveOpen(true)}><Layers className="mr-1 size-4" />Add to Sleeve</Button>
           <Button size="sm" variant="outline" disabled={busy} onClick={() => void leaveSleeve()}>Remove from sleeve</Button>
           {busy && <Loader2 className="size-4 animate-spin" />}

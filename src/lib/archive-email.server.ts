@@ -208,14 +208,31 @@ export async function resolveInlinePhotos(
       : await ensureShareLinksForRefs(
           db,
           ownerId,
-          identifiers,
+          identifiers.filter((i) => !i.startsWith("PH")),
           Boolean(opts.includeTranscription),
         ).catch(() => ({}) as Record<string, string>);
 
   const pagesByIdentifier: Record<string, string[]> = {};
   for (const identifier of identifiers) {
     try {
-      if (identifier.startsWith("FH")) {
+      if (identifier.startsWith("PH")) {
+        // Gallery photograph: page 1 = front viewing copy, page 2 = back. Never the TIFF master.
+        const { data } = await db
+          .from("photos")
+          .select("front_view_path, front_path, back_view_path")
+          .eq("ph_id", identifier)
+          .maybeSingle();
+        const row = data as { front_view_path: string | null; front_path: string; back_view_path: string | null } | null;
+        if (row) {
+          const paths = [row.front_view_path ?? row.front_path, row.back_view_path].filter(Boolean) as string[];
+          const urls: string[] = [];
+          for (const path of paths) {
+            const { data: signed } = await (db as any).storage.from("scans").createSignedUrl(path, 60 * 60 * 24 * 365);
+            urls.push(signed?.signedUrl ?? "");
+          }
+          pagesByIdentifier[identifier] = urls;
+        }
+      } else if (identifier.startsWith("FH")) {
         const { data } = await db
           .from("letters")
           .select("id")
