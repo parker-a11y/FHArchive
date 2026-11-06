@@ -156,9 +156,17 @@ function LetterPage() {
   const { isGuestViewer, isAdmin } = useAuth();
   const deleteRecord = useServerFn(deleteLetterRecord);
 
-  const { data: letter, isLoading } = useQuery({
+  const {
+    data: letter,
+    isLoading,
+    isError,
+    refetch: refetchLetter,
+  } = useQuery({
     queryKey: ["letter", archiveId],
     queryFn: () => fetchLetterByArchiveId(archiveId),
+    // Never trust a cached "not found": the record may have just been created.
+    staleTime: (q) => (q.state.data ? 60_000 : 0),
+    refetchOnMount: (q) => (q.state.data ? true : "always"),
   });
   const { data: retirement } = useQuery({
     queryKey: ["retirement", archiveId],
@@ -276,6 +284,15 @@ function LetterPage() {
   }, [letter?.id]);
 
   if (isLoading) return <div className="p-4 sm:p-8 text-sm text-muted-foreground">Loading…</div>;
+  if (!letter && isError)
+    return (
+      <div className="p-4 sm:p-8 space-y-2">
+        <p className="text-sm">Couldn't load {archiveId} — the connection hiccupped.</p>
+        <Button size="sm" variant="outline" onClick={() => refetchLetter()}>
+          Try again
+        </Button>
+      </div>
+    );
   if (!letter)
     return (
       <div className="p-4 sm:p-8">
