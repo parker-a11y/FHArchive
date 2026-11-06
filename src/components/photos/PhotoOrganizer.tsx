@@ -178,16 +178,41 @@ function CategoryPanel({ photo, mine, onToggle }: { photo: Photo; mine: string[]
 function BoxPicker({ photo }: { photo: Photo }) {
   const d = usePhotoData();
   const change = async (boxId: string | null) => {
-    d.patch((old) => ({ ...old, photos: old.photos.map((p) => (p.id === photo.id ? { ...p, box_id: boxId } : p)) }));
+    d.patch((old) => ({ ...old, photos: old.photos.map((p) => (p.id === photo.id ? { ...p, box_id: boxId, sleeve_id: null } : p)) }));
     try { await assignBox([photo.id], boxId); } catch (e) { toast.error((e as Error).message); d.refresh(); }
   };
+  const changeSleeve = async (sleeveId: string | null) => {
+    const sl = sleeveId ? d.sleeveById.get(sleeveId) : null;
+    d.patch((old) => ({ ...old, photos: old.photos.map((p) => (p.id === photo.id ? { ...p, sleeve_id: sleeveId, box_id: sl ? sl.box_id : p.box_id } : p)) }));
+    try { await assignSleeve([photo.id], sleeveId); } catch (e) { toast.error((e as Error).message); }
+    d.refresh();
+  };
+  const newSleeve = async () => {
+    try {
+      const x = await createSleeve({ code: nextSleeveCode(d.sleeves.map((s) => s.code)) });
+      await assignSleeve([photo.id], x.id);
+      toast.success(`Added to new ${x.code.replace("-", " ")}`);
+      d.refresh();
+    } catch (e) { toast.error((e as Error).message); }
+  };
   return (
-    <section className="flex items-center gap-2 rounded-md border border-border p-3 text-sm">
-      <label htmlFor="org-box" className="font-medium">Storage box</label>
-      <select id="org-box" value={photo.box_id ?? ""} onChange={(e) => void change(e.target.value || null)} className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1.5">
-        <option value="">Not assigned</option>
-        {d.boxes.map((b) => <option key={b.id} value={b.id}>{b.code}{b.name ? ` — ${b.name}` : ""}</option>)}
-      </select>
+    <section className="space-y-2 rounded-md border border-border p-3 text-sm">
+      <div className="flex items-center gap-2">
+        <label htmlFor="org-sleeve" className="w-24 font-medium">Sleeve</label>
+        <select id="org-sleeve" value={photo.sleeve_id ?? ""} onChange={(e) => void changeSleeve(e.target.value || null)} className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1.5">
+          <option value="">No sleeve</option>
+          {d.sleeves.map((x) => <option key={x.id} value={x.id}>{sleeveLabel(x)}</option>)}
+        </select>
+        <Button size="sm" variant="outline" onClick={() => void newSleeve()}>New sleeve</Button>
+      </div>
+      <div className="flex items-center gap-2">
+        <label htmlFor="org-box" className="w-24 font-medium">Storage box</label>
+        <select id="org-box" value={photo.box_id ?? ""} onChange={(e) => void change(e.target.value || null)} className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1.5">
+          <option value="">Not assigned</option>
+          {d.boxes.map((b) => <option key={b.id} value={b.id}>{b.code}{b.name ? ` — ${b.name}` : ""}</option>)}
+        </select>
+      </div>
+      {photo.sleeve_id && <p className="text-xs text-muted-foreground">Box follows the sleeve. Choosing a box here takes the photo out of its sleeve.</p>}
     </section>
   );
 }
