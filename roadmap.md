@@ -53,7 +53,7 @@
 - [x] Stage E — Photo Record List with search/sort, checkbox + shift-range + select-all, bulk category and box actions; PHOTO-### boxes with contents and printable labels on Storage Boxes
 - [x] Stage F — "The Photo Archive" gallery: justified lazy-loaded grid, category and search filtering, immersive viewer with zoom/fullscreen/keyboard, stable PH links, guest downloads limited to viewing JPEGs
 - [x] Photo connections: link a photo to letters, other photos or people with certainty and a note; shown in the viewer and as a linked-photographs strip on the letter page
-- [ ] Printable PHOTO box labels — printed from Storage Boxes and checked
+- [x] Printable PHOTO box labels — printed from Storage Boxes and checked (label test complete, Nov 6 2026)
 
 ## Book Builder
 - [x] Phase 1 — core Book Builder (projects, record selection, ordering, letter → envelope → transcription layout, preview, background PDF export, print copies, source-change checks)
