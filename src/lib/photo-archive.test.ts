@@ -16,3 +16,7 @@ test("date range", () => assert.deepEqual(parsePhotoYears("1935–1940"), { star
 test("unclear date stays unparsed", () => assert.equal(parsePhotoYears("summer, unknown"), null));
 test("match any category", () => assert.equal(matchesCategories(["x"], ["x", "y"], "any"), true));
 test("match all categories", () => assert.equal(matchesCategories(["x"], ["x", "y"], "all"), false));
+
+import { nextSleeveCode as _nextSleeve } from "./photo-archive";
+test("sleeve numbering starts at SLEEVE-001", () => assert.equal(_nextSleeve([]), "SLEEVE-001"));
+test("sleeve numbering follows the highest sleeve", () => assert.equal(_nextSleeve(["SLEEVE-002", "SLEEVE-010", "PHOTO-050"]), "SLEEVE-011"));

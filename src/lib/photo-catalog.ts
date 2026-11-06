@@ -104,10 +104,10 @@ export async function updateBox(id: string, patch: { name: string; location: str
   if (error) throw error;
 }
 
-/** Set (or clear, with null) the one physical box for these photographs. */
+/** Set (or clear, with null) the one physical box for these photographs; a photo placed directly in a box leaves its sleeve. */
 export async function assignBox(photoIds: readonly string[], boxId: string | null) {
   for (let i = 0; i < photoIds.length; i += 500) {
-    const { error } = await supabase.from("photos").update({ box_id: boxId }).in("id", photoIds.slice(i, i + 500));
+    const { error } = await supabase.from("photos").update({ box_id: boxId, sleeve_id: null }).in("id", photoIds.slice(i, i + 500));
     if (error) throw error;
   }
 }
@@ -174,4 +174,48 @@ export async function runPhNumbering(): Promise<number> {
   const { data, error } = await supabase.rpc("assign_ph_numbers");
   if (error) throw error;
   return data ?? 0;
+}
+
+export type PhotoSleeve = { id: string; code: string; name: string | null; box_id: string | null; created_at: string };
+
+export async function fetchSleeves(): Promise<PhotoSleeve[]> {
+  const { data, error } = await supabase.from("photo_sleeves").select("id, code, name, box_id, created_at").order("code");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createSleeve(input: { code: string; name?: string; boxId?: string | null }): Promise<PhotoSleeve> {
+  const code = input.code.trim().toUpperCase().replace(/^SLEEVE[\s-]*(\d+)$/, (_, n: string) => "SLEEVE-" + n.padStart(3, "0"));
+  if (!code) throw new Error("Enter a sleeve identifier");
+  const { data, error } = await supabase.from("photo_sleeves")
+    .insert({ code, name: input.name?.trim() || null, box_id: input.boxId ?? null })
+    .select("id, code, name, box_id, created_at").single();
+  if (error) throw error.code === "23505" ? new Error(`${code} already exists`) : error;
+  return data;
+}
+
+export async function renameSleeve(id: string, name: string) {
+  const { error } = await supabase.from("photo_sleeves").update({ name: name.trim() || null }).eq("id", id);
+  if (error) throw error;
+}
+
+/** Deletes the sleeve only; its photographs stay in the same box, unsleeved. */
+export async function deleteSleeve(id: string) {
+  const { error } = await supabase.from("photo_sleeves").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/** Put photographs into a sleeve (they move to the sleeve's box), or take them out with null. */
+export async function assignSleeve(photoIds: readonly string[], sleeveId: string | null) {
+  for (let i = 0; i < photoIds.length; i += 500) {
+    const { error } = await supabase.from("photos").update({ sleeve_id: sleeveId }).in("id", photoIds.slice(i, i + 500));
+    if (error) throw error;
+  }
+}
+
+/** Move whole sleeves into a box (or out of any box with null); their photographs follow. */
+export async function moveSleeves(sleeveIds: readonly string[], boxId: string | null) {
+  if (!sleeveIds.length) return;
+  const { error } = await supabase.from("photo_sleeves").update({ box_id: boxId }).in("id", [...sleeveIds]);
+  if (error) throw error;
 }

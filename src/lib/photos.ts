@@ -23,6 +23,7 @@ export type Photo = {
   ph_id: string | null;
   batch_id: string | null;
   box_id: string | null;
+  sleeve_id: string | null;
   people: string | null;
   date_text: string | null;
   date_year_start: number | null;
@@ -35,7 +36,7 @@ export type Photo = {
 };
 
 const COLS =
-  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at, sort_order, ph_seq, ph_id, batch_id, box_id, people, date_text, date_year_start, date_year_end, location, inscription, info_source, back_transcription, original_filename";
+  "id, front_path, front_thumb_path, front_view_path, back_path, back_thumb_path, back_view_path, caption, notes, legacy_archive_id, created_at, sort_order, ph_seq, ph_id, batch_id, box_id, sleeve_id, people, date_text, date_year_start, date_year_end, location, inscription, info_source, back_transcription, original_filename";
 
 export async function fetchPhotos(): Promise<Photo[]> {
   const out: Photo[] = [];

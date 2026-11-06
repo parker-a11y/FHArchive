@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchPhotos, viewPath, type Photo } from "@/lib/photos";
-import { fetchBoxes, fetchCategories, fetchCategoryLinks, linksByPhoto } from "@/lib/photo-catalog";
+import { fetchBoxes, fetchSleeves, fetchCategories, fetchCategoryLinks, linksByPhoto } from "@/lib/photo-catalog";
 import { matchesCategories } from "@/lib/photo-archive";
 import { SignedImg } from "@/components/photos/SignedImg";
 import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
@@ -17,8 +17,8 @@ type GallerySearch = { q?: string; cats?: string; all?: boolean; photo?: string;
 export const galleryOptions = queryOptions({
   queryKey: ["photo-gallery"],
   queryFn: async () => {
-    const [photos, categories, links, boxes] = await Promise.all([fetchPhotos(), fetchCategories(), fetchCategoryLinks(), fetchBoxes()]);
-    return { photos, categories, links, boxes };
+    const [photos, categories, links, boxes, sleeves] = await Promise.all([fetchPhotos(), fetchCategories(), fetchCategoryLinks(), fetchBoxes(), fetchSleeves()]);
+    return { photos, categories, links, boxes, sleeves };
   },
 });
 
