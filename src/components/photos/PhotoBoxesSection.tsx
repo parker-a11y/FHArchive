@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { condenseRanges } from "@/lib/box-ranges";
 import { createBox, fetchBoxes, fetchSleeves, moveSleeves, updateBox, type PhotoBox } from "@/lib/photo-catalog";
 import { nextBoxCode, sleeveLabel } from "@/lib/photo-archive";
+import { SleeveLabelButton } from "@/components/photos/SleeveLabelButton";
 
 type Row = { id: string; ph_id: string | null; ph_seq: number | null; caption: string | null; box_id: string | null; sleeve_id: string | null };
 
@@ -98,6 +99,7 @@ export function PhotoBoxesSection({ search }: { search: string }) {
                     <div key={x.id} className="flex flex-wrap items-center gap-2 rounded border border-border/70 px-2 py-1.5 text-xs">
                       <span className="font-mono font-medium">{sleeveLabel(x)}</span>
                       <span className="text-muted-foreground">{inS.length} photograph{inS.length === 1 ? "" : "s"}{inS.length ? ` · ${condenseRanges(inS.map((r) => r.ph_id).filter(Boolean) as string[])}` : ""}</span>
+                      <SleeveLabelButton sleeve={x} boxCode={b.code} phIds={inS.map((r) => r.ph_id).filter(Boolean) as string[]} />
                       {isAdmin && <select aria-label={`Move ${x.code}`} value={b.id} className="ml-auto rounded-md border border-input bg-background px-1.5 py-0.5"
                         onChange={(e) => void moveSleeves([x.id], e.target.value || null).then(() => { toast.success(`${x.code.replace("-", " ")} moved`); refresh(); }, (er: Error) => toast.error(er.message))}>
                         <option value="">Take out of box</option>
