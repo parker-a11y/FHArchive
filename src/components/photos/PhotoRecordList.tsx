@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Boxes, ExternalLink, FolderInput, Layers, Loader2, Search, Tag, Trash2, X } from "lucide-react";
+import { Boxes, ExternalLink, FolderInput, Layers, LayoutGrid, ListChecks, Loader2, Search, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,9 +13,25 @@ import { SignedImg } from "@/components/photos/SignedImg";
 import { usePhotoData } from "@/components/photos/usePhotoData";
 import { EmailPhotosButton } from "@/components/photos/EmailPhotosButton";
 import { SleeveLabelButton } from "@/components/photos/SleeveLabelButton";
+import { PhotoGrid, type Density } from "@/components/photos/PhotoGrid";
+import { PhotoLightbox } from "@/components/photos/PhotoLightbox";
 import { photoRecordRef, usePhotoRecords, type PhotoRecordRef } from "@/lib/photo-links";
 
 type Sort = "ph" | "ph-desc" | "uploaded" | "caption";
+type View = "list" | "grid";
+
+const VIEW_KEY = "photo_record_view";
+const DENSITY_KEY = "photo_record_density";
+
+/** Remembered between visits; defaults to the table. */
+function readStored<T extends string>(key: string, allowed: readonly T[]): T | null {
+  try {
+    const v = localStorage.getItem(key);
+    return allowed.includes(v as T) ? (v as T) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function PhotoRecordList() {
   const d = usePhotoData();
@@ -33,6 +49,28 @@ export function PhotoRecordList() {
   const [boxOpen, setBoxOpen] = useState(false);
   const [sleeveOpen, setSleeveOpen] = useState(false);
   const [sleeve, setSleeve] = useState("");
+  const [view, setView] = useState<View>("list");
+  const [density, setDensity] = useState<Density>("md");
+  const [zoomId, setZoomId] = useState<string | null>(null);
+  const [viewReady, setViewReady] = useState(false);
+
+  // Read the remembered view after mount, so the server render and the first
+  // paint always agree. Nothing is written back until the read has landed,
+  // otherwise the first paint would overwrite the stored choice.
+  useEffect(() => {
+    setView(readStored(VIEW_KEY, ["list", "grid"] as const) ?? "list");
+    setDensity(readStored(DENSITY_KEY, ["sm", "md", "lg"] as const) ?? "md");
+    setViewReady(true);
+  }, []);
+  useEffect(() => {
+    if (!viewReady) return;
+    try {
+      localStorage.setItem(VIEW_KEY, view);
+      localStorage.setItem(DENSITY_KEY, density);
+    } catch {
+      /* storage unavailable — the view just isn't remembered */
+    }
+  }, [view, density, viewReady]);
 
   const rows = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -100,6 +138,11 @@ export function PhotoRecordList() {
         <Select label="Batch" value={batch} onChange={setBatch} options={[["", "All batches"], ...(batches.data ?? []).map((b) => [b.id, b.name || new Date(b.created_at).toLocaleDateString()] as [string, string])]} />
         <Select label="Sleeve" value={sleeve} onChange={setSleeve} options={[["", "All sleeves"], ["__none", "No sleeve"], ...d.sleeves.map((x) => [x.id, x.code.replace("-", " ")] as [string, string])]} />
         <Select label="Sort" value={sort} onChange={(v) => setSort(v as Sort)} options={[["ph", "PH number"], ["ph-desc", "PH number, newest"], ["uploaded", "Upload date"], ["caption", "Subtitle"]]} />
+        <div className="ml-auto flex items-center gap-1 rounded-md border border-border p-0.5" role="group" aria-label="Record list view">
+          <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} aria-pressed={view === "list"} onClick={() => setView("list")}><ListChecks className="mr-1 size-4" />List</Button>
+          <Button size="sm" variant={view === "grid" ? "secondary" : "ghost"} aria-pressed={view === "grid"} onClick={() => setView("grid")}><LayoutGrid className="mr-1 size-4" />Grid</Button>
+        </div>
+        {view === "grid" && <Select label="Thumbnail size" value={density} onChange={(v) => setDensity(v as Density)} options={[["sm", "Small thumbnails"], ["md", "Medium thumbnails"], ["lg", "Large thumbnails"]]} />}
       </div>
 
       <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-md border border-border bg-card p-2 text-sm">
@@ -124,6 +167,19 @@ export function PhotoRecordList() {
         </>}
       </div>
 
+      {view === "grid" ? (
+        <PhotoGrid
+          rows={rows}
+          sel={sel}
+          onPick={click}
+          catNames={(p) => (d.byPhoto.get(p.id) ?? []).map((c) => d.catName.get(c) ?? "").filter(Boolean)}
+          sleeveOf={(p) => (p.sleeve_id && d.sleeveById.get(p.sleeve_id)?.code.replace("-", " ")) || null}
+          boxOf={(p) => (p.box_id ? d.boxById.get(p.box_id)?.code ?? null : null)}
+          recOf={(p) => photoRecordRef(p, recs)}
+          onZoom={setZoomId}
+          density={density}
+        />
+      ) : (
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="bg-muted/50 text-xs text-muted-foreground">
@@ -166,9 +222,23 @@ export function PhotoRecordList() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab.</p>
+      )}
+      <p className="text-xs text-muted-foreground">{view === "grid"
+        ? "Click a tile to select it (Shift-click for a range), double-click to open its archive record, or use the corner button to view it full size."
+        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab."}</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
+      {zoomId && (
+        <PhotoLightbox
+          photos={rows}
+          index={Math.max(0, rows.findIndex((p) => p.id === zoomId))}
+          canDownloadOriginal
+          categoryNames={(p) => (d.byPhoto.get(p.id) ?? []).map((id) => d.catName.get(id) ?? "")}
+          boxLabel={(p) => (p.box_id ? d.boxById.get(p.box_id)?.code ?? null : null)}
+          onIndex={(i) => setZoomId(rows[i]?.id ?? null)}
+          onClose={() => setZoomId(null)}
+        />
+      )}
     </div>
   );
 }
