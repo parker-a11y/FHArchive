@@ -140,7 +140,8 @@ export function PhotoRecordList() {
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                     <Checkbox aria-label={`Select ${p.ph_id ?? "photograph"}`} checked={on} onClick={(e) => { e.preventDefault(); click(p.id, e.shiftKey); }} />
                   </td>
-                  <td className="px-2 py-1.5" title={rec ? `Double-click to open the ${rec.archive_id} record` : undefined}
+                  <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}
+                    title={rec ? `Double-click to open the ${rec.archive_id} record` : undefined}
                     onDoubleClick={(e) => { e.stopPropagation(); if (rec) window.open(rec.href, "_blank", "noopener"); }}>
                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded bg-muted"><SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="max-h-12 max-w-12 object-contain" /></div>
                   </td>
@@ -165,7 +166,7 @@ export function PhotoRecordList() {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-muted-foreground">Click a row or checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab.</p>
+      <p className="text-xs text-muted-foreground">Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab.</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
     </div>
