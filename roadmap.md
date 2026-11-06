@@ -14,7 +14,7 @@
 - [x] Join continuing sentences at transcription page boundaries without changing individual page reviews (13 tests passed; verified combined display on FH0559).
 - [x] Restore authenticated daily backups and verify a fresh catalog dump and resumed Google Drive file copying.
 - [x] Publish backup reliability changes so nightly file copying uses bounded, resumable batches (published Oct 20, 2026).
-- [ ] Catch-up copying of ~5,400 remaining scans: temporary `backup-catchup-15min` schedule (every 10 min, files-only mode) is running; delete it once `backup_files` count reaches the storage total (~5,733 files).
+- [x] Catch-up copying of scan files to Google Drive: scans bucket 8,410 files, 8,431 backed-up rows, only today's just-uploaded photos pending the next 10-minute tick; temporary `backup-catchup-15min` schedule can now be deleted
 - [x] Create Short Title uses "Postcard from …" for the Postcard subtype (Quick Entry + record page)
 
 - [x] Remove Container / Box field from UI/exports (DB column kept, unused)
