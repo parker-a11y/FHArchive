@@ -2799,6 +2799,38 @@ export type Database = {
           },
         ]
       }
+      photo_sleeves: {
+        Row: {
+          box_id: string | null
+          code: string
+          created_at: string
+          id: string
+          name: string | null
+        }
+        Insert: {
+          box_id?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          box_id?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_sleeves_box_id_fkey"
+            columns: ["box_id"]
+            isOneToOne: false
+            referencedRelation: "photo_boxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photos: {
         Row: {
           back_path: string | null
@@ -2827,6 +2859,7 @@ export type Database = {
           people: string | null
           ph_id: string | null
           ph_seq: number | null
+          sleeve_id: string | null
           sort_order: number | null
           updated_at: string
         }
@@ -2857,6 +2890,7 @@ export type Database = {
           people?: string | null
           ph_id?: string | null
           ph_seq?: number | null
+          sleeve_id?: string | null
           sort_order?: number | null
           updated_at?: string
         }
@@ -2887,6 +2921,7 @@ export type Database = {
           people?: string | null
           ph_id?: string | null
           ph_seq?: number | null
+          sleeve_id?: string | null
           sort_order?: number | null
           updated_at?: string
         }
@@ -2903,6 +2938,13 @@ export type Database = {
             columns: ["box_id"]
             isOneToOne: false
             referencedRelation: "photo_boxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_sleeve_id_fkey"
+            columns: ["sleeve_id"]
+            isOneToOne: false
+            referencedRelation: "photo_sleeves"
             referencedColumns: ["id"]
           },
         ]
