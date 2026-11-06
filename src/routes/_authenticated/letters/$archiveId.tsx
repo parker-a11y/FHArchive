@@ -86,6 +86,7 @@ import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
 import { LetterContextPanel } from "@/components/letter/LetterContextPanel";
+import { LinkedPhotosPanel } from "@/components/letter/LinkedPhotosPanel";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
@@ -571,6 +572,7 @@ function LetterPage() {
       </header>
 
       <LetterContextPanel key={letter.id} letter={letter} />
+      <LinkedPhotosPanel letterId={letter.id} />
 
       {showTranscription && (
         <section className="mx-4 mt-4 rounded border border-border bg-card p-4 sm:mx-8">
