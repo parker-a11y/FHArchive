@@ -65,7 +65,7 @@ export function RecordEmailHistory({ letterId }: { letterId: string }) {
               </div>
               {email.data.header_title && <h2 className="font-display text-2xl">{email.data.header_title}</h2>}
               {email.data.header_subtitle && <p className="text-muted-foreground">{email.data.header_subtitle}</p>}
-              <RichTextView text={email.data.message_body ?? ""} />
+              <RichTextView html={email.data.message_body ?? ""} />
             </div>
           ) : <p>This email is no longer available.</p>}
         </DialogContent>
