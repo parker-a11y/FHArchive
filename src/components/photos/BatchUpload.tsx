@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, RotateCcw, UploadCloud, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { galleryOptions } from "@/routes/_authenticated/photos";
 
 import { supabase } from "@/integrations/supabase/client";
 
-type Item = { key: string; file: File; status: "waiting" | "uploading" | "done" | "failed"; error?: string; phId?: string; thumbUrl?: string };
+type Item = { key: string; file: File; status: "waiting" | "uploading" | "done" | "failed"; error?: string; phId?: string; photoId?: string; thumbUrl?: string };
 const isImage = (f: File) => f.type.startsWith("image/") || /\.(tiff?|jpe?g|png)$/i.test(f.name);
 const PARALLEL = 2;
 
@@ -53,7 +54,7 @@ export function BatchUpload() {
               const { data: s } = await supabase.storage.from("scans").createSignedUrl(res.thumbPath, 3600);
               thumbUrl = s?.signedUrl;
             }
-            set(it.key, { status: "done", phId: res.phId ?? undefined, thumbUrl });
+            set(it.key, { status: "done", phId: res.phId ?? undefined, photoId: res.id, thumbUrl });
           }
           catch (e) { set(it.key, { status: "failed", error: (e as Error).message }); }
         }
