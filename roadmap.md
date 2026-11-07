@@ -58,6 +58,7 @@
 - [x] Printable PHOTO box labels — printed from Storage Boxes and checked (label test complete, Nov 6 2026)
 - [x] Photo Organizer extras: thumbnail grid view (remembered, same click/shift-range selection and bulk actions, full-size viewer, open record), permanent rotate buttons, sleeve labels, photo emails
 - [x] Clicking a photo in the Record List (list or grid) opens that photograph's own record ready to edit; selecting uses the row/details area, the checkbox, or Shift-click ranges
+- [x] Photo Details Save button: shows "Unsaved changes" while typing, saves on click or Ctrl/Cmd+S, confirms "Saved", and survives a reload (typing still autosaves as a backstop)
 
 ## Book Builder
 - [x] Phase 1 — core Book Builder (projects, record selection, ordering, letter → envelope → transcription layout, preview, background PDF export, print copies, source-change checks)
