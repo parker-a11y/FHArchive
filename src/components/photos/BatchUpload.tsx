@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, RotateCcw, UploadCloud, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,13 @@ import { galleryOptions } from "@/routes/_authenticated/photos";
 
 import { supabase } from "@/integrations/supabase/client";
 
-type Item = { key: string; file: File; status: "waiting" | "uploading" | "done" | "failed"; error?: string; phId?: string; thumbUrl?: string };
+type Item = { key: string; file: File; status: "waiting" | "uploading" | "done" | "failed"; error?: string; phId?: string; photoId?: string; thumbUrl?: string };
 const isImage = (f: File) => f.type.startsWith("image/") || /\.(tiff?|jpe?g|png)$/i.test(f.name);
 const PARALLEL = 2;
 
 export function BatchUpload() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Item[]>([]);
   const [name, setName] = useState("");
   const [running, setRunning] = useState(false);
@@ -53,7 +55,7 @@ export function BatchUpload() {
               const { data: s } = await supabase.storage.from("scans").createSignedUrl(res.thumbPath, 3600);
               thumbUrl = s?.signedUrl;
             }
-            set(it.key, { status: "done", phId: res.phId ?? undefined, thumbUrl });
+            set(it.key, { status: "done", phId: res.phId ?? undefined, photoId: res.id, thumbUrl });
           }
           catch (e) { set(it.key, { status: "failed", error: (e as Error).message }); }
         }
@@ -107,11 +109,19 @@ export function BatchUpload() {
               <li key={i.key} className="flex items-center gap-2 px-3 py-1.5">
                 {i.status === "done" ? <CheckCircle2 className="size-4 text-primary" /> : i.status === "failed" ? <XCircle className="size-4 text-destructive" /> : i.status === "uploading" ? <Loader2 className="size-4 animate-spin" /> : <span className="size-4" />}
                 {i.thumbUrl ? (
-                  <img src={i.thumbUrl} alt={i.phId ?? i.file.name} className="size-10 shrink-0 rounded-sm border border-border object-cover" />
+                  <button type="button" disabled={!i.photoId} title={i.photoId ? `Open ${i.phId ?? "this photograph"}'s record` : undefined}
+                    onClick={() => i.photoId && void navigate({ to: "/photo-organizer", search: { photo: i.photoId } })}
+                    className="shrink-0 cursor-pointer rounded-sm transition hover:ring-2 hover:ring-primary disabled:cursor-default">
+                    <img src={i.thumbUrl} alt={i.phId ?? i.file.name} className="size-10 rounded-sm border border-border object-cover" />
+                  </button>
                 ) : i.status === "done" ? (
                   <span className="size-10 shrink-0 rounded-sm border border-border bg-muted" />
                 ) : null}
-                {i.phId && <span className="archive-id shrink-0 font-semibold">{i.phId}</span>}
+                {i.phId && (
+                  <button type="button" disabled={!i.photoId} title={i.photoId ? `Open ${i.phId}'s record` : undefined}
+                    onClick={() => i.photoId && void navigate({ to: "/photo-organizer", search: { photo: i.photoId } })}
+                    className="archive-id shrink-0 font-semibold hover:underline disabled:no-underline">{i.phId}</button>
+                )}
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">{i.file.name}</span>
                 {i.error && <span className="truncate text-xs text-destructive" title={i.error}>{i.error}</span>}
               </li>
