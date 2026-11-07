@@ -929,6 +929,15 @@ function QuickEntry() {
                     >
                       Jaq
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
+                      onClick={() => pickPerson(setAuthorPerson, (v) => set("author", v), "Skip")}
+                    >
+                      Skip
+                    </Button>
                   </div>
                 </div>
                 <div className="space-y-1.5">
@@ -963,6 +972,15 @@ function QuickEntry() {
                       }
                     >
                       Jaq
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2.5 text-xs border-archive-gold/60 bg-archive-gold/10 font-medium hover:bg-archive-gold/25"
+                      onClick={() => pickPerson(setRecipientPerson, (v) => set("recipient", v), "Fran and Jaq")}
+                    >
+                      Fran and Jaq
                     </Button>
                   </div>
                 </div>
