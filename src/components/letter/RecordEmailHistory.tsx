@@ -32,11 +32,12 @@ export function RecordEmailHistory({ letterId }: { letterId: string }) {
   });
 
   if (history.isError) return <span className="text-xs text-muted-foreground">Email history unavailable <Button variant="link" size="sm" onClick={() => history.refetch()}>Try again</Button></span>;
-  if (!history.data?.sends.length) return null;
+  if (!history.data) return null;
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm" aria-label="Previously emailed records">
       <span className="field-label inline-flex items-center gap-1.5"><Mail className="size-3.5" /> Email records</span>
+      {!history.data.sends.length && <span className="text-muted-foreground">No emails sent</span>}
       <TooltipProvider delayDuration={150}>
         {history.data.sends.map((send) => (
           <Tooltip key={send.id}>
