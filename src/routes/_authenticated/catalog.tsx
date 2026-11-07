@@ -769,10 +769,12 @@ function QuickEntry() {
             <div className="space-y-1.5">
               <Label className="field-label">Date as written</Label>
               <Input
+                list={DATE_AS_WRITTEN_LIST_ID}
                 value={form.date_as_written}
                 onChange={(e) => set("date_as_written", e.target.value)}
                 placeholder="Mon. eve — June 14"
               />
+              <DateAsWrittenDatalist />
               <div className="flex gap-1.5 pt-1">
                 <Button
                   type="button"
