@@ -37,7 +37,7 @@ function readStored<T extends string>(key: string, allowed: readonly T[]): T | n
 export function PhotoRecordList() {
   const d = usePhotoData();
   const navigate = useNavigate();
-  /** Double-click opens the photograph's own record in the Organizer tab. */
+  /** Clicking a photo opens its own record in the Organizer tab, ready to edit. */
   const openPhoto = (id: string) => void navigate({ to: "/photo-organizer", search: { photo: id } });
   const batches = useQuery({ queryKey: ["photo-batches"], queryFn: fetchBatches });
   const records = usePhotoRecords();
@@ -215,9 +215,8 @@ export function PhotoRecordList() {
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
                     <Checkbox aria-label={`Select ${p.ph_id ?? "photograph"}`} checked={on} onClick={(e) => { e.preventDefault(); click(p.id, e.shiftKey); }} />
                   </td>
-                  <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}
-                    title="Double-click to open this photograph's record"
-                    onDoubleClick={(e) => { e.stopPropagation(); openPhoto(p.id); }}>
+                  <td className="px-2 py-1.5" onClick={(e) => { e.stopPropagation(); openPhoto(p.id); }}
+                    title="Click to open this photograph's record for editing">
                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded bg-muted"><SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="max-h-12 max-w-12 object-contain" /></div>
                   </td>
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
@@ -253,8 +252,8 @@ export function PhotoRecordList() {
       </div>
       )}
       <p className="text-xs text-muted-foreground">{view === "grid"
-        ? "Click a tile to select it (Shift-click for a range), double-click to open the photograph's record, or hover for the full-size and rotate buttons. Rotating saves permanently."
-        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo to open its record; use the FH number to open the linked archive record in a new tab. The rotate buttons save permanently."}</p>
+        ? "Click a picture to open that photograph's record for editing, or click its details below to select it (Shift-click for a range). Hover for the full-size and rotate buttons. Rotating saves permanently."
+        : "Click a photo to open its record for editing. Click anywhere else in the row (or use the checkbox) to select; Shift-click selects a continuous range. Use the FH number to open the linked archive record in a new tab. The rotate buttons save permanently."}</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
       {zoomId && (
