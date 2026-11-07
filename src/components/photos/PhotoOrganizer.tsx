@@ -20,7 +20,7 @@ const RECENT_DAYS = 30;
 
 const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
 
-export function PhotoOrganizer() {
+export function PhotoOrganizer({ initialPhotoId }: { initialPhotoId?: string }) {
   const d = usePhotoData();
   const batches = useQuery({ queryKey: ["photo-batches"], queryFn: fetchBatches });
   const [kind, setKind] = useState<SetKind>("uncategorized");
@@ -47,6 +47,14 @@ export function PhotoOrganizer() {
   useEffect(() => {
     if (!first.current) return;
     first.current = false;
+    // Opened from the Record List with a specific photograph: show it in the full set.
+    if (initialPhotoId && d.photos.some((p) => p.id === initialPhotoId)) {
+      const all = build("all");
+      setKind("all");
+      setIds(all);
+      setPos(Math.max(0, all.indexOf(initialPhotoId)));
+      return;
+    }
     const u = build("uncategorized");
     if (u.length) setIds(u); else { setKind("all"); setIds(build("all")); }
     // eslint-disable-next-line react-hooks/exhaustive-deps

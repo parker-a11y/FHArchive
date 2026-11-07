@@ -19,8 +19,9 @@ const TABS = [
 type Tab = (typeof TABS)[number]["id"];
 
 export const Route = createFileRoute("/_authenticated/photo-organizer")({
-  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab; photo?: string } => ({
     tab: TABS.some((t) => t.id === s.tab) ? (s.tab as Tab) : undefined,
+    photo: typeof s.photo === "string" && s.photo ? s.photo : undefined,
   }),
   head: () => ({ meta: [
     { title: "Photo Organizer — The Francis Files" },
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/_authenticated/photo-organizer")({
 
 function Page() {
   const { isAdmin, loading } = useAuth();
-  const { tab = "organize" } = Route.useSearch();
+  const { tab = "organize", photo } = Route.useSearch();
   const navigate = useNavigate({ from: "/photo-organizer" });
   if (loading) return null;
   if (!isAdmin) return <><PageHeader title="Photo Organizer" /><p className="p-8 text-sm text-muted-foreground">The Photo Organizer is available to administrators. <Link to="/photos" className="text-primary underline">Open the Photo Archive</Link>.</p></>;
@@ -55,7 +56,7 @@ function Page() {
         ))}
       </nav>
       <div className="px-4 py-4 sm:px-8">
-        {tab === "organize" && <PhotoOrganizer />}
+        {tab === "organize" && <PhotoOrganizer initialPhotoId={photo} />}
         {tab === "list" && <PhotoRecordList />}
         {tab === "upload" && <BatchUpload />}
         {tab === "categories" && <CategoryManager />}
