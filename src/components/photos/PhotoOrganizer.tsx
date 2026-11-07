@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ImagePlus, Loader2, Maximize2, Plus, RotateCcw, RotateCw, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ImagePlus, Loader2, Maximize2, Plus, RotateCcw, RotateCw, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -281,9 +281,13 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
   const backInput = useRef<HTMLInputElement>(null);
   const [backBusy, setBackBusy] = useState(false);
 
+  // Typed-but-not-yet-stored edits, compared against the last saved snapshot so
+  // the Save button and the panel header can tell the truth about what is pending.
+  const dirty = JSON.stringify(v) !== saved.current;
+
   const save = async () => {
     const snap = JSON.stringify(latest.current);
-    if (snap === saved.current) return;
+    if (snap === saved.current) { setState("saved"); return; }
     setState("saving");
     try {
       await savePhotoDetails(photo.id, latest.current);
@@ -298,11 +302,13 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
   useEffect(() => () => { void save(); }, []);
 
   return (
-    <section className="rounded-md border border-border">
+    <section className="rounded-md border border-border" onKeyDown={(e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); void save(); }
+    }}>
       <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium">
         <span>Photo Details</span>
         <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
-          {state === "saving" ? "Saving…" : state === "saved" ? "Saved" : state === "error" ? "Not saved" : "Optional"}
+          {state === "saving" ? "Saving…" : dirty ? "Unsaved changes" : state === "error" ? "Not saved" : state === "saved" ? "Saved" : "Optional"}
           <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} />
         </span>
       </button>
@@ -317,6 +323,11 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
             </label>
           ))}
           <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button size="sm" disabled={state === "saving"} onClick={() => void save()}
+              title="Save the details you typed (Ctrl/Cmd + S)">
+              {state === "saving" ? <Loader2 className="mr-1 size-4 animate-spin" /> : <Save className="mr-1 size-4" />}
+              {state === "saving" ? "Saving…" : dirty ? "Save" : "Saved"}
+            </Button>
             <input ref={backInput} type="file" accept="image/*,.tif,.tiff" className="hidden" onChange={async (e) => {
               const f = e.target.files?.[0]; e.target.value = "";
               if (!f) return;
