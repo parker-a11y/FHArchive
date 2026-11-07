@@ -24,6 +24,10 @@ import {
   LocationLineNoneButton,
   LOCATION_LINE_LIST_ID,
 } from "@/components/letter/LocationLineOptions";
+import {
+  DateAsWrittenDatalist,
+  DATE_AS_WRITTEN_LIST_ID,
+} from "@/components/letter/DateAsWrittenOptions";
 import { ContainerSelect } from "@/components/containers/ContainerSelect";
 import { StorageLocationSelect } from "@/components/letter/StorageLocationSelect";
 import {
