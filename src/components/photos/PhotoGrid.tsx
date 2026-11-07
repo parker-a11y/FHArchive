@@ -19,7 +19,7 @@ type Props = {
   boxOf: (p: Photo) => string | null;
   recOf: (p: Photo) => PhotoRecordRef | null;
   onZoom: (id: string) => void;
-  /** Double-click on a tile: open the photograph's own record. */
+  /** Click on the picture: open the photograph's own record for editing. */
   onOpen: (id: string) => void;
   /** Permanently rotate the viewing copy 90° left or right. */
   onRotate: (p: Photo, degrees: 90 | -90) => void;
@@ -29,9 +29,9 @@ type Props = {
 };
 
 /**
- * Thumbnail grid over the same filtered, sorted rows the table shows. Selection
- * works exactly as in the list (click to toggle, Shift-click for a range) so the
- * bulk bar above behaves the same in either view.
+ * Thumbnail grid over the same filtered, sorted rows the table shows. Clicking a
+ * picture opens that photograph's record; clicking its details below selects it
+ * (Shift-click for a range) so the bulk bar above behaves the same in either view.
  */
 export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf, onZoom, onOpen, onRotate, rotating, density }: Props) {
   if (!rows.length) {
@@ -49,13 +49,21 @@ export function PhotoGrid({ rows, sel, onPick, catNames, sleeveOf, boxOf, recOf,
           <div
             key={p.id}
             onClick={(e) => onPick(p.id, e.shiftKey)}
-            onDoubleClick={() => onOpen(p.id)}
-            title="Click to select · double-click to open this photograph's record"
+            title="Click the details below to select · Shift-click for a range · click the picture to open this photograph's record"
             className={`group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-md border transition ${
               on ? "border-primary bg-accent ring-2 ring-primary" : "border-border hover:border-primary/50 hover:bg-muted/40"
             }`}
           >
-            <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-muted">
+            <div
+              className="relative flex aspect-square items-center justify-center overflow-hidden bg-muted"
+              title="Click to open this photograph's record for editing"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Shift/Cmd/Ctrl on the picture keeps the selection gestures; a plain click opens the record.
+                if (e.shiftKey || e.metaKey || e.ctrlKey) { onPick(p.id, e.shiftKey); return; }
+                onOpen(p.id);
+              }}
+            >
               <SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="h-full w-full object-contain" />
               <span className="absolute left-1 top-1 rounded bg-background p-0.5 shadow-sm" onClick={(e) => e.stopPropagation()}>
                 <Checkbox

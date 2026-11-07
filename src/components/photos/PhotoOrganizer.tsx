@@ -157,7 +157,7 @@ export function PhotoOrganizer({ initialPhotoId }: { initialPhotoId?: string }) 
             <CategoryPanel photo={photo} mine={mine} onToggle={toggle} />
             <BoxPicker photo={photo} />
             <PhotoConnectionsEditor photoId={photo.id} />
-            <DetailsPanel key={photo.id} photo={photo} onDeleted={() => { setIds((x) => x.filter((id) => id !== photo.id)); d.refresh(); }} />
+            <DetailsPanel key={photo.id} photo={photo} defaultOpen={!!initialPhotoId} onDeleted={() => { setIds((x) => x.filter((id) => id !== photo.id)); d.refresh(); }} />
           </aside>
         </div>
       )}
@@ -271,9 +271,9 @@ function toDetails(p: Photo): PhotoDetails {
   return { caption: p.caption ?? "", people: p.people ?? "", date_text: p.date_text ?? "", location: p.location ?? "", inscription: p.inscription ?? "", notes: p.notes ?? "", info_source: p.info_source ?? "", back_transcription: p.back_transcription ?? "" };
 }
 
-function DetailsPanel({ photo, onDeleted }: { photo: Photo; onDeleted: () => void }) {
+function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo; defaultOpen?: boolean; onDeleted: () => void }) {
   const d = usePhotoData();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [v, setV] = useState<PhotoDetails>(() => toDetails(photo));
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const saved = useRef(JSON.stringify(toDetails(photo)));
