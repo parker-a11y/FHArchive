@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, ImagePlus,
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 import { attachPhotoBack, deletePhoto, rotatePhotoView, viewPath, type Photo } from "@/lib/photos";
 import { assignBox, assignSleeve, createCategory, createSleeve, fetchBatches, savePhotoDetails, setCategory, type PhotoDetails } from "@/lib/photo-catalog";
 import { SignedImg } from "@/components/photos/SignedImg";
@@ -267,6 +268,70 @@ const FIELDS: { key: keyof PhotoDetails; label: string; multi?: boolean; hint?: 
   { key: "back_transcription", label: "Writing on the back (transcription)", multi: true },
 ];
 
+// One-tap additions for the two most common people, using their exact names
+// from the people list so they match the type-ahead suggestions.
+const QUICK_PEOPLE = [
+  { label: "Fran", name: "Francis A. Harrington" },
+  { label: "Jac", name: "Jaquelyn Harrington" },
+];
+
+// People is a comma-separated free-text field; this input suggests existing
+// people for the name currently being typed (the part after the last comma).
+function PeopleInput({ value, onChange, onBlur }: { value: string; onChange: (v: string) => void; onBlur: () => void }) {
+  const names = useQuery({
+    queryKey: ["people-names"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("people").select("name").order("name");
+      if (error) throw error;
+      return (data ?? []).map((x) => x.name as string);
+    },
+  });
+  const [focused, setFocused] = useState(false);
+  const parts = value.split(",");
+  const token = (parts[parts.length - 1] ?? "").trim().toLowerCase();
+  const prefix = parts.slice(0, -1).join(",");
+  const suggestions = token
+    ? (names.data ?? [])
+        .filter((n) => n.toLowerCase().includes(token) && !parts.some((p) => p.trim().toLowerCase() === n.toLowerCase()))
+        .slice(0, 8)
+    : [];
+  const pick = (name: string) => onChange(prefix ? `${prefix}, ${name}` : name);
+  const addQuick = (name: string) => {
+    if (parts.some((p) => p.trim().toLowerCase() === name.toLowerCase())) return;
+    const base = value.replace(/[,\s]+$/, "");
+    onChange(base ? `${base}, ${name}` : name);
+  };
+  return (
+    <div className="relative mt-1">
+      <Input value={value} placeholder="Fran Harrington, Jacquelyn Harrington"
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setTimeout(() => setFocused(false), 150); onBlur(); }}
+        className="text-sm text-foreground" />
+      {focused && suggestions.length > 0 && (
+        <ul className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-md border border-border bg-popover text-sm shadow-md">
+          {suggestions.map((n) => (
+            <li key={n}>
+              <button type="button" className="block w-full px-2 py-1.5 text-left hover:bg-accent"
+                onMouseDown={(e) => { e.preventDefault(); pick(n); }}>
+                {n}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="mt-1 flex gap-1">
+        {QUICK_PEOPLE.map((q) => (
+          <Button key={q.label} type="button" size="sm" variant="outline" className="h-6 px-2 text-xs"
+            title={`Add ${q.name}`}
+            onClick={() => addQuick(q.name)}>+ {q.label}</Button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function toDetails(p: Photo): PhotoDetails {
   return { caption: p.caption ?? "", people: p.people ?? "", date_text: p.date_text ?? "", location: p.location ?? "", inscription: p.inscription ?? "", notes: p.notes ?? "", info_source: p.info_source ?? "", back_transcription: p.back_transcription ?? "" };
 }
@@ -319,7 +384,9 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
               {f.label}
               {f.multi
                 ? <Textarea rows={3} value={v[f.key]} onChange={(e) => setV({ ...v, [f.key]: e.target.value })} onBlur={() => void save()} className="mt-1 text-sm text-foreground" />
-                : <Input value={v[f.key]} placeholder={f.hint} onChange={(e) => setV({ ...v, [f.key]: e.target.value })} onBlur={() => void save()} className="mt-1 text-sm text-foreground" />}
+                : f.key === "people"
+                  ? <PeopleInput value={v.people} onChange={(x) => setV({ ...v, people: x })} onBlur={() => void save()} />
+                  : <Input value={v[f.key]} placeholder={f.hint} onChange={(e) => setV({ ...v, [f.key]: e.target.value })} onBlur={() => void save()} className="mt-1 text-sm text-foreground" />}
             </label>
           ))}
           <div className="flex flex-wrap items-center gap-2 pt-1">
