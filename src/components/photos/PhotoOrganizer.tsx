@@ -48,18 +48,27 @@ export function PhotoOrganizer({ initialPhotoId }: { initialPhotoId?: string }) 
   useEffect(() => {
     if (!first.current) return;
     first.current = false;
-    // Opened from the Record List with a specific photograph: show it in the full set.
-    if (initialPhotoId && d.photos.some((p) => p.id === initialPhotoId)) {
-      const all = build("all");
-      setKind("all");
-      setIds(all);
-      setPos(Math.max(0, all.indexOf(initialPhotoId)));
-      return;
-    }
+    // A requested photograph is handled by the effect below, which waits for it to load.
+    if (initialPhotoId) return;
     const u = build("uncategorized");
     if (u.length) setIds(u); else { setKind("all"); setIds(build("all")); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Opened with a specific photograph (Record List, upload list): show it in the
+  // full set. The photo list may still be stale on arrival (e.g. straight after an
+  // upload), so keep watching until the photograph appears, then position once.
+  const appliedInitial = useRef(false);
+  useEffect(() => {
+    if (appliedInitial.current || !initialPhotoId) return;
+    if (!d.photos.some((p) => p.id === initialPhotoId)) return;
+    appliedInitial.current = true;
+    const all = build("all");
+    setKind("all");
+    setIds(all);
+    setPos(Math.max(0, all.indexOf(initialPhotoId)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPhotoId, d.photos]);
 
   const byId = useMemo(() => new Map(d.photos.map((p) => [p.id, p])), [d.photos]);
   const list = ids.map((id) => byId.get(id)).filter(Boolean) as Photo[];
