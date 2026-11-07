@@ -384,7 +384,9 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
               {f.label}
               {f.multi
                 ? <Textarea rows={3} value={v[f.key]} onChange={(e) => setV({ ...v, [f.key]: e.target.value })} onBlur={() => void save()} className="mt-1 text-sm text-foreground" />
-                : <Input value={v[f.key]} placeholder={f.hint} onChange={(e) => setV({ ...v, [f.key]: e.target.value })} onBlur={() => void save()} className="mt-1 text-sm text-foreground" />}
+                : f.key === "people"
+                  ? <PeopleInput value={v.people} onChange={(x) => setV({ ...v, people: x })} onBlur={() => void save()} />
+                  : <Input value={v[f.key]} placeholder={f.hint} onChange={(e) => setV({ ...v, [f.key]: e.target.value })} onBlur={() => void save()} className="mt-1 text-sm text-foreground" />}
             </label>
           ))}
           <div className="flex flex-wrap items-center gap-2 pt-1">
