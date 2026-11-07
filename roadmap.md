@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Add linked prior emails beside FH storage details, showing recipients on hover; verify against a real sent email.
+
 - [x] Add the collapsible Cast of Characters & Setting panel above letter tabs; shared-letter counts tested and signed-in FH0647 expanded/collapsed with shared links verified on desktop and mobile.
 
 - [x] Add a minor-edit confirmation to retain completed AI review without rerunning analysis; four regression tests passed and signed-in confirmation persisted after reload on FH0011.

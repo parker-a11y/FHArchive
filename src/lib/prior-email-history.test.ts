@@ -12,6 +12,13 @@ test("a letter's prior send is not dropped beyond the newest 300 emails", () => 
   const emails: HistoryEmail[] = Array.from({ length: 601 }, (_, i) => ({ id: `email-${i}`, recipients: [{ email: "family@example.com" }] }));
   assert.deepEqual(priorEmailHistory(emails, [{ kind: "letter", id: "FH0001" }], new Set(["email-600"])).sends.map((e) => e.id), ["email-600"]);
 });
+test("record email links retain the matching email ID, date and recipient list", () => {
+  const result = priorEmailHistory([
+    { id: "sent-letter", subject: "FH0400", sent_at: "2026-11-06T15:00:00Z", recipients: [{ email: "family@example.com" }, { email: "cousin@example.com" }] },
+    { id: "other-letter", recipients: [{ email: "other@example.com" }] },
+  ], [{ kind: "letter", id: "letter-400" }], new Set(["sent-letter"]));
+  assert.deepEqual(result.sends, [{ id: "sent-letter", subject: "FH0400", sentAt: "2026-11-06T15:00:00Z", recipients: ["family@example.com", "cousin@example.com"], shareToken: null }]);
+});
 test("proof-only addresses do not count as previously sent", () => {
   const emails = ["PARKERJH@GMAIL.COM", "parker@tenfoldcapture.com"].map((email, i) => ({ id: String(i), recipients: [{ email }] }));
   assert.equal(priorEmailHistory(emails, [{ kind: "letter", id: "FH0001" }], new Set(["0", "1"])).sends.length, 0);
