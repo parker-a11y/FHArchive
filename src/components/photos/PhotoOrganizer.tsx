@@ -354,12 +354,30 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
   const latest = useRef(v); latest.current = v;
   const backInput = useRef<HTMLInputElement>(null);
   const [backBusy, setBackBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
+
+  const remove = async () => {
+    if (deletingRef.current || !confirm(`Delete ${photo.ph_id ?? "this photograph"} and its photo files? This cannot be undone. Its PH number will not be reused.${photo.legacy_archive_id ? " Original files shared with the former FH record will be preserved." : ""}`)) return;
+    deletingRef.current = true;
+    setDeleting(true);
+    try {
+      await deletePhoto(photo);
+      toast.success(`${photo.ph_id ?? "Photograph"} deleted`);
+      onDeleted();
+    } catch (e) {
+      deletingRef.current = false;
+      setDeleting(false);
+      toast.error((e as Error).message);
+    }
+  };
 
   // Typed-but-not-yet-stored edits, compared against the last saved snapshot so
   // the Save button and the panel header can tell the truth about what is pending.
   const dirty = JSON.stringify(v) !== saved.current;
 
   const save = async () => {
+    if (deletingRef.current) return;
     const snap = JSON.stringify(latest.current);
     if (snap === saved.current) { setState("saved"); return; }
     setState("saving");
@@ -379,13 +397,19 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
     <section className="rounded-md border border-border" onKeyDown={(e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); void save(); }
     }}>
-      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between px-3 py-2.5 text-sm font-medium">
+      <div className="flex items-center gap-1 pr-2">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2.5 text-sm font-medium">
         <span>Photo Details</span>
         <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
           {state === "saving" ? "Saving…" : dirty ? "Unsaved changes" : state === "error" ? "Not saved" : state === "saved" ? "Saved" : "Optional"}
           <ChevronDown className={`size-4 transition ${open ? "rotate-180" : ""}`} />
         </span>
       </button>
+      <Button size="sm" variant="ghost" className="shrink-0 text-destructive" disabled={deleting || state === "saving" || backBusy} onClick={() => void remove()}>
+        {deleting ? <Loader2 className="mr-1 size-4 animate-spin" /> : <Trash2 className="mr-1 size-4" />}
+        {deleting ? "Deleting…" : "Delete photo"}
+      </Button>
+      </div>
       {open && (
         <div className="space-y-3 border-t border-border p-3">
           {FIELDS.map((f) => (
@@ -416,10 +440,6 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
               {backBusy ? <Loader2 className="mr-1 size-4 animate-spin" /> : <ImagePlus className="mr-1 size-4" />}
               {photo.back_path ? "Replace reverse side" : "Add reverse side"}
             </Button>
-            <Button size="sm" variant="ghost" className="text-destructive" onClick={async () => {
-              if (!confirm(`Delete ${photo.ph_id ?? "this photograph"}? Its PH number will not be reused.`)) return;
-              try { await deletePhoto(photo); onDeleted(); } catch (e) { toast.error((e as Error).message); }
-            }}><Trash2 className="mr-1 size-4" />Delete</Button>
           </div>
           {(photo.original_filename || photo.batch_id) && (
             <p className="text-xs text-muted-foreground">Uploaded {new Date(photo.created_at).toLocaleDateString()}{photo.original_filename ? ` as ${photo.original_filename}` : ""}</p>
