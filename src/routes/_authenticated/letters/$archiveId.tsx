@@ -87,6 +87,7 @@ import { LabelDialog } from "@/components/letter/LabelDialog";
 import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
 import { LetterContextPanel } from "@/components/letter/LetterContextPanel";
 import { LinkedPhotosPanel } from "@/components/letter/LinkedPhotosPanel";
+import { RecordEmailHistory } from "@/components/letter/RecordEmailHistory";
 import { LetterSourcesPanel } from "@/components/letter/LetterSourcesPanel";
 import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
@@ -496,7 +497,9 @@ function LetterPage() {
                   .filter((v) => v && v !== "—")
                   .join(" · ") || "—"}
               </span>
+              {!isGuestViewer && <RecordEmailHistory letterId={letter.id} />}
             </div>
+            {!isGuestViewer && <div className="mt-3 sm:hidden"><RecordEmailHistory letterId={letter.id} /></div>}
           </div>
           <div className="flex flex-wrap items-center gap-2 xl:max-w-[46%] xl:shrink-0 xl:justify-end">
             {!isGuestViewer && <ShareStatusBadge letter={letter} />}
