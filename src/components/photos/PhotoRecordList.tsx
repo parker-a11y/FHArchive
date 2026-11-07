@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Boxes, ExternalLink, FolderInput, Layers, LayoutGrid, ListChecks, Loader2, RotateCcw, RotateCw, Search, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,9 @@ function readStored<T extends string>(key: string, allowed: readonly T[]): T | n
 
 export function PhotoRecordList() {
   const d = usePhotoData();
+  const navigate = useNavigate();
+  /** Double-click opens the photograph's own record in the Organizer tab. */
+  const openPhoto = (id: string) => void navigate({ to: "/photo-organizer", search: { photo: id } });
   const batches = useQuery({ queryKey: ["photo-batches"], queryFn: fetchBatches });
   const records = usePhotoRecords();
   const recs: Map<string, PhotoRecordRef> = records.data ?? new Map();
@@ -189,6 +193,7 @@ export function PhotoRecordList() {
           boxOf={(p) => (p.box_id ? d.boxById.get(p.box_id)?.code ?? null : null)}
           recOf={(p) => photoRecordRef(p, recs)}
           onZoom={setZoomId}
+          onOpen={openPhoto}
           onRotate={(p, deg) => void rotate(p, deg)}
           rotating={rotating}
           density={density}
@@ -211,8 +216,8 @@ export function PhotoRecordList() {
                     <Checkbox aria-label={`Select ${p.ph_id ?? "photograph"}`} checked={on} onClick={(e) => { e.preventDefault(); click(p.id, e.shiftKey); }} />
                   </td>
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}
-                    title={rec ? `Double-click to open the ${rec.archive_id} record` : undefined}
-                    onDoubleClick={(e) => { e.stopPropagation(); if (rec) window.open(rec.href, "_blank", "noopener"); }}>
+                    title="Double-click to open this photograph's record"
+                    onDoubleClick={(e) => { e.stopPropagation(); openPhoto(p.id); }}>
                     <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded bg-muted"><SignedImg path={p.front_thumb_path ?? p.front_view_path} alt="" className="max-h-12 max-w-12 object-contain" /></div>
                   </td>
                   <td className="px-2 py-1.5" onClick={(e) => e.stopPropagation()}>
@@ -248,8 +253,8 @@ export function PhotoRecordList() {
       </div>
       )}
       <p className="text-xs text-muted-foreground">{view === "grid"
-        ? "Click a tile to select it (Shift-click for a range), double-click to open its archive record, or hover for the full-size and rotate buttons. Rotating saves permanently."
-        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo, or use its record number, to open that archive record in a new tab. The rotate buttons save permanently."}</p>
+        ? "Click a tile to select it (Shift-click for a range), double-click to open the photograph's record, or hover for the full-size and rotate buttons. Rotating saves permanently."
+        : "Click anywhere in a row (except its photo) or use the checkbox to select; Shift-click selects a continuous range. Double-click a photo to open its record; use the FH number to open the linked archive record in a new tab. The rotate buttons save permanently."}</p>
       <AssignBoxDialog open={boxOpen} onOpenChange={setBoxOpen} ids={selected} onDone={() => d.refresh()} />
       <AddToSleeveDialog open={sleeveOpen} onOpenChange={setSleeveOpen} ids={selected} onDone={() => d.refresh()} />
       {zoomId && (
