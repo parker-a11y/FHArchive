@@ -44,7 +44,7 @@ export function LabelCard(props: LabelProps) {
 
 function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "1.1in", compactLines = false }: LabelProps) {
   const twoCol = compactLines && lines.length > 12;
-  const compactSize = lines.length > 20 ? "0.13in" : twoCol ? "0.15in" : "0.18in";
+  const compactSize = lines.length > 20 ? "0.12in" : twoCol ? "0.13in" : "0.18in";
   return (
     <div className="flex h-[6in] w-[4in] flex-col items-center justify-center border border-border bg-white text-center">
       <div
