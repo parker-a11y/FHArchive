@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Letter } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
+import { recordHealth } from "@/lib/record-health";
+import { useAiStateByLetter } from "@/lib/record-ai-state";
 
 const EXACT_SKIP = new Set(["year", "month", "unknown", "not_applicable", "undated"]);
 const MONTHS = [
@@ -26,6 +28,7 @@ function monthCells(year: number, month: number) {
 export function MonthInHistory({ letters }: { letters: Letter[] }) {
   const [offset, setOffset] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
+  const { data: aiByLetter = {} } = useAiStateByLetter();
 
   const { year, month, cells } = useMemo(() => {
     const t = new Date();
@@ -99,12 +102,19 @@ export function MonthInHistory({ letters }: { letters: Letter[] }) {
                     <ul className="space-y-0.5">
                       {items.map((l) => {
                         const isOpen = open === l.id;
+                        const health = recordHealth(l, aiByLetter[l.id]);
                         return (
                           <li key={l.id} className="rounded bg-muted/50 text-[11px]">
                             <button onClick={() => setOpen(isOpen ? null : l.id)} className="flex w-full items-start gap-0.5 p-1 text-left">
                               <span className="min-w-0 flex-1">
-                                <span className="archive-id block text-[9px] text-primary">
-                                  {l.archive_id} · {l.normalized_date!.slice(0, 4)}
+                                <span className="archive-id flex items-center gap-1 text-[9px] text-primary">
+                                  <span
+                                    title={health.label}
+                                    aria-label={health.label}
+                                    className="inline-block size-1.5 shrink-0 rounded-full border border-black/10"
+                                    style={{ backgroundColor: health.color }}
+                                  />
+                                  <span className="truncate">{l.archive_id} · {l.normalized_date!.slice(0, 4)}</span>
                                 </span>
                                 <span className="line-clamp-2 font-medium">{l.title || `${l.author || "—"} → ${l.recipient || "—"}`}</span>
                               </span>
@@ -114,6 +124,13 @@ export function MonthInHistory({ letters }: { letters: Letter[] }) {
                               <div className="space-y-1 border-t border-border p-1.5 text-muted-foreground">
                                 <p>{displayDate(l)}</p>
                                 <p>{l.author || "—"} → {l.recipient || "—"}{l.origin ? ` · ${l.origin}` : ""}</p>
+                                <p className="flex items-center gap-1.5">
+                                  <span
+                                    className="inline-block size-1.5 shrink-0 rounded-full border border-black/10"
+                                    style={{ backgroundColor: health.color }}
+                                  />
+                                  {health.label}
+                                </p>
                                 {l.summary_short && <p className="text-foreground">{l.summary_short}</p>}
                                 <Link to="/letters/$archiveId" params={{ archiveId: l.archive_id }} className="inline-block font-medium text-primary hover:underline">
                                   Open record →
