@@ -11,6 +11,7 @@ import { WeekInHistory } from "@/components/WeekInHistory";
 import { MonthInHistory } from "@/components/MonthInHistory";
 import { timelineYears } from "@/lib/timeline-years";
 import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
+import { useAiStateByLetter } from "@/lib/record-ai-state";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -56,34 +57,8 @@ function Timeline() {
   const tagMap = links[0] ?? {};
 
   // AI-analysis review state drives the purple/green distinction, exactly as on
-  // All Records. Counts are read as aggregates so the whole archive costs a few
-  // hundred rows instead of every suggestion row.
-  const { data: aiByLetter = {} } = useQuery({
-    queryKey: ["timeline-ai-state"],
-    queryFn: async () => {
-      const out: Record<string, { total: number; pending: number }> = {};
-      const [totals, pending] = await Promise.all([
-        supabase.from("letters").select("id, ai_suggestions(count)"),
-        supabase
-          .from("ai_suggestions")
-          .select("letter_id")
-          .eq("status", "pending"),
-      ]);
-      if (totals.error) throw totals.error;
-      if (pending.error) throw pending.error;
-      for (const r of (totals.data ?? []) as {
-        id: string;
-        ai_suggestions: { count: number | string }[];
-      }[]) {
-        out[r.id] = { total: Number(r.ai_suggestions?.[0]?.count ?? 0), pending: 0 };
-      }
-      for (const r of (pending.data ?? []) as { letter_id: string }[]) {
-        const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
-        s.pending += 1;
-      }
-      return out;
-    },
-  });
+  // All Records. Shared with the this-week and this-month calendars below.
+  const { data: aiByLetter = {} } = useAiStateByLetter();
 
   const [period, setPeriod] = useState("");
   const [filter, setFilter] = useState("");
