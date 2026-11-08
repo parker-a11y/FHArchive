@@ -46,6 +46,7 @@
 
 - [x] Simplify photo intake: front + optional back image, writing on back, title, date, people, place, box
 - [x] Bulk Photo Upload: drag photos into an Unassigned bucket, then pick photos there to create records
+- [x] Catalog: second "Save & open record" button beside "Create Short Title" at the top of the form (the original at the bottom is unchanged)
 
 ## Photo Archive, Organizer, Gallery & Photo Storage
 - [x] Stage A — permanent PH numbers (PH00001…), counter + safe assignment on upload, admin-approved backfill of the 53 existing photos, legacy FH photo links resolve to the photo
