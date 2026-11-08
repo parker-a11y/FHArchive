@@ -107,14 +107,14 @@ export function MonthInHistory({ letters }: { letters: Letter[] }) {
                           <li key={l.id} className="rounded bg-muted/50 text-[11px]">
                             <button onClick={() => setOpen(isOpen ? null : l.id)} className="flex w-full items-start gap-0.5 p-1 text-left">
                               <span className="min-w-0 flex-1">
-                                <span className="archive-id flex items-center gap-1 text-[9px] text-primary">
+                                <span className="archive-id block text-[9px] text-primary">
                                   <span
                                     title={health.label}
                                     aria-label={health.label}
-                                    className="inline-block size-1.5 shrink-0 rounded-full border border-black/10"
+                                    className="mr-1 inline-block size-1.5 shrink-0 rounded-full border border-black/10 align-middle"
                                     style={{ backgroundColor: health.color }}
                                   />
-                                  <span className="truncate">{l.archive_id} · {l.normalized_date!.slice(0, 4)}</span>
+                                  {l.archive_id} · {l.normalized_date!.slice(0, 4)}
                                 </span>
                                 <span className="line-clamp-2 font-medium">{l.title || `${l.author || "—"} → ${l.recipient || "—"}`}</span>
                               </span>
