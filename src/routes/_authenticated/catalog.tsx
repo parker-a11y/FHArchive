@@ -864,19 +864,31 @@ function QuickEntry() {
                 <Label className="field-label">
                   Title / short description <span className="text-destructive">*</span>
                 </Label>
-                {isPersonalLetter(form.record_type, form.subtype) && (
+                <div className="flex shrink-0 items-center gap-2">
                   <Button
                     type="button"
+                    variant="outline"
                     size="sm"
-                    className="border border-archive-gold-strong bg-archive-gold font-semibold text-white shadow-sm hover:bg-archive-gold-strong"
-                    onClick={() => {
-                      set("title", shortLetterTitle(form));
-                      setTitleError(false);
-                    }}
+                    className="whitespace-nowrap"
+                    disabled={busy}
+                    onClick={() => save("open")}
                   >
-                    Create Short Title
+                    Save &amp; open record
                   </Button>
-                )}
+                  {isPersonalLetter(form.record_type, form.subtype) && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="whitespace-nowrap border border-archive-gold-strong bg-archive-gold font-semibold text-white shadow-sm hover:bg-archive-gold-strong"
+                      onClick={() => {
+                        set("title", shortLetterTitle(form));
+                        setTitleError(false);
+                      }}
+                    >
+                      Create Short Title
+                    </Button>
+                  )}
+                </div>
               </div>
               <Input
                 ref={titleRef}
