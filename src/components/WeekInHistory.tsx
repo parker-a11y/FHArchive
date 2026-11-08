@@ -86,15 +86,17 @@ export function WeekInHistory({ letters }: { letters: Letter[] }) {
                         <button onClick={() => setOpen(isOpen ? null : l.id)} className="flex w-full items-start gap-1 p-1.5 text-left">
                           <span className="min-w-0 flex-1">
                             <span className="archive-id block text-[10px] text-primary">
+                              {l.archive_id} · {l.normalized_date!.slice(0, 4)}
+                            </span>
+                            <span className="line-clamp-2 font-medium">
                               <span
                                 title={health.label}
                                 aria-label={health.label}
                                 className="mr-1 inline-block size-1.5 shrink-0 rounded-full border border-black/10 align-middle"
                                 style={{ backgroundColor: health.color }}
                               />
-                              {l.archive_id} · {l.normalized_date!.slice(0, 4)}
+                              {l.title || `${l.author || "—"} → ${l.recipient || "—"}`}
                             </span>
-                            <span className="line-clamp-2 font-medium">{l.title || `${l.author || "—"} → ${l.recipient || "—"}`}</span>
                           </span>
                           <ChevronDown className={`mt-0.5 size-3 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                         </button>
