@@ -10,6 +10,7 @@ import { DateLink } from "@/components/DateLink";
 import { WeekInHistory } from "@/components/WeekInHistory";
 import { MonthInHistory } from "@/components/MonthInHistory";
 import { timelineYears } from "@/lib/timeline-years";
+import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -53,6 +54,36 @@ function Timeline() {
     },
   });
   const tagMap = links[0] ?? {};
+
+  // AI-analysis review state drives the purple/green distinction, exactly as on
+  // All Records. Counts are read as aggregates so the whole archive costs a few
+  // hundred rows instead of every suggestion row.
+  const { data: aiByLetter = {} } = useQuery({
+    queryKey: ["timeline-ai-state"],
+    queryFn: async () => {
+      const out: Record<string, { total: number; pending: number }> = {};
+      const [totals, pending] = await Promise.all([
+        supabase.from("letters").select("id, ai_suggestions(count)"),
+        supabase
+          .from("ai_suggestions")
+          .select("letter_id")
+          .eq("status", "pending"),
+      ]);
+      if (totals.error) throw totals.error;
+      if (pending.error) throw pending.error;
+      for (const r of (totals.data ?? []) as {
+        id: string;
+        ai_suggestions: { count: number | string }[];
+      }[]) {
+        out[r.id] = { total: Number(r.ai_suggestions?.[0]?.count ?? 0), pending: 0 };
+      }
+      for (const r of (pending.data ?? []) as { letter_id: string }[]) {
+        const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
+        s.pending += 1;
+      }
+      return out;
+    },
+  });
 
   const [period, setPeriod] = useState("");
   const [filter, setFilter] = useState("");
@@ -194,6 +225,12 @@ function Timeline() {
                   >
                     {l.archive_id}
                   </Link>
+                  <span
+                    title={recordHealth(l, aiByLetter[l.id]).label}
+                    aria-label={recordHealth(l, aiByLetter[l.id]).label}
+                    className="inline-block h-2.5 w-2.5 shrink-0 self-center rounded-full border border-black/10 shadow-[inset_0_-1px_1px_rgba(0,0,0,0.15),inset_0_1px_1px_rgba(255,255,255,0.5)]"
+                    style={{ backgroundColor: recordHealth(l, aiByLetter[l.id]).color }}
+                  />
                   <span className="text-sm font-medium">
                     <DateLink date={l.normalized_date}>{displayDate(l)}</DateLink>
                   </span>
@@ -220,6 +257,13 @@ function Timeline() {
           );
         })}
         {rows.length === 0 && <p className="text-sm text-muted-foreground">No letters yet.</p>}
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-5 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.green }} /> Complete — verified &amp; AI reviewed</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.purple }} /> Verified — AI review pending</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.blue }} /> AI transcribed — needs verifying</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.yellow }} /> Scanned, transcription pending</span>
+          <span className="inline-flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: HEALTH_COLORS.red }} /> No scans or problem detected</span>
+        </p>
       </div>
     </>
   );
