@@ -22,7 +22,11 @@ export function JacketLabelDialog({ ids }: { ids: string[] }) {
   });
 
   const idText = condenseRanges(letters.map((l) => l.archive_id));
+  // More than 4 records: drop descriptions, list only FH number and date.
+  const compact = letters.length > 4;
+  const maxLines = compact ? 30 : 12;
   const lines = letters.map((l) => {
+    if (compact) return [l.archive_id, labelDate(l)].filter(Boolean).join(" · ");
     const t = (l.title ?? "").trim();
     const short = t.length > 40 ? t.slice(0, 40) + "…" : t;
     return [l.archive_id, labelDate(l), short].filter(Boolean).join(" · ");
@@ -44,7 +48,8 @@ export function JacketLabelDialog({ ids }: { ids: string[] }) {
           archiveId={idText}
           defaultDate={dateText}
           defaultTitle={`${letters.length} records in this jacket`}
-          lines={lines.length > 12 ? [...lines.slice(0, 12), `+ ${lines.length - 12} more`] : lines}
+          lines={lines.length > maxLines ? [...lines.slice(0, maxLines - 1), `+ ${lines.length - maxLines + 1} more`] : lines}
+          compactLines={compact}
           idFontSize={idText.length > 14 ? "0.45in" : idText.length > 7 ? "0.6in" : undefined}
         />
       )}
