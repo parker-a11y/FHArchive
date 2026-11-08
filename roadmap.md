@@ -66,3 +66,4 @@
 - [x] Phase 3 — advanced publishing and Blurb/Lulu/BookBaby profiles
 
 - [x] Book Builder Phase 3: chapters, contents, front matter, themes, facing pages, Lulu/Blurb/BookBaby profiles, preflight, cover designer (23 tests; real 156-page Lulu test book + cover exported and checked)
+- [x] Timeline: per-record status dots in the chronological list using the All Records traffic-light scheme, with the same legend (all 747 records checked in preview: 714 green, 22 blue, 7 purple, 2 yellow, 2 red)
