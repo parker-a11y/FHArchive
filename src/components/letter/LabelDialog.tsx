@@ -14,6 +14,8 @@ type LabelProps = {
   lines?: string[];
   /** Override the big identifier size for longer IDs (e.g. "SLEEVE 001"). */
   idFontSize?: string;
+  /** Compact list (jacket labels with many records): smaller text, two columns when long. */
+  compactLines?: boolean;
 };
 
 /**
@@ -40,7 +42,9 @@ export function LabelCard(props: LabelProps) {
   );
 }
 
-function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "1.1in" }: LabelProps) {
+function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "1.1in", compactLines = false }: LabelProps) {
+  const twoCol = compactLines && lines.length > 12;
+  const compactSize = lines.length > 20 ? "0.13in" : twoCol ? "0.15in" : "0.18in";
   return (
     <div className="flex h-[6in] w-[4in] flex-col items-center justify-center border border-border bg-white text-center">
       <div
@@ -63,7 +67,19 @@ function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "
       >
         {dateText}
       </div>
-      {lines.length > 0 && (
+      {lines.length > 0 && compactLines && (
+        <div
+          className={`mt-[0.25in] w-full px-[0.3in] text-black ${twoCol ? "grid grid-cols-2 gap-x-[0.15in]" : ""}`}
+          style={{ fontSize: compactSize, lineHeight: 1.3, gridAutoFlow: twoCol ? "row" : undefined }}
+        >
+          {lines.map((l, i) => (
+            <div key={i} className="whitespace-nowrap">
+              {l}
+            </div>
+          ))}
+        </div>
+      )}
+      {lines.length > 0 && !compactLines && (
         <div className="mt-[0.3in] space-y-[0.08in] px-[0.35in]">
           {lines.map((l, i) => (
             <div key={i} className="text-black" style={{ fontSize: "0.2in", lineHeight: 1.3 }}>
@@ -202,8 +218,10 @@ export function EntryLabelDialog({
   defaultTitle = "",
   lines,
   idFontSize,
+  compactLines,
 }: {
   idFontSize?: string;
+  compactLines?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   archiveId: string;
@@ -245,6 +263,7 @@ export function EntryLabelDialog({
               title={titleText}
               lines={lines}
               idFontSize={idFontSize}
+              compactLines={compactLines}
             />
           </div>
           <div className="flex shrink-0 items-center self-center sm:self-stretch">
