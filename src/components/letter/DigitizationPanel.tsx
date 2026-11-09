@@ -128,7 +128,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [autoTranscribing, setAutoTranscribing] = useState(false);
 
-  const { data: files = [] } = useQuery({
+  const { data: files = [], isLoading } = useQuery({
     queryKey: key,
     queryFn: () => fetchDigitalFiles(letter.id),
   });
@@ -542,6 +542,98 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const status = letter.digitization_status ?? "not_scanned";
   const complete = status === "complete";
 
+  const nothingUploaded = !isLoading && masters === 0 && !progress;
+
+  if (nothingUploaded) {
+    return (
+      <section className="space-y-6">
+        {uploader}
+        {!isAdmin && (
+          <p className="text-sm text-muted-foreground">
+            No scans uploaded for {letter.archive_id} yet.
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  /** The upload drop zone — admins only. */
+  const uploader = isAdmin ? (
+      <div
+        onDragEnter={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragActive(true);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragActive(false);
+          if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
+        }}
+        className={`rounded border-2 border-dashed px-6 py-8 text-center transition-colors ${
+          dragActive
+            ? "border-primary bg-primary/10"
+            : "border-border bg-muted/40"
+        }`}
+      >
+        <UploadCloud className="mx-auto mb-3 size-8 text-primary" />
+        <p className="text-sm">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            <UploadCloud className="size-4" />
+            Upload Scans / Digital Files
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={MASTER_ACCEPT}
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.length) uploadFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Or drop a whole batch here (e.g. {letter.archive_id}_001.tif …_010.tif)
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Dropped batches are automatically sorted by filename so pages import in order. The TIFF you
+          upload is stored byte-for-byte as the archival master and is never resized, recompressed
+          or replaced. Name each scan, then click “Confirm Upload Complete” to generate the JPEG
+          viewing copies and thumbnails.
+        </p>
+        {progress && (
+          <div className="mx-auto mt-4 max-w-md text-left">
+            <div className="flex justify-between text-xs">
+              <span className="truncate">{progress.current}</span>
+              <span className="tabular-nums">
+                {progress.done + 1} / {progress.total}
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded bg-border">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${((progress.done + 0.5) / progress.total) * 100}%` }}
+              />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">{progress.stage}</p>
+          </div>
+        )}
+      </div>
+  ) : null;
+
   return (
     <section className="space-y-6">
       {/* Summary */}
@@ -724,82 +816,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         )}
       </div>
 
-      {/* Uploader — admins only */}
-      {isAdmin && (
-      <div
-        onDragEnter={(e) => {
-          e.preventDefault();
-          setDragActive(true);
-        }}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          setDragActive(false);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragActive(true);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragActive(false);
-          if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
-        }}
-        className={`rounded border-2 border-dashed px-6 py-8 text-center transition-colors ${
-          dragActive
-            ? "border-primary bg-primary/10"
-            : "border-border bg-muted/40"
-        }`}
-      >
-        <UploadCloud className="mx-auto mb-3 size-8 text-primary" />
-        <p className="text-sm">
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <UploadCloud className="size-4" />
-            Upload Scans / Digital Files
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={MASTER_ACCEPT}
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files?.length) uploadFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </p>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Or drop a whole batch here (e.g. {letter.archive_id}_001.tif …_010.tif)
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Dropped batches are automatically sorted by filename so pages import in order. The TIFF you
-          upload is stored byte-for-byte as the archival master and is never resized, recompressed
-          or replaced. Name each scan, then click “Confirm Upload Complete” to generate the JPEG
-          viewing copies and thumbnails.
-        </p>
-        {progress && (
-          <div className="mx-auto mt-4 max-w-md text-left">
-            <div className="flex justify-between text-xs">
-              <span className="truncate">{progress.current}</span>
-              <span className="tabular-nums">
-                {progress.done + 1} / {progress.total}
-              </span>
-            </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded bg-border">
-              <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${((progress.done + 0.5) / progress.total) * 100}%` }}
-              />
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{progress.stage}</p>
-          </div>
-        )}
-      </div>
-      )}
+      {uploader}
 
       {/* Gallery */}
       <div>
