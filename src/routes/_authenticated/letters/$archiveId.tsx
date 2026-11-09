@@ -583,10 +583,20 @@ function LetterPage() {
               <ChevronRight className="ml-1 inline size-3.5" />
             </Nav>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="field-label">Chronological</span>
-            <Nav target={cPrev}>← Previous</Nav>
-            <Nav target={cNext}>Next →</Nav>
+          <div className="flex items-center gap-3">
+            <span className="field-label">By date</span>
+            <Nav target={cPrev}>
+              <ChevronLeft className="mr-1 inline size-3.5" />
+              {cPrev
+                ? `${cPrev.archive_id}${cPrev.normalized_date ? ` · ${cPrev.normalized_date}` : ""}`
+                : "Previous"}
+            </Nav>
+            <Nav target={cNext}>
+              {cNext
+                ? `${cNext.archive_id}${cNext.normalized_date ? ` · ${cNext.normalized_date}` : ""}`
+                : "Next"}
+              <ChevronRight className="ml-1 inline size-3.5" />
+            </Nav>
           </div>
         </div>
       </header>
