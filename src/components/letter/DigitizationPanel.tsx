@@ -542,21 +542,6 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const status = letter.digitization_status ?? "not_scanned";
   const complete = status === "complete";
 
-  const nothingUploaded = !isLoading && masters === 0 && !progress;
-
-  if (nothingUploaded) {
-    return (
-      <section className="space-y-6">
-        {uploader}
-        {!isAdmin && (
-          <p className="text-sm text-muted-foreground">
-            No scans uploaded for {letter.archive_id} yet.
-          </p>
-        )}
-      </section>
-    );
-  }
-
   /** The upload drop zone — admins only. */
   const uploader = isAdmin ? (
       <div
@@ -633,6 +618,21 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         )}
       </div>
   ) : null;
+
+  const nothingUploaded = !isLoading && masters === 0 && !progress;
+
+  if (nothingUploaded) {
+    return (
+      <section className="space-y-6">
+        {uploader}
+        {!isAdmin && (
+          <p className="text-sm text-muted-foreground">
+            No scans uploaded for {letter.archive_id} yet.
+          </p>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">
