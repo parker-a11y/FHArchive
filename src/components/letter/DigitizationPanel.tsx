@@ -159,6 +159,20 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [masters, letter.id, letter.image_count, letter.scan_status]);
 
+  // Opening "Scans & Files" on a record with nothing uploaded goes straight to
+  // the file chooser — no second click needed. Once per panel, never for
+  // records that already have scans.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || !isAdmin || progress) return;
+    const empty = isLoading ? letter.image_count === 0 : masters === 0;
+    if (!empty) return;
+    const input = fileInputRef.current;
+    if (!input) return;
+    autoOpenedRef.current = true;
+    input.click();
+  }, [isAdmin, isLoading, masters, progress, letter.image_count]);
+
   const jpegFiles = files.filter(hasJpeg);
   const thumbFiles = files.filter(hasThumb);
   const jpegCount = jpegFiles.length;
