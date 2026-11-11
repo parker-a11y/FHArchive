@@ -480,6 +480,8 @@ function Calendar({
         </div>
       </div>
 
+      <div className="overflow-x-auto">
+      <div className="min-w-[700px]">
       <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-muted-foreground">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
           <div key={d} className="py-1">
@@ -585,6 +587,8 @@ function Calendar({
             </button>
           );
         })}
+      </div>
+      </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
