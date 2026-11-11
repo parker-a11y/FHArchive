@@ -470,7 +470,10 @@ function Calendar({
               title={`${e.subject} — ${(e.recipients ?? []).map((r) => r.email).join(", ")}`}
               className="h-auto min-h-9 max-w-full whitespace-normal break-words text-left"
             >
-              {recordsByEmail.get(e.id)?.join(", ") || e.subject}
+              <span className="min-w-0">
+                {recordsByEmail.get(e.id)?.length ? <span className="block font-mono font-semibold">{recordsByEmail.get(e.id)?.join(", ")}</span> : null}
+                <span className="block">{e.subject}</span>
+              </span>
             </Button>
           ))}
           {!emails.some((e) => e.status === "scheduled" && !e.scheduled_for) && <span className="text-xs text-muted-foreground">No emails awaiting a date</span>}
@@ -545,17 +548,6 @@ function Calendar({
               >
                 {outsideMonth && day === 1 ? date.toLocaleDateString([], { month: "short", day: "numeric" }) : day}
               </span>
-              <span className="mt-1 flex flex-wrap gap-0.5 sm:hidden">
-                {unique.map((e) => (
-                  <span
-                    key={e.emailId}
-                    className={cn(
-                      "size-2 rounded-full",
-                      e.kind === "sent" ? "bg-emerald-500" : "bg-sky-500",
-                    )}
-                  />
-                ))}
-              </span>
               {entries.map((e) => (
                 <span
                   key={e.emailId}
@@ -574,19 +566,20 @@ function Calendar({
                   }}
                   onDragEnd={() => { clearMonthHover(); setDragOver(null); }}
                   className={cn(
-                    "mt-1 hidden truncate rounded px-1 py-0.5 sm:block",
+                    "mt-1 block min-w-0 rounded px-1 py-0.5 whitespace-normal [overflow-wrap:anywhere]",
                     e.kind === "scheduled" && "cursor-grab active:cursor-grabbing",
                     e.kind === "sent"
                       ? "bg-emerald-500/15 text-emerald-700"
                       : "bg-sky-500/15 text-sky-700",
                   )}
-                  title={`${e.subject} — ${e.time}`}
+                  title={`${e.ids.length ? `${e.ids.join(", ")} — ` : ""}${e.subject} — ${e.time}`}
                 >
-                  {e.ids.length ? e.ids.join(", ") : e.subject}
+                  {e.ids.length > 0 && <span className="block font-mono font-semibold">{e.ids.join(", ")}</span>}
+                  <span className="block">{e.subject}</span>
                 </span>
               ))}
               {extra > 0 && (
-                <span className="mt-1 hidden text-muted-foreground sm:block">+{extra} more</span>
+                <span className="mt-1 block text-muted-foreground">+{extra} more</span>
               )}
               {empty && <span className="mt-1 hidden text-muted-foreground sm:block">open</span>}
             </button>
