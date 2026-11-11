@@ -1,0 +1,4 @@
+ALTER POLICY "Authenticated users can read uploaded images" ON storage.objects TO authenticated USING (bucket_id = 'uploaded-images' AND public.can_read_archive((SELECT auth.uid())));
+ALTER POLICY "Authenticated users can update uploaded images" ON storage.objects TO authenticated USING (bucket_id = 'uploaded-images' AND public.can_edit_archive((SELECT auth.uid()))) WITH CHECK (bucket_id = 'uploaded-images' AND public.can_edit_archive((SELECT auth.uid())));
+ALTER POLICY "Authenticated users can delete uploaded images" ON storage.objects TO authenticated USING (bucket_id = 'uploaded-images' AND public.can_edit_archive((SELECT auth.uid())));
+ALTER POLICY "Authenticated users can upload images" ON storage.objects TO authenticated WITH CHECK (bucket_id = 'uploaded-images' AND public.can_edit_archive((SELECT auth.uid())));
