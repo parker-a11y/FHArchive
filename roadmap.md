@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Email Admin: TBD SCHEDULE drop area preserves all email details; real scheduled email parked, reloaded, dragged back and original time restored; 12 tests passed.
+
 - [x] Add linked prior emails beside FH storage details with recipient hover details; FH0400's real sent email opened on desktop, phone links verified, nine history tests passed.
 
 - [x] Add the collapsible Cast of Characters & Setting panel above letter tabs; shared-letter counts tested and signed-in FH0647 expanded/collapsed with shared links verified on desktop and mobile.

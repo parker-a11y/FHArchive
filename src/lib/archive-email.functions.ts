@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { emailSchedulePatch } from "./email-schedule";
 import { validateEmailAttachments, type EmailAttachment } from "./email-attachments";
 import { lastComposedEmail, priorEmailHistory, type HistoryEmail } from "./prior-email-history";
 
@@ -339,28 +340,26 @@ export const updateScheduledEmail = createServerFn({ method: "POST" })
 /** Moves scheduled emails to new send times (calendar drag and drop). Admin only. */
 export const rescheduleEmails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { moves: { emailId: string; scheduledFor: string }[] }) => ({
+  .inputValidator((data: { moves: { emailId: string; scheduledFor: string | null }[] }) => ({
     moves: (data.moves ?? []).slice(0, 50).map((m) => ({
       emailId: String(m.emailId),
-      scheduledFor: String(m.scheduledFor),
+      scheduledFor: m.scheduledFor === null ? null : String(m.scheduledFor),
     })),
   }))
   .handler(async ({ data, context }) => {
     const db = context.supabase;
     const { data: isAdmin } = await db.rpc("is_admin", { _user_id: context.userId });
     if (!isAdmin) throw new Error("Only archive administrators can change email.");
-    for (const m of data.moves) {
-      const when = new Date(m.scheduledFor);
-      if (Number.isNaN(when.getTime())) throw new Error("That scheduled time is not valid.");
-      if (when.getTime() < Date.now() + 60_000) throw new Error("Pick a day in the future.");
-    }
-    for (const m of data.moves) {
-      const { error } = await db
+    const moves = data.moves.map((m) => ({ ...m, patch: emailSchedulePatch(m.scheduledFor) }));
+    for (const m of moves) {
+      const { data: updated, error } = await db
         .from("archive_emails")
-        .update({ scheduled_for: new Date(m.scheduledFor).toISOString() } as never)
+        .update(m.patch)
         .eq("id", m.emailId)
-        .eq("status", "scheduled");
+        .eq("status", "scheduled")
+        .select("id");
       if (error) throw new Error(error.message);
+      if (!updated?.length) throw new Error("That email is no longer waiting to be sent.");
     }
     return { ok: true };
   });

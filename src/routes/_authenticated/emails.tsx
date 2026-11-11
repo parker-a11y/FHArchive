@@ -286,7 +286,7 @@ function Calendar({
     const map = new Map<string, DayEntry[]>();
     for (const e of emails) {
       const scheduled = e.status === "scheduled" && e.scheduled_for;
-      const when = scheduled ? e.scheduled_for! : e.sent_at;
+      const when = scheduled ? e.scheduled_for : e.sent_at;
       if (!when) continue;
       if (!scheduled && !SENT_STATUSES.has(e.status)) continue;
       const key = localDayKey(when);
@@ -338,17 +338,31 @@ function Calendar({
   const dropOn = async (key: string, raw: string) => {
     clearMonthHover();
     setDragOver(null);
-    let group: { id: string; when: string }[] = [];
+    if (readOnly || moving) return;
+    let group: { id: string; when: string | null }[] = [];
     try {
       group = JSON.parse(raw);
     } catch {
       return;
     }
-    if (!group.length || localDayKey(group[0].when) === key) return;
+    if (!group.length || (group[0].when && localDayKey(group[0].when) === key)) return;
+    if (key === "tbd") {
+      setMoving(true);
+      try {
+        await reschedule({ data: { moves: group.map((g) => ({ emailId: g.id, scheduledFor: null })) } });
+        await qc.invalidateQueries({ queryKey: ["archive-emails"] });
+        toast.success("Moved to TBD SCHEDULE");
+      } catch (e) {
+        toast.error((e as Error).message);
+      } finally {
+        setMoving(false);
+      }
+      return;
+    }
     const moves = group.map((g) => {
-      const old = new Date(g.when);
+      const old = g.when ? new Date(g.when) : null;
       const [y, m, d] = key.split("-").map(Number);
-      const next = new Date(y, m - 1, d, old.getHours(), old.getMinutes(), 0, 0);
+      const next = new Date(y, m - 1, d, old?.getHours() ?? 9, old?.getMinutes() ?? 0, 0, 0);
       return { emailId: g.id, scheduledFor: next.toISOString() };
     });
     if (new Date(moves[0].scheduledFor).getTime() < Date.now() + 60_000)
@@ -418,6 +432,50 @@ function Calendar({
           </Button>
         </div>
       </header>
+
+      <div
+        role="region"
+        aria-label="TBD SCHEDULE"
+        aria-busy={moving}
+        onDragOver={(ev) => {
+          if (readOnly || moving || !ev.dataTransfer.types.includes("application/x-archive-email")) return;
+          ev.preventDefault();
+          ev.dataTransfer.dropEffect = "move";
+          clearMonthHover();
+          setDragOver("tbd");
+        }}
+        onDragLeave={(ev) => {
+          if (!ev.currentTarget.contains(ev.relatedTarget as Node | null)) setDragOver(null);
+        }}
+        onDrop={(ev) => {
+          ev.preventDefault();
+          dropOn("tbd", ev.dataTransfer.getData("application/x-archive-email"));
+        }}
+        className={cn("mb-4 min-h-24 rounded-md border-2 border-dashed border-border bg-muted/30 p-3", dragOver === "tbd" && "border-primary bg-primary/10 ring-2 ring-primary/40")}
+      >
+        <h3 className="text-xs font-semibold">TBD SCHEDULE</h3>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {emails.filter((e) => e.status === "scheduled" && !e.scheduled_for).map((e) => (
+            <Button
+              key={e.id}
+              variant="outline"
+              disabled={moving}
+              draggable={!readOnly && !moving}
+              onDragStart={(ev) => {
+                ev.dataTransfer.effectAllowed = "move";
+                ev.dataTransfer.setData("application/x-archive-email", JSON.stringify([{ id: e.id, when: null }]));
+              }}
+              onDragEnd={() => { clearMonthHover(); setDragOver(null); }}
+              onClick={() => onPickEmail("tbd", e.id)}
+              title={`${e.subject} — ${(e.recipients ?? []).map((r) => r.email).join(", ")}`}
+              className="h-auto min-h-9 max-w-full whitespace-normal break-words text-left"
+            >
+              {recordsByEmail.get(e.id)?.join(", ") || e.subject}
+            </Button>
+          ))}
+          {!emails.some((e) => e.status === "scheduled" && !e.scheduled_for) && <span className="text-xs text-muted-foreground">No emails awaiting a date</span>}
+        </div>
+      </div>
 
       <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-muted-foreground">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
@@ -501,7 +559,7 @@ function Calendar({
               {entries.map((e) => (
                 <span
                   key={e.emailId}
-                  draggable={!readOnly && e.kind === "scheduled"}
+                  draggable={!readOnly && !moving && e.kind === "scheduled"}
                   onClick={(ev) => {
                     ev.stopPropagation();
                     onPickEmail(key, e.emailId);
@@ -646,8 +704,9 @@ function EmailsPage() {
   const sheetEmails = useMemo(() => {
     if (!sheetDay) return [];
     const dayEmails = emails.filter((e) => {
+      if (sheetDay === "tbd") return e.status === "scheduled" && !e.scheduled_for;
       const scheduled = e.status === "scheduled" && e.scheduled_for;
-      const when = scheduled ? e.scheduled_for! : e.sent_at;
+      const when = scheduled ? e.scheduled_for : e.sent_at;
       if (!when) return false;
       if (!scheduled && !SENT_STATUSES.has(e.status)) return false;
       return localDayKey(when) === sheetDay;
@@ -717,7 +776,7 @@ function EmailsPage() {
               STATUS_STYLES[e.status] ?? STATUS_STYLES["sending"]
             }`}
           >
-            {e.status}
+            {e.status === "scheduled" && !e.scheduled_for ? "TBD schedule" : e.status}
           </span>
           {recs.length > 0 && (
             <span className="font-mono text-xs font-semibold">
@@ -729,8 +788,8 @@ function EmailsPage() {
             {(e.recipients ?? []).map((r) => r.email).join(", ")}
           </span>
           <span className="ml-auto text-xs text-muted-foreground">
-            {e.status === "scheduled" && e.scheduled_for
-              ? `Sends ${new Date(e.scheduled_for).toLocaleString()}`
+            {e.status === "scheduled"
+              ? e.scheduled_for ? `Sends ${new Date(e.scheduled_for).toLocaleString()}` : "Awaiting date"
               : new Date(e.sent_at).toLocaleString()}
           </span>
           {isAdmin && e.status === "scheduled" && (
@@ -820,8 +879,17 @@ function EmailsPage() {
     for (const r of emailRecords as EmailRecordRef[]) {
       map.set(r.email_id, [...(map.get(r.email_id) ?? []), r.archive_id]);
     }
+    const identifiers = new Map(letters.map((l) => [l.id, l.archive_id]));
+    for (const email of emails) {
+      if (map.has(email.id)) continue;
+      const ids = (email.send_payload?.records ?? []).flatMap((r) => {
+        const id = r.kind === "letter" ? identifiers.get(r.id) : undefined;
+        return id ? [id] : [];
+      });
+      if (ids.length) map.set(email.id, ids);
+    }
     return map;
-  }, [emailRecords]);
+  }, [emailRecords, emails, letters]);
 
   const letterState = useMemo(() => {
     const map = new Map<string, LetterState>();
@@ -1105,7 +1173,7 @@ function EmailsPage() {
         <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
           <SheetHeader className="mx-auto w-full max-w-5xl pr-8">
             <SheetTitle>
-              {sheetDay &&
+              {sheetDay === "tbd" ? "TBD SCHEDULE" : sheetDay &&
                 new Date(`${sheetDay}T12:00`).toLocaleDateString([], {
                   weekday: "long",
                   month: "long",
@@ -1119,7 +1187,7 @@ function EmailsPage() {
               <p className="text-sm text-muted-foreground">No letter scheduled for this date.</p>
             )}
             {sheetEmails.map((e) => renderEmail(e, true))}
-            {isAdmin && <Button
+            {isAdmin && sheetDay !== "tbd" && <Button
               variant="outline"
               className="w-full"
               onClick={() => {

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/scheduled-emails")({
         const db = supabaseAdmin as any;
         const { data: due, error } = await db
           .from("archive_emails")
-          .select("id, owner_id, send_payload")
+          .select("id, owner_id, send_payload, scheduled_for")
           .eq("status", "scheduled")
           .lte("scheduled_for", new Date().toISOString())
           .limit(10);
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/api/public/scheduled-emails")({
             .update({ status: "sending" })
             .eq("id", row.id)
             .eq("status", "scheduled")
+            .eq("scheduled_for", row.scheduled_for)
             .select("id");
           if (!claimed?.length) continue;
           try {
