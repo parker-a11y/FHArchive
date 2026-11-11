@@ -36,6 +36,7 @@ import {
   Star,
   Eye,
 } from "lucide-react";
+import { CustomLabelDialog } from "@/components/letter/CustomLabelDialog";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -466,6 +467,7 @@ function Dashboard() {
                 {updatingStatus ? "Checking records…" : "Update status"}
               </Button>
             )}
+            {canEditForReal && <CustomLabelDialog />}
             {canEditForReal && (
               <Button
                 size="sm"
