@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Fix recurring Scans & Files upload pop-ups and premature zero-count writes; delayed FH0817 loading produced no false writes or automatic picker, explicit Upload opened one picker, and eight regression tests passed.
+
 - [x] Fix cut-off text on 4×6 labels with shared wrapping and shrink-to-fit; signed-in dashboard long-text print bounds verified (384×576 pixels, no overflow). Physical printer check remains user-side.
 
 - [x] Email Admin: TBD SCHEDULE drop area preserves all email details; real scheduled email parked, reloaded, dragged back and original time restored; 12 tests passed.

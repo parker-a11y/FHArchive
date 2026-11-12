@@ -79,6 +79,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Letter } from "@/lib/queries";
 import { reorderScans, type ScanDropTarget } from "@/lib/scan-order";
+import { scanSummaryPatch } from "@/lib/scan-summary";
 
 type Progress = { total: number; done: number; current: string; stage: string } | null;
 
@@ -128,7 +129,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [autoTranscribing, setAutoTranscribing] = useState(false);
 
-  const { data: files = [], isLoading } = useQuery({
+  const { data: files = [], isLoading, isSuccess, isFetching } = useQuery({
     queryKey: key,
     queryFn: () => fetchDigitalFiles(letter.id),
   });
@@ -149,29 +150,15 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
   // Keep the record's scan count in step with the digital files it holds.
   useEffect(() => {
-    const status = masters > 0 ? "scanned" : "not_scanned";
-    if (letter.image_count === masters && letter.scan_status === status) return;
+    const patch = scanSummaryPatch(isSuccess && !isFetching && isAdmin, masters, letter);
+    if (!patch) return;
     supabase
       .from("letters")
-      .update({ image_count: masters, scan_status: status } as never)
+      .update(patch as never)
       .eq("id", letter.id)
-      .then(() => refreshLetter());
+      .then(({ error }) => { if (!error) refreshLetter(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [masters, letter.id, letter.image_count, letter.scan_status]);
-
-  // Opening "Scans & Files" on a record with nothing uploaded goes straight to
-  // the file chooser — no second click needed. Once per panel, never for
-  // records that already have scans.
-  const autoOpenedRef = useRef(false);
-  useEffect(() => {
-    if (autoOpenedRef.current || !isAdmin || progress) return;
-    const empty = isLoading ? letter.image_count === 0 : masters === 0;
-    if (!empty) return;
-    const input = fileInputRef.current;
-    if (!input) return;
-    autoOpenedRef.current = true;
-    input.click();
-  }, [isAdmin, isLoading, masters, progress, letter.image_count]);
+  }, [isSuccess, isFetching, isAdmin, masters, letter.id, letter.image_count, letter.scan_status]);
 
   const jpegFiles = files.filter(hasJpeg);
   const thumbFiles = files.filter(hasThumb);
@@ -584,14 +571,14 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       >
         <UploadCloud className="mx-auto mb-3 size-8 text-primary" />
         <p className="text-sm">
-          <button
+          <Button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
             <UploadCloud className="size-4" />
             Upload Scans / Digital Files
-          </button>
+          </Button>
           <input
             ref={fileInputRef}
             type="file"
