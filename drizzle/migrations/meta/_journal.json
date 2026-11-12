@@ -127,6 +127,13 @@
       "when": 1794375409143,
       "tag": "0017_restrict_uploaded_images_to_archive_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794496720019,
+      "tag": "0018_label_prints",
+      "breakpoints": true
     }
   ]
 }

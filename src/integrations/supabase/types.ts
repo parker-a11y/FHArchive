@@ -1932,6 +1932,32 @@ export type Database = {
         }
         Relationships: []
       }
+      label_prints: {
+        Row: {
+          letter_id: string
+          printed_at: string
+          printed_by: string | null
+        }
+        Insert: {
+          letter_id: string
+          printed_at?: string
+          printed_by?: string | null
+        }
+        Update: {
+          letter_id?: string
+          printed_at?: string
+          printed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "label_prints_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: true
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       letter_events: {
         Row: {
           created_at: string

@@ -7,6 +7,16 @@ import { Input } from "@/components/ui/input";
 import { labelDate, labelOf, PERIODS } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
 import { LabelFrame } from "./LabelFrame";
+import { supabase } from "@/integrations/supabase/client";
+
+/** Remember which records have had a folder label printed (for Print Multiple Labels). */
+export async function markLabelsPrinted(ids: string[]) {
+  if (!ids.length) return;
+  const { data } = await supabase.auth.getUser();
+  await supabase.from("label_prints").upsert(
+    ids.map((letter_id) => ({ letter_id, printed_at: new Date().toISOString(), printed_by: data.user?.id ?? null })),
+  );
+}
 
 type LabelProps = {
   archiveId: string;
@@ -104,12 +114,15 @@ export function printLabelNow(onDone: () => void) {
   }, 300);
 }
 
-function PrintButton({ onDone, size = "default" }: { onDone: () => void; size?: "default" | "large" }) {
+function PrintButton({ onDone, size = "default", printedIds }: { onDone: () => void; size?: "default" | "large"; printedIds?: string[] }) {
   const isLarge = size === "large";
   return (
     <Button
       className={`no-print gap-2 ${isLarge ? "h-40 w-48 flex-col text-xl" : ""}`}
-      onClick={() => printLabelNow(onDone)}
+      onClick={() => {
+        if (printedIds) void markLabelsPrinted(printedIds);
+        printLabelNow(onDone);
+      }}
     >
       <Printer className={isLarge ? "size-10" : "size-4"} />
       <span className="text-center leading-tight">
@@ -122,11 +135,12 @@ function PrintButton({ onDone, size = "default" }: { onDone: () => void; size?: 
 }
 
 /** Enter anywhere in the label dialog prints the label (unless a button/textarea has focus). */
-function handleEnterToPrint(e: React.KeyboardEvent, onDone: () => void) {
+function handleEnterToPrint(e: React.KeyboardEvent, onDone: () => void, printedIds?: string[]) {
   if (e.key !== "Enter" || e.shiftKey) return;
   const target = e.target as HTMLElement;
   if (target.closest("textarea") || target.closest("button")) return;
   e.preventDefault();
+  if (printedIds) void markLabelsPrinted(printedIds);
   printLabelNow(onDone);
 }
 
@@ -176,7 +190,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
           <Printer className="size-4" /> Print Folder Label
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl" onKeyDown={(e) => handleEnterToPrint(e, () => setOpen(false))}>
+      <DialogContent className="sm:max-w-3xl" onKeyDown={(e) => handleEnterToPrint(e, () => setOpen(false), [letter.id])}>
         <DialogTitle>4 × 6 Folder Label</DialogTitle>
         <div className="no-print space-y-2">
           <label className="field-label">Title / short description</label>
@@ -202,7 +216,7 @@ export function LabelDialog({ letter }: { letter: Letter }) {
             />
           </div>
           <div className="flex shrink-0 items-center self-center sm:self-stretch">
-            <PrintButton onDone={() => setOpen(false)} size="large" />
+            <PrintButton onDone={() => setOpen(false)} size="large" printedIds={[letter.id]} />
           </div>
         </div>
       </DialogContent>
@@ -220,7 +234,9 @@ export function EntryLabelDialog({
   lines,
   idFontSize,
   compactLines,
+  printedIds,
 }: {
+  printedIds?: string[];
   idFontSize?: string;
   compactLines?: boolean;
   open: boolean;
@@ -246,7 +262,7 @@ export function EntryLabelDialog({
     >
       <DialogContent
         className="sm:max-w-3xl"
-        onKeyDown={(e) => handleEnterToPrint(e, () => onOpenChange(false))}
+        onKeyDown={(e) => handleEnterToPrint(e, () => onOpenChange(false), printedIds)}
       >
         <DialogTitle>4 × 6 Folder Label — {archiveId}</DialogTitle>
         <div className="no-print space-y-2">
@@ -268,7 +284,7 @@ export function EntryLabelDialog({
             />
           </div>
           <div className="flex shrink-0 items-center self-center sm:self-stretch">
-            <PrintButton onDone={() => onOpenChange(false)} size="large" />
+            <PrintButton onDone={() => onOpenChange(false)} size="large" printedIds={printedIds} />
           </div>
         </div>
       </DialogContent>
