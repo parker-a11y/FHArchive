@@ -160,6 +160,19 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess, isFetching, isAdmin, masters, letter.id, letter.image_count, letter.scan_status]);
 
+  // Opening "Scans & Files" on a record with no scans goes straight to the
+  // file chooser. Only after the scan list has fully loaded and confirms zero
+  // files, so records that already have scans never trigger it.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || !isAdmin || progress) return;
+    if (!isSuccess || isFetching || files.length > 0) return;
+    const input = fileInputRef.current;
+    if (!input) return;
+    autoOpenedRef.current = true;
+    input.click();
+  }, [isAdmin, isSuccess, isFetching, files.length, progress]);
+
   const jpegFiles = files.filter(hasJpeg);
   const thumbFiles = files.filter(hasThumb);
   const jpegCount = jpegFiles.length;
