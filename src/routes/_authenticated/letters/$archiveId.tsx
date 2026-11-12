@@ -1239,7 +1239,7 @@ function LetterPage() {
           )}
           {!isGuestViewer && (
             <div className="mb-4 flex justify-end">
-              <NextAttentionButton sequence={letter.fh_seq} tab="transcription" />
+              <NextAttentionButton sequence={letter.fh_seq} />
             </div>
           )}
           <TranscriptionPanel letter={letter} highlight={hl} />

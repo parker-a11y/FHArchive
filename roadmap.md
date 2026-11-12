@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] NEXT NEED ATTENTION always opens the found record on its Transcription tab, even when clicked from AI Analysis; signed-in FH0681 (AI) → FH0677 and FH0677 → FH0674 both landed on Transcription with text visible, 8 tests passed.
+
 - [x] Add NEXT NEED ATTENTION to transcription and AI review, descending by FH number and skipping green records; seven selection tests passed and signed-in FH0815 → FH0814 navigation kept each review tab open.
 
 - [x] Fix recurring Scans & Files upload pop-ups and premature zero-count writes; delayed FH0817 loading produced no false writes or automatic picker, explicit Upload opened one picker, and eight regression tests passed.

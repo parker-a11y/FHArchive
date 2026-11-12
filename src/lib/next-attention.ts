@@ -1,5 +1,9 @@
 import { recordHealth, type RecordAiState, type RecordHealthInput } from "./record-health";
 
+// Every record found by NEXT NEED ATTENTION lands on its Transcription tab,
+// whichever tab the button was clicked from.
+export const ATTENTION_LAND_TAB = "transcription";
+
 export type AttentionRecord = RecordHealthInput & {
   id: string;
   fh_seq: number;

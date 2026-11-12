@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { nextAttentionRecord, type AttentionRecord } from "./next-attention";
+import { ATTENTION_LAND_TAB, nextAttentionRecord, type AttentionRecord } from "./next-attention";
 
 const row = (seq: number, status = "human_verified", scan = "scanned"): AttentionRecord => ({
   id: String(seq), fh_seq: seq, archive_id: `FH${String(seq).padStart(4, "0")}`,
@@ -28,4 +28,7 @@ for (const [stage, status, scan, ai] of [
 test("do not wrap at the bottom or navigate to photographs moved out of FH", () => {
   assert.equal(nextAttentionRecord(1, [row(1), row(2)], {}), undefined);
   assert.equal(nextAttentionRecord(815, [{ ...row(814), record_type: "moved_to_gallery" }], {}), undefined);
+});
+test("the found record always opens on the Transcription tab", () => {
+  assert.equal(ATTENTION_LAND_TAB, "transcription");
 });

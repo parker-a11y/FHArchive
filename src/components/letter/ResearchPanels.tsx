@@ -893,7 +893,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
                 Re-analyze everything
               </Button>
             )}
-            <NextAttentionButton sequence={letter.fh_seq} tab="ai" disabled={busy} />
+            <NextAttentionButton sequence={letter.fh_seq} disabled={busy} />
           </div>
         </div>
         {changedCount > 0 && (
