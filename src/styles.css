@@ -221,9 +221,46 @@
   color: var(--color-muted-foreground);
 }
 
-/* The printable label lives in a body-level portal; it is print-only. */
+/* Physical label dimensions and ink are invariant across application themes. */
+:root {
+  --label-paper: oklch(1 0 0);
+  --label-ink: oklch(0 0 0);
+}
+.label-stock {
+  position: relative;
+  width: 4in;
+  height: 6in;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  background: var(--label-paper);
+  color: var(--label-ink);
+  text-align: center;
+}
+.label-safe-area {
+  position: absolute;
+  inset: 0.25in;
+}
+.label-fitted-content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+  transform: translate(-50%, -50%);
+}
+.label-fitted-content > * { flex-shrink: 0; max-width: 100%; }
+
+/* Offscreen, rather than display:none, so print content can be measured before printing. */
 .print-label {
-  display: none;
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 @media print {
@@ -234,7 +271,7 @@
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
-    background: white;
+    background: var(--label-paper);
   }
   /* Everything except the label portal is removed from the print layout,
      so the app's full height can never spill onto extra label sheets. */
@@ -243,13 +280,14 @@
   }
   .print-label {
     display: block !important;
+    visibility: visible !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
     width: 4in !important;
     height: 6in !important;
     overflow: hidden !important;
-    background: white;
+    background: var(--label-paper);
     break-after: avoid;
     page-break-after: avoid;
   }

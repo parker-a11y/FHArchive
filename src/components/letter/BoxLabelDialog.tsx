@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logEdits } from "@/lib/queries";
 import { condenseRanges } from "@/lib/box-ranges";
 import logoMark from "@/assets/francis-files-logo.png";
+import { LabelFrame } from "./LabelFrame";
 
 export type BoxRecord = {
   id: string;
@@ -35,32 +36,32 @@ function BoxLabelFace({
   dateText: string;
 }) {
   return (
-    <div className="flex h-[6in] w-[4in] flex-col items-center justify-between border border-border bg-white px-[0.3in] py-[0.35in] text-center">
+    <LabelFrame>
       <div className="flex flex-col items-center">
         <img src={logoMark} alt="" className="h-[0.7in] w-auto object-contain" />
         <div
-          className="mt-[0.06in] font-semibold tracking-[0.16em] text-black uppercase"
+          className="mt-[0.06in] font-semibold uppercase"
           style={{ fontSize: "0.13in" }}
         >
           The Francis Files
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <div className="my-[0.3in] flex w-full flex-col items-center justify-center">
         <div
-          className="font-semibold tracking-[0.18em] text-black uppercase"
+          className="font-semibold uppercase"
           style={{ fontSize: "0.13in" }}
         >
           Box
         </div>
         <div
-          className="archive-id mt-[0.08in] leading-none font-bold text-black"
+          className="archive-id mt-[0.08in] w-full leading-none font-bold"
           style={{ fontSize: boxName.length > 12 ? "0.5in" : "0.75in" }}
         >
           {boxName || "—"}
         </div>
         <div
-          className="mt-[0.3in] font-semibold text-black"
+          className="mt-[0.3in] w-full font-semibold"
           style={{ fontSize: "0.22in", lineHeight: 1.35 }}
         >
           {rangeText || "—"}
@@ -68,14 +69,14 @@ function BoxLabelFace({
       </div>
 
       <div className="w-full">
-        <div className="text-black" style={{ fontSize: "0.16in" }}>
+        <div style={{ fontSize: "0.16in" }}>
           {count} file jacket{count === 1 ? "" : "s"}
         </div>
-        <div className="mt-[0.06in] text-black" style={{ fontSize: "0.14in" }}>
+        <div className="mt-[0.06in]" style={{ fontSize: "0.14in" }}>
           {dateText}
         </div>
       </div>
-    </div>
+    </LabelFrame>
   );
 }
 

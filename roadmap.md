@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Fix cut-off text on 4×6 labels with shared wrapping and shrink-to-fit; signed-in dashboard long-text print bounds verified (384×576 pixels, no overflow). Physical printer check remains user-side.
+
 - [x] Email Admin: TBD SCHEDULE drop area preserves all email details; real scheduled email parked, reloaded, dragged back and original time restored; 12 tests passed.
 
 - [x] Add linked prior emails beside FH storage details with recipient hover details; FH0400's real sent email opened on desktop, phone links verified, nine history tests passed.

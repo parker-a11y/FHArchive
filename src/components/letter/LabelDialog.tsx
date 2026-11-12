@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 import { Input } from "@/components/ui/input";
 import { labelDate, labelOf, PERIODS } from "@/lib/archive";
 import type { Letter } from "@/lib/queries";
+import { LabelFrame } from "./LabelFrame";
 
 type LabelProps = {
   archiveId: string;
@@ -46,49 +47,49 @@ function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "
   const twoCol = compactLines && lines.length > 12;
   const compactSize = lines.length > 20 ? "0.12in" : twoCol ? "0.13in" : "0.18in";
   return (
-    <div className="flex h-[6in] w-[4in] flex-col items-center justify-center border border-border bg-white text-center">
+    <LabelFrame>
       <div
-        className="archive-id leading-none font-bold text-black"
-        style={{ fontSize: idFontSize, letterSpacing: "0.02em" }}
+        className="archive-id w-full leading-none font-bold"
+        style={{ fontSize: idFontSize }}
       >
         {archiveId}
       </div>
       {title.trim() !== "" && (
         <div
-          className="mt-[0.25in] px-[0.3in] font-semibold text-black"
+          className="mt-[0.25in] w-full font-semibold"
           style={{ fontSize: "0.26in", lineHeight: 1.25 }}
         >
           {title}
         </div>
       )}
       <div
-        className="mt-[0.35in] font-semibold text-black"
-        style={{ fontSize: "0.32in", letterSpacing: "0.04em" }}
+        className="mt-[0.35in] w-full font-semibold"
+        style={{ fontSize: "0.32in" }}
       >
         {dateText}
       </div>
       {lines.length > 0 && compactLines && (
         <div
-          className={`mt-[0.25in] w-full px-[0.3in] text-black ${twoCol ? "grid grid-cols-2 gap-x-[0.15in]" : ""}`}
+          className={`mt-[0.25in] w-full ${twoCol ? "grid grid-cols-2 gap-x-[0.15in]" : ""}`}
           style={{ fontSize: compactSize, lineHeight: 1.3, gridAutoFlow: twoCol ? "row" : undefined }}
         >
           {lines.map((l, i) => (
-            <div key={i} className="whitespace-nowrap">
+            <div key={i} className="min-w-0">
               {l}
             </div>
           ))}
         </div>
       )}
       {lines.length > 0 && !compactLines && (
-        <div className="mt-[0.3in] space-y-[0.08in] px-[0.35in]">
+        <div className="mt-[0.3in] w-full space-y-[0.08in]">
           {lines.map((l, i) => (
-            <div key={i} className="text-black" style={{ fontSize: "0.2in", lineHeight: 1.3 }}>
+            <div key={i} style={{ fontSize: "0.2in", lineHeight: 1.3 }}>
               {l}
             </div>
           ))}
         </div>
       )}
-    </div>
+    </LabelFrame>
   );
 }
 

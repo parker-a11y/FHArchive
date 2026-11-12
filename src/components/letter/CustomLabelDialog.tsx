@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { printLabelNow } from "./LabelDialog";
+import { LabelFrame } from "./LabelFrame";
 
 type Face = { heading: string; title: string; dateText: string; lines: string[] };
 
@@ -15,31 +16,31 @@ type Face = { heading: string; title: string; dateText: string; lines: string[] 
 function CustomFace({ heading, title, dateText, lines }: Face) {
   const idSize = heading.length > 14 ? "0.45in" : heading.length > 7 ? "0.6in" : "1.1in";
   return (
-    <div className="relative flex h-[6in] w-[4in] flex-col items-center justify-center border border-border bg-white text-center">
-      <img src={logoMark} alt="The Francis Files" className="absolute top-[0.2in] left-1/2 h-[0.6in] w-[0.6in] -translate-x-1/2 object-contain" />
+    <LabelFrame>
+      <img src={logoMark} alt="The Francis Files" className="mb-[0.2in] h-[0.6in] w-[0.6in] shrink-0 object-contain" />
       {heading.trim() && (
-        <div className="archive-id leading-none font-bold text-black" style={{ fontSize: idSize, letterSpacing: "0.02em" }}>
+        <div className="archive-id w-full leading-none font-bold" style={{ fontSize: idSize }}>
           {heading}
         </div>
       )}
       {title.trim() && (
-        <div className="mt-[0.25in] px-[0.3in] font-semibold text-black" style={{ fontSize: "0.26in", lineHeight: 1.25 }}>
+        <div className="mt-[0.25in] w-full font-semibold" style={{ fontSize: "0.26in", lineHeight: 1.25 }}>
           {title}
         </div>
       )}
       {dateText.trim() && (
-        <div className="mt-[0.35in] font-semibold text-black" style={{ fontSize: "0.32in", letterSpacing: "0.04em" }}>
+        <div className="mt-[0.35in] w-full font-semibold" style={{ fontSize: "0.32in" }}>
           {dateText}
         </div>
       )}
       {lines.length > 0 && (
-        <div className="mt-[0.3in] space-y-[0.08in] px-[0.35in]">
+        <div className="mt-[0.3in] w-full space-y-[0.08in]">
           {lines.map((l, i) => (
-            <div key={i} className="text-black" style={{ fontSize: "0.2in", lineHeight: 1.3 }}>{l}</div>
+            <div key={i} style={{ fontSize: "0.2in", lineHeight: 1.3 }}>{l}</div>
           ))}
         </div>
       )}
-    </div>
+    </LabelFrame>
   );
 }
 
@@ -51,7 +52,7 @@ export function CustomLabelDialog() {
   const [body, setBody] = useState("");
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const face: Face = { heading, title, dateText, lines: body.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 12) };
+  const face: Face = { heading, title, dateText, lines: body.split("\n").map((l) => l.trim()).filter(Boolean) };
 
   const reset = (o: boolean) => {
     setOpen(o);
