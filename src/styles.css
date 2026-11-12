@@ -211,6 +211,10 @@
   font-family: var(--font-mono);
   font-weight: 600;
   letter-spacing: 0.04em;
+  /* Record numbers (FH0817, PH0012, …) must never break across lines,
+     even inside the label fitter's overflow-wrap: anywhere. */
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 @utility field-label {
