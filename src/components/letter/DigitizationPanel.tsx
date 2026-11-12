@@ -111,6 +111,9 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const { isGuestViewer, isAdmin } = useAuth();
   const key = ["digital-files", letter.id];
   const [progress, setProgress] = useState<Progress>(null);
+  /** Newly uploaded copies that look like files already on this record (or in the same batch). */
+  const [dupes, setDupes] = useState<{ id: string; name: string }[]>([]);
+  const [deletingDupes, setDeletingDupes] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<ScanDropTarget | null>(null);
   const dropTargetRef = useRef<ScanDropTarget | null>(null);
@@ -197,17 +200,23 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     if (!chosen.length) return;
     const startOrder = files.length;
     let added = 0;
+    // Same file name and byte size = almost certainly the same scan uploaded twice.
+    const seen = new Set(files.map((f) => `${f.original_filename}|${f.master_size}`));
+    const found: { id: string; name: string }[] = [];
 
     for (let i = 0; i < chosen.length; i++) {
       const file = chosen[i];
       try {
-        await uploadScanMaster({
+        const newId = await uploadScanMaster({
           archiveId: letter.archive_id,
           letterId: letter.id,
           file,
           sortOrder: startOrder + i + 1,
           onStage: (stage) => setProgress({ total: chosen.length, done: i, current: file.name, stage }),
         });
+        const key = `${file.name}|${file.size}`;
+        if (seen.has(key)) found.push({ id: newId, name: file.name });
+        seen.add(key);
         added++;
         refresh();
       } catch (err) {
@@ -218,6 +227,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
     setProgress(null);
     refresh();
+    if (found.length) setDupes(found);
     if (added) {
       if ((letter.digitization_status ?? "not_scanned") === "not_scanned")
         await patchLetter({ digitization_status: "in_progress" });
@@ -226,6 +236,59 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
       );
     }
   }
+
+  async function deleteDupes() {
+    setDeletingDupes(true);
+    try {
+      const ids = new Set(dupes.map((d) => d.id));
+      const current = await fetchDigitalFiles(letter.id);
+      for (const f of current.filter((x) => ids.has(x.id))) await deleteDigitalFile(f);
+      toast.success(`${dupes.length} duplicate${dupes.length === 1 ? "" : "s"} deleted`);
+      setDupes([]);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setDeletingDupes(false);
+      refresh();
+    }
+  }
+
+  const dupeDialog = (
+    <AlertDialog open={dupes.length > 0} onOpenChange={(v) => !v && !deletingDupes && setDupes([])}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Duplicate scan{dupes.length === 1 ? "" : "s"} uploaded</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2">
+              <p>
+                {dupes.length === 1 ? "This file has" : "These files have"} the same name and size as a scan
+                already on {letter.archive_id}:
+              </p>
+              <ul className="list-disc pl-5 font-mono text-xs">
+                {dupes.map((d) => (
+                  <li key={d.id}>{d.name}</li>
+                ))}
+              </ul>
+              <p>Delete the new copies? The original scans stay untouched.</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deletingDupes}>Keep them</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={deletingDupes}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={(e) => {
+              e.preventDefault();
+              void deleteDupes();
+            }}
+          >
+            {deletingDupes ? "Deleting…" : "Delete duplicates"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   /* --------------------- confirm upload → derivatives --------------------- */
 
@@ -558,6 +621,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
   /** The upload drop zone — admins only. */
   const uploader = isAdmin ? (
+    <>
+      {dupeDialog}
       <div
         onDragEnter={(e) => {
           e.preventDefault();
@@ -631,6 +696,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           </div>
         )}
       </div>
+    </>
   ) : null;
 
   const nothingUploaded = !isLoading && masters === 0 && !progress;
