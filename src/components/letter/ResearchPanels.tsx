@@ -27,6 +27,7 @@ import { mergeToneOptions, toneEligible as isToneEligible } from "@/lib/tones";
 import { useToneOptions } from "@/components/ToneMultiSelect";
 
 import { Button } from "@/components/ui/button";
+import { NextAttentionButton } from "@/components/letter/NextAttentionButton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -892,6 +893,7 @@ export function AiPanel({ letter }: { letter: Letter }) {
                 Re-analyze everything
               </Button>
             )}
+            <NextAttentionButton sequence={letter.fh_seq} tab="ai" disabled={busy} />
           </div>
         </div>
         {changedCount > 0 && (

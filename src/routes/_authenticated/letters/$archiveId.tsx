@@ -93,6 +93,7 @@ import { ShareDialog, ShareStatusBadge } from "@/components/letter/ShareDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { flowingCombinedTranscription } from "@/lib/transcription-format";
 import { TranscriptionPanel } from "@/components/letter/TranscriptionPanel";
+import { NextAttentionButton } from "@/components/letter/NextAttentionButton";
 import { FfnText } from "@/components/ffn/FfnText";
 import { RichTextView } from "@/components/RichTextView";
 import { fetchRetirement } from "@/lib/numbering";
@@ -635,8 +636,8 @@ function LetterPage() {
       )}
 
       <Tabs
-        key={tab ?? "catalog"}
-        defaultValue={tab === "transcription" || tab === "digitization" ? tab : "catalog"}
+        key={`${archiveId}:${tab ?? "catalog"}`}
+        defaultValue={tab === "ai" || tab === "transcription" || tab === "digitization" ? tab : "catalog"}
         className="px-4 sm:px-8 py-6"
       >
         <TabsList className="no-print">
@@ -1234,6 +1235,11 @@ function LetterPage() {
           {!isGuestViewer && (
             <div className="mb-4 flex justify-end">
               <LabelDialog letter={letter} />
+            </div>
+          )}
+          {!isGuestViewer && (
+            <div className="mb-4 flex justify-end">
+              <NextAttentionButton sequence={letter.fh_seq} tab="transcription" />
             </div>
           )}
           <TranscriptionPanel letter={letter} highlight={hl} />
