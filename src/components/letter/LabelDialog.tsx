@@ -59,8 +59,8 @@ function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "
   return (
     <LabelFrame>
       <div
-        className="archive-id w-full leading-none font-bold"
-        style={{ fontSize: idFontSize }}
+        className="archive-id leading-none font-bold"
+        style={{ fontSize: idFontSize, width: "max-content", maxWidth: "none" }}
       >
         {archiveId}
       </div>

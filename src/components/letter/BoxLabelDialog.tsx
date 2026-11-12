@@ -55,8 +55,8 @@ function BoxLabelFace({
           Box
         </div>
         <div
-          className="archive-id mt-[0.08in] w-full leading-none font-bold"
-          style={{ fontSize: boxName.length > 12 ? "0.5in" : "0.75in" }}
+          className="archive-id mt-[0.08in] leading-none font-bold"
+          style={{ fontSize: boxName.length > 12 ? "0.5in" : "0.75in", width: "max-content", maxWidth: "none" }}
         >
           {boxName || "—"}
         </div>
