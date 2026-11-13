@@ -20,12 +20,14 @@ export async function markLabelsPrinted(ids: string[]) {
 
 type LabelProps = {
   archiveId: string;
+  /** Multi-record headings keep each record/range endpoint on its own line. */
+  archiveIdLines?: string[];
   dateText: string;
   title?: string;
   lines?: string[];
   /** Override the big identifier size for longer IDs (e.g. "SLEEVE 001"). */
   idFontSize?: string;
-  /** Compact list (jacket labels with many records): smaller text, two columns when long. */
+  /** Compact list (jacket labels with many records): smaller text. */
   compactLines?: boolean;
 };
 
@@ -53,16 +55,15 @@ export function LabelCard(props: LabelProps) {
   );
 }
 
-function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "1.1in", compactLines = false }: LabelProps) {
-  const twoCol = compactLines && lines.length > 12;
-  const compactSize = lines.length > 20 ? "0.12in" : twoCol ? "0.13in" : "0.18in";
+function LabelFace({ archiveId, archiveIdLines, dateText, title = "", lines = [], idFontSize = "1.1in", compactLines = false }: LabelProps) {
+  const compactSize = lines.length > 20 ? "0.12in" : lines.length > 12 ? "0.13in" : "0.18in";
   return (
     <LabelFrame>
       <div
         className="archive-id leading-none font-bold"
         style={{ fontSize: idFontSize, width: "max-content", maxWidth: "none" }}
       >
-        {archiveId}
+        {archiveIdLines?.length ? archiveIdLines.map((line, i) => <div key={i}>{line}</div>) : archiveId}
       </div>
       {title.trim() !== "" && (
         <div
@@ -80,8 +81,8 @@ function LabelFace({ archiveId, dateText, title = "", lines = [], idFontSize = "
       </div>
       {lines.length > 0 && compactLines && (
         <div
-          className={`mt-[0.25in] w-full ${twoCol ? "grid grid-cols-2 gap-x-[0.15in]" : ""}`}
-          style={{ fontSize: compactSize, lineHeight: 1.3, gridAutoFlow: twoCol ? "row" : undefined }}
+          className="mt-[0.25in] w-full"
+          style={{ fontSize: compactSize, lineHeight: 1.3 }}
         >
           {lines.map((l, i) => (
             <div key={i} className="min-w-0">
@@ -229,6 +230,7 @@ export function EntryLabelDialog({
   open,
   onOpenChange,
   archiveId,
+  archiveIdLines,
   defaultDate,
   defaultTitle = "",
   lines,
@@ -242,6 +244,7 @@ export function EntryLabelDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   archiveId: string;
+  archiveIdLines?: string[];
   defaultDate: string;
   defaultTitle?: string;
   lines: string[];
@@ -276,6 +279,7 @@ export function EntryLabelDialog({
           <div className="flex-1">
             <LabelCard
               archiveId={archiveId}
+              archiveIdLines={archiveIdLines}
               dateText={dateText}
               title={titleText}
               lines={lines}

@@ -20,6 +20,10 @@ export function JacketEntryDialog({
 }) {
   const letters = [...input].sort((a, b) => a.archive_id.localeCompare(b.archive_id));
   const idText = condenseRanges(letters.map((l) => l.archive_id));
+  const idLines = idText.split(", ").flatMap((range) => {
+    const [first, last] = range.split("–");
+    return last ? [first, `through ${last}`] : [first];
+  });
   // More than 4 records: drop descriptions, list only FH number and date.
   const compact = letters.length > 4;
   const maxLines = compact ? 30 : 12;
@@ -39,6 +43,7 @@ export function JacketEntryDialog({
       open={open}
       onOpenChange={onOpenChange}
       archiveId={idText}
+      archiveIdLines={idLines}
       defaultDate={dateText}
       defaultTitle={`${letters.length} records in this jacket`}
       lines={lines.length > maxLines ? [...lines.slice(0, maxLines - 1), `+ ${lines.length - maxLines + 1} more`] : lines}
