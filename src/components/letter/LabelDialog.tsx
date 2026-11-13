@@ -63,7 +63,9 @@ function LabelFace({ archiveId, archiveIdLines, dateText, title = "", lines = []
         className="archive-id leading-none font-bold"
         style={{ fontSize: idFontSize, width: "max-content", maxWidth: "none" }}
       >
-        {archiveIdLines?.length ? archiveIdLines.map((line, i) => <div key={i}>{line}</div>) : archiveId}
+        {archiveIdLines?.length ? archiveIdLines.map((line, i) => (
+          <div key={i} className={line.startsWith("through ") ? "text-[0.65em]" : undefined}>{line}</div>
+        )) : archiveId}
       </div>
       {title.trim() !== "" && (
         <div
