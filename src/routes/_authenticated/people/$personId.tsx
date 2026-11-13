@@ -95,13 +95,42 @@ function PersonPage() {
   const mentionIds = mentions.map((m) => m.letter_id);
   const mentioned = letters.filter((l) => mentionIds.includes(l.id));
 
-  const List = ({ title, rows }: { title: string; rows: typeof letters }) => (
+  const List = ({ title, rows, sortable }: { title: string; rows: typeof letters; sortable?: boolean }) => {
+    const [sort, setSort] = useState<"number" | "date">("number");
+    const sorted =
+      sortable && sort === "date"
+        ? [...rows].sort((a, b) => {
+            const da = a.normalized_date;
+            const db = b.normalized_date;
+            if (da && db && da !== db) return da < db ? -1 : 1;
+            if (da && !db) return -1;
+            if (!da && db) return 1;
+            return a.archive_id.localeCompare(b.archive_id);
+          })
+        : rows;
+    return (
     <div className="mb-6">
-      <h3 className="field-label mb-2">
-        {title} — {rows.length}
-      </h3>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="field-label">
+          {title} — {rows.length}
+        </h3>
+        {sortable && (
+          <div className="flex rounded border border-border text-[10px] uppercase tracking-wider">
+            {(["number", "date"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSort(s)}
+                className={`px-2 py-0.5 ${sort === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/60"}`}
+              >
+                {s === "number" ? "Record #" : "Date"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="divide-y divide-border rounded border border-border bg-card">
-        {rows.map((l) => (
+        {sorted.map((l) => (
           <Link
             key={l.id}
             to="/letters/$archiveId"
@@ -115,7 +144,8 @@ function PersonPage() {
         {rows.length === 0 && <p className="px-3 py-3 text-xs text-muted-foreground">None.</p>}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <>
@@ -161,7 +191,7 @@ function PersonPage() {
         <div>
           <List title="Letters written by" rows={written} />
           <List title="Letters sent to" rows={received} />
-          <List title="Letters mentioning" rows={mentioned} />
+          <List title="Letters mentioning" rows={mentioned} sortable />
         </div>
       </div>
     </>
