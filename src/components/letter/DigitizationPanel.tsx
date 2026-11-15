@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
   CheckCircle2,
   Download,
+  FilePlus2,
   FileText,
   FileWarning,
   GripVertical,
@@ -106,8 +108,19 @@ function Stat({
   );
 }
 
-export function DigitizationPanel({ letter }: { letter: Letter }) {
+export function DigitizationPanel({
+  letter,
+  onNewRecord,
+}: {
+  letter: Letter;
+  /**
+   * What “Yes — new record” does. Defaults to opening Quick Entry.
+   * Return false to keep the offer open (e.g. the save was refused).
+   */
+  onNewRecord?: () => boolean | void | Promise<boolean | void>;
+}) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const { isGuestViewer, isAdmin } = useAuth();
   const key = ["digital-files", letter.id];
   const [progress, setProgress] = useState<Progress>(null);
@@ -131,6 +144,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [autoTranscribing, setAutoTranscribing] = useState(false);
+  const [newRecordOffer, setNewRecordOffer] = useState(false);
 
   const { data: files = [], isLoading, isSuccess, isFetching } = useQuery({
     queryKey: key,
@@ -290,6 +304,53 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
     </AlertDialog>
   );
 
+  /* ------------------- new-record offer after confirming ------------------ */
+
+  const newRecordOfferDialog = (
+    <AlertDialog open={newRecordOffer} onOpenChange={(v) => !v && setNewRecordOffer(false)}>
+      <AlertDialogContent className="sm:max-w-xl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-2xl sm:text-3xl">NEW RECORD?</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2">
+              <p>
+                {letter.archive_id} is processed. Start the next record now, or stay on this one.
+              </p>
+              <p className="text-xs">
+                “Yes” opens a fresh entry for the next FH number. This record keeps its scans,
+                names and transcription.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="gap-3 sm:flex-row sm:justify-between sm:space-x-0">
+          <Button
+            variant="outline"
+            className="h-12 w-full text-base sm:w-auto sm:min-w-44"
+            onClick={() => setNewRecordOffer(false)}
+          >
+            No — stay on {letter.archive_id}
+          </Button>
+          <Button
+            className="h-12 w-full border border-archive-gold-strong bg-archive-gold text-base font-semibold text-white shadow-md hover:bg-archive-gold-strong sm:w-auto sm:min-w-44"
+            onClick={async () => {
+              if (onNewRecord) {
+                const result = await onNewRecord();
+                if (result === false) return; // e.g. the title is still missing
+              } else {
+                navigate({ to: "/catalog" });
+              }
+              setNewRecordOffer(false);
+            }}
+          >
+            <FilePlus2 className="mr-2 size-5" />
+            Yes — new record
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   /* --------------------- confirm upload → derivatives --------------------- */
 
   function jumpToScan(id: string) {
@@ -341,8 +402,10 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
           digitization_completed_at: new Date().toISOString(),
         });
       }
-      if (!renameErrors.length)
+      if (!renameErrors.length) {
         toast.success("Processing complete — nothing left to generate for this record.");
+        setNewRecordOffer(true);
+      }
       return;
     }
 
@@ -372,6 +435,8 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
         digitization_completed_at: new Date().toISOString(),
       });
       toast.success(`Processing complete — ${ok} viewing JPEG${ok === 1 ? "" : "s"} and thumbnails generated.`);
+      // Offer the next record straight away; transcription keeps running underneath.
+      setNewRecordOffer(true);
       await maybeAutoTranscribe(current);
     } else if (ok) {
       toast.warning(`${ok} processed, ${failed} failed. Masters are all safe.`);
@@ -716,6 +781,7 @@ export function DigitizationPanel({ letter }: { letter: Letter }) {
 
   return (
     <section className="space-y-6">
+      {newRecordOfferDialog}
       {/* Summary */}
       <div className="rounded border border-border bg-muted/30 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">

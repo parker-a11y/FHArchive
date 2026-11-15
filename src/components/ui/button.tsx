@@ -40,7 +40,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        // Buttons default to "submit" in HTML, so a button sitting anywhere inside
+        // a <form> would submit it. Only an explicit type="submit" should submit.
+        {...(asChild ? {} : { type: "button" })}
+        {...props}
+      />
     );
   },
 );

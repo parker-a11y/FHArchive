@@ -420,9 +420,35 @@ function QuickEntry() {
     }
   }
 
-  async function save(mode: "next" | "open" | "label") {
-    if (busy) return;
-    if (!requireTitle()) return;
+  /**
+   * Clear the form for the next entry, carrying over the batch-friendly
+   * defaults (type, storage, author/recipient people) and claiming the next number.
+   */
+  function resetForNextEntry() {
+    setForm((f) => ({
+      ...blank,
+      record_type: f.record_type,
+      subtype: f.subtype,
+      period: f.period,
+      primary_person: f.primary_person,
+      storage_type: f.storage_type,
+      storage_folder: f.storage_folder,
+      storage_location: f.storage_location,
+      source_container_id: f.source_container_id,
+      author: isLetterType(f.record_type) ? f.author : "",
+      recipient: isLetterType(f.record_type) ? f.recipient : "",
+    }));
+    setStartedLetter(null);
+    // Preserve author/recipient people links for batch entry of similar records.
+    setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
+    setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
+    loadNext();
+  }
+
+  /** Returns false when the entry could not be saved (e.g. the title is missing). */
+  async function save(mode: "next" | "open" | "label"): Promise<boolean> {
+    if (busy) return false;
+    if (!requireTitle()) return false;
     setBusy(true);
     const precision = datePrecision();
     let created: { id: string; archive_id: string };
@@ -436,14 +462,16 @@ function QuickEntry() {
         .eq("id", created.id);
       if (error) {
         setBusy(false);
-        return toast.error(error.message);
+        toast.error(error.message);
+        return false;
       }
     } else {
       try {
         created = await createRecord(coreArgs(precision));
       } catch (e) {
         setBusy(false);
-        return toast.error((e as Error).message);
+        toast.error((e as Error).message);
+        return false;
       }
       const { error: extrasError } = await supabase
         .from("letters")
@@ -489,7 +517,7 @@ function QuickEntry() {
     setSession((s) => [created.archive_id, ...s]);
     if (mode === "open") {
       navigate({ to: "/letters/$archiveId", params: { archiveId: created.archive_id } });
-      return;
+      return true;
     }
     if (mode === "label") {
       setLabelFor({
@@ -502,24 +530,8 @@ function QuickEntry() {
         }),
       });
     }
-    setForm((f) => ({
-      ...blank,
-      record_type: f.record_type,
-      subtype: f.subtype,
-      period: f.period,
-      primary_person: f.primary_person,
-      storage_type: f.storage_type,
-      storage_folder: f.storage_folder,
-      storage_location: f.storage_location,
-      source_container_id: f.source_container_id,
-      author: isLetterType(f.record_type) ? f.author : "",
-      recipient: isLetterType(f.record_type) ? f.recipient : "",
-    }));
-    setStartedLetter(null);
-    // Preserve author/recipient people links for batch entry of similar records.
-    setAuthorPerson((p) => (isLetterType(form.record_type) ? p : null));
-    setRecipientPerson((p) => (isLetterType(form.record_type) ? p : null));
-    loadNext();
+    resetForNextEntry();
+    return true;
   }
 
 
@@ -623,6 +635,7 @@ function QuickEntry() {
                   sheets: form.sheets ? Number(form.sheets) : null,
                   has_envelope: isLetter ? form.has_envelope : false,
                 }}
+                onNewRecord={() => save("next")}
               />
             </div>
           )}
