@@ -314,7 +314,7 @@ export function DigitizationPanel({
           <AlertDialogDescription asChild>
             <div className="space-y-2">
               <p>
-                {letter.archive_id} is processed. Start the next record now, or stay on this one.
+                {letter.archive_id} is processing in the background. Start the next record now, or stay on this one.
               </p>
               <p className="text-xs">
                 “Yes” opens a fresh entry for the next FH number. This record keeps its scans,
@@ -360,6 +360,8 @@ export function DigitizationPanel({
   }
 
   async function confirmUploadComplete() {
+    // Offer the next record immediately; processing carries on in the background.
+    setNewRecordOffer(true);
     // Naming is optional: anything left unidentified simply gets its sequence number.
     let current = [...files];
     const renameErrors: string[] = [];
@@ -404,7 +406,6 @@ export function DigitizationPanel({
       }
       if (!renameErrors.length) {
         toast.success("Processing complete — nothing left to generate for this record.");
-        setNewRecordOffer(true);
       }
       return;
     }
@@ -435,8 +436,6 @@ export function DigitizationPanel({
         digitization_completed_at: new Date().toISOString(),
       });
       toast.success(`Processing complete — ${ok} viewing JPEG${ok === 1 ? "" : "s"} and thumbnails generated.`);
-      // Offer the next record straight away; transcription keeps running underneath.
-      setNewRecordOffer(true);
       await maybeAutoTranscribe(current);
     } else if (ok) {
       toast.warning(`${ok} processed, ${failed} failed. Masters are all safe.`);
