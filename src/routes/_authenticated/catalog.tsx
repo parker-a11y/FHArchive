@@ -14,7 +14,7 @@ import { createRecord, previewNextArchiveId, type Letter } from "@/lib/queries";
 import { fetchRecentOrigins } from "@/lib/recent-origins";
 
 import { DigitizationPanel } from "@/components/letter/DigitizationPanel";
-import { FilePlus2, Printer } from "lucide-react";
+import { CalendarDays, FilePlus2, Printer } from "lucide-react";
 
 import { StarNoteDialog } from "@/components/StarToggle";
 import { FffBadge } from "@/components/FffBadge";
@@ -748,6 +748,15 @@ function QuickEntry() {
                   />
                   Month / year only
                 </label>
+                <a
+                  href="https://yearwheel-calendar-journey.lovable.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-archive-gold/60 bg-archive-gold/10 px-2.5 text-xs font-medium text-foreground hover:bg-archive-gold/25"
+                >
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  CALENDAR VIEW
+                </a>
               </div>
               <label className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
                 <input
