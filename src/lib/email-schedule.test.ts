@@ -36,3 +36,8 @@ import { emailSchedulePatch } from "./email-schedule";
     assert.throws(() => joinDayAndTime("2026-11-16", ""), /Pick a send time/);
     assert.throws(() => joinDayAndTime("not-a-day", "11:00"), /Pick a day first/);
   });
+test("composer quick pick keeps the chosen day and sets the time", async () => {
+  const { withSendTime } = await import("./email-schedule");
+  assert.equal(withSendTime("2026-11-20T09:00", "11:00"), "2026-11-20T11:00");
+  assert.equal(withSendTime("", "11:00", new Date(2026, 10, 16, 12)), "2026-11-17T11:00");
+});

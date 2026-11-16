@@ -31,3 +31,12 @@ export function emailSchedulePatch(scheduledFor: string | null, now = Date.now()
   if (when.getTime() < now + 60_000) throw new Error("Pick a day in the future.");
   return { scheduled_for: when.toISOString() };
 }
+/** Keeps the chosen day (or tomorrow when none) and swaps in a quick-pick time. */
+export function withSendTime(current: string, time: string, now = new Date()) {
+  let day = /^\d{4}-\d{2}-\d{2}/.test(current) ? current.slice(0, 10) : "";
+  if (!day) {
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    day = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  }
+  return joinDayAndTime(day, time);
+}

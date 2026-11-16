@@ -1,3 +1,4 @@
+import { DEFAULT_SEND_TIME, SEND_TIME_CHOICES, formatSendTime, withSendTime } from "@/lib/email-schedule";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -881,6 +882,24 @@ export function EmailArchiveDialog({
               <Button type="button" variant="outline" onClick={pickNextSlot}>
                 Next available slot
               </Button>
+            </div>
+          )}
+          {later && (
+            <div className="flex flex-wrap gap-2">
+              {SEND_TIME_CHOICES.map((t) => (
+                <Button
+                  key={t}
+                  type="button"
+                  size="sm"
+                  variant={sendAt.slice(11, 16) === t ? "default" : "outline"}
+                  onClick={() => setSendAt(withSendTime(sendAt, t))}
+                >
+                  {formatSendTime(t)}
+                  {t === DEFAULT_SEND_TIME && (
+                    <span className="ml-1 text-[10px] uppercase tracking-wide opacity-80">default</span>
+                  )}
+                </Button>
+              ))}
             </div>
           )}
           {later && (
