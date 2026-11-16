@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ContactEmailList, CONTACT_EMAIL_LIST_ID } from "@/components/letter/ContactEmailList";
-import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Send, ShieldCheck } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FileDown, Link2, Loader2, Save, Send, ShieldCheck } from "lucide-react";
 import { AppShell, EditorOnly, PageHeader } from "@/components/AppShell";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,14 @@ import {
   SCRATCHPAD_QUERY_KEY,
 } from "@/components/letter/EmailScratchpadButton";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_SEND_HOUR,
+  DEFAULT_SEND_TIME,
+  SEND_TIME_CHOICES,
+  formatSendTime,
+  isSendTime,
+  joinDayAndTime,
+} from "@/lib/email-schedule";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EditScheduledEmailButton } from "@/components/letter/EditScheduledEmailButton";
 
@@ -362,7 +370,7 @@ function Calendar({
     const moves = group.map((g) => {
       const old = g.when ? new Date(g.when) : null;
       const [y, m, d] = key.split("-").map(Number);
-      const next = new Date(y, m - 1, d, old?.getHours() ?? 9, old?.getMinutes() ?? 0, 0, 0);
+      const next = new Date(y, m - 1, d, old?.getHours() ?? DEFAULT_SEND_HOUR, old?.getMinutes() ?? 0, 0, 0);
       return { emailId: g.id, scheduledFor: next.toISOString() };
     });
     if (new Date(moves[0].scheduledFor).getTime() < Date.now() + 60_000)
@@ -658,7 +666,9 @@ function EmailsPage() {
   const [filter, setFilter] = useState<LetterState | "all">("all");
   const [search, setSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState(DEFAULT_SEND_TIME);
   const [sheetDay, setSheetDay] = useState<string | null>(null);
+  const [sheetTime, setSheetTime] = useState(DEFAULT_SEND_TIME);
   const [sheetEmailId, setSheetEmailId] = useState<string | null>(null);
   const [lookup, setLookup] = useState("");
 
@@ -926,7 +936,17 @@ function EmailsPage() {
     return c;
   }, [letters, letterState]);
 
-  const scheduleAt = selectedDay ? `${selectedDay}T09:00` : undefined;
+  const scheduleAt = selectedDay ? joinDayAndTime(selectedDay, selectedTime) : undefined;
+
+  /** Confirms the day + time picked in the calendar, then points at the letter list. */
+  const confirmSchedule = () => {
+    if (!sheetDay || sheetDay === "tbd" || !isSendTime(sheetTime)) return;
+    setSelectedDay(sheetDay);
+    setSelectedTime(sheetTime);
+    setSheetDay(null);
+    setSheetEmailId(null);
+    document.getElementById("letter-coverage")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <AppShell>
@@ -997,6 +1017,7 @@ function EmailsPage() {
           readOnly={!isAdmin}
           onPickDay={(key) => {
             setSheetEmailId(null);
+            setSheetTime(DEFAULT_SEND_TIME);
             setSheetDay(key);
           }}
           onPickEmail={(key, emailId) => {
@@ -1035,13 +1056,13 @@ function EmailsPage() {
             <p className="mb-2 rounded border border-primary/40 bg-primary/5 px-3 py-2 text-xs">
               Scheduling for{" "}
               <strong>
-                {new Date(`${selectedDay}T09:00`).toLocaleDateString([], {
+                {new Date(joinDayAndTime(selectedDay, selectedTime)).toLocaleDateString([], {
                   weekday: "long",
                   month: "long",
                   day: "numeric",
                 })}
               </strong>{" "}
-              at 9:00am — press Schedule on a letter below.{" "}
+              at <strong>{formatSendTime(selectedTime)}</strong> — press Schedule on a letter below.{" "}
               <button className="underline" onClick={() => setSelectedDay(null)}>
                 Clear
               </button>
@@ -1184,17 +1205,46 @@ function EmailsPage() {
               <p className="text-sm text-muted-foreground">No letter scheduled for this date.</p>
             )}
             {sheetEmails.map((e) => renderEmail(e, true))}
-            {isAdmin && sheetDay !== "tbd" && <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setSelectedDay(sheetDay);
-                setSheetDay(null);
-                document.getElementById("letter-coverage")?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Schedule a letter for this day
-            </Button>}
+            {isAdmin && sheetDay !== "tbd" && (
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Send time for this day
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {SEND_TIME_CHOICES.map((t) => (
+                    <Button
+                      key={t}
+                      size="sm"
+                      variant={sheetTime === t ? "default" : "outline"}
+                      onClick={() => setSheetTime(t)}
+                    >
+                      {formatSendTime(t)}
+                      {t === DEFAULT_SEND_TIME && (
+                        <span className="ml-1 text-[10px] uppercase tracking-wide opacity-80">default</span>
+                      )}
+                    </Button>
+                  ))}
+                  <Input
+                    type="time"
+                    value={sheetTime}
+                    onChange={(e) => setSheetTime(e.target.value)}
+                    className="h-8 w-32"
+                    aria-label="Other send time"
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  11:00 AM is the usual daily dispatch time. Pick another or type your own.
+                </p>
+                <Button
+                  className="mt-3 w-full gap-2"
+                  onClick={confirmSchedule}
+                  disabled={!isSendTime(sheetTime)}
+                >
+                  <Save className="size-4" />
+                  SAVE — schedule for {isSendTime(sheetTime) ? formatSendTime(sheetTime) : "…"}
+                </Button>
+              </div>
+            )}
           </div>
         </SheetContent>
       </Sheet>

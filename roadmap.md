@@ -83,3 +83,4 @@
 - [x] Timeline: per-record status dots in the chronological list using the All Records traffic-light scheme, with the same legend (all 747 records checked in preview: 714 green, 22 blue, 7 purple, 2 yellow, 2 red)
 - [x] Timeline calendar panels: status dots on every card in "This week" and the month calendar, same traffic-light scheme and hover/expanded status wording as All Records (17 week cards and 67 November cards checked in preview)
 - [x] Print Multiple Labels on record page
+- [x] Email calendar: 11:00 AM default send time with quick picks, and a SAVE button to confirm the chosen day and time
