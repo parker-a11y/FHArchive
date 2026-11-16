@@ -14,15 +14,21 @@ import type { DigitalFileWithDerivatives } from "@/lib/digital-files";
 
 const BUCKET = "scans";
 
+/** "Postcard " / "POSTCARD" → "postcard" — stored values are title case. */
+function normalizeKind(value: string) {
+  return value.trim().toLowerCase();
+}
+
 /** Record-type aware one-click choices. Always ends with a custom escape hatch. */
 export function quickIdentifyChoices(
   recordType: string | null | undefined,
   subtype?: string | null,
 ): string[] {
-  const type = recordType ?? "letter";
+  const type = normalizeKind(recordType ?? "letter");
+  const sub = normalizeKind(subtype ?? "");
   if (type === "letter") {
-    if (subtype === "postcard") return ["Front", "Back", "Enclosure", "Other"];
-    if (subtype === "telegram")
+    if (sub === "postcard") return ["Front", "Back", "Enclosure", "Other"];
+    if (sub === "telegram")
       return ["Front", "Back", "Envelope Front", "Envelope Back", "Other"];
     return [
       "Page 1 Front",
@@ -183,4 +189,72 @@ export async function renameScanFile(opts: {
   );
 
   return `${base}.${ext}`;
+}
+
+/**
+ * Names a record type hands out automatically, in upload order. Postcards are
+ * two-sided by nature, so their first scan is Front and their second is Back.
+ * Every other record type names its scans by hand (or by sequence number).
+ */
+export function autoScanLabels(
+  recordType: string | null | undefined,
+  subtype?: string | null,
+): string[] {
+  const type = normalizeKind(recordType ?? "letter");
+  const sub = normalizeKind(subtype ?? "");
+  if (type === "letter" && sub === "postcard") return ["Front", "Back"];
+  return [];
+}
+
+/** Next automatic name still unused on this record, or null when none apply. */
+export function nextAutoScanLabel(
+  recordType: string | null | undefined,
+  subtype: string | null | undefined,
+  usedLabels: (string | null | undefined)[],
+): string | null {
+  const used = new Set(
+    usedLabels.map((l) => normalizeKind(l ?? "")).filter(Boolean),
+  );
+  return autoScanLabels(recordType, subtype).find((l) => !used.has(normalizeKind(l))) ?? null;
+}
+
+/**
+ * Applies the automatic names to a record's scans. Files that already carry a
+ * label are left exactly as they are, and anything past the automatic names
+ * stays unlabelled for the usual one-click or sequential-numbering paths.
+ * Renaming moves the master and its finished derivatives, so the stored
+ * archival filename matches the label.
+ */
+export async function applyAutoScanLabels(opts: {
+  archiveId: string;
+  recordType: string | null | undefined;
+  subtype?: string | null;
+  files: DigitalFileWithDerivatives[];
+  /** Restrict the pass to these file ids, e.g. only the scans just uploaded. */
+  onlyIds?: Set<string>;
+}): Promise<{ files: DigitalFileWithDerivatives[]; named: string[]; errors: string[] }> {
+  const { archiveId, recordType, subtype, onlyIds } = opts;
+  const named: string[] = [];
+  const errors: string[] = [];
+  let current = [...opts.files];
+  if (!autoScanLabels(recordType, subtype).length) return { files: current, named, errors };
+
+  const inOrder = [...current].sort(
+    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.id.localeCompare(b.id),
+  );
+  for (const f of inOrder) {
+    if (f.label && f.label.trim()) continue;
+    if (onlyIds && !onlyIds.has(f.id)) continue;
+    const label = nextAutoScanLabel(recordType, subtype, current.map((c) => c.label));
+    if (!label) break;
+    try {
+      const name = await renameScanFile({ archiveId, file: f, label, otherFiles: current });
+      const newPath = `${archiveId}/masters/${name}`;
+      current = current.map((c) => (c.id === f.id ? { ...c, master_path: newPath, label } : c));
+      named.push(label);
+    } catch (err) {
+      errors.push(`${basenameOf(f.master_path)}: ${(err as Error).message}`);
+    }
+  }
+  return { files: current, named, errors };
 }

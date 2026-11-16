@@ -55,6 +55,8 @@ import {
 } from "@/lib/digital-files";
 
 import {
+  applyAutoScanLabels,
+  autoScanLabels,
   basenameOf,
   extensionOf,
   nextSuggestedChoice,
@@ -217,6 +219,7 @@ export function DigitizationPanel({
     // Same file name and byte size = almost certainly the same scan uploaded twice.
     const seen = new Set(files.map((f) => `${f.original_filename}|${f.master_size}`));
     const found: { id: string; name: string }[] = [];
+    const newIds = new Set<string>();
 
     for (let i = 0; i < chosen.length; i++) {
       const file = chosen[i];
@@ -228,6 +231,7 @@ export function DigitizationPanel({
           sortOrder: startOrder + i + 1,
           onStage: (stage) => setProgress({ total: chosen.length, done: i, current: file.name, stage }),
         });
+        newIds.add(newId);
         const key = `${file.name}|${file.size}`;
         if (seen.has(key)) found.push({ id: newId, name: file.name });
         seen.add(key);
@@ -241,6 +245,34 @@ export function DigitizationPanel({
 
     setProgress(null);
     refresh();
+
+    // Postcards name their own uploads: first scan Front, second Back.
+    if (newIds.size && autoScanLabels(letter.record_type, letter.subtype).length) {
+      try {
+        const stored = await fetchDigitalFiles(letter.id);
+        const auto = await applyAutoScanLabels({
+          archiveId: letter.archive_id,
+          recordType: letter.record_type,
+          subtype: letter.subtype,
+          files: stored,
+          onlyIds: newIds,
+        });
+        if (auto.named.length) {
+          setLastLabel(auto.named[auto.named.length - 1]);
+          toast.info(`Named automatically: ${auto.named.join(", ")}.`);
+        }
+        if (auto.errors.length) {
+          toast.error(
+            `${auto.errors.length} scan${auto.errors.length === 1 ? "" : "s"} could not be named — ${auto.errors[0]}`,
+            { duration: 12000 },
+          );
+        }
+        refresh();
+      } catch (err) {
+        toast.error(`Scans uploaded, but automatic naming failed — ${(err as Error).message}`);
+      }
+    }
+
     if (found.length) setDupes(found);
     if (added) {
       if ((letter.digitization_status ?? "not_scanned") === "not_scanned")
@@ -365,8 +397,21 @@ export function DigitizationPanel({
     // Naming is optional: anything left unidentified simply gets its sequence number.
     let current = [...files];
     const renameErrors: string[] = [];
-    if (unnamed.length) {
-      for (const f of unnamed) {
+    // Postcards name their own scans Front / Back before anything is numbered.
+    if (unnamed.length && autoScanLabels(letter.record_type, letter.subtype).length) {
+      const auto = await applyAutoScanLabels({
+        archiveId: letter.archive_id,
+        recordType: letter.record_type,
+        subtype: letter.subtype,
+        files: current,
+      });
+      current = auto.files;
+      renameErrors.push(...auto.errors);
+      if (auto.named.length) setLastLabel(auto.named[auto.named.length - 1]);
+    }
+    const stillUnnamed = unnamedFiles(current);
+    if (stillUnnamed.length) {
+      for (const f of stillUnnamed) {
         try {
           const name = await renameScanFile({
             archiveId: letter.archive_id,
@@ -391,7 +436,7 @@ export function DigitizationPanel({
         renameErrors.forEach((e) => console.error("Rename failed:", e));
       } else {
         toast.info(
-          `${unnamed.length} unidentified scan${unnamed.length === 1 ? "" : "s"} numbered sequentially.`,
+          `${stillUnnamed.length} unidentified scan${stillUnnamed.length === 1 ? "" : "s"} numbered sequentially.`,
         );
       }
       refresh();
