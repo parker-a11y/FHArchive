@@ -106,7 +106,8 @@ type Col = { key: string; label: string; width: number; minWidth?: number; edita
 
 
 const COLUMNS: Col[] = [
-  { key: "archive_id", label: "FH ID", width: 160, minWidth: 150 },
+  // Room for the record number, health dot and every action icon, including Notes.
+  { key: "archive_id", label: "FH ID", width: 220, minWidth: 210 },
   { key: "record_type", label: "Type", width: 150 },
   { key: "subtype", label: "Subtype", width: 130 },
   { key: "title", label: "Title", width: 200, editable: true },
@@ -126,7 +127,7 @@ const COLUMNS: Col[] = [
   { key: "transcription_status", label: "Transcription", width: 130 },
   { key: "tones", label: "Tone / sentiment", width: 200 },
   { key: "keywords", label: "Keywords", width: 180 },
-  { key: "notes", label: "Notes", width: 220, editable: true },
+  { key: "notes", label: "Notes", width: 220, minWidth: 120, editable: true },
 ];
 
 const PAGE_SIZE = 100;
@@ -330,7 +331,17 @@ function LettersTable() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem("letters_col_widths");
-      if (raw) setWidths(JSON.parse(raw) as Record<string, number>);
+      if (raw) {
+        const saved = JSON.parse(raw) as Record<string, unknown>;
+        const restoredWidths: Record<string, number> = {};
+        for (const c of COLUMNS) {
+          const width = saved[c.key];
+          if (typeof width === "number" && Number.isFinite(width)) {
+            restoredWidths[c.key] = Math.max(c.minWidth ?? 60, width);
+          }
+        }
+        setWidths(restoredWidths);
+      }
     } catch {
       /* ignore corrupt saved widths */
     }
@@ -597,6 +608,8 @@ function LettersTable() {
   });
 
   const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
+  // Fixed-layout tables honor resized columns instead of squeezing them to fit content.
+  const tableWidth = 32 + cols.reduce((total, c) => total + (widths[c.key] ?? c.width), 0);
 
   type SelectedRecord = {
     kind: "letter";
@@ -1340,7 +1353,16 @@ function LettersTable() {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table
+          className="min-w-full table-fixed border-collapse text-sm"
+          style={{ width: tableWidth }}
+        >
+          <colgroup>
+            <col style={{ width: 32 }} />
+            {cols.map((c) => (
+              <col key={c.key} style={{ width: widths[c.key] ?? c.width }} />
+            ))}
+          </colgroup>
           <thead className="sticky top-0 bg-secondary">
             <tr>
               <th className="w-8 border-b border-border px-2 py-2">
@@ -1362,7 +1384,7 @@ function LettersTable() {
               {cols.map((c) => (
                 <th
                   key={c.key}
-                  style={{ width: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
+                  style={{ width: widths[c.key] ?? c.width }}
                   className="relative border-b border-border px-3 py-2 text-left font-medium select-none"
                 >
                   <button
@@ -1446,13 +1468,13 @@ function LettersTable() {
                         "truncate align-top",
                         compact ? "px-2 py-0.5" : "px-3 py-1.5",
                       )}
-                      style={{ maxWidth: widths[c.key] ?? c.width, minWidth: c.minWidth ?? 60 }}
+                      style={{ width: widths[c.key] ?? c.width, maxWidth: widths[c.key] ?? c.width }}
                       onDoubleClick={() =>
                         c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
                       }
                     >
                       {c.key === "archive_id" ? (
-                        <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1.5 [&>*]:shrink-0">
                           <StarToggle
                             table="letters"
                             id={l.id}
