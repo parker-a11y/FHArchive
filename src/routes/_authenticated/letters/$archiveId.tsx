@@ -414,6 +414,24 @@ function LetterPage() {
                 showLabel
               />
             </div>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="field-label">Date</span>
+              <DateLink
+                date={letter.normalized_date}
+                className="font-display text-2xl font-semibold leading-none tracking-tight text-foreground sm:text-3xl"
+              >
+                {displayDate(letter)}
+              </DateLink>
+              {letter.normalized_date && (
+                <Link
+                  to="/on-this-date/$date"
+                  params={{ date: letter.normalized_date.slice(0, 10) }}
+                  className="text-xs text-muted-foreground hover:text-primary hover:underline"
+                >
+                  · What was happening this day?
+                </Link>
+              )}
+            </div>
             <div className="mt-2 text-sm">
               <span className="rounded border border-border bg-secondary px-1.5 py-0.5 text-xs">
                 {recordTypeOptions.find((o) => o.value === letter.record_type)?.label ??
@@ -422,34 +440,8 @@ function LetterPage() {
               </span>
               {letter.title && <span className="ml-3 font-medium">{letter.title}</span>}
             </div>
-            <div className="mt-2 text-sm sm:hidden">
-              <span className="field-label mr-2">Date</span>
-              <DateLink date={letter.normalized_date}>{displayDate(letter)}</DateLink>
-              {letter.normalized_date && (
-                <Link
-                  to="/on-this-date/$date"
-                  params={{ date: letter.normalized_date.slice(0, 10) }}
-                  className="ml-2 text-xs text-muted-foreground hover:text-primary hover:underline"
-                >
-                  · What was happening this day?
-                </Link>
-              )}
-            </div>
             <div className="mt-3 hidden flex-wrap gap-x-8 gap-y-1 text-sm sm:flex">
 
-              <span>
-                <span className="field-label mr-2">Date</span>
-                <DateLink date={letter.normalized_date}>{displayDate(letter)}</DateLink>
-                {letter.normalized_date && (
-                  <Link
-                    to="/on-this-date/$date"
-                    params={{ date: letter.normalized_date.slice(0, 10) }}
-                    className="ml-2 text-xs text-muted-foreground hover:text-primary hover:underline"
-                  >
-                    · What was happening this day?
-                  </Link>
-                )}
-              </span>
               <span>
                 <span className="field-label mr-2">From</span>
                 {authorPerson?.id ? (
