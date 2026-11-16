@@ -19,7 +19,7 @@ function CustomFace({ heading, title, dateText, lines }: Face) {
     <LabelFrame>
       <img src={logoMark} alt="The Francis Files" className="mb-[0.2in] h-[0.6in] w-[0.6in] shrink-0 object-contain" />
       {heading.trim() && (
-        <div className="archive-id leading-none font-bold" style={{ fontSize: idSize, width: "max-content", maxWidth: "none" }}>
+        <div className="w-full whitespace-normal font-mono leading-none font-bold" style={{ fontSize: idSize }}>
           {heading}
         </div>
       )}

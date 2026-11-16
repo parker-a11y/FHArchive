@@ -28,6 +28,10 @@ export function PhotoFrame({ photo }: { photo: InlinePhoto }) {
                 <Link to="/letters/$archiveId" params={{ archiveId: id }} className="archive-id text-archive-gold hover:underline">
                   {id}
                 </Link>
+              ) : id.startsWith("PH") ? (
+                <Link to="/photos/$phId" params={{ phId: id }} className="archive-id text-archive-gold hover:underline">
+                  {id}
+                </Link>
               ) : (
                 <Link to="/sources/$dsId" params={{ dsId: id }} className="archive-id text-archive-gold hover:underline">
                   {id}
