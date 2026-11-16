@@ -18,6 +18,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { describeSendConfirm } from "@/lib/email-send-confirm";
 import { CopyShareLinkButton } from "@/components/letter/CopyShareLinkButton";
 import { ArchivePhotoPicker } from "@/components/media/ArchivePhotoPicker";
 import { RichTextEditor, insertTokenParagraph } from "@/components/editor/RichTextEditor";
@@ -107,6 +118,9 @@ export function EmailArchiveDialog({
     onDraftSaved?.();
   };
   const [open, setOpen] = useState(false);
+  // One extra click before anything is mailed: the send button opens this
+  // summary instead of dispatching, so a stray click cannot send.
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [attachments, setAttachments] = useState<EmailAttachment[]>(draft?.attachments ?? []);
@@ -236,6 +250,7 @@ export function EmailArchiveDialog({
   // Restore before the summary-prefill effect runs, so a restored message is
   // never overwritten by the record's AI summary.
   const handleOpenChange = (v: boolean) => {
+    if (!v) setConfirmOpen(false);
     if (v) {
       // Keep a draft saved earlier in this composer; only an explicit draft prop overrides it.
       if (draftId) setSavedDraftId(draftId);
@@ -461,13 +476,6 @@ export function EmailArchiveDialog({
     }
     if (recipients.length === 0) return toast.error("Add at least one recipient");
     if (later && !sendAt) return toast.error("Pick a date and time to send");
-    if (
-      subjectMismatch &&
-      !window.confirm(
-        `The subject mentions ${subjectMismatch.join(", ")}, which doesn't match the record being sent. Send anyway?`,
-      )
-    )
-      return;
     setBusy(true);
     try {
       const res = await send({
@@ -516,6 +524,30 @@ export function EmailArchiveDialog({
       setBusy(false);
     }
   };
+
+  /**
+   * The send button's real entry point: validate, then ask before mailing.
+   * The confirmation summary is the same one the dialog shows, so the button
+   * can never promise a different action than the one that runs.
+   */
+  const requestSend = () => {
+    if (blogMode) return void submit();
+    if (recipients.length === 0) return toast.error("Add at least one recipient");
+    if (later && !sendAt) return toast.error("Pick a date and time to send");
+    setConfirmOpen(true);
+  };
+
+  const confirm = describeSendConfirm({
+    recipients,
+    subject,
+    later,
+    sendAt,
+    includeImages,
+    includeEnvelope,
+    includeTranscription,
+    hasLetter,
+    blogMode,
+  });
 
   const saveDraft = async () => {
     setBusy(true);
@@ -865,7 +897,7 @@ export function EmailArchiveDialog({
           <Button variant="outline" onClick={saveDraft} disabled={busy || uploading}>
             {savedDraftId ? "Update draft" : "Save draft"}
           </Button>
-          <Button onClick={submit} disabled={busy || uploading}>
+          <Button onClick={requestSend} disabled={busy || uploading}>
             {busy
               ? blogMode
                 ? "Posting…"
@@ -880,6 +912,71 @@ export function EmailArchiveDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Nothing is mailed until this is confirmed. */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirm?.title ?? "Send this email now?"}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  {confirm?.recipientCount === 1
+                    ? "This goes to 1 person"
+                    : `This goes to ${confirm?.recipientCount ?? 0} people`}
+                  :
+                </p>
+                <ul className="max-h-40 space-y-1 overflow-y-auto rounded border border-border bg-muted/40 px-3 py-2 text-sm">
+                  {(confirm?.recipientEmails ?? []).map((email) => (
+                    <li key={email} className="break-all">
+                      {email}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm">
+                  <span className="field-label mr-2">Subject</span>
+                  {confirm?.subject}
+                </p>
+                <p className="text-sm">
+                  <span className="field-label mr-2">When</span>
+                  {confirm?.when}
+                </p>
+                {confirm && confirm.contents.length > 0 && (
+                  <p className="text-sm">
+                    <span className="field-label mr-2">Includes</span>
+                    {confirm.contents.join(", ")}
+                  </p>
+                )}
+                {subjectMismatch && (
+                  <p className="text-sm font-medium text-destructive">
+                    Heads up: the subject mentions {subjectMismatch.join(", ")}, which doesn't match
+                    the record being sent.
+                  </p>
+                )}
+                {includeTranscription && stale.length > 0 && (
+                  <p className="text-sm font-medium text-destructive">
+                    The combined transcription for {staleIds} is older than the corrected page text.
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Go back</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={(e) => {
+                // Keep the composer open; only the confirmation closes here.
+                e.preventDefault();
+                setConfirmOpen(false);
+                void submit();
+              }}
+            >
+              {busy ? "Working…" : (confirm?.actionLabel ?? "Send now")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
