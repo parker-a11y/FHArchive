@@ -58,6 +58,41 @@ function Timeline() {
     })),
     [letters, selected],
   );
+  const toggleSelected = (id: string, checked: boolean) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
+  // One action bar, shown both in the sticky filter bar and inside each
+  // calendar section, so a selection made there is actionable where it was made.
+  const selectionActions =
+    canEdit && selectedRecords.length > 0 ? (
+      <div className="flex flex-wrap items-center gap-2" aria-label="Selected letter actions">
+        <span className="text-sm font-medium">{selectedRecords.length} selected</span>
+        {isAdmin && (
+          <EmailArchiveDialog
+            records={selectedRecords}
+            trigger={
+              <Button size="sm" className="gap-2">
+                <Mail className="size-4" /> EMAIL RECORDS ({selectedRecords.length})
+              </Button>
+            }
+          />
+        )}
+        <Button asChild variant="outline" size="sm" className="h-auto min-h-8 gap-2 whitespace-normal text-left">
+          <Link to="/writer" search={{ ids: selectedRecords.map((r) => r.identifier).join(",") }}>
+            <Feather className="size-4 shrink-0" />
+            {selectedRecords.length > WRITER_MAX_RECORDS
+              ? `Write about records (first ${WRITER_MAX_RECORDS} of ${selectedRecords.length})`
+              : `Write about records (${selectedRecords.length})`}
+          </Link>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Clear selection</Button>
+      </div>
+    ) : null;
   const { data: links = [] } = useQuery({
     queryKey: ["timeline_links"],
     queryFn: async () => {
@@ -153,8 +188,18 @@ function Timeline() {
   return (
     <>
       <PageHeader title="Timeline" description={`${rows.length} letters in chronological order`} />
-      <WeekInHistory letters={letters} />
-      <MonthInHistory letters={letters} />
+      <WeekInHistory
+        letters={letters}
+        selected={selected}
+        onToggle={toggleSelected}
+        actions={selectionActions}
+      />
+      <MonthInHistory
+        letters={letters}
+        selected={selected}
+        onToggle={toggleSelected}
+        actions={selectionActions}
+      />
       <div
         ref={barRef}
         className="sticky top-[53px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-8 lg:top-0"
@@ -165,30 +210,7 @@ function Timeline() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        {canEdit && selectedRecords.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-2" aria-label="Selected letter actions">
-            <span className="text-sm font-medium">{selectedRecords.length} selected</span>
-            {isAdmin && (
-              <EmailArchiveDialog
-                records={selectedRecords}
-                trigger={
-                  <Button size="sm" className="gap-2">
-                    <Mail className="size-4" /> EMAIL RECORDS ({selectedRecords.length})
-                  </Button>
-                }
-              />
-            )}
-            <Button asChild variant="outline" size="sm" className="h-auto min-h-8 gap-2 whitespace-normal text-left">
-              <Link to="/writer" search={{ ids: selectedRecords.map((r) => r.identifier).join(",") }}>
-                <Feather className="size-4 shrink-0" />
-                {selectedRecords.length > WRITER_MAX_RECORDS
-                  ? `Write about records (first ${WRITER_MAX_RECORDS} of ${selectedRecords.length})`
-                  : `Write about records (${selectedRecords.length})`}
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Clear selection</Button>
-          </div>
-        )}
+        {selectionActions && <div className="mt-2">{selectionActions}</div>}
         {years.length > 0 && (
           <div
             className="no-scrollbar mt-2 flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
@@ -242,12 +264,7 @@ function Timeline() {
                       className="self-center"
                       aria-label={`Select ${l.archive_id}`}
                       checked={selected.has(l.id)}
-                      onCheckedChange={(checked) => setSelected((current) => {
-                        const next = new Set(current);
-                        if (checked === true) next.add(l.id);
-                        else next.delete(l.id);
-                        return next;
-                      })}
+                      onCheckedChange={(checked) => toggleSelected(l.id, checked === true)}
                     />
                   )}
                   <Link

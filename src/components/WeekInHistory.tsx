@@ -1,10 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Letter } from "@/lib/queries";
 import { displayDate } from "@/lib/archive";
 import { recordHealth } from "@/lib/record-health";
 import { useAiStateByLetter } from "@/lib/record-ai-state";
+import { Checkbox } from "@/components/ui/checkbox";
+
+/** Shared selection state handed down by the page that owns the action bar. */
+type SelectionProps = {
+  selected?: Set<string>;
+  onToggle?: (id: string, checked: boolean) => void;
+  actions?: ReactNode;
+};
 
 const EXACT_SKIP = new Set(["year", "month", "unknown", "not_applicable", "undated"]);
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -20,7 +28,7 @@ export function weekDays(start: Date) {
   });
 }
 
-export function WeekInHistory({ letters }: { letters: Letter[] }) {
+export function WeekInHistory({ letters, selected, onToggle, actions }: { letters: Letter[] } & SelectionProps) {
   const [offset, setOffset] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
   const { data: aiByLetter = {} } = useAiStateByLetter();
@@ -65,6 +73,7 @@ export function WeekInHistory({ letters }: { letters: Letter[] }) {
           <ChevronRight className="size-4" />
         </button>
       </div>
+      {actions && <div className="mb-2">{actions}</div>}
       <div className="grid gap-2 sm:grid-cols-7">
         {days.map((d, i) => {
           const items = byDay[d.md] ?? [];
@@ -83,7 +92,16 @@ export function WeekInHistory({ letters }: { letters: Letter[] }) {
                     const health = recordHealth(l, aiByLetter[l.id]);
                     return (
                       <li key={l.id} className="rounded bg-muted/50 text-xs">
-                        <button onClick={() => setOpen(isOpen ? null : l.id)} className="flex w-full items-start gap-1 p-1.5 text-left">
+                        <div className="flex items-start gap-1">
+                          {onToggle && (
+                            <Checkbox
+                              className="mt-2.5 size-3.5 shrink-0 [&_svg]:size-3"
+                              aria-label={`Select ${l.archive_id}`}
+                              checked={selected?.has(l.id) ?? false}
+                              onCheckedChange={(c) => onToggle(l.id, c === true)}
+                            />
+                          )}
+                          <button onClick={() => setOpen(isOpen ? null : l.id)} className="flex min-w-0 flex-1 items-start gap-1 p-1.5 text-left">
                           <span className="min-w-0 flex-1">
                             <span className="archive-id block text-[10px] text-primary">
                               {l.archive_id} · {l.normalized_date!.slice(0, 4)}
@@ -99,7 +117,8 @@ export function WeekInHistory({ letters }: { letters: Letter[] }) {
                             </span>
                           </span>
                           <ChevronDown className={`mt-0.5 size-3 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                        </button>
+                          </button>
+                        </div>
                         {isOpen && (
                           <div className="space-y-1 border-t border-border p-1.5 text-muted-foreground">
                             <p>{displayDate(l)}</p>
