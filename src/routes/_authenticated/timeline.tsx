@@ -3,6 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
+import { useAuth } from "@/hooks/useAuth";
+import { WRITER_MAX_RECORDS } from "@/lib/writer-limits";
+import { Feather, Mail } from "lucide-react";
 import { fetchLetters } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
@@ -27,6 +33,8 @@ export const Route = createFileRoute("/_authenticated/timeline")({
         property: "og:description",
         content: "Chronological view of the family letter correspondence.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: () => (
@@ -37,7 +45,19 @@ export const Route = createFileRoute("/_authenticated/timeline")({
 });
 
 function Timeline() {
+  const { isAdmin, canEdit } = useAuth();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const { data: letters = [] } = useQuery({ queryKey: ["letters"], queryFn: fetchLetters });
+  const selectedRecords = useMemo(
+    () => letters.filter((l) => selected.has(l.id)).map((l) => ({
+      kind: "letter" as const,
+      id: l.id,
+      identifier: l.archive_id,
+      title: l.title,
+      date: l.normalized_date,
+    })),
+    [letters, selected],
+  );
   const { data: links = [] } = useQuery({
     queryKey: ["timeline_links"],
     queryFn: async () => {
@@ -140,11 +160,35 @@ function Timeline() {
         className="sticky top-[53px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-8 lg:top-0"
       >
         <Input
-          className="h-8 w-72"
+          className="h-8 w-full sm:w-72"
           placeholder="Filter by person, place or keyword…"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
+        {canEdit && selectedRecords.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-2" aria-label="Selected letter actions">
+            <span className="text-sm font-medium">{selectedRecords.length} selected</span>
+            {isAdmin && (
+              <EmailArchiveDialog
+                records={selectedRecords}
+                trigger={
+                  <Button size="sm" className="gap-2">
+                    <Mail className="size-4" /> EMAIL RECORDS ({selectedRecords.length})
+                  </Button>
+                }
+              />
+            )}
+            <Button asChild variant="outline" size="sm" className="h-auto min-h-8 gap-2 whitespace-normal text-left">
+              <Link to="/writer" search={{ ids: selectedRecords.map((r) => r.identifier).join(",") }}>
+                <Feather className="size-4 shrink-0" />
+                {selectedRecords.length > WRITER_MAX_RECORDS
+                  ? `Write about records (first ${WRITER_MAX_RECORDS} of ${selectedRecords.length})`
+                  : `Write about records (${selectedRecords.length})`}
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Clear selection</Button>
+          </div>
+        )}
         {years.length > 0 && (
           <div
             className="no-scrollbar mt-2 flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
@@ -193,6 +237,19 @@ function Timeline() {
               )}
               <div className="border-l-2 border-border py-2 pl-4 hover:border-primary hover:bg-muted/50">
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  {canEdit && (
+                    <Checkbox
+                      className="self-center"
+                      aria-label={`Select ${l.archive_id}`}
+                      checked={selected.has(l.id)}
+                      onCheckedChange={(checked) => setSelected((current) => {
+                        const next = new Set(current);
+                        if (checked === true) next.add(l.id);
+                        else next.delete(l.id);
+                        return next;
+                      })}
+                    />
+                  )}
                   <Link
                     to="/letters/$archiveId"
                     params={{ archiveId: l.archive_id }}
