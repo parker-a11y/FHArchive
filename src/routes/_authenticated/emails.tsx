@@ -393,7 +393,7 @@ function Calendar({
   };
 
   return (
-    <section aria-label="Dispatch calendar" className="sticky top-20 z-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-lg border border-border bg-card p-4 shadow-md lg:top-4 lg:max-h-[calc(100dvh-2rem)]">
+    <section aria-label="Dispatch calendar" className="rounded-lg border border-border bg-card p-4 shadow-md">
       <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">Dispatch calendar</h2>
@@ -403,7 +403,7 @@ function Calendar({
           </p>
         </div>
       </header>
-        <nav aria-label="Calendar month" className="sticky top-0 z-10 mb-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-card py-1">
+        <nav aria-label="Calendar month" className="mb-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-card py-1">
           <Button
             variant="outline"
             size="icon"
