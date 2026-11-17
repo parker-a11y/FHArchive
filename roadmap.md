@@ -87,3 +87,4 @@
 - [x] Print Multiple Labels on record page
 - [x] Email calendar: 11:00 AM default send time with quick picks, and a SAVE button to confirm the chosen day and time
 - [x] From and To shown larger and bolder on record pages, the shared read-only view, and the All Records list
+- [x] Email and recap photo picker searches and browses gallery photographs (PH numbers), verified on 119 photographs with a real insert into the composer

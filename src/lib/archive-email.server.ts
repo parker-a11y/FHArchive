@@ -5,6 +5,11 @@ import {
   type InlinePhoto,
 } from "@/lib/inline-photos";
 import { readableRecordTranscription } from "@/lib/combined-transcription.server";
+import {
+  galleryPhotoPagePaths,
+  GALLERY_PHOTO_COLS,
+  type GalleryPhotoRow,
+} from "@/lib/photo-pages";
 
 
 /** Emailed links always point at the public archive domain, never a preview URL. */
@@ -216,18 +221,17 @@ export async function resolveInlinePhotos(
   for (const identifier of identifiers) {
     try {
       if (identifier.startsWith("PH")) {
-        // Gallery photograph: page 1 = front viewing copy, page 2 = back. Never the TIFF master.
+        // Gallery photograph: page 1 = front, page 2 = back. Never the TIFF master.
         const { data } = await db
           .from("photos")
-          .select("front_view_path, front_path, back_view_path")
+          .select(GALLERY_PHOTO_COLS)
           .eq("ph_id", identifier)
           .maybeSingle();
-        const row = data as { front_view_path: string | null; front_path: string; back_view_path: string | null } | null;
+        const row = data as GalleryPhotoRow | null;
         if (row) {
-          const paths = [row.front_view_path ?? row.front_path, row.back_view_path].filter(Boolean) as string[];
           const urls: string[] = [];
-          for (const path of paths) {
-            const { data: signed } = await (db as any).storage.from("scans").createSignedUrl(path, 60 * 60 * 24 * 365);
+          for (const page of galleryPhotoPagePaths(row)) {
+            const { data: signed } = await (db as any).storage.from("scans").createSignedUrl(page.path, 60 * 60 * 24 * 365);
             urls.push(signed?.signedUrl ?? "");
           }
           pagesByIdentifier[identifier] = urls;

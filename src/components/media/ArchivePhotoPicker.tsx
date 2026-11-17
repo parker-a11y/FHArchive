@@ -14,8 +14,12 @@ import {
 } from "@/components/ui/dialog";
 import { fetchDigitalFiles } from "@/lib/digital-files";
 import { photoToken, imageUrlToken } from "@/lib/inline-photos";
+import { galleryPhotoPagePaths, GALLERY_PHOTO_COLS, type GalleryPhotoRow } from "@/lib/photo-pages";
 
-type PickRecord = { kind: "letter" | "source"; id: string; identifier: string; title: string | null };
+type PickRecord =
+  | { kind: "letter"; id: string; identifier: string; title: string | null }
+  | { kind: "source"; id: string; identifier: string; title: string | null }
+  | { kind: "photo"; id: string; identifier: string; title: string | null; photo: GalleryPhotoRow };
 
 /**
  * Pages of a record in the same order the email renderer uses, so the page
@@ -62,6 +66,27 @@ async function sourcePages(sourceId: string) {
   );
 }
 
+/** A gallery photograph, ready to be picked: its PH number is the token identifier. */
+function photoPick(row: Record<string, unknown>): PickRecord {
+  return {
+    kind: "photo",
+    id: String(row["id"]),
+    identifier: String(row["ph_id"]),
+    title: row["caption"] == null ? null : String(row["caption"]),
+    photo: row as unknown as GalleryPhotoRow,
+  };
+}
+
+/** Gallery photograph pages in the order the email renderer uses: 1 = front, 2 = back. */
+async function photoPages(row: GalleryPhotoRow) {
+  return Promise.all(
+    galleryPhotoPagePaths(row).map(async (p) => {
+      const { data } = await supabase.storage.from("scans").createSignedUrl(p.path, 3600);
+      return { url: data?.signedUrl ?? "", label: p.label };
+    }),
+  );
+}
+
 /** Lets an archivist drop any archive image into the text they are writing. */
 export function ArchivePhotoPicker({
   onInsert,
@@ -83,17 +108,13 @@ export function ArchivePhotoPicker({
     enabled: open && !searching,
     queryFn: async (): Promise<PickRecord[]> => {
       const { data } = await supabase
-        .from("letters")
-        .select("id, archive_id, title, created_at")
-        .eq("record_type", "photograph")
-        .order("created_at", { ascending: false })
-        .limit(40);
-      return ((data ?? []) as Record<string, unknown>[]).map((l) => ({
-        kind: "letter" as const,
-        id: String(l['id']),
-        identifier: String(l['archive_id']),
-        title: l['title'] == null ? null : String(l['title']),
-      }));
+        .from("photos")
+        .select(`id, ph_seq, ${GALLERY_PHOTO_COLS}`)
+        .order("ph_seq", { ascending: true })
+        .limit(200);
+      return ((data ?? []) as Record<string, unknown>[])
+        .filter((p) => p["ph_id"] != null)
+        .map(photoPick);
     },
   });
 
@@ -102,7 +123,7 @@ export function ArchivePhotoPicker({
     enabled: open && searching,
     queryFn: async (): Promise<PickRecord[]> => {
       const q = query.trim().replace(/[%,]/g, "");
-      const [letters, sources] = await Promise.all([
+      const [letters, sources, photos] = await Promise.all([
         supabase
           .from("letters")
           .select("id, archive_id, title")
@@ -116,6 +137,14 @@ export function ArchivePhotoPicker({
           .select("id, ds_id, title")
           .or(`ds_id.ilike.%${q}%,title.ilike.%${q}%`)
           .limit(15),
+        supabase
+          .from("photos")
+          .select(`id, ph_seq, ${GALLERY_PHOTO_COLS}`)
+          .or(
+            `ph_id.ilike.%${q}%,caption.ilike.%${q}%,people.ilike.%${q}%,location.ilike.%${q}%,inscription.ilike.%${q}%`,
+          )
+          .order("ph_seq", { ascending: true })
+          .limit(25),
       ]);
       return [
         ...((letters.data ?? []) as Record<string, unknown>[]).map((l) => ({
@@ -130,6 +159,9 @@ export function ArchivePhotoPicker({
           identifier: String(s['ds_id']),
           title: s['title'] == null ? null : String(s['title']),
         })),
+        ...((photos.data ?? []) as Record<string, unknown>[])
+          .filter((p) => p["ph_id"] != null)
+          .map(photoPick),
       ];
     },
   });
@@ -139,6 +171,7 @@ export function ArchivePhotoPicker({
     enabled: open && Boolean(selected),
     queryFn: () => {
       if (!selected) return [];
+      if (selected.kind === "photo") return photoPages(selected.photo);
       return selected.kind === "letter" ? letterPages(selected.id) : sourcePages(selected.id);
     },
   });
@@ -223,8 +256,8 @@ export function ArchivePhotoPicker({
         <DialogHeader>
           <DialogTitle>Insert a photo from the archive</DialogTitle>
           <DialogDescription>
-            Search for a record, or pick from the photographs below. The picture is placed where
-            your cursor is, captioned with its record number.
+            Search for a record or a gallery photograph, or pick from the photographs below. The
+            picture is placed where your cursor is, captioned with its record number.
           </DialogDescription>
         </DialogHeader>
 
@@ -365,14 +398,14 @@ export function ArchivePhotoPicker({
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by FH / DS number, title or person…"
+              placeholder="Search by FH / PH / DS number, title, person or caption…"
             />
             <p className="text-xs text-muted-foreground">
               {searching
                 ? isFetching
                   ? "Searching…"
                   : `${results.length} matching records`
-                : "Photographs in the archive"}
+                : "Photographs in the gallery"}
             </p>
             <div className="max-h-[45vh] space-y-1 overflow-y-auto pr-1">
               {list.map((r) => (
@@ -388,7 +421,7 @@ export function ArchivePhotoPicker({
               ))}
               {list.length === 0 && (
                 <p className="py-6 text-sm text-muted-foreground">
-                  {searching ? "No records matched." : "No photographs catalogued yet — search above."}
+                  {searching ? "No records matched." : "No photographs in the gallery yet — search above."}
                 </p>
               )}
             </div>
