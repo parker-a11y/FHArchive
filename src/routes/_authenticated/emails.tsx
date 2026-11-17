@@ -393,7 +393,7 @@ function Calendar({
   };
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4">
+    <section aria-label="Dispatch calendar" className="sticky top-20 z-20 max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-lg border border-border bg-card p-4 shadow-md lg:top-4 lg:max-h-[calc(100dvh-2rem)]">
       <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">Dispatch calendar</h2>
@@ -402,7 +402,8 @@ function Calendar({
             {moving && " Moving…"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+      </header>
+        <nav aria-label="Calendar month" className="sticky top-0 z-10 mb-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-card py-1">
           <Button
             variant="outline"
             size="icon"
@@ -419,9 +420,9 @@ function Calendar({
           >
             <ChevronLeft className="size-5" />
           </Button>
-          <span className="w-36 text-center text-sm font-medium">
+          <h3 aria-live="polite" className="text-center font-display text-xl font-semibold sm:text-2xl">
             {cursor.toLocaleDateString([], { month: "long", year: "numeric" })}
-          </span>
+          </h3>
           <Button
             variant="outline"
             size="icon"
@@ -438,8 +439,7 @@ function Calendar({
           >
             <ChevronRight className="size-5" />
           </Button>
-        </div>
-      </header>
+        </nav>
 
       <div
         role="region"
@@ -459,7 +459,7 @@ function Calendar({
           ev.preventDefault();
           dropOn("tbd", ev.dataTransfer.getData("application/x-archive-email"));
         }}
-        className={cn("mb-4 min-h-24 rounded-md border-2 border-dashed border-border bg-muted/30 p-3", dragOver === "tbd" && "border-primary bg-primary/10 ring-2 ring-primary/40")}
+        className={cn("mb-4 max-h-40 min-h-24 overflow-y-auto rounded-md border-2 border-dashed border-border bg-muted/30 p-3", dragOver === "tbd" && "border-primary bg-primary/10 ring-2 ring-primary/40")}
       >
         <h3 className="text-xs font-semibold">TBD SCHEDULE</h3>
         <div className="mt-2 flex flex-wrap gap-2">

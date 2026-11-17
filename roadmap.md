@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Dispatch calendar: prominent month title and left/right arrows, persistent calendar while scrolling, and bounded TBD list; signed-in desktop/phone and drag-hover navigation verified, 7 scheduling tests passed.
+
 - [x] Fix long custom-label headings shrinking other text; the reported heading now wraps at full label scale in the signed-in preview.
 - [x] Fix embedded PH photo links opening Digital Sources; a real PH00115 caption opened its gallery photograph, and 23 related tests passed.
 
