@@ -33,12 +33,12 @@ export const Route = createFileRoute("/s/$token")({
   component: SharedRecordPage,
 });
 
-function Meta({ label, value, year, estimatedYear }: { label: string; value: string | null; year?: number; estimatedYear?: boolean }) {
+function Meta({ label, value, year, estimatedYear, em = false }: { label: string; value: string | null; year?: number; estimatedYear?: boolean; em?: boolean }) {
   if (!value) return null;
   return (
     <div>
-      <div className="field-label">{label}</div>
-      <div className="text-sm"><FfnText text={value} year={year} estimatedYear={estimatedYear} /></div>
+      <div className={em ? "record-party-label" : "field-label"}>{label}</div>
+      <div className={em ? "record-party" : "text-sm"}><FfnText text={value} year={year} estimatedYear={estimatedYear} /></div>
     </div>
   );
 }
@@ -156,8 +156,8 @@ function SharedRecordPage() {
   const metaAside = (
     <>
       <Meta label="Date" value={dateLine} year={moneyYear} estimatedYear={estimatedYear} />
-      <Meta label="From" value={record.author} year={moneyYear} estimatedYear={estimatedYear} />
-      <Meta label="To" value={record.recipient} year={moneyYear} estimatedYear={estimatedYear} />
+      <Meta label="From" value={record.author} year={moneyYear} estimatedYear={estimatedYear} em />
+      <Meta label="To" value={record.recipient} year={moneyYear} estimatedYear={estimatedYear} em />
       <Meta label="Location line (written at)" value={record.dateline} year={moneyYear} estimatedYear={estimatedYear} />
       <Meta label="Mailing origin" value={record.origin} year={moneyYear} estimatedYear={estimatedYear} />
       <Meta label="Destination" value={record.destination} year={moneyYear} estimatedYear={estimatedYear} />

@@ -442,8 +442,8 @@ function LetterPage() {
             </div>
             <div className="mt-3 hidden flex-wrap gap-x-8 gap-y-1 text-sm sm:flex">
 
-              <span>
-                <span className="field-label mr-2">From</span>
+              <span className="record-party">
+                <span className="record-party-label mr-2">From</span>
                 {authorPerson?.id ? (
                   <Link
                     to="/people/$personId"
@@ -456,8 +456,8 @@ function LetterPage() {
                   letter.author || "—"
                 )}
               </span>
-              <span>
-                <span className="field-label mr-2">To</span>
+              <span className="record-party">
+                <span className="record-party-label mr-2">To</span>
                 {recipientPerson?.id ? (
                   <Link
                     to="/people/$personId"

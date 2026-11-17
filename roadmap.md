@@ -86,3 +86,4 @@
 - [x] Timeline calendar panels: status dots on every card in "This week" and the month calendar, same traffic-light scheme and hover/expanded status wording as All Records (17 week cards and 67 November cards checked in preview)
 - [x] Print Multiple Labels on record page
 - [x] Email calendar: 11:00 AM default send time with quick picks, and a SAVE button to confirm the chosen day and time
+- [x] From and To shown larger and bolder on record pages, the shared read-only view, and the All Records list

@@ -225,6 +225,21 @@
   color: var(--color-muted-foreground);
 }
 
+/* From / To are read at a glance on every record, so they sit a step above
+   ordinary metadata in both size and weight. */
+@utility record-party-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+@utility record-party {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 /* Physical label dimensions and ink are invariant across application themes. */
 :root {
   --label-paper: oklch(1 0 0);

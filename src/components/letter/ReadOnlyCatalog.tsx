@@ -22,11 +22,11 @@ import { yearFromDate } from "@/lib/money";
  * empty fields, or internal workflow/administrative metadata — only the
  * archival information the record actually holds.
  */
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function Field({ label, value, em = false }: { label: string; value: React.ReactNode; em?: boolean }) {
   return (
     <div>
-      <div className="field-label">{label}</div>
-      <div className="mt-0.5 text-sm break-words">{value}</div>
+      <div className={em ? "record-party-label" : "field-label"}>{label}</div>
+      <div className={em ? "mt-0.5 record-party break-words" : "mt-0.5 text-sm break-words"}>{value}</div>
     </div>
   );
 }
@@ -60,9 +60,9 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
     letter.transcription_verified?.trim() || letter.transcription_raw_ai?.trim(),
   );
 
-  const details: { label: string; value: React.ReactNode }[] = [];
-  const push = (label: string, value: unknown, node?: React.ReactNode) => {
-    if (has(value)) details.push({ label, value: node ?? String(value) });
+  const details: { label: string; value: React.ReactNode; em?: boolean }[] = [];
+  const push = (label: string, value: unknown, node?: React.ReactNode, em = false) => {
+    if (has(value)) details.push({ label, value: node ?? String(value), em });
   };
 
   push("Record type", labelOf(RECORD_TYPES, letter.record_type));
@@ -87,8 +87,8 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
   push("Identification", labelOf(IDENTIFICATION_STATUS, letter.identification_status));
   push("Primary person", letter.primary_person);
   if (isLetter) {
-    push("Author (from)", letter.author);
-    push("Recipient (to)", letter.recipient);
+    push("Author (from)", letter.author, undefined, true);
+    push("Recipient (to)", letter.recipient, undefined, true);
   }
   push("Mailing origin / location", letter.origin);
   if (isLetter) push("Mailing destination", letter.destination);
@@ -150,7 +150,7 @@ export function ReadOnlyCatalog({ letter }: { letter: Letter }) {
     <div className="max-w-5xl space-y-6">
       <Section title="Catalog">
         {details.map((d) => (
-          <Field key={d.label} label={d.label} value={d.value} />
+          <Field key={d.label} label={d.label} value={d.value} em={d.em} />
         ))}
       </Section>
 
