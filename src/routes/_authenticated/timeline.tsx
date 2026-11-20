@@ -8,8 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { WRITER_MAX_RECORDS } from "@/lib/writer-limits";
-import { Feather, Mail } from "lucide-react";
+import { Copy, Feather, Mail } from "lucide-react";
+import { toast } from "sonner";
 import { fetchLetters } from "@/lib/queries";
+import { richTextToPlain } from "@/lib/rich-text";
+import { flowingCombinedTranscription } from "@/lib/transcription-format";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
@@ -66,6 +69,48 @@ function Timeline() {
       return next;
     });
 
+  // Copy every selected letter's transcription in one clipboard payload, each
+  // headed by its catalog details so the text stays attributable when pasted
+  // elsewhere.
+  const [copying, setCopying] = useState(false);
+  const copyTranscriptions = async () => {
+    const chosen = letters.filter((l) => selected.has(l.id));
+    if (chosen.length === 0) return;
+    setCopying(true);
+    try {
+      // The timeline list query is slim and omits the transcription text, so
+      // load it here only for the records being copied.
+      const { data: texts, error } = await supabase
+        .from("letters")
+        .select("id, transcription_verified")
+        .in("id", chosen.map((l) => l.id));
+      if (error) throw error;
+      const textById = new Map((texts ?? []).map((t) => [t.id, t.transcription_verified]));
+      const blocks = chosen.map((l) => {
+        const header = [
+          `${l.archive_id}${l.title ? ` — ${l.title}` : ""}`,
+          `Date: ${displayDate(l) || "Undated"}`,
+          `From: ${l.author || "Unknown"}${l.origin ? ` (${l.origin})` : ""}`,
+          `To: ${l.recipient || "Unknown"}${l.destination ? ` (${l.destination})` : ""}`,
+        ].join("\n");
+        const body =
+          richTextToPlain(flowingCombinedTranscription(textById.get(l.id))).trim() ||
+          "[No transcription yet]";
+        return `${header}\n\n${body}`;
+      });
+      await navigator.clipboard.writeText(blocks.join("\n\n---\n\n"));
+      toast.success(
+        chosen.length === 1
+          ? `Copied transcription of ${chosen[0].archive_id}`
+          : `Copied transcriptions of ${chosen.length} records`,
+      );
+    } catch (e) {
+      toast.error((e as Error).message || "Could not copy to clipboard");
+    } finally {
+      setCopying(false);
+    }
+  };
+
   // One action bar, shown both in the sticky filter bar and inside each
   // calendar section, so a selection made there is actionable where it was made.
   const selectionActions =
@@ -82,6 +127,16 @@ function Timeline() {
             }
           />
         )}
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={copying}
+          onClick={copyTranscriptions}
+        >
+          <Copy className="size-4" />
+          {copying ? "Copying…" : `Copy transcriptions (${selectedRecords.length})`}
+        </Button>
         <Button asChild variant="outline" size="sm" className="h-auto min-h-8 gap-2 whitespace-normal text-left">
           <Link to="/writer" search={{ ids: selectedRecords.map((r) => r.identifier).join(",") }}>
             <Feather className="size-4 shrink-0" />
