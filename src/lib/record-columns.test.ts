@@ -6,7 +6,7 @@ import { normalizeColumnOrder } from "./column-order";
 test("Collections is its own column, without replacing any archive columns", () => {
   assert.equal(COLUMNS.find(c => c.key === "collections")?.label, "Collections");
   assert.deepEqual(DEFAULT_COLUMN_ORDER.filter(key => key !== "collections"), [
-    "archive_id", "record_type", "subtype", "title", "date", "date_precision", "identification_status",
+    "archive_id", "record_type", "subtype", "title", "date", "date_precision", "destination",
     "primary_person", "author", "recipient", "origin", "storage", "sheets", "image_count", "has_envelope",
     "digitization_status", "scan_status", "transcription_status", "tones", "keywords", "notes",
   ]);

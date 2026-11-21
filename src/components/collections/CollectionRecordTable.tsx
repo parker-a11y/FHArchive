@@ -9,7 +9,7 @@ import { fetchAiStateForLetters, fetchKeywordsForLetters } from "@/lib/record-gr
 import { type CollectionRecord, collectionDate } from "@/lib/collections/model";
 import { type Letter } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
-import { DATE_PRECISION, IDENTIFICATION_STATUS, SCAN_STATUS, TRANSCRIPTION_STATUS, STORAGE_TYPES, displayDate, labelOf } from "@/lib/archive";
+import { DATE_PRECISION, SCAN_STATUS, TRANSCRIPTION_STATUS, STORAGE_TYPES, displayDate, labelOf } from "@/lib/archive";
 import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { useRecordTypeOptions } from "@/lib/categories";
 import { recordHealth } from "@/lib/record-health";
@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 100;
 // Only display metadata; never load transcription bodies for a collection listing.
-const LETTER_FIELDS = "id,archive_id,fh_seq,title,record_type,subtype,date_as_written,normalized_date,date_precision,date_certainty,date_end,date_from_postmark,identification_status,primary_person,author,recipient,origin,storage_type,storage_folder,sheets,image_count,has_envelope,digitization_status,scan_status,transcription_status,tones,notes,starred" as const;
+const LETTER_FIELDS = "id,archive_id,fh_seq,title,record_type,subtype,date_as_written,normalized_date,date_precision,date_certainty,date_end,date_from_postmark,destination,primary_person,author,recipient,origin,storage_type,storage_folder,sheets,image_count,has_envelope,digitization_status,scan_status,transcription_status,tones,notes,starred" as const;
 async function fetchTableMetadata(ids: string[]) {
   const letters: Partial<Letter>[] = [];
   for (let i = 0; i < ids.length; i += 100) {
@@ -93,7 +93,6 @@ export function CollectionRecordTable({ records, selected, setSelected, collecti
     if (!l) return "—";
     switch (key) {
       case "date_precision": return labelOf(DATE_PRECISION,l.date_precision);
-      case "identification_status": return labelOf(IDENTIFICATION_STATUS,l.identification_status);
       case "storage": return [labelOf(STORAGE_TYPES,l.storage_type),l.storage_folder].filter(v => v && v !== "—").join(" · ");
       case "scan_status": return labelOf(SCAN_STATUS,l.scan_status);
       case "transcription_status": return labelOf(TRANSCRIPTION_STATUS,l.transcription_status);

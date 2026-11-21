@@ -837,8 +837,6 @@ function LettersTable() {
         return labelOf(recordTypeOptions, l.record_type);
       case "date_precision":
         return labelOf(DATE_PRECISION, l.date_precision);
-      case "identification_status":
-        return labelOf(IDENTIFICATION_STATUS, l.identification_status);
       case "storage":
         return storageText(l);
       case "research_status":

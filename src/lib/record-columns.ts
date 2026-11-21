@@ -10,7 +10,7 @@ export const COLUMNS: Col[] = [
   { key: "title", label: "Title", width: 200, editable: true },
   { key: "date", label: "Date", width: 150 },
   { key: "date_precision", label: "Date status", width: 130 },
-  { key: "identification_status", label: "ID status", width: 130 },
+  { key: "destination", label: "Mailing destination", width: 180, editable: true },
   { key: "primary_person", label: "Primary person", width: 150, editable: true },
   { key: "author", label: "From", width: 150, editable: true },
   { key: "recipient", label: "To", width: 150, editable: true },
