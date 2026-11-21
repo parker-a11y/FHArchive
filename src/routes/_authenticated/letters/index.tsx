@@ -1435,11 +1435,12 @@ function LettersTable() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((l) => (
+            {rows.map((l, i) => (
               <tr
                 key={l.id}
                 className={cn(
                   "border-b border-border hover:bg-muted/50",
+                  i % 2 === 1 && "bg-muted/30",
                   compact && "leading-tight",
                 )}
               >
@@ -1479,7 +1480,7 @@ function LettersTable() {
                     >
                       {c.key === "archive_id" ? (
                         <span className="inline-flex flex-wrap items-center gap-1.5 [&>*]:shrink-0">
-                          <span className="w-full"><CollectionLabels record={{kind:'letter',id:l.id}} /></span>
+                          <CollectionLabels record={{kind:'letter',id:l.id}} />
                           <StarToggle
                             table="letters"
                             id={l.id}

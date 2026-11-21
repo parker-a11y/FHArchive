@@ -83,7 +83,7 @@ export function CollectionLabels({ record }: { record: RecordKey }) {
   const labels = data?.collections.filter((c) => ids.has(c.id)) ?? [];
   if (!labels.length) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1 py-1" aria-label="Collection labels">
+    <div className="flex w-full flex-wrap items-center gap-1 py-1" aria-label="Collection labels">
       {(expanded ? labels : labels.slice(0, 2)).map((c) => (
         <Link
           key={c.id}
