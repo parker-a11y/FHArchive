@@ -86,6 +86,7 @@ import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { MultiLabelDialog } from "@/components/letter/MultiLabelDialog";
 import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
+import { RecordCollections } from '@/components/collections/CollectionControls';
 import { LetterContextPanel } from "@/components/letter/LetterContextPanel";
 import { LinkedPhotosPanel } from "@/components/letter/LinkedPhotosPanel";
 import { RecordEmailHistory } from "@/components/letter/RecordEmailHistory";
@@ -602,6 +603,7 @@ function LetterPage() {
 
       <LetterContextPanel key={letter.id} letter={letter} />
       <LinkedPhotosPanel letterId={letter.id} />
+      <div className="px-4 sm:px-8"><RecordCollections record={{kind:'letter',id:letter.id}} /></div>
 
       {showTranscription && (
         <section className="mx-4 mt-4 rounded border border-border bg-card p-4 sm:mx-8">

@@ -90,3 +90,9 @@
 - [x] Email calendar: 11:00 AM default send time with quick picks, and a SAVE button to confirm the chosen day and time
 - [x] From and To shown larger and bolder on record pages, the shared read-only view, and the All Records list
 - [x] Email and recap photo picker searches and browses gallery photographs (PH numbers), verified on 119 photographs with a real insert into the composer
+
+## Collections
+- [x] Non-destructive schema, access rules and collection management.
+- [x] Bulk labels in Timeline, All Records, Search and original letter/photo/source records; chronological collection browsing and scoped transcription search.
+- [x] Evidence-grounded semantic AI suggestions, explicit approval and remembered dismissals; existing research retrieval plus 119 indexed photographs.
+- [x] Six rule tests passed; signed-in seven-record Timeline addition, All Records and Search labels, two-label original record, photo opening, real AI recommendations, two approved suggestions, dismissal after reload, safe removal/deletion and mobile fit verified. Temporary collections removed.

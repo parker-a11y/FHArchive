@@ -1,0 +1,6 @@
+- Collection membership uses canonical record UUIDs with separate FK columns for letters, photos and sources; deleting labels cannot delete archive rows.
+- Collection reads and mutations use the authenticated client and existing archive role checks so record access remains RLS-scoped.
+- AI retrieval reuses existing passage embeddings, verifies candidates against live accessible records, and stores recommendations separately from membership until user approval.
+- Transcription search is scoped to collection member UUIDs in bounded queries; ordinary collection listings never fetch full archival texts.
+- Photograph meaning search keeps a fingerprinted, derived passage/vector cache; every text chunk is embedded and retained, and only changed photos are reindexed.
+- Terminal AI availability blocks are stored outside collection rows so deletion cannot bypass them; resumption is an explicit administrator action after service recovery.

@@ -1,0 +1,1 @@
+ALTER TABLE public.collection_photo_vectors ADD COLUMN chunks jsonb NOT NULL DEFAULT '[]'::jsonb;

@@ -141,6 +141,27 @@
       "when": 1794850870511,
       "tag": "0019_search_letters_invoker",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795284622103,
+      "tag": "0020_archive_collections",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795285345793,
+      "tag": "0021_collection_discovery_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795285377320,
+      "tag": "0022_collection_photo_chunks",
+      "breakpoints": true
     }
   ]
 }

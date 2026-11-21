@@ -1,0 +1,11 @@
+CREATE TABLE public.collection_photo_vectors(photo_id uuid PRIMARY KEY REFERENCES public.photos(id) ON DELETE CASCADE,fingerprint text NOT NULL,embedding vector(3072) NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.collection_photo_vectors TO authenticated; GRANT ALL ON public.collection_photo_vectors TO service_role;
+ALTER TABLE public.collection_photo_vectors ENABLE ROW LEVEL SECURITY;
+CREATE POLICY collection_photo_vectors_read ON public.collection_photo_vectors FOR SELECT TO authenticated USING(public.can_read_archive(auth.uid()) AND EXISTS(SELECT 1 FROM public.photos p WHERE p.id=photo_id));
+CREATE INDEX collection_photo_vectors_hnsw ON public.collection_photo_vectors USING hnsw((embedding::halfvec(3072)) halfvec_cosine_ops);
+CREATE FUNCTION public.match_collection_photos(query_embedding vector,match_count integer DEFAULT 24) RETURNS TABLE(photo_id uuid,similarity double precision) LANGUAGE sql STABLE SECURITY INVOKER SET search_path=public AS $$ SELECT v.photo_id,1-(v.embedding::halfvec(3072)<=>query_embedding::halfvec(3072)) FROM public.collection_photo_vectors v JOIN public.photos p ON p.id=v.photo_id ORDER BY v.embedding::halfvec(3072)<=>query_embedding::halfvec(3072) LIMIT least(greatest(match_count,1),50) $$;
+REVOKE ALL ON FUNCTION public.match_collection_photos(vector,integer) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.match_collection_photos(vector,integer) TO authenticated,service_role;
+CREATE TABLE public.collection_discovery_state(key text PRIMARY KEY,reason text NOT NULL,requires_owner_action boolean NOT NULL DEFAULT false,updated_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.collection_discovery_state TO authenticated; GRANT ALL ON public.collection_discovery_state TO service_role;
+ALTER TABLE public.collection_discovery_state ENABLE ROW LEVEL SECURITY;
+CREATE POLICY discovery_state_read ON public.collection_discovery_state FOR SELECT TO authenticated USING(public.can_edit_archive(auth.uid()));

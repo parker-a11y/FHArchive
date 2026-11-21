@@ -21,6 +21,7 @@ import { Route as AuthenticatedAskRouteImport } from './routes/_authenticated/as
 import { Route as AuthenticatedBackupsRouteImport } from './routes/_authenticated/backups'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCategoriesRouteImport } from './routes/_authenticated/categories'
+import { Route as AuthenticatedCollectionsRouteImport } from './routes/_authenticated/collections'
 import { Route as AuthenticatedEmailsRouteImport } from './routes/_authenticated/emails'
 import { Route as AuthenticatedEnvelopesRouteImport } from './routes/_authenticated/envelopes'
 import { Route as AuthenticatedPhotoInboxRouteImport } from './routes/_authenticated/photo-inbox'
@@ -49,6 +50,7 @@ import { Route as AuthenticatedAdminOnThisDateRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedBooksIndexRouteImport } from './routes/_authenticated/books/index'
 import { Route as AuthenticatedBooksBookIdRouteImport } from './routes/_authenticated/books/$bookId'
+import { Route as AuthenticatedCollectionsCollectionIdRouteImport } from './routes/_authenticated/collections_.$collectionId'
 import { Route as AuthenticatedContainersIndexRouteImport } from './routes/_authenticated/containers/index'
 import { Route as AuthenticatedContainersBoxIdRouteImport } from './routes/_authenticated/containers/$boxId'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
@@ -144,6 +146,12 @@ const AuthenticatedCategoriesRoute = AuthenticatedCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCollectionsRoute =
+  AuthenticatedCollectionsRouteImport.update({
+    id: '/collections',
+    path: '/collections',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEmailsRoute = AuthenticatedEmailsRouteImport.update({
   id: '/emails',
   path: '/emails',
@@ -290,6 +298,12 @@ const AuthenticatedBooksBookIdRoute =
   AuthenticatedBooksBookIdRouteImport.update({
     id: '/books/$bookId',
     path: '/books/$bookId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCollectionsCollectionIdRoute =
+  AuthenticatedCollectionsCollectionIdRouteImport.update({
+    id: '/collections_/$collectionId',
+    path: '/collections/$collectionId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedContainersIndexRoute =
@@ -497,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/backups': typeof AuthenticatedBackupsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
+  '/collections': typeof AuthenticatedCollectionsRoute
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
@@ -524,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/books/$bookId': typeof AuthenticatedBooksBookIdRoute
+  '/collections/$collectionId': typeof AuthenticatedCollectionsCollectionIdRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -570,6 +586,7 @@ export interface FileRoutesByTo {
   '/backups': typeof AuthenticatedBackupsRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/categories': typeof AuthenticatedCategoriesRoute
+  '/collections': typeof AuthenticatedCollectionsRoute
   '/emails': typeof AuthenticatedEmailsRoute
   '/envelopes': typeof AuthenticatedEnvelopesRoute
   '/photo-inbox': typeof AuthenticatedPhotoInboxRoute
@@ -598,6 +615,7 @@ export interface FileRoutesByTo {
   '/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/books/$bookId': typeof AuthenticatedBooksBookIdRoute
+  '/collections/$collectionId': typeof AuthenticatedCollectionsCollectionIdRoute
   '/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -646,6 +664,7 @@ export interface FileRoutesById {
   '/_authenticated/backups': typeof AuthenticatedBackupsRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/categories': typeof AuthenticatedCategoriesRoute
+  '/_authenticated/collections': typeof AuthenticatedCollectionsRoute
   '/_authenticated/emails': typeof AuthenticatedEmailsRoute
   '/_authenticated/envelopes': typeof AuthenticatedEnvelopesRoute
   '/_authenticated/photo-inbox': typeof AuthenticatedPhotoInboxRoute
@@ -674,6 +693,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/on-this-date': typeof AuthenticatedAdminOnThisDateRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/books/$bookId': typeof AuthenticatedBooksBookIdRoute
+  '/_authenticated/collections_/$collectionId': typeof AuthenticatedCollectionsCollectionIdRoute
   '/_authenticated/containers/$boxId': typeof AuthenticatedContainersBoxIdRoute
   '/_authenticated/keywords/$keywordId': typeof AuthenticatedKeywordsKeywordIdRoute
   '/_authenticated/letters/$archiveId': typeof AuthenticatedLettersArchiveIdRoute
@@ -723,6 +743,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/collections'
     | '/emails'
     | '/envelopes'
     | '/photo-inbox'
@@ -750,6 +771,7 @@ export interface FileRouteTypes {
     | '/admin/on-this-date'
     | '/admin/users'
     | '/books/$bookId'
+    | '/collections/$collectionId'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -796,6 +818,7 @@ export interface FileRouteTypes {
     | '/backups'
     | '/catalog'
     | '/categories'
+    | '/collections'
     | '/emails'
     | '/envelopes'
     | '/photo-inbox'
@@ -824,6 +847,7 @@ export interface FileRouteTypes {
     | '/admin/on-this-date'
     | '/admin/users'
     | '/books/$bookId'
+    | '/collections/$collectionId'
     | '/containers/$boxId'
     | '/keywords/$keywordId'
     | '/letters/$archiveId'
@@ -871,6 +895,7 @@ export interface FileRouteTypes {
     | '/_authenticated/backups'
     | '/_authenticated/catalog'
     | '/_authenticated/categories'
+    | '/_authenticated/collections'
     | '/_authenticated/emails'
     | '/_authenticated/envelopes'
     | '/_authenticated/photo-inbox'
@@ -899,6 +924,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/on-this-date'
     | '/_authenticated/admin/users'
     | '/_authenticated/books/$bookId'
+    | '/_authenticated/collections_/$collectionId'
     | '/_authenticated/containers/$boxId'
     | '/_authenticated/keywords/$keywordId'
     | '/_authenticated/letters/$archiveId'
@@ -1051,6 +1077,13 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof AuthenticatedCategoriesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/collections': {
+      id: '/_authenticated/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof AuthenticatedCollectionsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/emails': {
@@ -1247,6 +1280,13 @@ declare module '@tanstack/react-router' {
       path: '/books/$bookId'
       fullPath: '/books/$bookId'
       preLoaderRoute: typeof AuthenticatedBooksBookIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/collections_/$collectionId': {
+      id: '/_authenticated/collections_/$collectionId'
+      path: '/collections/$collectionId'
+      fullPath: '/collections/$collectionId'
+      preLoaderRoute: typeof AuthenticatedCollectionsCollectionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/containers/': {
@@ -1488,6 +1528,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBackupsRoute: typeof AuthenticatedBackupsRoute
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedCategoriesRoute: typeof AuthenticatedCategoriesRoute
+  AuthenticatedCollectionsRoute: typeof AuthenticatedCollectionsRoute
   AuthenticatedEmailsRoute: typeof AuthenticatedEmailsRoute
   AuthenticatedEnvelopesRoute: typeof AuthenticatedEnvelopesRoute
   AuthenticatedPhotoInboxRoute: typeof AuthenticatedPhotoInboxRoute
@@ -1506,6 +1547,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminOnThisDateRoute: typeof AuthenticatedAdminOnThisDateRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedBooksBookIdRoute: typeof AuthenticatedBooksBookIdRoute
+  AuthenticatedCollectionsCollectionIdRoute: typeof AuthenticatedCollectionsCollectionIdRoute
   AuthenticatedContainersBoxIdRoute: typeof AuthenticatedContainersBoxIdRoute
   AuthenticatedKeywordsKeywordIdRoute: typeof AuthenticatedKeywordsKeywordIdRoute
   AuthenticatedLettersArchiveIdRoute: typeof AuthenticatedLettersArchiveIdRoute
@@ -1535,6 +1577,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBackupsRoute: AuthenticatedBackupsRoute,
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCategoriesRoute: AuthenticatedCategoriesRoute,
+  AuthenticatedCollectionsRoute: AuthenticatedCollectionsRoute,
   AuthenticatedEmailsRoute: AuthenticatedEmailsRoute,
   AuthenticatedEnvelopesRoute: AuthenticatedEnvelopesRoute,
   AuthenticatedPhotoInboxRoute: AuthenticatedPhotoInboxRoute,
@@ -1553,6 +1596,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminOnThisDateRoute: AuthenticatedAdminOnThisDateRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedBooksBookIdRoute: AuthenticatedBooksBookIdRoute,
+  AuthenticatedCollectionsCollectionIdRoute:
+    AuthenticatedCollectionsCollectionIdRoute,
   AuthenticatedContainersBoxIdRoute: AuthenticatedContainersBoxIdRoute,
   AuthenticatedKeywordsKeywordIdRoute: AuthenticatedKeywordsKeywordIdRoute,
   AuthenticatedLettersArchiveIdRoute: AuthenticatedLettersArchiveIdRoute,

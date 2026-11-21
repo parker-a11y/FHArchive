@@ -6,6 +6,7 @@ import { displayDate } from "@/lib/archive";
 import { recordHealth } from "@/lib/record-health";
 import { useAiStateByLetter } from "@/lib/record-ai-state";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CollectionLabels } from '@/components/collections/CollectionControls';
 
 /** Shared selection state handed down by the page that owns the action bar. */
 type SelectionProps = {
@@ -119,6 +120,7 @@ export function WeekInHistory({ letters, selected, onToggle, actions }: { letter
                           <ChevronDown className={`mt-0.5 size-3 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                           </button>
                         </div>
+                        <CollectionLabels record={{kind:'letter',id:l.id}} />
                         {isOpen && (
                           <div className="space-y-1 border-t border-border p-1.5 text-muted-foreground">
                             <p>{displayDate(l)}</p>

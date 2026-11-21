@@ -6,6 +6,7 @@ import { viewPath, originalName, fetchPhotoOriginal, type Photo } from "@/lib/ph
 import { deliverFile } from "@/lib/download";
 import { PhotoConnectionList, usePhotoLinks } from "@/components/photos/PhotoConnections";
 import { signPhotoPath, useSignedPath } from "@/components/photos/SignedImg";
+import { RecordCollections } from '@/components/collections/CollectionControls';
 
 type Props = {
   photos: Photo[];
@@ -173,6 +174,7 @@ export function PhotoLightbox({ photos, index, categoryNames, boxLabel, canDownl
             ))}
           </dl>
           <LightboxConnections photoId={photo.id} />
+          <div className="text-gallery-stage-foreground [&_button]:text-foreground [&_a]:text-muted-foreground"><RecordCollections record={{kind:'photo',id:photo.id}} /></div>
           <p className="mt-6 text-xs opacity-50">← → to browse · double-click to zoom · Esc to close</p>
         </aside>
       )}

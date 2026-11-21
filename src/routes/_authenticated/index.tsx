@@ -125,6 +125,8 @@ export const Route = createFileRoute("/_authenticated/")({
         property: "og:description",
         content: "Cataloging, scanning and transcription progress across the letter collection.",
       },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
     ],
   }),
   component: () => (

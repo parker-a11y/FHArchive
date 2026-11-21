@@ -695,6 +695,195 @@ export type Database = {
         }
         Relationships: []
       }
+      collection_discovery_state: {
+        Row: {
+          key: string
+          reason: string
+          requires_owner_action: boolean
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          reason: string
+          requires_owner_action?: boolean
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          reason?: string
+          requires_owner_action?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      collection_memberships: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          kind: string | null
+          letter_id: string | null
+          photo_id: string | null
+          ref_id: string | null
+          source_id: string | null
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          kind?: string | null
+          letter_id?: string | null
+          photo_id?: string | null
+          ref_id?: string | null
+          source_id?: string | null
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          kind?: string | null
+          letter_id?: string | null
+          photo_id?: string | null
+          ref_id?: string | null
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_memberships_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_memberships_letter_id_fkey"
+            columns: ["letter_id"]
+            isOneToOne: false
+            referencedRelation: "letters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_memberships_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_memberships_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "digital_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_photo_vectors: {
+        Row: {
+          chunks: Json
+          embedding: string
+          fingerprint: string
+          photo_id: string
+          updated_at: string
+        }
+        Insert: {
+          chunks?: Json
+          embedding: string
+          fingerprint: string
+          photo_id: string
+          updated_at?: string
+        }
+        Update: {
+          chunks?: Json
+          embedding?: string
+          fingerprint?: string
+          photo_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_photo_vectors_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: true
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collection_suggestions: {
+        Row: {
+          collection_id: string
+          confidence: string
+          created_at: string
+          dismissed: boolean
+          excerpt: string
+          id: string
+          kind: string
+          reason: string
+          ref_id: string
+        }
+        Insert: {
+          collection_id: string
+          confidence: string
+          created_at?: string
+          dismissed?: boolean
+          excerpt?: string
+          id?: string
+          kind: string
+          reason: string
+          ref_id: string
+        }
+        Update: {
+          collection_id?: string
+          confidence?: string
+          created_at?: string
+          dismissed?: boolean
+          excerpt?: string
+          id?: string
+          kind?: string
+          reason?: string
+          ref_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_suggestions_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections: {
+        Row: {
+          ai_blocked_reason: string | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          ai_blocked_reason?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          ai_blocked_reason?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       container_counter: {
         Row: {
           last_seq: number
@@ -3891,7 +4080,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      collection_archive_records: {
+        Row: {
+          author: string | null
+          body: string | null
+          date_text: string | null
+          destination: string | null
+          identifier: string | null
+          kind: string | null
+          origin: string | null
+          recipient: string | null
+          record_type: string | null
+          ref_id: string | null
+          sort_date: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       archive_owner_id: { Args: never; Returns: string }
@@ -4006,6 +4211,13 @@ export type Database = {
         Returns: {
           keyword_id: string
           uses: number
+        }[]
+      }
+      match_collection_photos: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          photo_id: string
+          similarity: number
         }[]
       }
       match_research_chunks: {

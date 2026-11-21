@@ -9,6 +9,7 @@ import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { WRITER_MAX_RECORDS } from "@/lib/writer-limits";
 import { Copy, Feather, Mail } from "lucide-react";
+import { AssignCollectionsDialog, CollectionLabels } from '@/components/collections/CollectionControls';
 import { toast } from "sonner";
 import { fetchLetters } from "@/lib/queries";
 import { richTextToPlain } from "@/lib/rich-text";
@@ -117,6 +118,7 @@ function Timeline() {
     canEdit && selectedRecords.length > 0 ? (
       <div className="flex flex-wrap items-center gap-2" aria-label="Selected letter actions">
         <span className="text-sm font-medium">{selectedRecords.length} selected</span>
+        <AssignCollectionsDialog records={selectedRecords} />
         {isAdmin && (
           <EmailArchiveDialog
             records={selectedRecords}
@@ -313,6 +315,7 @@ function Timeline() {
                 </h2>
               )}
               <div className="border-l-2 border-border py-2 pl-4 hover:border-primary hover:bg-muted/50">
+                <CollectionLabels record={{kind:'letter',id:l.id}} />
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                   {canEdit && (
                     <Checkbox

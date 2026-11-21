@@ -1,4 +1,5 @@
 import { SendToBookDialog } from "@/components/book/SendToBookDialog";
+import { AssignCollectionsDialog, CollectionLabels } from '@/components/collections/CollectionControls';
 import { useRecordTypeOptions } from "@/lib/categories";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
@@ -89,6 +90,8 @@ export const Route = createFileRoute("/_authenticated/letters/")({
         property: "og:description",
         content: "Spreadsheet view of the letter catalog with filtering and export.",
       },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
     ],
   }),
   component: () => (
@@ -945,7 +948,7 @@ function LettersTable() {
             <Button asChild variant="outline" size="sm" className="gap-2">
               <Link to="/storage-boxes"><Boxes className="size-4" /> Storage Boxes</Link>
             </Button>
-            {isAdmin && (
+            {canEdit && (
               <div className="flex items-center gap-1 rounded border border-border px-2 py-1">
                 <span className="text-xs text-muted-foreground">Range</span>
                 <Input
@@ -985,6 +988,7 @@ function LettersTable() {
             {canEdit && selectedRecords.length > 1 && (
               <JacketLabelDialog ids={selectedRecords.map((r) => r.id)} />
             )}
+            {canEdit && selectedRecords.length > 0 && <AssignCollectionsDialog records={selectedRecords} />}
             {isAdmin && selectedRecords.length > 0 && (
               <EmailArchiveDialog
                 records={selectedRecords}
@@ -1366,7 +1370,7 @@ function LettersTable() {
           <thead className="sticky top-0 bg-secondary">
             <tr>
               <th className="w-8 border-b border-border px-2 py-2">
-                {isAdmin && (
+                {canEdit && (
                 <Checkbox
                   aria-label="Select all records"
                   checked={allSelected}
@@ -1445,7 +1449,7 @@ function LettersTable() {
                     compact ? "py-0.5" : "py-1.5",
                   )}
                 >
-                  {isAdmin && (
+                  {canEdit && (
                     <span
                       onPointerDownCapture={(e) => (shiftHeld.current = e.shiftKey)}
                       onKeyDownCapture={(e) => (shiftHeld.current = e.shiftKey)}
@@ -1474,7 +1478,8 @@ function LettersTable() {
                       }
                     >
                       {c.key === "archive_id" ? (
-                        <span className="inline-flex items-center gap-1.5 [&>*]:shrink-0">
+                        <span className="inline-flex flex-wrap items-center gap-1.5 [&>*]:shrink-0">
+                          <span className="w-full"><CollectionLabels record={{kind:'letter',id:l.id}} /></span>
                           <StarToggle
                             table="letters"
                             id={l.id}

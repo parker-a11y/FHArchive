@@ -48,6 +48,7 @@ import {
 } from "@/components/sources/ShareSourceDialog";
 import { EmailArchiveDialog } from "@/components/letter/EmailArchiveDialog";
 import { RelatedRecordsPanel } from "@/components/RelatedRecordsPanel";
+import { RecordCollections } from '@/components/collections/CollectionControls';
 
 
 export const Route = createFileRoute("/_authenticated/sources/$dsId")({
@@ -209,6 +210,7 @@ function SourcePage() {
       </div>
 
       <div className="p-4 sm:p-8">
+        <RecordCollections record={{kind:'source',id:source.id}} />
         <Tabs defaultValue="details">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>

@@ -341,6 +341,8 @@ function PeopleInput({ value, onChange, onBlur }: { value: string; onChange: (v:
   );
 }
 
+import { RecordCollections } from '@/components/collections/CollectionControls';
+
 function toDetails(p: Photo): PhotoDetails {
   return { caption: p.caption ?? "", people: p.people ?? "", date_text: p.date_text ?? "", location: p.location ?? "", inscription: p.inscription ?? "", notes: p.notes ?? "", info_source: p.info_source ?? "", back_transcription: p.back_transcription ?? "" };
 }
@@ -412,6 +414,7 @@ function DetailsPanel({ photo, defaultOpen = false, onDeleted }: { photo: Photo;
       </div>
       {open && (
         <div className="space-y-3 border-t border-border p-3">
+          <RecordCollections record={{kind:'photo',id:photo.id}} />
           {FIELDS.map((f) => (
             <label key={f.key} className="block text-xs text-muted-foreground">
               {f.label}

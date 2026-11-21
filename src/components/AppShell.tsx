@@ -40,6 +40,7 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/catalog", label: "Quick Entry", icon: PlusSquare, editorOnly: true },
   { to: "/letters", label: "All Records", icon: Files },
+  { to: "/collections", label: "Collections", icon: Tags },
   { to: "/ask", label: "Ask Francis", icon: FileSearch },
   { to: "/recaps", label: "Weekly Recaps", icon: Newspaper },
   { to: "/sources", label: "Digital Sources", icon: Globe },

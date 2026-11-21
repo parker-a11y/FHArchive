@@ -2,6 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { Search as SearchIcon } from "lucide-react";
+import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/hooks/useAuth';
+import { AssignCollectionsDialog, CollectionLabels } from '@/components/collections/CollectionControls';
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
 import { DateLink } from "@/components/DateLink";
@@ -34,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/search")({
       },
       { property: "og:title", content: "Search — The Francis Files" },
       { property: "og:description", content: "Search every letter and reference in the archive." },
+      { property: 'og:type', content: 'website' },
+      { name: 'twitter:card', content: 'summary' },
     ],
   }),
   component: () => (
@@ -54,6 +59,8 @@ function ResultCard({
   tags,
   hits,
   meta,
+  selected,
+  onSelect,
 }: {
   letter: Letter;
   term: string;
@@ -61,6 +68,8 @@ function ResultCard({
   tags: string[];
   hits: number;
   meta: ReactNode;
+  selected: boolean;
+  onSelect?: (checked:boolean) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -88,6 +97,7 @@ function ResultCard({
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-baseline justify-between gap-4">
         <div className="flex items-baseline gap-2">
+          {onSelect && <Checkbox aria-label={`Select ${letter.archive_id}`} checked={selected} onCheckedChange={v=>onSelect(v===true)} />}
           <Link {...jump} className="archive-id text-primary hover:underline">
             {letter.archive_id}
           </Link>
@@ -102,6 +112,7 @@ function ResultCard({
       <p className="mt-1 text-sm font-medium">
         {[letter.author, letter.recipient].filter(Boolean).join(" → ") || letter.title || "Untitled"}
       </p>
+      <CollectionLabels record={{kind:'letter',id:letter.id}} />
 
       {tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
@@ -172,6 +183,8 @@ function useDebounced<T>(value: T, ms = 400): T {
 }
 
 function SearchPage() {
+  const {canEdit}=useAuth();
+  const [selected,setSelected]=useState<Set<string>>(new Set());
   const recordTypeOptions = useRecordTypeOptions();
   const [q, setQ] = useState("");
   // Seed from ?q= so "Search the archive" from the right-click menu lands here.
@@ -456,6 +469,7 @@ function SearchPage() {
       </div>
 
       <div className="px-4 sm:px-8 py-5 space-y-3">
+        {canEdit && results.length>0 && <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 border-b border-border bg-background py-3"><label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Select visible search results" checked={results.every(r=>selected.has(r.id))} onCheckedChange={v=>setSelected(p=>{const n=new Set(p);for(const r of results){if(v)n.add(r.id);else n.delete(r.id);}return n;})}/>Select visible</label><AssignCollectionsDialog records={[...selected].map(id=>({kind:'letter' as const,id}))}/>{selected.size>0&&<Button variant="ghost" size="sm" onClick={()=>setSelected(new Set())}>Clear ({selected.size})</Button>}</div>}
         {!hasAny && (
           <p className="text-sm text-muted-foreground">
             Enter a query or set a filter to search the archive.
@@ -479,6 +493,8 @@ function SearchPage() {
                 <ResultCard
                   key={l.id}
                   letter={l}
+                  selected={selected.has(l.id)}
+                  {...(canEdit?{onSelect:(checked:boolean)=>setSelected(p=>{const n=new Set(p);if(checked)n.add(l.id);else n.delete(l.id);return n;})}:{})}
                   term={debouncedQ}
                   snippets={snippets}
                   tags={tags}
