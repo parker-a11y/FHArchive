@@ -162,6 +162,13 @@
       "when": 1795285377320,
       "tag": "0022_collection_photo_chunks",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795293406203,
+      "tag": "0023_add_destination_sort_to_search_letters",
+      "breakpoints": true
     }
   ]
 }
