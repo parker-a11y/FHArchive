@@ -5,8 +5,24 @@ import {
   flowingCombinedTranscription,
   reflowCombinedFromPages,
   removeRepeatedNavyLetterhead,
+  transcriptionForCopy,
 } from "./transcription-format";
 import { richTextToPlain } from "./rich-text";
+
+describe("transcriptionForCopy", () => {
+  test("prefers verified text over combined and AI text", () => {
+    assert.equal(transcriptionForCopy({ transcription_verified: "Reviewed letter", transcription_rollup_text: "Combined letter", transcription_raw_ai: "AI letter" }), "Reviewed letter");
+  });
+  test("copies combined text when verification is pending", () => {
+    assert.equal(transcriptionForCopy({ transcription_verified: null, transcription_rollup_text: "<p>Combined letter</p>", transcription_raw_ai: "AI letter" }), "Combined letter");
+  });
+  test("copies AI text when verified and combined text are empty", () => {
+    assert.equal(transcriptionForCopy({ transcription_verified: "", transcription_rollup_text: null, transcription_raw_ai: "AI letter" }), "AI letter");
+  });
+  test("uses a placeholder only when no transcription is available", () => {
+    assert.equal(transcriptionForCopy({ transcription_verified: null, transcription_rollup_text: null, transcription_raw_ai: null }), "[No transcription yet]");
+  });
+});
 
 describe("flowingCombinedTranscription", () => {
   test("removes labeled and unlabeled system page headings", () => {

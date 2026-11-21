@@ -11,6 +11,16 @@ import { isRichHtml, plainTextToRichHtml, richTextToPlain, sanitizeRichHtml } fr
 
 const NAVY_LETTERHEAD = /\b(?:u\.?\s*s\.?|united\s+states)\s+(?:navy|naval)\b/i;
 
+/** Clipboard exports prefer reviewed text, then combined text, then AI text. */
+export function transcriptionForCopy(record: {
+  transcription_verified: string | null;
+  transcription_rollup_text: string | null;
+  transcription_raw_ai: string | null;
+}): string {
+  const text = record.transcription_verified || record.transcription_rollup_text || record.transcription_raw_ai;
+  return richTextToPlain(flowingCombinedTranscription(text)).trim() || "[No transcription yet]";
+}
+
 function normalizedLetterhead(value: string) {
   return value
     .replace(/<br\s*\/?\s*>/gi, "\n")

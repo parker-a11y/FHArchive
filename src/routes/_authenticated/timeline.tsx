@@ -12,8 +12,7 @@ import { Copy, Feather, Mail } from "lucide-react";
 import { AssignCollectionsDialog, CollectionLabels } from '@/components/collections/CollectionControls';
 import { toast } from "sonner";
 import { fetchLetters } from "@/lib/queries";
-import { richTextToPlain } from "@/lib/rich-text";
-import { flowingCombinedTranscription } from "@/lib/transcription-format";
+import { transcriptionForCopy } from "@/lib/transcription-format";
 import { supabase } from "@/integrations/supabase/client";
 import { PERIODS, displayDate } from "@/lib/archive";
 import { DateLink } from "@/components/DateLink";
@@ -83,10 +82,10 @@ function Timeline() {
       // load it here only for the records being copied.
       const { data: texts, error } = await supabase
         .from("letters")
-        .select("id, transcription_verified")
+        .select("id, transcription_verified, transcription_rollup_text, transcription_raw_ai")
         .in("id", chosen.map((l) => l.id));
       if (error) throw error;
-      const textById = new Map((texts ?? []).map((t) => [t.id, t.transcription_verified]));
+      const textById = new Map((texts ?? []).map((t) => [t.id, transcriptionForCopy(t)]));
       const blocks = chosen.map((l) => {
         const header = [
           `${l.archive_id}${l.title ? ` — ${l.title}` : ""}`,
@@ -95,7 +94,7 @@ function Timeline() {
           `To: ${l.recipient || "Unknown"}${l.destination ? ` (${l.destination})` : ""}`,
         ].join("\n");
         const body =
-          richTextToPlain(flowingCombinedTranscription(textById.get(l.id))).trim() ||
+          textById.get(l.id) ||
           "[No transcription yet]";
         return `${header}\n\n${body}`;
       });
