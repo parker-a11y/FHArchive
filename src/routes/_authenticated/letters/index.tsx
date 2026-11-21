@@ -1400,7 +1400,7 @@ function LettersTable() {
           </colgroup>
           <thead className="sticky top-0 bg-secondary">
             <tr>
-              <th className="w-8 border-b border-border px-2 py-2">
+              <th className="sticky left-0 z-20 w-8 border-b border-r border-border bg-secondary px-2 py-2">
                 {canEdit && (
                 <Checkbox
                   aria-label="Select all records"
@@ -1514,19 +1514,21 @@ function LettersTable() {
               <tr
                 key={l.id}
                 className={cn(
-                  "border-b border-border hover:bg-muted/50",
+                  "group border-b border-border hover:bg-muted/50",
                   i % 2 === 1 && "bg-muted/30",
                   compact && "leading-tight",
                 )}
               >
                 <td
                   className={cn(
-                    "px-2 align-top",
+                    "sticky left-0 z-10 border-r border-border bg-background px-2 align-top before:pointer-events-none before:absolute before:inset-0 group-hover:before:bg-muted/50",
+                    i % 2 === 1 && "before:bg-muted/30",
                     compact ? "py-0.5" : "py-1.5",
                   )}
                 >
                   {canEdit && (
                     <span
+                      className="relative z-10"
                       onPointerDownCapture={(e) => (shiftHeld.current = e.shiftKey)}
                       onKeyDownCapture={(e) => (shiftHeld.current = e.shiftKey)}
                     >
