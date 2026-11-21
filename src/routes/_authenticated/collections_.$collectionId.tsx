@@ -1,3 +1,4 @@
+import { CollectionRecordTable } from "@/components/collections/CollectionRecordTable";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -45,10 +46,8 @@ import {
 import {
   AddCollectionRecordsDialog,
   AssignCollectionsDialog,
-  CollectionLabels,
 } from "@/components/collections/CollectionControls";
 import { suggestCollectionItems, resumeCollectionDiscovery } from "@/lib/collections.functions";
-import { DateLink } from "@/components/DateLink";
 export const Route = createFileRoute("/_authenticated/collections_/$collectionId")({
   loader: ({ context }) => context.queryClient.ensureQueryData(collectionsQuery),
   head: ({ params }) => ({
@@ -640,41 +639,7 @@ function CollectionPage() {
             {!isLoading && !visible.length && (
               <p className="py-12 text-muted-foreground">No records in this view.</p>
             )}
-            {visible.map((r) => (
-              <div
-                key={`${r.kind}:${r.ref_id}`}
-                className="flex items-start gap-3 border-b border-border py-4"
-              >
-                {canEdit && (
-                  <Checkbox
-                    className="mt-1"
-                    aria-label={`Select ${r.identifier}`}
-                    checked={selected.has(`${r.kind}:${r.ref_id}`)}
-                    onCheckedChange={(v) =>
-                      setSelected((p) => {
-                        const n = new Set(p);
-                        const k = `${r.kind}:${r.ref_id}`;
-                        if (v) n.add(k);
-                        else n.delete(k);
-                        return n;
-                      })
-                    }
-                  />
-                )}
-                <div className="min-w-0">
-                  <div className="flex flex-wrap gap-x-4 gap-y-1">
-                    <OriginalLink record={r} />
-                    <DateLink date={r.sort_date}>{collectionDate(r)}</DateLink>
-                    <span className="text-xs text-muted-foreground">{r.record_type}</span>
-                  </div>
-                  <h3 className="mt-1 font-medium break-words">{r.title || "Untitled"}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {[r.author, r.recipient].filter(Boolean).join(" → ")}
-                  </p>
-                  <CollectionLabels record={{ kind: r.kind, id: r.ref_id }} />
-                </div>
-              </div>
-            ))}
+            <CollectionRecordTable records={visible} selected={selected} setSelected={setSelected} collectionSort={sort} />
           </>
         )}
       </div>

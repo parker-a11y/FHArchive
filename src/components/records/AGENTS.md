@@ -1,0 +1,1 @@
+- All Records and collection browsing share RecordGrid and record-columns for headers, widths, drag ordering, locked selection and row styling so their presentation stays consistent.

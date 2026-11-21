@@ -1,3 +1,6 @@
+import { fetchKeywordsForLetters, fetchAiStateForLetters } from "@/lib/record-grid-data";
+import { RecordGrid, gridRowClass, gridSelectionClass, gridCellClass } from "@/components/records/RecordGrid";
+import { COLUMNS, DEFAULT_COLUMN_ORDER, COLUMN_ORDER_KEY } from "@/lib/record-columns";
 import { SendToBookDialog } from "@/components/book/SendToBookDialog";
 import { AssignCollectionsDialog, CollectionLabels } from '@/components/collections/CollectionControls';
 import { useRecordTypeOptions } from "@/lib/categories";
@@ -5,8 +8,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Feather, Boxes, ChevronLeft, ChevronRight, Download, Eye, GripVertical, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
-import { moveColumn, normalizeColumnOrder } from "@/lib/column-order";
+import { Feather, Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { normalizeColumnOrder } from "@/lib/column-order";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -106,37 +109,7 @@ import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
 import { transcribeRecord } from "@/lib/transcription.functions";
 
 
-type Col = { key: string; label: string; width: number; minWidth?: number; editable?: boolean };
-
-
-const COLUMNS: Col[] = [
-  // Room for the record number, health dot and every action icon, including Notes.
-  { key: "archive_id", label: "FH ID", width: 220, minWidth: 210 },
-  { key: "record_type", label: "Type", width: 150 },
-  { key: "subtype", label: "Subtype", width: 130 },
-  { key: "title", label: "Title", width: 200, editable: true },
-  { key: "date", label: "Date", width: 150 },
-  { key: "date_precision", label: "Date status", width: 130 },
-  { key: "identification_status", label: "ID status", width: 130 },
-  { key: "primary_person", label: "Primary person", width: 150, editable: true },
-  { key: "author", label: "From", width: 150, editable: true },
-  { key: "recipient", label: "To", width: 150, editable: true },
-  { key: "origin", label: "Origin", width: 160, editable: true },
-  { key: "storage", label: "Storage", width: 200 },
-  { key: "sheets", label: "Sheets", width: 70, editable: true },
-  { key: "image_count", label: "Images", width: 70 },
-  { key: "has_envelope", label: "Env", width: 60 },
-  { key: "digitization_status", label: "Digitization", width: 160 },
-  { key: "scan_status", label: "Scan", width: 110 },
-  { key: "transcription_status", label: "Transcription", width: 130 },
-  { key: "tones", label: "Tone / sentiment", width: 200 },
-  { key: "keywords", label: "Keywords", width: 180 },
-  { key: "notes", label: "Notes", width: 220, minWidth: 120, editable: true },
-];
-
 const PAGE_SIZE = 100;
-const DEFAULT_COLUMN_ORDER = COLUMNS.map((c) => c.key);
-const COLUMN_ORDER_KEY = "letters_column_order_v1";
 
 /** Debounce a value so filtering doesn't fire a query on every keystroke. */
 function useDebounced<T>(value: T, ms = 300): T {
@@ -156,38 +129,6 @@ function storageText(l: Letter) {
   return parts.join(" · ");
 }
 
-type KeywordRow = { letter_id: string; keywords: { name: string } | null };
-
-function groupKeywords(tags: KeywordRow[]) {
-  const m: Record<string, string[]> = {};
-  for (const t of tags) {
-    if (!t.keywords) continue;
-    (m[t.letter_id] ??= []).push(t.keywords.name);
-  }
-  return m;
-}
-
-/** Keyword names for a set of letter ids, fetched in PostgREST-safe chunks. */
-async function fetchKeywordsForLetters(ids: string[]): Promise<Record<string, string[]>> {
-  const all: KeywordRow[] = [];
-  const PAGE = 1000;
-  for (let i = 0; i < ids.length; i += 50) {
-    const chunk = ids.slice(i, i + 50);
-    for (let from = 0; ; from += PAGE) {
-      const { data, error } = await supabase
-        .from("letter_keywords")
-        .select("letter_id, keywords(name)")
-        .in("letter_id", chunk)
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      const rows = (data ?? []) as unknown as KeywordRow[];
-      all.push(...rows);
-      if (rows.length < PAGE) break;
-    }
-  }
-  return groupKeywords(all);
-}
-
 type HealthFilter =
   | ""
   | "green"
@@ -196,33 +137,6 @@ type HealthFilter =
   | "yellow"
   | "red"
   | "needs_attention";
-
-/** Pending / total AI suggestion counts for the records on the current page. */
-async function fetchAiStateForLetters(
-  ids: string[],
-): Promise<Record<string, { total: number; pending: number }>> {
-  const out: Record<string, { total: number; pending: number }> = {};
-  const PAGE = 1000;
-  for (let i = 0; i < ids.length; i += 50) {
-    const chunk = ids.slice(i, i + 50);
-    for (let from = 0; ; from += PAGE) {
-      const { data, error } = await supabase
-        .from("ai_suggestions")
-        .select("letter_id, status")
-        .in("letter_id", chunk)
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      const rows = (data ?? []) as { letter_id: string; status: string }[];
-      for (const r of rows) {
-        const s = (out[r.letter_id] ??= { total: 0, pending: 0 });
-        s.total += 1;
-        if (r.status === "pending") s.pending += 1;
-      }
-      if (rows.length < PAGE) break;
-    }
-  }
-  return out;
-}
 
 /** Saved All Records view (filters, chips, sort, page, layout) — survives navigation and reloads. */
 const VIEW_STATE_KEY = "letters_view_state_v1";
@@ -333,8 +247,6 @@ function LettersTable() {
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [columnOrder, setColumnOrder] = useState(DEFAULT_COLUMN_ORDER);
-  const draggedColumn = useRef<string | null>(null);
-  const [columnDrop, setColumnDrop] = useState<{ key: string; after: boolean } | null>(null);
 
   useEffect(() => {
     try {
@@ -632,8 +544,6 @@ function LettersTable() {
     const column = COLUMNS.find((c) => c.key === key);
     return column && !hidden.includes(key) ? [column] : [];
   });
-  // Fixed-layout tables honor resized columns instead of squeezing them to fit content.
-  const tableWidth = 32 + cols.reduce((total, c) => total + (widths[c.key] ?? c.width), 0);
 
   type SelectedRecord = {
     kind: "letter";
@@ -1387,144 +1297,22 @@ function LettersTable() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table
-          className="min-w-full table-fixed border-collapse text-sm"
-          style={{ width: tableWidth }}
+      <div>
+        <RecordGrid cols={cols} widths={widths} setWidths={setWidths} columnOrder={columnOrder} saveColumnOrder={saveColumnOrder} sort={sort} setSort={setSort}
+          selectionHeader={canEdit && <Checkbox aria-label="Select all records" checked={allSelected} onCheckedChange={(v) => setSelected((s) => {
+            const next = new Map(s);
+            if (v) rows.forEach((l) => next.set(l.id, asSelected(l)));
+            else rows.forEach((l) => next.delete(l.id));
+            return next;
+          })} />}
         >
-          <colgroup>
-            <col style={{ width: 32 }} />
-            {cols.map((c) => (
-              <col key={c.key} style={{ width: widths[c.key] ?? c.width }} />
-            ))}
-          </colgroup>
-          <thead className="sticky top-0 bg-secondary">
-            <tr>
-              <th className="sticky left-0 z-20 w-8 border-b border-r border-border bg-secondary px-2 py-2">
-                {canEdit && (
-                <Checkbox
-                  aria-label="Select all records"
-                  checked={allSelected}
-                  onCheckedChange={(v) =>
-                    setSelected((s) => {
-                      const next = new Map(s);
-                      if (v) rows.forEach((l) => next.set(l.id, asSelected(l)));
-                      else rows.forEach((l) => next.delete(l.id));
-                       return next;
-                     })
-                   }
-                 />
-                )}
-               </th>
-              {cols.map((c) => (
-                <th
-                  key={c.key}
-                  style={{ width: widths[c.key] ?? c.width }}
-                  className={cn(
-                    "relative border-b border-border px-3 py-2 text-left font-medium select-none",
-                    columnDrop?.key === c.key && (columnDrop.after ? "border-r-2 border-r-primary" : "border-l-2 border-l-primary"),
-                  )}
-                  onDragOver={(e) => {
-                    if (!draggedColumn.current) return;
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    const bounds = e.currentTarget.getBoundingClientRect();
-                    setColumnDrop({ key: c.key, after: e.clientX > bounds.left + bounds.width / 2 });
-                  }}
-                  onDrop={(e) => {
-                    const source = draggedColumn.current;
-                    if (!source) return;
-                    e.preventDefault();
-                    const bounds = e.currentTarget.getBoundingClientRect();
-                    saveColumnOrder(moveColumn(columnOrder, source, c.key, e.clientX > bounds.left + bounds.width / 2));
-                    draggedColumn.current = null;
-                    setColumnDrop(null);
-                  }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="mr-1 inline-flex size-5 cursor-grab text-muted-foreground active:cursor-grabbing"
-                    aria-label={`Move ${c.label} column`}
-                    title={`Drag ${c.label} to rearrange; Alt + arrow keys to move`}
-                    draggable
-                    onDragStart={(e) => {
-                      draggedColumn.current = c.key;
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", c.key);
-                    }}
-                    onDragEnd={() => { draggedColumn.current = null; setColumnDrop(null); }}
-                    onKeyDown={(e) => {
-                      if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
-                      e.preventDefault();
-                      const direction = e.key === "ArrowLeft" ? -1 : 1;
-                      const adjacent = cols[cols.findIndex((col) => col.key === c.key) + direction];
-                      if (adjacent) saveColumnOrder(moveColumn(columnOrder, c.key, adjacent.key, direction === 1));
-                    }}
-                  >
-                    <GripVertical className="size-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="field-label h-auto px-0 py-0 hover:bg-transparent hover:text-foreground"
-                    onClick={() =>
-                      setSort((s) =>
-                        s.key === c.key ? { key: c.key, dir: s.dir === 1 ? -1 : 1 } : { key: c.key, dir: 1 },
-                      )
-                    }
-                  >
-                    {c.label}
-                    {sort.key === c.key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
-                  </Button>
-                  <span
-                    role="separator"
-                    onMouseDown={(e) => {
-                      const startX = e.clientX;
-                      const startW = widths[c.key] ?? c.width;
-                      const minW = c.minWidth ?? 60;
-                      const move = (ev: MouseEvent) =>
-                        setWidths((w) => ({
-                          ...w,
-                          [c.key]: Math.max(minW, startW + ev.clientX - startX),
-                        }));
-                       const up = () => {
-                         window.removeEventListener("mousemove", move);
-                         window.removeEventListener("mouseup", up);
-                         setWidths((w) => {
-                           try {
-                             localStorage.setItem("letters_col_widths", JSON.stringify(w));
-                           } catch {
-                             /* storage unavailable */
-                           }
-                           return w;
-                         });
-                       };
-                      window.addEventListener("mousemove", move);
-                      window.addEventListener("mouseup", up);
-                    }}
-                    className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-primary/40"
-                  />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
             {rows.map((l, i) => (
               <tr
                 key={l.id}
-                className={cn(
-                  "group border-b border-border hover:bg-muted/50",
-                  i % 2 === 1 && "bg-muted/30",
-                  compact && "leading-tight",
-                )}
+                className={gridRowClass(i,compact)}
               >
                 <td
-                  className={cn(
-                    "sticky left-0 z-10 border-r border-border bg-background px-2 align-top before:pointer-events-none before:absolute before:inset-0 group-hover:before:bg-muted/50",
-                    i % 2 === 1 && "before:bg-muted/30",
-                    compact ? "py-0.5" : "py-1.5",
-                  )}
+                  className={gridSelectionClass(i,compact)}
                 >
                   {canEdit && (
                     <span
@@ -1546,10 +1334,7 @@ function LettersTable() {
                   return (
                     <td
                       key={c.key}
-                      className={cn(
-                        "truncate align-top",
-                        compact ? "px-2 py-0.5" : "px-3 py-1.5",
-                      )}
+                      className={gridCellClass(compact)}
                       style={{ width: widths[c.key] ?? c.width, maxWidth: widths[c.key] ?? c.width }}
                       onDoubleClick={() =>
                         c.editable && !isGuestViewer && setEditing({ id: l.id, key: c.key })
@@ -1557,7 +1342,6 @@ function LettersTable() {
                     >
                       {c.key === "archive_id" ? (
                         <span className="inline-flex flex-wrap items-center gap-1.5 [&>*]:shrink-0">
-                          <CollectionLabels record={{kind:'letter',id:l.id}} />
                           <StarToggle
                             table="letters"
                             id={l.id}
@@ -1612,6 +1396,8 @@ function LettersTable() {
                             />
                           )}
                          </span>
+                      ) : c.key === "collections" ? (
+                        <CollectionLabels record={{kind:"letter",id:l.id}} />
                       ) : isEditing ? (
                         <input
                           autoFocus
@@ -1642,8 +1428,7 @@ function LettersTable() {
                 })}
               </tr>
             ))}
-          </tbody>
-        </table>
+        </RecordGrid>
         {rows.length === 0 && !isLoading && (
           <p className="px-4 sm:px-8 py-6 sm:py-8 text-sm text-muted-foreground">No matching records.</p>
         )}

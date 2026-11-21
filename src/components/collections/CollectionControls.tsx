@@ -83,13 +83,13 @@ export function CollectionLabels({ record }: { record: RecordKey }) {
   const labels = data?.collections.filter((c) => ids.has(c.id)) ?? [];
   if (!labels.length) return null;
   return (
-    <div className="flex w-full flex-wrap items-center gap-1 py-1" aria-label="Collection labels">
+    <div className="flex w-full flex-wrap items-center gap-1 py-1" aria-label="Collections">
       {(expanded ? labels : labels.slice(0, 2)).map((c) => (
         <Link
           key={c.id}
           to="/collections/$collectionId"
           params={{ collectionId: c.id }}
-          className="max-w-48 truncate rounded border border-border bg-muted px-1.5 py-0.5 text-xs font-normal text-muted-foreground hover:text-primary"
+          className="max-w-full truncate text-sm font-normal text-primary hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {c.name}

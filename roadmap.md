@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Collections now has a dedicated plain-text column and collection browsing shares the All Records table; 13 tests and real 46-record collection selection, ordering, reset and locked-column checks passed without changing archive data.
+
 - [x] All Records: existing default column order preserved, draggable headings with saved arrangement and Reset columns; five tests and signed-in drag/reload/reset verification passed.
 
 - [x] Timeline: select letters with checkboxes and open EMAIL RECORDS or Writing Assistant with that selection; signed-in two-letter composer and single-letter writing handoff verified, phone controls fit, no email sent.
