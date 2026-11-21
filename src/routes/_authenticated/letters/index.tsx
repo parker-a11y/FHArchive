@@ -5,7 +5,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Feather, Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { Feather, Boxes, ChevronLeft, ChevronRight, Download, Eye, GripVertical, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { moveColumn, normalizeColumnOrder } from "@/lib/column-order";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { ToneMultiSelect } from "@/components/ToneMultiSelect";
@@ -134,6 +135,8 @@ const COLUMNS: Col[] = [
 ];
 
 const PAGE_SIZE = 100;
+const DEFAULT_COLUMN_ORDER = COLUMNS.map((c) => c.key);
+const COLUMN_ORDER_KEY = "letters_column_order_v1";
 
 /** Debounce a value so filtering doesn't fire a query on every keystroke. */
 function useDebounced<T>(value: T, ms = 300): T {
@@ -329,6 +332,21 @@ function LettersTable() {
   const pageInitialized = useRef(false);
   const [hidden, setHidden] = useState<string[]>([]);
   const [widths, setWidths] = useState<Record<string, number>>({});
+  const [columnOrder, setColumnOrder] = useState(DEFAULT_COLUMN_ORDER);
+  const draggedColumn = useRef<string | null>(null);
+  const [columnDrop, setColumnDrop] = useState<{ key: string; after: boolean } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(COLUMN_ORDER_KEY);
+      if (raw) setColumnOrder(normalizeColumnOrder(JSON.parse(raw), DEFAULT_COLUMN_ORDER));
+    } catch { /* unavailable or corrupt browser storage */ }
+  }, []);
+
+  function saveColumnOrder(order: string[]) {
+    setColumnOrder(order);
+    try { localStorage.setItem(COLUMN_ORDER_KEY, JSON.stringify(order)); } catch { /* storage unavailable */ }
+  }
 
   // Persist column widths so resizes survive reloads and navigation.
   useEffect(() => {
@@ -610,7 +628,10 @@ function LettersTable() {
     queryFn: () => fetchAiStateForLetters(pageIds),
   });
 
-  const cols = COLUMNS.filter((c) => !hidden.includes(c.key));
+  const cols = columnOrder.flatMap((key) => {
+    const column = COLUMNS.find((c) => c.key === key);
+    return column && !hidden.includes(key) ? [column] : [];
+  });
   // Fixed-layout tables honor resized columns instead of squeezing them to fit content.
   const tableWidth = 32 + cols.reduce((total, c) => total + (widths[c.key] ?? c.width), 0);
 
@@ -851,6 +872,7 @@ function LettersTable() {
     setShowCorrespondence(false);
     setHidden([]);
     setWidths({});
+    saveColumnOrder([...DEFAULT_COLUMN_ORDER]);
     pendingPage.current = null;
     try {
       localStorage.removeItem("letters_col_widths");
@@ -1328,7 +1350,7 @@ function LettersTable() {
         </div>
       )}
 
-      <div className="flex items-center gap-3 border-b border-border px-4 sm:px-8 py-2 text-sm">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 sm:px-8 py-2 text-sm">
         <Button
           variant="outline"
           size="sm"
@@ -1354,6 +1376,15 @@ function LettersTable() {
           Next <ChevronRight className="size-4" />
         </Button>
         {isLoading && <span className="text-xs text-muted-foreground">Loading…</span>}
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto"
+          onClick={() => saveColumnOrder([...DEFAULT_COLUMN_ORDER])}
+          title="Restore the original column order"
+        >
+          <RotateCcw className="size-4" /> Reset columns
+        </Button>
       </div>
 
       <div className="overflow-x-auto">
@@ -1389,10 +1420,54 @@ function LettersTable() {
                 <th
                   key={c.key}
                   style={{ width: widths[c.key] ?? c.width }}
-                  className="relative border-b border-border px-3 py-2 text-left font-medium select-none"
+                  className={cn(
+                    "relative border-b border-border px-3 py-2 text-left font-medium select-none",
+                    columnDrop?.key === c.key && (columnDrop.after ? "border-r-2 border-r-primary" : "border-l-2 border-l-primary"),
+                  )}
+                  onDragOver={(e) => {
+                    if (!draggedColumn.current) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    const bounds = e.currentTarget.getBoundingClientRect();
+                    setColumnDrop({ key: c.key, after: e.clientX > bounds.left + bounds.width / 2 });
+                  }}
+                  onDrop={(e) => {
+                    const source = draggedColumn.current;
+                    if (!source) return;
+                    e.preventDefault();
+                    const bounds = e.currentTarget.getBoundingClientRect();
+                    saveColumnOrder(moveColumn(columnOrder, source, c.key, e.clientX > bounds.left + bounds.width / 2));
+                    draggedColumn.current = null;
+                    setColumnDrop(null);
+                  }}
                 >
-                  <button
-                    className="field-label hover:text-foreground"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="mr-1 inline-flex size-5 cursor-grab text-muted-foreground active:cursor-grabbing"
+                    aria-label={`Move ${c.label} column`}
+                    title={`Drag ${c.label} to rearrange; Alt + arrow keys to move`}
+                    draggable
+                    onDragStart={(e) => {
+                      draggedColumn.current = c.key;
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", c.key);
+                    }}
+                    onDragEnd={() => { draggedColumn.current = null; setColumnDrop(null); }}
+                    onKeyDown={(e) => {
+                      if (!e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+                      e.preventDefault();
+                      const direction = e.key === "ArrowLeft" ? -1 : 1;
+                      const adjacent = cols[cols.findIndex((col) => col.key === c.key) + direction];
+                      if (adjacent) saveColumnOrder(moveColumn(columnOrder, c.key, adjacent.key, direction === 1));
+                    }}
+                  >
+                    <GripVertical className="size-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="field-label h-auto px-0 py-0 hover:bg-transparent hover:text-foreground"
                     onClick={() =>
                       setSort((s) =>
                         s.key === c.key ? { key: c.key, dir: s.dir === 1 ? -1 : 1 } : { key: c.key, dir: 1 },
@@ -1401,7 +1476,7 @@ function LettersTable() {
                   >
                     {c.label}
                     {sort.key === c.key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
-                  </button>
+                  </Button>
                   <span
                     role="separator"
                     onMouseDown={(e) => {

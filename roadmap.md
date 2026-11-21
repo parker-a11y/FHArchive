@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] All Records: existing default column order preserved, draggable headings with saved arrangement and Reset columns; five tests and signed-in drag/reload/reset verification passed.
+
 - [x] Timeline: select letters with checkboxes and open EMAIL RECORDS or Writing Assistant with that selection; signed-in two-letter composer and single-letter writing handoff verified, phone controls fit, no email sent.
 
 - [x] Dispatch calendar: prominent month title and left/right arrows, persistent calendar while scrolling, and bounded TBD list; signed-in desktop/phone and drag-hover navigation verified, 7 scheduling tests passed.
