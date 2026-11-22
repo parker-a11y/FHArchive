@@ -86,7 +86,7 @@ import { DIGITIZATION_STATUS } from "@/lib/digitization";
 import { LabelDialog } from "@/components/letter/LabelDialog";
 import { MultiLabelDialog } from "@/components/letter/MultiLabelDialog";
 import { ReadOnlyCatalog } from "@/components/letter/ReadOnlyCatalog";
-import { RecordCollections } from '@/components/collections/CollectionControls';
+import { RecordCollections, AssignCollectionsDialog } from '@/components/collections/CollectionControls';
 import { LetterContextPanel } from "@/components/letter/LetterContextPanel";
 import { LinkedPhotosPanel } from "@/components/letter/LinkedPhotosPanel";
 import { RecordEmailHistory } from "@/components/letter/RecordEmailHistory";
@@ -503,6 +503,9 @@ function LetterPage() {
                 <LabelDialog letter={letter} />
                 <MultiLabelDialog letter={letter} />
               </div>
+            )}
+            {!isGuestViewer && (
+              <AssignCollectionsDialog records={[{ kind: "letter", id: letter.id }]} />
             )}
             <Button
               variant="outline"
