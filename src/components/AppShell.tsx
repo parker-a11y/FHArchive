@@ -89,6 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Global shortcuts:
   //   Ctrl+Option+0 → Quick Entry, Ctrl+Option+9 → All Records
   //   Ctrl+Option+L → activate the page's Print Label button (folder/box label)
+  //   Command+Option+9 → activate the page's Print Multiple Labels button
   const isMac =
     typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
@@ -97,15 +98,30 @@ export function AppShell({ children }: { children: ReactNode }) {
       const el = e.target as HTMLElement | null;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
 
+      // Match physical number-row keys because Option may rewrite e.key.
+      const code = e.code;
+      const key = e.key ? e.key.toLowerCase() : "";
+      const isNine = code === "Digit9" || key === "9";
+
+      // Command+Option+9 (macOS; Windows key+Alt elsewhere) → the page's
+      // Print Multiple Labels button. Kept distinct from Ctrl+Option+9, which
+      // navigates to All Records.
+      if (e.metaKey && e.altKey && !e.ctrlKey && isNine) {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = document.querySelector<HTMLElement>(
+          'button[data-shortcut="print-multiple-labels"]:not([disabled])',
+        );
+        if (btn) btn.click();
+        else toast.info("No Print Multiple Labels button on this page.");
+        return;
+      }
+
       // Require the same physical Ctrl+Option combination on every platform.
       const comboMatch = e.ctrlKey && e.altKey && !e.metaKey;
       if (!comboMatch) return;
 
-      // Match physical number-row keys because Option may rewrite e.key.
-      const code = e.code;
-      const key = e.key ? e.key.toLowerCase() : "";
       const isZero = code === "Digit0" || key === "0";
-      const isNine = code === "Digit9" || key === "9";
       const isL = code === "KeyL" || key === "l";
       if (isZero && canEdit) {
         e.preventDefault();

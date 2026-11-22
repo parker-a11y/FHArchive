@@ -56,7 +56,14 @@ export function MultiLabelDialog({ letter }: { letter: Letter }) {
 
   return (
     <>
-      <Button variant="outline" size="sm" className="gap-2" onClick={load}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-2"
+        onClick={load}
+        data-shortcut="print-multiple-labels"
+        title="Keyboard shortcut: Command+Option+9 (Ctrl+Alt+9 on Windows)"
+      >
         <Layers className="size-4" /> Print Multiple Labels
       </Button>
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
