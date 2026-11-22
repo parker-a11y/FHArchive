@@ -1,3 +1,4 @@
+import { CollectionScansDialog } from "@/components/collections/CollectionScansDialog";
 import { CollectionRecordTable } from "@/components/collections/CollectionRecordTable";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -624,6 +625,7 @@ function CollectionPage() {
                   <>
                     <span className="text-sm">{chosen.length} selected</span>
                     <AssignCollectionsDialog records={chosen} />
+                    <CollectionScansDialog records={records.filter((r) => r.kind === "letter" && selected.has(`${r.kind}:${r.ref_id}`)).map((r) => ({ id: r.ref_id, identifier: r.identifier }))} />
                     <Button variant="outline" size="sm" disabled={busy} onClick={removeRecords}>
                       Remove from collection
                     </Button>
