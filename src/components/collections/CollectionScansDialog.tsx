@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Download, Images } from "lucide-react";
 import { toast } from "sonner";
 import { deliverFile } from "@/lib/download";
+import { flatScanName } from "@/lib/scan-zip-names";
 
 type Rec = { id: string; identifier: string };
 type Scan = { id: string; letter_id: string; label: string | null; original_filename: string; master_path: string; thumb?: string };
@@ -64,8 +65,7 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
       const s = list[i]!;
       setProgress(`Fetching ${i + 1} of ${list.length}…`);
       const base = s.original_filename || s.master_path.split("/").pop() || "scan.tif";
-      let name = `${recId.get(s.letter_id) ?? "record"}/${base}`;
-      for (let n = 2; used.has(name); n++) name = `${recId.get(s.letter_id) ?? "record"}/${n}-${base}`;
+      const name = flatScanName(recId.get(s.letter_id) ?? "record", base, used);
       used.add(name);
       const { data, error } = await supabase.storage.from("scans").download(s.master_path);
       if (error || !data) { toast.error(`${base}: ${error?.message ?? "failed"}`); continue; }
