@@ -9,7 +9,8 @@ import { deliverFile } from "@/lib/download";
 import { flatScanName } from "@/lib/scan-zip-names";
 
 type Rec = { id: string; identifier: string };
-type Scan = { id: string; letter_id: string; label: string | null; original_filename: string; master_path: string; thumb?: string };
+type Scan = { id: string; letter_id: string; label: string | null; original_filename: string; master_path: string; jpeg_path?: string; thumb?: string };
+type Format = "tiff" | "jpeg";
 
 const chunk = <T,>(a: T[], n: number) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
 
@@ -19,6 +20,7 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
   const [loading, setLoading] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [format, setFormat] = useState<Format>("tiff");
   const [zip, setZip] = useState<Blob | null>(null);
   const [progress, setProgress] = useState("");
   const ids = records.map((r) => r.id).join(",");
@@ -37,9 +39,12 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
         out.push(...(data ?? []));
         const fids = (data ?? []).map((d) => d.id);
         for (const fp of chunk(fids, 200)) {
-          const { data: th } = await supabase.from("file_derivatives").select("file_id, storage_path")
-            .in("file_id", fp).eq("kind", "thumbnail").eq("status", "complete");
-          const paths = (th ?? []).filter((t) => t.storage_path);
+          const { data: th } = await supabase.from("file_derivatives").select("file_id, kind, storage_path")
+            .in("file_id", fp).in("kind", ["thumbnail", "jpeg"]).eq("status", "complete");
+          (th ?? []).forEach((t) => {
+            if (t.kind === "jpeg" && t.storage_path) { const s = out.find((x) => x.id === t.file_id); if (s) s.jpeg_path = t.storage_path; }
+          });
+          const paths = (th ?? []).filter((t) => t.kind === "thumbnail" && t.storage_path);
           if (!paths.length) continue;
           const { data: signed } = await supabase.storage.from("scans").createSignedUrls(paths.map((t) => t.storage_path!), 3600);
           paths.forEach((t, i) => { const s = out.find((x) => x.id === t.file_id); if (s && signed?.[i]?.signedUrl) s.thumb = signed[i].signedUrl; });
@@ -64,10 +69,12 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
     for (let i = 0; i < list.length; i++) {
       const s = list[i]!;
       setProgress(`Fetching ${i + 1} of ${list.length}…`);
+      const useJpeg = format === "jpeg" && s.jpeg_path;
       const base = s.original_filename || s.master_path.split("/").pop() || "scan.tif";
-      const name = flatScanName(recId.get(s.letter_id) ?? "record", base, used);
+      const named = useJpeg ? base.replace(/\.[^.]+$/, ".jpg") : base;
+      const name = flatScanName(recId.get(s.letter_id) ?? "record", named, used);
       used.add(name);
-      const { data, error } = await supabase.storage.from("scans").download(s.master_path);
+      const { data, error } = await supabase.storage.from("scans").download(useJpeg ? s.jpeg_path! : s.master_path);
       if (error || !data) { toast.error(`${base}: ${error?.message ?? "failed"}`); continue; }
       z.file(name, data); ok++;
     }
@@ -89,8 +96,14 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
               onCheckedChange={(v) => setPicked(v ? new Set(scans.map((s) => s.id)) : new Set())} />
             Select all ({scans.length})
           </label>
+          <div className="flex items-center gap-1 rounded-md border border-border p-0.5" role="group" aria-label="Download format">
+            <Button size="sm" variant={format === "tiff" ? "default" : "ghost"} className="h-7 px-2 text-xs"
+              onClick={() => { setFormat("tiff"); setZip(null); }}>TIFF originals</Button>
+            <Button size="sm" variant={format === "jpeg" ? "default" : "ghost"} className="h-7 px-2 text-xs"
+              onClick={() => { setFormat("jpeg"); setZip(null); }}>JPG (high quality)</Button>
+          </div>
           <Button size="sm" disabled={!picked.size || busy} onClick={download}>
-            <Download className="size-4" /> Prepare ZIP of TIFF originals ({picked.size})
+            <Download className="size-4" /> Prepare ZIP of {format === "tiff" ? "TIFF originals" : "JPGs"} ({picked.size})
           </Button>
           {progress && <span className="text-sm text-muted-foreground">{progress}</span>}
           {zip && <Button size="sm" variant="secondary" onClick={() => deliverFile(zip, `collection-scans-${new Date().toISOString().slice(0, 10)}.zip`)}>
