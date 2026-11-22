@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Download, Images } from "lucide-react";
 import { toast } from "sonner";
+import { deliverFile } from "@/lib/download";
 
 type Rec = { id: string; identifier: string };
 type Scan = { id: string; letter_id: string; label: string | null; original_filename: string; master_path: string; thumb?: string };
@@ -17,13 +18,15 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
   const [loading, setLoading] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [zip, setZip] = useState<Blob | null>(null);
+  const [progress, setProgress] = useState("");
   const ids = records.map((r) => r.id).join(",");
 
   useEffect(() => {
     if (!open) return;
     let cancel = false;
     (async () => {
-      setLoading(true); setPicked(new Set());
+      setLoading(true); setPicked(new Set()); setZip(null); setProgress("");
       const out: Scan[] = [];
       for (const part of chunk(records.map((r) => r.id), 100)) {
         const { data, error } = await supabase.from("digital_files")
@@ -50,18 +53,27 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
   const toggle = (id: string, on: boolean) => setPicked((p) => { const n = new Set(p); if (on) n.add(id); else n.delete(id); return n; });
 
   async function download() {
-    setBusy(true);
+    setBusy(true); setZip(null);
     const list = scans.filter((s) => picked.has(s.id));
-    for (const s of list) {
-      const name = s.original_filename || s.master_path.split("/").pop() || "scan.tif";
-      const { data, error } = await supabase.storage.from("scans").createSignedUrl(s.master_path, 300, { download: name });
-      if (error || !data) { toast.error(`${name}: ${error?.message ?? "failed"}`); continue; }
-      const a = document.createElement("a"); a.href = data.signedUrl; a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      await new Promise((r) => setTimeout(r, 700));
+    const { default: JSZip } = await import("jszip");
+    const z = new JSZip();
+    const used = new Set<string>();
+    const recId = new Map(records.map((r) => [r.id, r.identifier]));
+    let ok = 0;
+    for (let i = 0; i < list.length; i++) {
+      const s = list[i]!;
+      setProgress(`Fetching ${i + 1} of ${list.length}…`);
+      const base = s.original_filename || s.master_path.split("/").pop() || "scan.tif";
+      let name = `${recId.get(s.letter_id) ?? "record"}/${base}`;
+      for (let n = 2; used.has(name); n++) name = `${recId.get(s.letter_id) ?? "record"}/${n}-${base}`;
+      used.add(name);
+      const { data, error } = await supabase.storage.from("scans").download(s.master_path);
+      if (error || !data) { toast.error(`${base}: ${error?.message ?? "failed"}`); continue; }
+      z.file(name, data); ok++;
     }
-    setBusy(false);
-    toast.success(`Started ${list.length} original scan download${list.length === 1 ? "" : "s"}`);
+    setProgress(`Building ZIP of ${ok} file${ok === 1 ? "" : "s"}…`);
+    const blob = await z.generateAsync({ type: "blob", compression: "STORE" });
+    setZip(blob); setProgress(`Ready: ${ok} of ${list.length} scans`); setBusy(false);
   }
 
   return (
@@ -78,8 +90,11 @@ export function CollectionScansDialog({ records }: { records: Rec[] }) {
             Select all ({scans.length})
           </label>
           <Button size="sm" disabled={!picked.size || busy} onClick={download}>
-            <Download className="size-4" /> Download TIFF originals ({picked.size})
+            <Download className="size-4" /> Prepare ZIP of TIFF originals ({picked.size})
           </Button>
+          {progress && <span className="text-sm text-muted-foreground">{progress}</span>}
+          {zip && <Button size="sm" variant="secondary" onClick={() => deliverFile(zip, `collection-scans-${new Date().toISOString().slice(0, 10)}.zip`)}>
+            <Download className="size-4" /> Save ZIP</Button>}
         </div>
         {loading ? <p className="py-8 text-muted-foreground">Loading scans…</p> : !scans.length ? <p className="py-8 text-muted-foreground">No scans for these records.</p> :
           records.map((r) => {

@@ -73,6 +73,7 @@
     "html-react-parser": "^6.1.7",
     "htmlparser2": "9",
     "input-otp": "^1.4.2",
+    "jszip": "^3.10.2",
     "lucide-react": "^0.575.0",
     "pdfjs-dist": "^6.3.289",
     "react": "^19.2.0",
