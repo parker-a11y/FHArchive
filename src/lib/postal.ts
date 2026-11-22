@@ -21,6 +21,16 @@ export const POSTAL_SERVICES: readonly Option[] = [
   { value: "unknown", label: "Unknown" },
 ] as const;
 
+/**
+ * One-click postal service picks shown under the Postal service field.
+ * "Stamped" is the archive's Stamped / Paid Postage value; "Airmail" is its
+ * own value and still counts as paid postage for searching.
+ */
+export const POSTAL_QUICK_PICKS: readonly Option[] = [
+  { value: "paid", label: "Stamped" },
+  { value: "airmail", label: "Airmail" },
+] as const;
+
 /** Values that count as paid/stamped postage (airmail included). */
 export const PAID_POSTAL_SERVICES = ["paid", "airmail"] as const;
 

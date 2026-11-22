@@ -9,8 +9,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { CategorySelect } from "@/components/CategorySelect";
-import { addPostalService, usePostalServiceOptions } from "@/lib/postal";
+import {
+  addPostalService,
+  usePostalServiceOptions,
+  POSTAL_QUICK_PICKS,
+} from "@/lib/postal";
 
 export type PostalValues = {
   forwarded: boolean;
@@ -45,6 +50,29 @@ export function PostalFields({
             return value;
           }}
         />
+        {/* One-click picks for the two markings seen most often on these envelopes. */}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {POSTAL_QUICK_PICKS.map((pick) => {
+            const active = values.postal_service === pick.value;
+            return (
+              <Button
+                key={pick.value}
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-pressed={active}
+                className={`h-7 px-2.5 text-xs font-medium uppercase tracking-wide border-archive-gold/60 ${
+                  active
+                    ? "bg-archive-gold/30 hover:bg-archive-gold/40"
+                    : "bg-archive-gold/10 hover:bg-archive-gold/25"
+                }`}
+                onClick={() => onChange("postal_service", pick.value)}
+              >
+                {pick.label}
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="space-y-1.5">
