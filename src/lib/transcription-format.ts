@@ -56,6 +56,23 @@ export function transcriptionCopyBlock(
   return `${transcriptionCopyHeader(record)}\n\n${transcriptionForCopy(record)}`;
 }
 
+/**
+ * One clipboard payload for several records: every record keeps its own
+ * catalog-headed block, and the blocks are separated so a pasted run stays
+ * attributable to the record each part came from.
+ */
+export function transcriptionCopyBundle(
+  records: Array<
+    CopyHeaderRecord & {
+      transcription_verified: string | null;
+      transcription_rollup_text: string | null;
+      transcription_raw_ai: string | null;
+    }
+  >,
+): string {
+  return records.map((record) => transcriptionCopyBlock(record)).join("\n\n---\n\n");
+}
+
 /** Clipboard exports prefer reviewed text, then combined text, then AI text. */
 export function transcriptionForCopy(record: {
   transcription_verified: string | null;

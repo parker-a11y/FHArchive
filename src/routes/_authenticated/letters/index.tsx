@@ -8,7 +8,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { VISIBILITY } from "@/lib/shares";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Feather, Boxes, ChevronLeft, ChevronRight, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
+import { Feather, Boxes, ChevronLeft, ChevronRight, Copy, Download, Eye, Loader2, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { normalizeColumnOrder } from "@/lib/column-order";
 import { z } from "zod";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -26,6 +26,7 @@ import {
 } from "@/components/letter/EmailScratchpadButton";
 import { DateLink } from "@/components/DateLink";
 import { richTextToPlain } from "@/lib/rich-text";
+import { transcriptionCopyBundle } from "@/lib/transcription-format";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -674,6 +675,48 @@ function LettersTable() {
     qc.invalidateQueries({ queryKey: ["letters-page"] });
   }
 
+  /**
+   * Copy every selected record's transcription, each one headed by its catalog
+   * details — the same paste-ready block the transcription tab's button makes.
+   */
+  const [copyingTranscripts, setCopyingTranscripts] = useState(false);
+  async function copySelectedTranscriptions() {
+    const ids = [...selected.keys()];
+    if (!ids.length) return;
+    setCopyingTranscripts(true);
+    try {
+      // The records list deliberately omits transcription text, so load it here
+      // for only the records being copied.
+      type CopyRecord = Parameters<typeof transcriptionCopyBundle>[0][number] & { fh_seq: number };
+      const found: CopyRecord[] = [];
+      for (let i = 0; i < ids.length; i += 100) {
+        const { data, error } = await supabase
+          .from("letters")
+          .select(
+            "fh_seq, archive_id, title, author, recipient, origin, destination, normalized_date, date_end, date_as_written, date_precision, date_certainty, date_from_postmark, transcription_verified, transcription_rollup_text, transcription_raw_ai",
+          )
+          .in("id", ids.slice(i, i + 100));
+        if (error) throw error;
+        found.push(...(((data ?? []) as unknown) as CopyRecord[]));
+      }
+      if (!found.length) {
+        toast.error("Those records could not be found");
+        return;
+      }
+      found.sort((a, b) => a.fh_seq - b.fh_seq);
+      await navigator.clipboard.writeText(transcriptionCopyBundle(found));
+      toast.success(
+        found.length === 1
+          ? `Copied transcription of ${found[0]?.archive_id}`
+          : `Copied transcriptions of ${found.length} records`,
+      );
+    } catch (e) {
+      toast.error((e as Error).message || "Could not copy to clipboard");
+    } finally {
+      setCopyingTranscripts(false);
+    }
+  }
+
 
   /** Export every record matching the current filters (all pages). */
   async function buildExportRows() {
@@ -928,6 +971,20 @@ function LettersTable() {
                   </Button>
                 }
               />
+            )}
+            {canEdit && selectedRecords.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={copyingTranscripts}
+                onClick={copySelectedTranscriptions}
+              >
+                <Copy className="size-4" />
+                {copyingTranscripts
+                  ? "Copying…"
+                  : `Copy transcriptions (${selectedRecords.length})`}
+              </Button>
             )}
             {canEdit && selectedRecords.length > 0 && (
               <Button asChild variant="outline" size="sm" className="gap-2">

@@ -6,6 +6,7 @@ import {
   reflowCombinedFromPages,
   removeRepeatedNavyLetterhead,
   transcriptionCopyBlock,
+  transcriptionCopyBundle,
   transcriptionCopyHeader,
   transcriptionForCopy,
 } from "./transcription-format";
@@ -72,6 +73,26 @@ describe("transcriptionCopyBlock", () => {
       transcriptionCopyBlock(copiedLetter),
       `${transcriptionCopyHeader(copiedLetter)}\n\nDear Marion, the ship sailed at dawn.`,
     );
+  });
+});
+
+describe("transcriptionCopyBundle", () => {
+  test("keeps one catalog-headed block per record, in the order given", () => {
+    const second = {
+      ...copiedLetter,
+      archive_id: "FH0818",
+      title: "Postcard to Marion",
+      normalized_date: "1943-11-12",
+      transcription_verified: "Darling, the train left on time.",
+    };
+    assert.equal(
+      transcriptionCopyBundle([copiedLetter, second]),
+      `${transcriptionCopyBlock(copiedLetter)}\n\n---\n\n${transcriptionCopyBlock(second)}`,
+    );
+  });
+
+  test("adds no separator when a single record is copied", () => {
+    assert.equal(transcriptionCopyBundle([copiedLetter]), transcriptionCopyBlock(copiedLetter));
   });
 });
 
