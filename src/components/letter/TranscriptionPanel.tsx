@@ -42,6 +42,7 @@ import {
   reflowCombinedFromPages,
   needsReflow,
   reflowTranscription,
+  transcriptionCopyHeader,
 } from "@/lib/transcription-format";
 
 import { analyzeRecord } from "@/lib/ai-analysis.functions";
@@ -773,7 +774,10 @@ export function TranscriptionPanel({ letter, highlight }: { letter: Letter; high
                 richTextToPlain(combinedAi);
               if (!text.trim()) return;
               try {
-                await navigator.clipboard.writeText(text);
+                // Catalog details ride along so the pasted text stays attributable.
+                await navigator.clipboard.writeText(
+                  `${transcriptionCopyHeader(letter)}\n\n${text}`,
+                );
                 toast.success("Transcription copied to clipboard");
               } catch {
                 toast.error("Couldn't copy — your browser blocked clipboard access");

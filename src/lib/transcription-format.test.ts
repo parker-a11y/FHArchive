@@ -5,9 +5,75 @@ import {
   flowingCombinedTranscription,
   reflowCombinedFromPages,
   removeRepeatedNavyLetterhead,
+  transcriptionCopyBlock,
+  transcriptionCopyHeader,
   transcriptionForCopy,
 } from "./transcription-format";
 import { richTextToPlain } from "./rich-text";
+
+const copiedLetter = {
+  archive_id: "FH0817",
+  title: "Letter to Marion",
+  author: "Francis A. Harrington",
+  recipient: "Marion Harrington",
+  origin: "San Diego, California",
+  destination: "Hendersonville, North Carolina",
+  normalized_date: "1943-11-09",
+  date_precision: "day",
+  date_certainty: "confirmed",
+  transcription_verified: "Dear Marion, the ship sailed at dawn.",
+  transcription_rollup_text: null,
+  transcription_raw_ai: null,
+};
+
+describe("transcriptionCopyHeader", () => {
+  test("lists record, To, From, Date, Mailing Origin and Mailing Destination in order", () => {
+    assert.equal(
+      transcriptionCopyHeader(copiedLetter),
+      [
+        "FH0817 — Letter to Marion",
+        "To: Marion Harrington",
+        "From: Francis A. Harrington",
+        "Date: November 9, 1943",
+        "Mailing Origin: San Diego, California",
+        "Mailing Destination: Hendersonville, North Carolina",
+      ].join("\n"),
+    );
+  });
+
+  test("names missing values instead of dropping their lines", () => {
+    assert.equal(
+      transcriptionCopyHeader({
+        archive_id: "FH0900",
+        title: null,
+        author: null,
+        recipient: "  ",
+        origin: null,
+        destination: null,
+        normalized_date: null,
+        date_precision: "undated",
+        date_certainty: "unknown",
+      }),
+      [
+        "FH0900",
+        "To: Unknown",
+        "From: Unknown",
+        "Date: Undated",
+        "Mailing Origin: Not recorded",
+        "Mailing Destination: Not recorded",
+      ].join("\n"),
+    );
+  });
+});
+
+describe("transcriptionCopyBlock", () => {
+  test("puts the catalog details above the transcription in one payload", () => {
+    assert.equal(
+      transcriptionCopyBlock(copiedLetter),
+      `${transcriptionCopyHeader(copiedLetter)}\n\nDear Marion, the ship sailed at dawn.`,
+    );
+  });
+});
 
 describe("transcriptionForCopy", () => {
   test("prefers verified text over combined and AI text", () => {

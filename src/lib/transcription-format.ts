@@ -8,8 +8,53 @@
  */
 
 import { isRichHtml, plainTextToRichHtml, richTextToPlain, sanitizeRichHtml } from "@/lib/rich-text";
+import { displayDate } from "@/lib/archive";
 
 const NAVY_LETTERHEAD = /\b(?:u\.?\s*s\.?|united\s+states)\s+(?:navy|naval)\b/i;
+
+/** Catalog details a clipboard export can head a transcription with. */
+export type CopyHeaderRecord = {
+  archive_id: string;
+  title?: string | null;
+  author?: string | null;
+  recipient?: string | null;
+  origin?: string | null;
+  destination?: string | null;
+  normalized_date: string | null;
+  date_end?: string | null;
+  date_as_written?: string | null;
+  date_precision: string;
+  date_certainty: string;
+  date_from_postmark?: boolean | null;
+};
+
+/**
+ * Paste-ready header for a clipboard export: record number and title, then
+ * To, From, Date, Mailing Origin and Mailing Destination, one per line.
+ * Values that were never recorded say so instead of being left out, so the
+ * pasted block always has the same shape.
+ */
+export function transcriptionCopyHeader(record: CopyHeaderRecord): string {
+  return [
+    `${record.archive_id}${record.title ? ` — ${record.title}` : ""}`,
+    `To: ${record.recipient?.trim() || "Unknown"}`,
+    `From: ${record.author?.trim() || "Unknown"}`,
+    `Date: ${displayDate(record).trim() || "Undated"}`,
+    `Mailing Origin: ${record.origin?.trim() || "Not recorded"}`,
+    `Mailing Destination: ${record.destination?.trim() || "Not recorded"}`,
+  ].join("\n");
+}
+
+/** Header plus the best available transcription in one paste-ready block. */
+export function transcriptionCopyBlock(
+  record: CopyHeaderRecord & {
+    transcription_verified: string | null;
+    transcription_rollup_text: string | null;
+    transcription_raw_ai: string | null;
+  },
+): string {
+  return `${transcriptionCopyHeader(record)}\n\n${transcriptionForCopy(record)}`;
+}
 
 /** Clipboard exports prefer reviewed text, then combined text, then AI text. */
 export function transcriptionForCopy(record: {
