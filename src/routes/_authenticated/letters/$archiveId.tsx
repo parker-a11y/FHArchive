@@ -476,8 +476,8 @@ function LetterPage() {
                 {letter.origin || "—"}
               </span>
               <span>
-                <span className="field-label mr-2">ID status</span>
-                {labelOf(IDENTIFICATION_STATUS, letter.identification_status)}
+                <span className="field-label mr-2">Mailing destination</span>
+                {letter.destination || "—"}
               </span>
               <span>
                 <span className="field-label mr-2">Digitization</span>
