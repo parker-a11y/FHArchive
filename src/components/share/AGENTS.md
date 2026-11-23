@@ -1,0 +1,1 @@
+- Public no-login /record/<FH number> pages and token shares both render SharedRecordView from the same server builder, so they expose identical whitelisted fields (no TIFF masters or private notes).
