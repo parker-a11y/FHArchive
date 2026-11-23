@@ -22,6 +22,7 @@ import { timelineYears } from "@/lib/timeline-years";
 import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
 import { useAiStateByLetter } from "@/lib/record-ai-state";
 import { TimelineSummaryExport } from "@/components/timeline/TimelineSummaryExport";
+import { FullArchiveExport } from "@/components/timeline/FullArchiveExport";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -269,6 +270,7 @@ function Timeline() {
             onChange={(e) => setFilter(e.target.value)}
           />
           <TimelineSummaryExport visible={rows} selected={letters.filter((l) => selected.has(l.id))} />
+          <FullArchiveExport />
         </div>
         {selectionActions && <div className="mt-2">{selectionActions}</div>}
         {years.length > 0 && (

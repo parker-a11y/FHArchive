@@ -85,3 +85,31 @@ export function buildDocHtml(rows: SummaryExportRow[], heading: string): string 
 <style>body{font-family:Georgia,serif;font-size:11pt;line-height:1.4}h1{font-size:18pt}h2{font-size:13pt;margin:14pt 0 4pt}p{margin:2pt 0}</style></head>
 <body><h1>${esc(heading)}</h1><p>${rows.length} records, in date order.</p>${body}</body></html>`;
 }
+
+export type FullExportRow = SummaryExportRow & { transcription: string };
+
+/** Full Archive Export: Timeline Summary columns plus the stored transcription, untouched. */
+export function buildFullCsv(rows: FullExportRow[]): string {
+  const lines = [[...CSV_HEADERS, "Public Link", "Transcription Link", "Full Transcription"].filter((h, i, a) => a.indexOf(h) === i).join(",")];
+  for (const r of rows) {
+    lines.push(
+      [r.date, r.archiveId, r.title, r.from, r.to, r.origin, r.destination, r.summary, r.people.join("; "),
+        publicRecordUrl(r.archiveId), publicTranscriptionUrl(r.archiveId), r.transcription]
+        .map(csvCell)
+        .join(","),
+    );
+  }
+  return "\uFEFF" + lines.join("\r\n");
+}
+
+/** Stored record-level text, in the same order of preference used across the app. */
+export function storedTranscription(r: { transcription_verified?: string | null; transcription_rollup_text?: string | null; transcription_raw_ai?: string | null }): string {
+  return (r.transcription_verified?.trim() ? r.transcription_verified : null)
+    ?? (r.transcription_rollup_text?.trim() ? r.transcription_rollup_text : null)
+    ?? (r.transcription_raw_ai?.trim() ? r.transcription_raw_ai : null)
+    ?? "";
+}
+
+export function fullArchiveFilename(d: Date): string {
+  return `FH_Archive_Full_${d.toISOString().slice(0, 10)}.csv`;
+}

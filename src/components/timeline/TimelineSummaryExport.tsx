@@ -8,10 +8,10 @@ import { displayDate } from "@/lib/archive";
 import { buildCsv, buildDocHtml, recordFields, sortExportRows, type SummaryExportRow } from "@/lib/timeline-export";
 import type { fetchLetters } from "@/lib/queries";
 
-type Letter = Awaited<ReturnType<typeof fetchLetters>>[number];
+export type Letter = Awaited<ReturnType<typeof fetchLetters>>[number];
 type Format = "pdf" | "doc" | "csv";
 
-function downloadBlob(blob: Blob, filename: string) {
+export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -22,7 +22,7 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
-async function loadRows(letters: Letter[]): Promise<SummaryExportRow[]> {
+export async function loadRows(letters: Letter[]): Promise<SummaryExportRow[]> {
   const ids = letters.map((l) => l.id);
   const summaries = new Map<string, string>();
   const people = new Map<string, Set<string>>();

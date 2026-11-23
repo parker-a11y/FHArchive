@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildCsv, sortExportRows, type SummaryExportRow } from "./timeline-export";
+import { buildCsv, buildFullCsv, fullArchiveFilename, storedTranscription, sortExportRows, type SummaryExportRow } from "./timeline-export";
 
 const row = (o: Partial<SummaryExportRow>): SummaryExportRow => ({
   date: "", sortDate: null, archiveId: "FH0001", title: "", from: "", to: "", origin: "", destination: "", summary: "", people: [], ...o,
@@ -23,4 +23,23 @@ test("CSV rows carry a public no-login link for each record", () => {
   const csv = buildCsv([row({ archiveId: "FH0817" })]);
   assert.ok(csv.split("\r\n")[0]!.endsWith(",Public Link,Transcription Link"));
   assert.ok(csv.endsWith(",https://fharchive.com/record/FH0817,https://fharchive.com/record/FH0817/transcription"));
+});
+
+test("Full archive CSV keeps multi-paragraph quoted transcription in one cell, unchanged", () => {
+  const text = 'Dear Mom,\n\nIt rained, "again".\nLove, Fran';
+  const csv = buildFullCsv([{ ...row({ archiveId: "FH0002" }), transcription: text }]);
+  assert.ok(csv.startsWith("\uFEFF"));
+  assert.ok(csv.split("\r\n")[0]!.endsWith(",Public Link,Transcription Link,Full Transcription"));
+  assert.ok(csv.endsWith(`,"Dear Mom,\n\nIt rained, ""again"".\nLove, Fran"`));
+});
+
+test("Full archive CSV leaves the transcription blank when missing but keeps the row", () => {
+  const csv = buildFullCsv([{ ...row({ archiveId: "FH0003" }), transcription: "" }]);
+  assert.equal(csv.split("\r\n").length, 2);
+  assert.ok(csv.endsWith("/FH0003/transcription,"));
+});
+
+test("Full archive file name and stored text preference", () => {
+  assert.equal(fullArchiveFilename(new Date("2026-11-23T12:00:00Z")), "FH_Archive_Full_2026-11-23.csv");
+  assert.equal(storedTranscription({ transcription_verified: "", transcription_rollup_text: "R", transcription_raw_ai: "A" }), "R");
 });
