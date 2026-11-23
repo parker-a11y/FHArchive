@@ -34,7 +34,7 @@ function Tags({ label, items }: { label: string; items: string[] }) {
   );
 }
 
-export function SharedRecordView({ record, footer = "shared privately by link", transcriptionOpen = false }: { record: SharedRecord | null; footer?: string; transcriptionOpen?: boolean }) {
+export function SharedRecordView({ record, footer = "shared privately by link", transcriptionOpen = false, transcriptionHref }: { record: SharedRecord | null; footer?: string; transcriptionOpen?: boolean; transcriptionHref?: string }) {
   const [index, setIndex] = useState(0);
   const [sideBySide, setSideBySide] = useState(transcriptionOpen);
 
@@ -184,6 +184,13 @@ export function SharedRecordView({ record, footer = "shared privately by link", 
                   : "Read transcription alongside the letter"}
               </Button>
             </div>
+          )}
+          {transcriptionHref && (
+            <p className="mt-3 text-sm">
+              <a href={transcriptionHref} className="font-medium text-primary underline">
+                Transcription (text only)
+              </a>
+            </p>
           )}
           {record.scope === "file" && record.itemLabel && (
             <p className="mt-2 text-xs text-muted-foreground">

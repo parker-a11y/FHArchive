@@ -82,6 +82,7 @@ import { Route as ApiPublicResearchSnapshotRouteImport } from './routes/api/publ
 import { Route as ApiPublicScheduledEmailsRouteImport } from './routes/api/public/scheduled-emails'
 import { Route as ApiPublicWeeklyRecapRouteImport } from './routes/api/public/weekly-recap'
 import { Route as ETokenPdfRouteImport } from './routes/e_.$token.pdf'
+import { Route as RecordArchiveIdTranscriptionRouteImport } from './routes/record_.$archiveId.transcription'
 import { Route as AuthenticatedAdminNotesIndexRouteImport } from './routes/_authenticated/admin/notes/index'
 import { Route as AuthenticatedAdminNotesNoteIdRouteImport } from './routes/_authenticated/admin/notes/$noteId'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -486,6 +487,12 @@ const ETokenPdfRoute = ETokenPdfRouteImport.update({
   path: '/e/$token/pdf',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecordArchiveIdTranscriptionRoute =
+  RecordArchiveIdTranscriptionRouteImport.update({
+    id: '/record_/$archiveId/transcription',
+    path: '/record/$archiveId/transcription',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminNotesIndexRoute =
   AuthenticatedAdminNotesIndexRouteImport.update({
     id: '/admin/notes/',
@@ -568,6 +575,7 @@ export interface FileRoutesByFullPath {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e/$token/pdf': typeof ETokenPdfRoute
+  '/record/$archiveId/transcription': typeof RecordArchiveIdTranscriptionRoute
   '/books/': typeof AuthenticatedBooksIndexRoute
   '/containers/': typeof AuthenticatedContainersIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
@@ -645,6 +653,7 @@ export interface FileRoutesByTo {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e/$token/pdf': typeof ETokenPdfRoute
+  '/record/$archiveId/transcription': typeof RecordArchiveIdTranscriptionRoute
   '/books': typeof AuthenticatedBooksIndexRoute
   '/containers': typeof AuthenticatedContainersIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
@@ -724,6 +733,7 @@ export interface FileRoutesById {
   '/api/public/scheduled-emails': typeof ApiPublicScheduledEmailsRoute
   '/api/public/weekly-recap': typeof ApiPublicWeeklyRecapRoute
   '/e_/$token/pdf': typeof ETokenPdfRoute
+  '/record_/$archiveId/transcription': typeof RecordArchiveIdTranscriptionRoute
   '/_authenticated/books/': typeof AuthenticatedBooksIndexRoute
   '/_authenticated/containers/': typeof AuthenticatedContainersIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
@@ -803,6 +813,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e/$token/pdf'
+    | '/record/$archiveId/transcription'
     | '/books/'
     | '/containers/'
     | '/events/'
@@ -880,6 +891,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e/$token/pdf'
+    | '/record/$archiveId/transcription'
     | '/books'
     | '/containers'
     | '/events'
@@ -958,6 +970,7 @@ export interface FileRouteTypes {
     | '/api/public/scheduled-emails'
     | '/api/public/weekly-recap'
     | '/e_/$token/pdf'
+    | '/record_/$archiveId/transcription'
     | '/_authenticated/books/'
     | '/_authenticated/containers/'
     | '/_authenticated/events/'
@@ -1003,6 +1016,7 @@ export interface RootRouteChildren {
   ApiPublicScheduledEmailsRoute: typeof ApiPublicScheduledEmailsRoute
   ApiPublicWeeklyRecapRoute: typeof ApiPublicWeeklyRecapRoute
   ETokenPdfRoute: typeof ETokenPdfRoute
+  RecordArchiveIdTranscriptionRoute: typeof RecordArchiveIdTranscriptionRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -1519,6 +1533,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ETokenPdfRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/record_/$archiveId/transcription': {
+      id: '/record_/$archiveId/transcription'
+      path: '/record/$archiveId/transcription'
+      fullPath: '/record/$archiveId/transcription'
+      preLoaderRoute: typeof RecordArchiveIdTranscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/notes/': {
       id: '/_authenticated/admin/notes/'
       path: '/admin/notes'
@@ -1676,6 +1697,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicScheduledEmailsRoute: ApiPublicScheduledEmailsRoute,
   ApiPublicWeeklyRecapRoute: ApiPublicWeeklyRecapRoute,
   ETokenPdfRoute: ETokenPdfRoute,
+  RecordArchiveIdTranscriptionRoute: RecordArchiveIdTranscriptionRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

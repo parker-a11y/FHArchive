@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getPublicRecord } from "@/lib/shares.functions";
 import { SharedRecordView } from "@/components/share/SharedRecordView";
-import { publicRecordUrl } from "@/lib/timeline-export";
+import { publicRecordUrl, publicTranscriptionUrl } from "@/lib/timeline-export";
 
 export const Route = createFileRoute("/record/$archiveId")({
   loader: ({ params }) => getPublicRecord({ data: { archiveId: params.archiveId } }),
@@ -29,5 +29,13 @@ export const Route = createFileRoute("/record/$archiveId")({
 });
 
 function PublicRecordPage() {
-  return <SharedRecordView record={Route.useLoaderData()} footer="public record link" transcriptionOpen />;
+  const { archiveId } = Route.useParams();
+  return (
+    <SharedRecordView
+      record={Route.useLoaderData()}
+      footer="public record link"
+      transcriptionOpen
+      transcriptionHref={publicTranscriptionUrl(archiveId).replace("https://fharchive.com", "")}
+    />
+  );
 }

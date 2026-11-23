@@ -21,6 +21,11 @@ export function publicRecordUrl(archiveId: string): string {
   return PUBLIC_RECORD_BASE + encodeURIComponent(archiveId);
 }
 
+/** No-login plain-text transcription only. */
+export function publicTranscriptionUrl(archiveId: string): string {
+  return publicRecordUrl(archiveId) + "/transcription";
+}
+
 export function sortExportRows(rows: SummaryExportRow[]): SummaryExportRow[] {
   return [...rows].sort((a, b) => {
     if (a.sortDate && b.sortDate && a.sortDate !== b.sortDate) return a.sortDate < b.sortDate ? -1 : 1;
@@ -30,7 +35,7 @@ export function sortExportRows(rows: SummaryExportRow[]): SummaryExportRow[] {
   });
 }
 
-const CSV_HEADERS = ["Date", "Record", "Title", "From", "To", "Mailing Origin", "Mailing Destination", "Summary", "People Mentioned", "Public Link"];
+const CSV_HEADERS = ["Date", "Record", "Title", "From", "To", "Mailing Origin", "Mailing Destination", "Summary", "People Mentioned", "Public Link", "Transcription Link"];
 
 function csvCell(v: string) {
   return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
@@ -40,7 +45,7 @@ export function buildCsv(rows: SummaryExportRow[]): string {
   const lines = [CSV_HEADERS.join(",")];
   for (const r of rows) {
     lines.push(
-      [r.date, r.archiveId, r.title, r.from, r.to, r.origin, r.destination, r.summary, r.people.join("; "), publicRecordUrl(r.archiveId)]
+      [r.date, r.archiveId, r.title, r.from, r.to, r.origin, r.destination, r.summary, r.people.join("; "), publicRecordUrl(r.archiveId), publicTranscriptionUrl(r.archiveId)]
         .map(csvCell)
         .join(","),
     );
@@ -59,6 +64,7 @@ export function recordFields(r: SummaryExportRow): [string, string][] {
     ["Mailing Destination", r.destination],
     ["People Mentioned", r.people.length ? r.people.join("; ") : "None recorded"],
     ["Public Link", publicRecordUrl(r.archiveId)],
+    ["Transcription Link", publicTranscriptionUrl(r.archiveId)],
   ];
 }
 
