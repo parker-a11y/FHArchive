@@ -40,6 +40,7 @@ import { Route as ETokenRouteImport } from './routes/e.$token'
 import { Route as NotesIndexRouteImport } from './routes/notes/index'
 import { Route as NotesSlugRouteImport } from './routes/notes/$slug'
 import { Route as PTokenRouteImport } from './routes/p.$token'
+import { Route as RecordArchiveIdRouteImport } from './routes/record.$archiveId'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -242,6 +243,11 @@ const NotesSlugRoute = NotesSlugRouteImport.update({
 const PTokenRoute = PTokenRouteImport.update({
   id: '/p/$token',
   path: '/p/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecordArchiveIdRoute = RecordArchiveIdRouteImport.update({
+  id: '/record/$archiveId',
+  path: '/record/$archiveId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const STokenRoute = STokenRouteImport.update({
@@ -529,6 +535,7 @@ export interface FileRoutesByFullPath {
   '/e/$token': typeof ETokenRoute
   '/notes/$slug': typeof NotesSlugRoute
   '/p/$token': typeof PTokenRoute
+  '/record/$archiveId': typeof RecordArchiveIdRoute
   '/s/$token': typeof STokenRoute
   '/notes/': typeof NotesIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
@@ -604,6 +611,7 @@ export interface FileRoutesByTo {
   '/e/$token': typeof ETokenRoute
   '/notes/$slug': typeof NotesSlugRoute
   '/p/$token': typeof PTokenRoute
+  '/record/$archiveId': typeof RecordArchiveIdRoute
   '/s/$token': typeof STokenRoute
   '/': typeof AuthenticatedIndexRoute
   '/notes': typeof NotesIndexRoute
@@ -682,6 +690,7 @@ export interface FileRoutesById {
   '/e/$token': typeof ETokenRoute
   '/notes/$slug': typeof NotesSlugRoute
   '/p/$token': typeof PTokenRoute
+  '/record/$archiveId': typeof RecordArchiveIdRoute
   '/s/$token': typeof STokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/notes/': typeof NotesIndexRoute
@@ -761,6 +770,7 @@ export interface FileRouteTypes {
     | '/e/$token'
     | '/notes/$slug'
     | '/p/$token'
+    | '/record/$archiveId'
     | '/s/$token'
     | '/notes/'
     | '/.lovable/oauth/consent'
@@ -836,6 +846,7 @@ export interface FileRouteTypes {
     | '/e/$token'
     | '/notes/$slug'
     | '/p/$token'
+    | '/record/$archiveId'
     | '/s/$token'
     | '/'
     | '/notes'
@@ -913,6 +924,7 @@ export interface FileRouteTypes {
     | '/e/$token'
     | '/notes/$slug'
     | '/p/$token'
+    | '/record/$archiveId'
     | '/s/$token'
     | '/_authenticated/'
     | '/notes/'
@@ -975,6 +987,7 @@ export interface RootRouteChildren {
   ETokenRoute: typeof ETokenRoute
   NotesSlugRoute: typeof NotesSlugRoute
   PTokenRoute: typeof PTokenRoute
+  RecordArchiveIdRoute: typeof RecordArchiveIdRoute
   STokenRoute: typeof STokenRoute
   NotesIndexRoute: typeof NotesIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
@@ -1210,6 +1223,13 @@ declare module '@tanstack/react-router' {
       path: '/p/$token'
       fullPath: '/p/$token'
       preLoaderRoute: typeof PTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/record/$archiveId': {
+      id: '/record/$archiveId'
+      path: '/record/$archiveId'
+      fullPath: '/record/$archiveId'
+      preLoaderRoute: typeof RecordArchiveIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$token': {
@@ -1640,6 +1660,7 @@ const rootRouteChildren: RootRouteChildren = {
   ETokenRoute: ETokenRoute,
   NotesSlugRoute: NotesSlugRoute,
   PTokenRoute: PTokenRoute,
+  RecordArchiveIdRoute: RecordArchiveIdRoute,
   STokenRoute: STokenRoute,
   NotesIndexRoute: NotesIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,

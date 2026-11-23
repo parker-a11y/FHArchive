@@ -14,6 +14,13 @@ export type SummaryExportRow = {
   people: string[];
 };
 
+export const PUBLIC_RECORD_BASE = "https://fharchive.com/record/";
+
+/** No-login, read-only link for one record, keyed by its FH number. */
+export function publicRecordUrl(archiveId: string): string {
+  return PUBLIC_RECORD_BASE + encodeURIComponent(archiveId);
+}
+
 export function sortExportRows(rows: SummaryExportRow[]): SummaryExportRow[] {
   return [...rows].sort((a, b) => {
     if (a.sortDate && b.sortDate && a.sortDate !== b.sortDate) return a.sortDate < b.sortDate ? -1 : 1;
@@ -23,7 +30,7 @@ export function sortExportRows(rows: SummaryExportRow[]): SummaryExportRow[] {
   });
 }
 
-const CSV_HEADERS = ["Date", "Record", "Title", "From", "To", "Mailing Origin", "Mailing Destination", "Summary", "People Mentioned"];
+const CSV_HEADERS = ["Date", "Record", "Title", "From", "To", "Mailing Origin", "Mailing Destination", "Summary", "People Mentioned", "Public Link"];
 
 function csvCell(v: string) {
   return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
@@ -33,7 +40,7 @@ export function buildCsv(rows: SummaryExportRow[]): string {
   const lines = [CSV_HEADERS.join(",")];
   for (const r of rows) {
     lines.push(
-      [r.date, r.archiveId, r.title, r.from, r.to, r.origin, r.destination, r.summary, r.people.join("; ")]
+      [r.date, r.archiveId, r.title, r.from, r.to, r.origin, r.destination, r.summary, r.people.join("; "), publicRecordUrl(r.archiveId)]
         .map(csvCell)
         .join(","),
     );
@@ -51,6 +58,7 @@ export function recordFields(r: SummaryExportRow): [string, string][] {
     ["Mailing Origin", r.origin],
     ["Mailing Destination", r.destination],
     ["People Mentioned", r.people.length ? r.people.join("; ") : "None recorded"],
+    ["Public Link", publicRecordUrl(r.archiveId)],
   ];
 }
 

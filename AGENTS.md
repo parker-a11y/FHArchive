@@ -71,3 +71,4 @@ add `INSERT`/`UPDATE` on `storage.buckets` to a migration. RLS policies on
 - Photo connections live in `photo_links` (photo → letter/photo/person by ID, with documented/recollection/tentative certainty); they reference records only, so no image files are duplicated and photo-to-photo links read both ways.
 - Photo sleeves (`photo_sleeves`, SLEEVE-###) sit between photos and PHOTO boxes; database triggers keep a sleeved photo's `box_id` equal to its sleeve's box, so every existing box view stays correct and moving a sleeve moves its photos.
 - Photo rotation writes new viewing/thumbnail derivatives and updates both references only after upload; masters and old paths stay untouched.
+- Public no-login record pages live at /record/<FH number> and reuse SharedRecordView and the shared-record builder, so token shares and public links expose the same whitelisted fields (never TIFF masters or private notes).

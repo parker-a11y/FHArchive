@@ -16,5 +16,11 @@ test("sorts by date with undated records last", () => {
   });
 test("CSV quotes commas and joins people with semicolons", () => {
     const csv = buildCsv([row({ summary: 'Says "hi", home', people: ["Fran", "Jim"] })]);
-    assert.equal(csv.split("\r\n")[1], `,FH0001,,,,,,"Says ""hi"", home",Fran; Jim`);
+    assert.equal(csv.split("\r\n")[1], `,FH0001,,,,,,"Says ""hi"", home",Fran; Jim,https://fharchive.com/record/FH0001`);
   });
+
+test("CSV rows carry a public no-login link for each record", () => {
+  const csv = buildCsv([row({ archiveId: "FH0817" })]);
+  assert.ok(csv.split("\r\n")[0]!.endsWith(",Public Link"));
+  assert.ok(csv.endsWith(",https://fharchive.com/record/FH0817"));
+});
