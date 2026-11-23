@@ -21,6 +21,7 @@ import { MonthInHistory } from "@/components/MonthInHistory";
 import { timelineYears } from "@/lib/timeline-years";
 import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
 import { useAiStateByLetter } from "@/lib/record-ai-state";
+import { TimelineSummaryExport } from "@/components/timeline/TimelineSummaryExport";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -260,12 +261,15 @@ function Timeline() {
         ref={barRef}
         className="sticky top-[53px] z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-8 lg:top-0"
       >
-        <Input
-          className="h-8 w-full sm:w-72"
-          placeholder="Filter by person, place or keyword…"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            className="h-8 w-full sm:w-72"
+            placeholder="Filter by person, place or keyword…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          <TimelineSummaryExport visible={rows} selected={letters.filter((l) => selected.has(l.id))} />
+        </div>
         {selectionActions && <div className="mt-2">{selectionActions}</div>}
         {years.length > 0 && (
           <div
