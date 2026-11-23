@@ -29,5 +29,5 @@ export const Route = createFileRoute("/record/$archiveId")({
 });
 
 function PublicRecordPage() {
-  return <SharedRecordView record={Route.useLoaderData()} footer="public record link" />;
+  return <SharedRecordView record={Route.useLoaderData()} footer="public record link" transcriptionOpen />;
 }

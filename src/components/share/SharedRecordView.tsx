@@ -34,9 +34,9 @@ function Tags({ label, items }: { label: string; items: string[] }) {
   );
 }
 
-export function SharedRecordView({ record, footer = "shared privately by link" }: { record: SharedRecord | null; footer?: string }) {
+export function SharedRecordView({ record, footer = "shared privately by link", transcriptionOpen = false }: { record: SharedRecord | null; footer?: string; transcriptionOpen?: boolean }) {
   const [index, setIndex] = useState(0);
-  const [sideBySide, setSideBySide] = useState(false);
+  const [sideBySide, setSideBySide] = useState(transcriptionOpen);
 
   if (!record) {
     return (
