@@ -113,3 +113,33 @@ export function storedTranscription(r: { transcription_verified?: string | null;
 export function fullArchiveFilename(d: Date): string {
   return `FH_Archive_Full_${d.toISOString().slice(0, 10)}.csv`;
 }
+
+// Sent Emails Export: one row per delivered email with the FH records it
+// referenced (same catalog fields as the letters export) and its full body.
+export type EmailExportRow = { subject: string; body: string; records: SummaryExportRow[] };
+
+/** Email bodies may hold simple HTML; keep paragraph breaks, drop tags. */
+export function emailPlainText(body: string): string {
+  return body
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|h[1-6]|li|blockquote)>/gi, "\n\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function buildEmailsCsv(emails: EmailExportRow[]): string {
+  const headers = ["Email Subject", "Records", "Record Dates", "Titles", "From", "To", "Mailing Origin", "Mailing Destination", "Public Links", "Email Text"];
+  const lines = [headers.join(",")];
+  for (const e of emails) {
+    const recs = sortExportRows(e.records);
+    const col = (f: (r: SummaryExportRow) => string) => recs.map(f).join("; ");
+    lines.push(
+      [e.subject, col((r) => r.archiveId), col((r) => r.date), col((r) => r.title), col((r) => r.from), col((r) => r.to),
+        col((r) => r.origin), col((r) => r.destination), col((r) => publicRecordUrl(r.archiveId)), emailPlainText(e.body)]
+        .map(csvCell).join(","),
+    );
+  }
+  return "\uFEFF" + lines.join("\r\n");
+}

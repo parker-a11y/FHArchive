@@ -23,6 +23,7 @@ import { recordHealth, HEALTH_COLORS } from "@/lib/record-health";
 import { useAiStateByLetter } from "@/lib/record-ai-state";
 import { TimelineSummaryExport } from "@/components/timeline/TimelineSummaryExport";
 import { FullArchiveExport } from "@/components/timeline/FullArchiveExport";
+import { SentEmailsExport } from "@/components/timeline/SentEmailsExport";
 
 export const Route = createFileRoute("/_authenticated/timeline")({
   head: () => ({
@@ -246,6 +247,11 @@ function Timeline() {
   return (
     <>
       <PageHeader title="Timeline" description={`${rows.length} letters in chronological order`} />
+      <div className="flex flex-wrap items-center gap-2 px-4 pb-2 sm:px-8">
+        <TimelineSummaryExport visible={rows} selected={letters.filter((l) => selected.has(l.id))} />
+        <FullArchiveExport />
+        <SentEmailsExport />
+      </div>
       <WeekInHistory
         letters={letters}
         selected={selected}
@@ -269,35 +275,35 @@ function Timeline() {
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
           />
-          <TimelineSummaryExport visible={rows} selected={letters.filter((l) => selected.has(l.id))} />
-          <FullArchiveExport />
         </div>
         {selectionActions && <div className="mt-2">{selectionActions}</div>}
         {years.length > 0 && (
-          <div
-            className="no-scrollbar mt-2 flex gap-1 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
-            role="group"
-            aria-label="Jump to year"
-          >
-            {years.map((y) => {
-              const on = activeYear === y.year;
-              return (
-                <button
-                  key={y.year}
-                  type="button"
-                  onClick={() => jumpToYear(y.year)}
-                  title={`${y.count} record${y.count === 1 ? "" : "s"} in ${y.year}`}
-                  aria-current={on ? "true" : undefined}
-                  className={`rounded-full border px-2.5 py-0.5 text-xs tabular-nums transition-colors ${
-                    on
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
-                  }`}
-                >
-                  {y.year}
-                </button>
-              );
-            })}
+          <div className="mt-2 space-y-1" role="group" aria-label="Jump to year">
+            {decadeRows(years).map(([decade, list]) => (
+              <div key={decade} className="flex flex-wrap items-center gap-1.5">
+                <span className="w-16 shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{decade}</span>
+                {list.map((y) => {
+                  const on = activeYear === y.year;
+                  return (
+                    <button
+                      key={y.year}
+                      type="button"
+                      onClick={() => jumpToYear(y.year)}
+                      title={`${y.count} record${y.count === 1 ? "" : "s"} in ${y.year}`}
+                      aria-current={on ? "true" : undefined}
+                      className={`rounded-md border px-3 py-1 text-sm font-semibold tabular-nums transition-colors ${
+                        on
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:border-primary/60"
+                      }`}
+                    >
+                      {y.year}
+                      <span className={`ml-1.5 text-xs font-normal ${on ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{y.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -379,4 +385,13 @@ function Timeline() {
       </div>
     </>
   );
+}
+
+function decadeRows(years: { year: string; count: number }[]) {
+  const groups = new Map<string, { year: string; count: number }[]>();
+  for (const y of years) {
+    const key = /^\d{4}$/.test(y.year) ? `${y.year.slice(0, 3)}0s` : y.year;
+    groups.set(key, [...(groups.get(key) ?? []), y]);
+  }
+  return [...groups.entries()];
 }
